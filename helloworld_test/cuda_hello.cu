@@ -1,5 +1,6 @@
 #include <stdio.h>
-
+#include <iostream>
+using namespace std;
 __global__ void helloFromGPU(void){
     printf("Hello World from GPU!\n");
 }
