@@ -31,7 +31,8 @@
 - **Windows 本地李沐伴学（2026-09-16 新增）**：`app/d2l.html`，另有根目录 `李沐深度学习伴学.html`；18 个单元，独立存储键 `d2l-companion-v1`，支持 JSON 备份与 Markdown 笔记导出。编辑源在 `.d2l-src/`，修改后运行 `build.py` 同步两份 HTML。当前仅更新本地网站，未发布到 Kimi。使用说明见 `李沐伴学使用说明.md`。
 - **学习网站**（/mnt/agents/output/app，website_version_manager 发布，type=html）：
   - index.html 主路线图 / trial.html 试水期 / tracker.html 142 集追踪器（localStorage 存笔记，键 ml-tracker-v1）
-  - kaggle.html 作业指南 / kaggle-code.html 代码精讲（含★全流程地图）/ imdb.html IMDB 手写实战·完整流水线 / link.html 课程×项目联动表 / bridge.html 训练闭环补桥计划
+  - kaggle.html 作业指南 / kaggle-code.html 代码精讲（含★全流程地图）/ imdb.html IMDB 手写实战·完整流水线 / link.html 课程×项目联动表
+  - bridge.html 训练闭环补桥计划（①小网络训练 ②注意力计算 ③Transformer 编码器 ④BERT 与 IMDB 微调，四阶段完整教学）
 - **GitHub 仓库**：
   - `word2vec-nlp-tutorial`：Kaggle 作业代码（词袋 0.84576 / Word2Vec 0.84396）
   - `imdb-sentiment-models`：导师 IMDB 脚本包的运行指南/FIXES（15 个原始脚本由用户自行网页上传）
@@ -52,8 +53,9 @@
 - 当前 LSTM 概念卡点：用户曾把门控理解为 good 加好评、not 遗忘；已解释 GloVe 表示、门控状态与最终分类的区别，尚未获得用户独立作答证据。计划加入短补桥，但不把完整 LSTM 实现作为 Transformer 前置。
 - 2026-09-16 最新交流：用户转述导师建议重点看 BERT 和 Transformer。后续学习安排围绕这两个主题按需补基础；不将完整学完李沐课程或 LSTM 作为前置门槛。此条记录学习方向，不代表已掌握这些模型。
 - 2026-09-20 IMDB 实战重大进展：六个模型（CNN 0.88880 / LSTM 0.89128 / GRU 0.89996 / CNNLSTM 0.88580 / AttLSTM 修复后 0.89660 / Transformer 0.86944，均 5 epoch public LB）全部跑通并提交 Kaggle。AttLSTM 曾因 bug 得 0.50004（随机水平）后修复。epoch=20 实验观察到 GRU/AttLSTM 分数下降（候选解释：过拟合；未经训练/验证曲线确认，不据此断定最佳轮数）。概念问答经通义千问网页版进行，Kimi 校验版笔记存 `ML_note/IMDB六模型实战与概念问答.md`。概念理解证据来自问答转述，尚未经独立作答验证。
-- 2026-09-20 新增学习网站页面 `bridge.html`（训练闭环补桥计划）：GPT 建议路线（小网络一次训练 → 注意力 → Transformer → BERT）的教师版授课页；阶段①含固定数值小网络 T1 手算前向 / T2 手算梯度+autograd 核对 / T3 backward vs step，数字经 autograd 验证（∂L/∂W1[1,0]=0.084）；与 d2l 4.7 节对照。阶段②③④只给预告不展开。
-- 当前目标（用户 2026-09-20 陈述）：按补桥计划学习，先完成阶段①小网络训练闭环，再进入注意力 → Transformer → BERT。
+- 2026-09-20 新增学习网站页面 `bridge.html`（训练闭环补桥计划）：GPT 建议路线（小网络一次训练 → 注意力 → Transformer → BERT）的教师版授课页；阶段①含固定数值小网络 T1 手算前向 / T2 手算梯度+autograd 核对 / T3 backward vs step，数字经 autograd 验证（∂L/∂W1[1,0]=0.084）；与 d2l 4.7 节对照。
+- 2026-09-20 bridge.html ②③④ 由预告扩为完整教学（应用户「不够深入」反馈；d2l 10.3/10.5/10.6/10.7/14.8/15.6 经 web_open_url 通读）：②注意力计算（h₁h₂h₃+q 贯穿例：点积→softmax→加权 [0.4223,0.1554,0.4223]、dim=-1 沿键、masked_softmax 先于 softmax 填 −1e6、加性 vs 缩放点积参数对比、√d 方差论证 d=512 std≈22.6）；③Transformer 编码器（3×3 自注意力矩阵 [0.2119,0.2119,0.5761] 陷阱题、复杂度对比表、d=4 位置编码手算、LN vs BN [[1,2],[2,3]]、四投影层参数定位、残差梯度通路、编码器块形状跟踪图、M6 对照）；④BERT 微调（三种嵌入相加、[CLS]/[SEP]、MLM 15%+80/10/10 防错位、1.1 亿参数 vs 分类头 1538、MLM/NSP 头微调时丢弃、Kaggle 五步协议：切分→训练→验证集选点→提交→错例分析≥10 条）。所有数字 Python 验证。网站版本 db9f2ba。
+- 当前目标（用户 2026-09-20 陈述）：按补桥计划学习，先完成阶段①小网络训练闭环，再进入注意力 → Transformer → BERT。②③④ 教材已就位，待用户审批修正。
 - 课程：已看 1–36、42–107（共 102 集，第二部分完结，第三部分进行中）；**缺 37–41（过拟合与正则化）**，计划中。
 - Kaggle 作业：Part 1–3 全部完成并提交成功。
 - IMDB 脚本包：六模型全部跑通并提交（见上）。
