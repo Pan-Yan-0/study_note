@@ -56,10 +56,11 @@
 - 2026-09-20 新增学习网站页面 `bridge.html`（训练闭环补桥计划）：GPT 建议路线（小网络一次训练 → 注意力 → Transformer → BERT）的教师版授课页；阶段①含固定数值小网络 T1 手算前向 / T2 手算梯度+autograd 核对 / T3 backward vs step，数字经 autograd 验证（∂L/∂W1[1,0]=0.084）；与 d2l 4.7 节对照。
 - 2026-09-20 bridge.html ②③④ 由预告扩为完整教学（应用户「不够深入」反馈；d2l 10.3/10.5/10.6/10.7/14.8/15.6 经 web_open_url 通读）：②注意力计算（h₁h₂h₃+q 贯穿例：点积→softmax→加权 [0.4223,0.1554,0.4223]、dim=-1 沿键、masked_softmax 先于 softmax 填 −1e6、加性 vs 缩放点积参数对比、√d 方差论证 d=512 std≈22.6）；③Transformer 编码器（3×3 自注意力矩阵 [0.2119,0.2119,0.5761] 陷阱题、复杂度对比表、d=4 位置编码手算、LN vs BN [[1,2],[2,3]]、四投影层参数定位、残差梯度通路、编码器块形状跟踪图、M6 对照）；④BERT 微调（三种嵌入相加、[CLS]/[SEP]、MLM 15%+80/10/10 防错位、1.1 亿参数 vs 分类头 1538、MLM/NSP 头微调时丢弃、Kaggle 五步协议：切分→训练→验证集选点→提交→错例分析≥10 条）。所有数字 Python 验证。网站版本 db9f2ba。
 - 当前目标（用户 2026-09-20 陈述）：按补桥计划学习，先完成阶段①小网络训练闭环，再进入注意力 → Transformer → BERT。②③④ 教材已就位，待用户审批修正。
+- 2026-09-21 导师新任务（用户转述）：跑 `imdb_bert_trainer.py` 与 `imdb_bert_scratch.py` 出结果，再改 roberta-large 与 deberta-xxlarge。已交付 `/mnt/agents/output/bert_kaggle/`（四脚本+README，zip 已打包）：两个 Kaggle 兼容修补版（load_metric→numpy accuracy；evaluation_strategy 版本自适应；DATA_DIR 环境变量；自动建 result 目录）、imdb_roberta_large_trainer.py（fp16+batch8×累积2+lr1e-5+max_len256）、imdb_deberta_xxlarge_trainer.py（9 亿参数 16GB 四件套：梯度检查点+adamw_bnb_8bit+fp16+batch1×累积16）。关键事实：bert_scratch 实为「手写分类头+预训练编码器」，非从零训练。四脚本 py_compile 通过；训练须在 Kaggle GPU 执行，结果记录表待用户回填。
 - 课程：已看 1–36、42–107（共 102 集，第二部分完结，第三部分进行中）；**缺 37–41（过拟合与正则化）**，计划中。
 - Kaggle 作业：Part 1–3 全部完成并提交成功。
 - IMDB 脚本包：六模型全部跑通并提交（见上）。
-- 待办（用户侧）：三遍法第 2 遍盲写、补看 37–41、补桥计划阶段①验收。Kaggle 注册与 GPU 使用权限已就绪，不再列为待办。
+- 待办（用户侧）：三遍法第 2 遍盲写、补看 37–41、补桥计划阶段①验收、导师 BERT 四模型实验回填结果表。Kaggle 注册与 GPU 使用权限已就绪，不再列为待办。
 
 ## 工作流程备忘
 - 页面发布：website_version_manager(build_version, project_dir=/mnt/agents/output/app, type=html)，只返回版本 ID。
