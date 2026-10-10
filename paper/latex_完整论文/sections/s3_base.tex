@@ -1,0 +1,108 @@
+% ==================================================================
+\section{基础模型：语言主导融合与自蒸馏}\label{sec:base}
+% ==================================================================
+
+问题二和问题三用的是同一个预测网络。这一章先把它建好：以文献\cite{shi2026ldsd}提出的 LDSD 为骨架，做两处必要的适配。问题二在此基础上改造缺失处理，问题三在它外面加解释层。
+
+\subsection{为什么选 LDSD}
+
+多模态情感分析的主流做法大致有两类：一类是跨模态注意力融合，如 MulT\cite{tsai2019mult}；另一类是先学模态不变与模态特有的表示再融合，如 MISA\cite{hazarika2020misa}、Self-MM\cite{yu2021selfmm}。它们大多默认三路输入完整。面向缺失的工作则多采用重建或蒸馏的思路，如 TFR-Net\cite{yuan2021tfrnet}、LNLN\cite{zhang2024lnln}。
+
+LDSD 有两个设计正好对应本题的需要。第一是语言主导：把语言作为主模态，语音和视觉作为辅助，用语言去“查询”辅助模态中有用的部分，这一思路来自 ALMT\cite{zhang2023almt}。第\ref{sec:zero}节已经看到，附件2的文本50帧全部有值，语音、视觉则大量是填充，让信息最稠密的模态当主导是合理的。第二是自蒸馏重建：教师网络看完整输入，学生网络看缺失输入，用教师的重建结果指导学生，恰好对应“缺失下重建信息”的需求。当然，“语言主导”在本题数据上是否真的成立，不能只凭直觉，第\ref{sec:ablation}节会用两组消融专门检验。
+
+\subsection{网络结构}
+
+网络结构如图\ref{fig:arch}所示，下面按数据流向逐层写出。
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[
+  node distance=3mm,
+  blk/.style={draw=black!60, rounded corners=2pt, align=flush center, font=\small, inner sep=3pt, minimum height=8mm},
+  full/.style={blk, text width=13.2cm, fill=black!4},
+  half/.style={blk, text width=6.3cm, minimum height=15mm},
+  arr/.style={-{Stealth[length=1.8mm]}, draw=black!70, semithick}]
+\node[full] (in) {输入：文本 $U_l^1$（$T\times768$），语音 $U_a^1$（$T\times74$），视觉 $U_v^1$（$T\times35$），缺失掩码 $M_a,M_v$};
+\node[full, below=of in] (emb) {模态嵌入：统一到 $d=128$ 维\quad 式(\ref{eq:emb})};
+\node[full, below=of emb] (lang) {语言多尺度编码：两层8头 Transformer 得到 $H_l^2,H_l^3$\quad 式(\ref{eq:lang})};
+\node[full, below=of lang] (ahl) {自适应超模态学习（AHL）：以 $H_l^j$ 为 Query 聚合语音、视觉\quad 式(\ref{eq:alpha})～(\ref{eq:hyp})};
+\node[full, below=of ahl, draw=red!60!black, fill=red!8, very thick] (inp) {\textbf{超模态补洞（M4，本文新增）}：在缺失帧上用 $E_{rec}(H_{Hyp})$ 替换 $H_{Hyp}$\quad 式(\ref{eq:inpaint})};
+\node[half, below=6mm of inp.south west, anchor=north west, fill=black!8] (rec) {重建与自蒸馏\\ $E_{rec}(H_{Hyp}^3)\to H^{rec}$，EMA 教师 $\eta=0.99$\\ 损失 $\mathcal{L}_{rec}$\quad 式(\ref{eq:rec})～(\ref{eq:ema})};
+\node[half, below=6mm of inp.south east, anchor=north east, fill=blue!5] (fus) {跨模态融合与预测\\ $H=\mathrm{CrossTrans}(H_l,H_{Hyp})$\\ 回归头 + 三分类头\quad 式(\ref{eq:fusein})～(\ref{eq:heads})};
+\node[full, below=6mm of rec.south west, anchor=north west, fill=black!4] (obj) {总目标：$\mathcal{L}=\lambda\mathcal{L}_{rec}+\gamma(\mathcal{L}_{reg}+\mathcal{L}_{cls})$，$\lambda=0.5$，$\gamma=1.0$\quad 式(\ref{eq:total})};
+\node[full, below=5mm of obj, dashed, fill=orange!6] (xai) {问题三解释层（不改网络）：逐模态干预、滑动窗口遮蔽、帧—词元回指};
+\foreach \x/\y in {in/emb,emb/lang,lang/ahl,ahl/inp} \draw[arr] (\x) -- (\y);
+\draw[arr] (inp.south -| rec.north) -- (rec.north);
+\draw[arr] (inp.south -| fus.north) -- (fus.north);
+\draw[arr] (rec.south) -- (rec.south |- obj.north);
+\draw[arr] (fus.south) -- (fus.south |- obj.north);
+\draw[arr, dashed] (obj.south) -- (xai.north);
+\end{tikzpicture}
+\caption{预测网络结构（红框为问题二新增的补洞模块，它与左下方的重建器共用 $E_{rec}$；虚线框为问题三的解释层）}
+\label{fig:arch}
+\end{figure}
+
+\textbf{（1）模态嵌入。}三路输入维度各不相同，先各自拼接一个随机初始化、可学习的模态嵌入张量 $H_m^0$，再经线性投影和一层8头 Transformer 统一到 $d$ 维：
+\begin{equation}\label{eq:emb}
+H_m^1=E_m^1\big(\mathrm{concat}(H_m^0,\ U_m^1)\big)\in\mathbb{R}^{T\times d},\qquad m\in\{l,a,v\}.
+\end{equation}
+缺失在这一步注入：语音、视觉的缺失帧置零；语言的缺失帧替换为一个可学习的 \texttt{[UNK]} 向量（文献\cite{shi2026ldsd}用的是 BERT 的 \texttt{[UNK]} 词元，这里取它在特征空间里的等价物）。
+
+\textbf{（2）语言多尺度编码。}语言是主模态，在 $H_l^1$ 之上再叠两层编码器，得到三个尺度：
+\begin{equation}\label{eq:lang}
+H_l^i=E\big(H_l^{i-1};\ \theta_{E_l}^i\big)\in\mathbb{R}^{T\times d},\qquad i\in\{2,3\}.
+\end{equation}
+与式(\ref{eq:emb})中把输入写进初始化张量的嵌入层不同，这两层直接对语言特征本身建模。
+
+\textbf{（3）自适应超模态学习。}第 $j$ 层以语言第 $j$ 个尺度作 Query，从语音、视觉中聚合信息：
+\begin{align}
+\alpha&=\mathrm{softmax}\!\left(\frac{H_l^j W_{Q_l} W_{K_a}^{\top} H_a^{1\top}}{\sqrt{d_k}}\right),\label{eq:alpha}\\
+\beta&=\mathrm{softmax}\!\left(\frac{H_l^j W_{Q_l} W_{K_v}^{\top} H_v^{1\top}}{\sqrt{d_k}}\right),\label{eq:beta}\\
+H_{Hyp}^j&=H_{Hyp}^{j-1}+\alpha H_a^1 W_{V_a}+\beta H_v^1 W_{V_v},\qquad j\in\{1,2,3\},\label{eq:hyp}
+\end{align}
+其中 $d_k=16$，共8头。$\alpha_{t,t'}$ 的含义是“语言第 $t$ 个词在多大程度上关注语音第 $t'$ 帧”，这本身就是一条可解释线索，第\ref{sec:q3}章会用到。
+
+\textbf{（4）重建与自蒸馏。}重建器由两层8头 Transformer 加线性输出层构成，从超模态表示中重建三个模态：
+\begin{align}
+H_m^{rec}&=E_{rec}\big(H_{Hyp}^3\big),\qquad m\in\{v,a,l\},\label{eq:rec}\\
+H^{rec}&=\mathrm{concat}\big(H_v^{rec},H_a^{rec},H_l^{rec}\big).\label{eq:reccat}
+\end{align}
+教师网络接收完整输入，学生网络接收缺失输入，重建损失约束两者的重建结果一致；教师不参与梯度更新，参数由学生的指数滑动平均（EMA）得到\cite{tarvainen2017mean}：
+\begin{align}
+\mathcal{L}_{rec}&=\frac{1}{N_b}\sum_{n=1}^{N_b}\big\|H^{rec}_{tea,n}-H^{rec}_{stu,n}\big\|_2^2,\label{eq:lrec}\\
+\theta_t^{tea}&=\eta\,\theta_{t-1}^{tea}+(1-\eta)\,\theta_t^{stu},\qquad \eta=0.99.\label{eq:ema}
+\end{align}
+因为教师看到的是完整输入，它的重建结果代表“信息无损时应有的样子”，比单纯的自监督重建目标更强\cite{hinton2015distilling}。
+
+\textbf{（5）跨模态融合。}在语言和超模态序列前各拼接一个可学习的汇聚向量 $H^0$，由主导模态提供 Query、超模态提供 Key 和 Value：
+\begin{align}
+H_l&=\mathrm{concat}\big(H^0,H_l^3\big),\qquad H_{Hyp}=\mathrm{concat}\big(H^0,H_{Hyp}^3\big),\label{eq:fusein}\\
+H&=\mathrm{CrossTrans}\big(H_l,H_{Hyp}\big)\in\mathbb{R}^{1\times d}.\label{eq:fuse}
+\end{align}
+
+\textbf{（6）预测与损失。}
+\begin{align}
+\hat y_{reg}&=\mathrm{regressor}(H),\qquad \hat y_{cls}=\mathrm{classifier}(H),\label{eq:heads}\\
+\mathcal{L}_{reg}&=\big\|y-\hat y_{reg}\big\|_2^2,\qquad \mathcal{L}_{cls}=\mathrm{CE}\big(c,\hat y_{cls}\big),\label{eq:losses}\\
+\mathcal{L}&=\lambda\,\mathcal{L}_{rec}+\gamma\,\mathcal{L}_{sp},\qquad \mathcal{L}_{sp}=\mathcal{L}_{reg}+\mathcal{L}_{cls},\qquad \lambda=0.5,\ \gamma=1.0,\label{eq:total}
+\end{align}
+其中 $y$ 为强度标签，$c$ 为三分类极性标签，CE 为交叉熵。
+
+\subsection{两处适配}
+
+复现时我们只做了两处改动，都有明确理由，没有随意调整结构。
+
+一是增加了三分类头。原文的预测损失只有回归的均方误差，分类指标由回归输出分箱得到。但本题明确要求用准确率和 F1 评价极性，附件2又自带三分类标签，所以我们在融合表示 $H$ 之后并联了一个三分类头，见式(\ref{eq:heads})和式(\ref{eq:losses})。
+
+二是没有实现原文实验表格中出现的“对抗学习”一项。原文第3节正文中找不到它的公式和训练细节，我们不愿意凭猜测补一个进去，因此这一项没有实现。
+
+\subsection{评价指标}\label{sec:metrics}
+
+极性分类用三分类准确率 Acc-3 和宏平均 F1（F1-macro），强度回归用 MAE 和皮尔逊相关系数：
+\begin{gather}
+\mathrm{Acc}=\frac{1}{N}\sum_{n=1}^{N}\mathbb{1}\big[\hat c_n=c_n\big],\qquad
+\mathrm{F1}_{\mathrm{macro}}=\frac{1}{3}\sum_{k=1}^{3}\frac{2P_kR_k}{P_k+R_k},\label{eq:clsmetric}\\
+\mathrm{MAE}=\frac{1}{N}\sum_{n=1}^{N}\big|y_n-\hat y_n\big|,\qquad
+\mathrm{Corr}=\frac{\sum_n(y_n-\bar y)(\hat y_n-\bar{\hat y})}{\sqrt{\sum_n(y_n-\bar y)^2}\sqrt{\sum_n(\hat y_n-\bar{\hat y})^2}},\label{eq:regmetric}
+\end{gather}
+其中 $P_k$、$R_k$ 为第 $k$ 类的查准率和查全率。为了便于和文献对照，另外报告按 CMU-MOSEI 常用做法由强度值换算得到的 Acc-2、Acc-5、Acc-7。需要说明的是，F1-macro 对三类一视同仁，任何一类识别得差都会明显拉低它，比 Acc-3 更能暴露类别之间的不均衡，所以本文在比较模型时更看重 F1-macro。

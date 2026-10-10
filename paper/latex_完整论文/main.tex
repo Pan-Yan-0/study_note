@@ -1,0 +1,131 @@
+% !Mode:: "TeX:UTF-8"
+%!TEX program  = xelatex
+% 编译：xelatex -> bibtex -> xelatex -> xelatex
+\documentclass[bwprint]{gmcmthesis}
+
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,calc,fit,backgrounds}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{csvsimple}
+\usepackage{float}
+\normalem % ulem 默认会把 \emph 变成下划线，这里恢复成正常强调
+\AtBeginEnvironment{table}{\small\setlength{\tabcolsep}{4pt}} % 表格用五号左右字号
+\setcounter{tocdepth}{2}
+\setlength{\emergencystretch}{2em}
+
+% 待填项：用醒目的红字标出，提交前务必全部替换
+\newcommand\todo[1]{\textcolor{red}{\textbf{【待填：#1】}}}
+
+\renewcommand{\algorithmicrequire}{\textbf{输入：}}
+\renewcommand{\algorithmicensure}{\textbf{输出：}}
+\floatname{algorithm}{算法}
+
+\title{多模态情感特征对齐与鲁棒可解释预测}
+\baominghao{26XXXXXXXXX} % 参赛队号
+\schoolname{XX大学}      % 学校名称
+\membera{XXX}            % 队员A
+\memberb{XXX}            % 队员B
+\memberc{XXX}            % 队员C
+
+% ------------------------------------------------------------------
+% 封面与摘要页标题：模板原图写的是“第十五届”，这里改成文字版第二十三届；
+% logo.pdf 下排是 2018 年承办单位和第十五届标识，裁掉只留上排三个。
+% 如拿到当届官方封面，直接替换即可。
+% ------------------------------------------------------------------
+\makeatletter
+% 模板的 \thesection 自带尾点，交叉引用会变成“第5.章”，这里把点挪到标题格式里
+\renewcommand\thesection{\arabic{section}}
+\newcommand\secdot{.}
+\def\@seccntformat#1{\csname the#1\endcsname\csname secdot@#1\endcsname\ \ }
+\def\secdot@section{\secdot}
+\newcommand\tocsecdot{.}
+\titlecontents{section}[0pt]{\vspace{2mm}\bfseries\heiti}
+  {\thecontentslabel\tocsecdot\hskip.5em}{}{\titlerule*[0.5pc]{.}\contentspage}
+\renewcommand\gmcm@ges@string@contents{%
+  {\zihao{-2}中国研究生创新实践系列大赛}\\[6pt]
+  “华为杯”第二十三届中国研究生\\[2pt]
+  数学建模竞赛}
+\def\ge@maketitle{%
+  \newpage
+  \if@gmcm@preface
+  \setcounter{page}{0}%
+  \def\thepage{0}%
+  \thispagestyle{empty}%
+  \begin{center}
+    {\includegraphics[trim=0 95 0 0,clip]{logo}}
+    \vskip2.2cm
+    {\xinwei\zihao{2} \gmcm@ges@string@contents \par}
+  \end{center}
+  \vskip2em
+  \renewcommand\arraystretch{1.3}%
+  \noindent\begin{tabularx}{\textwidth}{lX}
+    \zihao{-2}\bfseries 学\qquad 校&\zihao{-2}\bfseries\gmcm@tokens@schoolname\\
+    \hline\\[-15pt]
+    \zihao{-2}\bfseries 参赛队号&\zihao{-2}\bfseries\gmcm@tokens@baominghao\\
+    \hline\\[-15pt]
+    \multirow{3}{*}{\zihao{-2}\bfseries 队员姓名}&\zihao{-2}\bfseries 1. \gmcm@tokens@membera\hfill\null\\
+    \cline{2-2}\\[-15pt]
+    &\zihao{-2}\bfseries 2. \gmcm@tokens@memberb\hfill\null\\
+    \cline{2-2}\\[-15pt]
+    &\zihao{-2}\bfseries 3. \gmcm@tokens@memberc\hfill\null\\
+    \hline
+  \end{tabularx}
+  \fi
+  \makenametitle}
+\def\makenametitle{%
+  \newpage
+  \setcounter{page}{1}%
+  \vspace*{-1.2cm}
+  \begin{center}
+    {\xinwei\zihao{3} \gmcm@ges@string@contents \par}
+  \end{center}
+  \vskip0.2cm
+  \begin{center}\begin{tabularx}{.95\textwidth}{@{}lX@{}}
+    {\zihao{4} 题\qquad 目} &\hfill\zihao{3}\heiti \@title\hfill\null\\
+    \cline{2-2}
+  \end{tabularx}\end{center}
+  \vskip-0.4cm}
+\makeatother
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+真实场景中，文本、语音、视觉三路信号时间尺度不一，还常常局部缺失，而多数情感模型只给结论、不给依据。本文围绕特征对齐、缺失下的鲁棒预测和可解释预测三项任务，建立了从原始视频到可核验结论的完整流程。
+
+针对问题一，本文用 bert-base-uncased、librosa 和 YuNet 从附件1的100条视频中提取768、74、35维的文本、语音、视觉特征，再用三角核重采样对齐到统一的50个位置，给出按词位置（口径H，与附件2一致）、全程50等分、说话者有效时段50等分三种方案。第三种是本文的改进：以“说话者的脸是否可见”划定有效时段，既剔除无人时段，又保留不说话时的表情。100条样本平均保留93\%的时长，语音、视觉非零位置分别为48.0和47.5，而按声音判定只有32\%的时长在说话。
+
+针对问题二，核查发现附件2的零帧绝大多数是尾部填充（语音96.28\%、视觉89.18\%），没有句中连续缺失，与附件3的形态不符。以语言主导融合与自蒸馏模型（LDSD）为基线（完整模态 Acc-3 68.78\%、F1 60.48\%），从5个候选模块中筛出连续段缺失增强与超模态补洞，得到 LDSD-Seg：段缺失 F1 由47.26\%升至61.70\%，MAE 由0.7112降至0.6639，验证集上完整与段缺失的 F1 落差由15.6个点缩小到0.1个点。108个单元的三因子扫描表明缺失时长是主因：语言缺失90\%以内 MAE 仅增0.060，全缺时增0.789；语音、视觉的影响低于0.006，位置的影响不到0.003。附件3预测为正向14条、负向11条、中性5条。
+
+针对问题三，利用附件2中序列位置与 BERT 词元一一对应的关系，在不改网络的前提下构建帧—词元回指、干预式模态归因、滑动窗口片段扫描和证据呈现四层解释。忠实性比值为2.88，加噪稳定性 Spearman 系数为0.9973；验证集中92\%的样本以文本为主导，与模态消融结果一致。附件4的20条样本主导模态均为文本，可找回真值的5条极性全对、强度 MAE 为0.3334，但预测强度普遍偏大。
+
+\keywords{多模态情感分析\quad 时序对齐\quad 说话者人脸跟踪\quad 模态局部缺失\quad 自蒸馏\quad 干预式归因}
+\end{abstract}
+
+\pagestyle{plain}
+\tableofcontents
+\newpage
+
+\input{sections/s1_restate}
+\input{sections/s0_q1}
+\input{sections/s2_data}
+\input{sections/s3_base}
+\input{sections/s4_q2}
+\input{sections/s5_q3}
+\input{sections/s6_eval}
+
+\bibliographystyle{gmcm}
+\bibliography{refs}
+
+\newpage
+\appendix
+\makeatletter
+\renewcommand\secdot{}
+\renewcommand\thesubsection{\Alph{section}.\arabic{subsection}}
+\makeatother
+\addtocontents{toc}{\protect\renewcommand\protect\tocsecdot{}}
+\input{sections/s7_appendix}
+
+\end{document}

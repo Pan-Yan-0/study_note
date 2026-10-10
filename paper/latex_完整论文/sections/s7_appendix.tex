@@ -1,0 +1,150 @@
+% ==================================================================
+\section{支撑材料与运行环境}\label{app:env}
+% ==================================================================
+
+\subsection{支撑材料清单}
+
+表\ref{tab:files}列出了随论文提交的支撑材料。
+
+\begin{table}[htbp]
+\centering
+\caption{支撑材料清单}
+\label{tab:files}
+\begin{tabularx}{\textwidth}{l>{\raggedright\arraybackslash}X}
+\toprule
+类别 & 文件 \\
+\midrule
+问题一代码包 & q1\_code\_package/：step1\_extract（方法一）、step1\_time50（方法二）、step1\_vad50（方法三）、eval（评估与可视化），含 README 与 requirements.txt \\
+问题一模型权重 & models/bert-base-uncased、models/yunet/face\_detection\_yunet\_2023mar.onnx \\
+问题一特征文件 & 三种方案各100个 .npz，目录见第\ref{sec:q1file}节 \\
+附件1汇总脚本 & tools/make\_q1\_table.py（由 .npz 生成附录\ref{app:q1}的全量汇总表） \\
+建模 Notebook & ldsd\_notebook.ipynb（69个单元格，15节），可在 Kaggle 上一键运行 \\
+数据核查 Notebook & audit\_notebook.ipynb \\
+模型参数 & ldsd\_main.pt（9.08 MB）\newline ldsd\_segment.pt（10.16 MB）\newline ablation\_models.pt（78.49 MB，9个消融模型打包） \\
+预测与解释 & attachment3\_predictions.csv，attachment3\_explanations.json\newline attachment4\_predictions.csv，attachment4\_explanations.json \\
+实验脚本 & exp\_segment.py（候选模块筛选），exp\_factors.py（三因子扫描） \\
+绘图脚本 & make\_architecture\_fig.py，make\_charts.py \\
+结果表 & summary\_all.csv，robustness.csv，factor\_scan\_agg.csv 等共12份 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{运行环境与运行说明}
+
+\textbf{问题一。}在本地 Windows 环境运行，只需 CPU。
+\begin{itemize}
+\item 环境：Python 3.10（conda 环境），PyTorch 使用 CPU 版，其余依赖按 requirements.txt 安装；librosa、OpenCV、transformers、ffmpeg 的版本号为 \todo{按 requirements.txt 填写}。
+\item 必设环境变量：\texttt{KMP\_DUPLICATE\_LIB\_OK=TRUE}（避免 OpenMP 重复加载导致崩溃）、\texttt{PYTHONIOENCODING=utf-8}（中文输出不乱码）；数据不在默认位置时另设 \texttt{DATA\_ROOT}。
+\item 运行方式：分别进入 step1\_extract、step1\_time50、step1\_vad50 目录执行 \texttt{python main.py}（加 \texttt{--limit 3} 可先调试前3条），三种方案跑完后在 eval 目录执行 eval\_align.py 得到表\ref{tab:q1eval}，执行 visualize\_sample.py 得到典型样本图；最后运行 tools/make\_q1\_table.py 生成附录\ref{app:q1}的汇总表。
+\item 随机种子：SEED = 2026。
+\end{itemize}
+
+\textbf{问题二、三。}全部实验在 Kaggle 提供的 GPU 环境上完成，全量运行总耗时 7772.6 s（约2.16 h）。
+\begin{itemize}
+\item 软件版本：Python、PyTorch、transformers 的版本为 \todo{按运行环境填写}；文本编码器为 bert-base-uncased。
+\item 运行入口：ldsd\_notebook.ipynb 按顺序执行即可复现全部结果；数据上传、BERT 依赖、运行方式和各步耗时见 README.md 中的“Kaggle 全量运行指南”。
+\item 随机种子：\todo{填写实际使用的随机种子}。固定随机种子是为了保证结果可复现。
+\item 数据处理规则：有效长度在标准化之前从原始特征计算（式(\ref{eq:validlen})）；语音、视觉使用训练集统计量标准化（式(\ref{eq:zscore})）；附件3的文本由 text\_bert 经 bert-base-uncased 重建。
+\end{itemize}
+
+% ==================================================================
+\section{核心算法伪代码}\label{app:algo}
+% ==================================================================
+
+\begin{algorithm}[H]
+\caption{说话者人脸跟踪与有效时段对齐（问题一方法三）}
+\label{alg:m3}
+\begin{algorithmic}[1]
+\Require 视频片段（时长 $D$），三路帧级特征，$\kappa=0.4$
+\Ensure 对齐后的 text、audio、vision（各50个位置）
+\State 计算语音短时能量 $e_j$，$e_j\ge0.05\max e$ 判为语音帧；剔除短于0.15 s 的语音段，填补短于0.25 s 的静音间隙
+\State 在“语音帧且检测到人脸”的帧中取面积最大的人脸，记典型面积 $A_s$
+\For{每个视频帧 $\tau$}
+  \State $v(\tau)\gets\mathbb{1}[\text{检测到人脸}\wedge A(\tau)\ge\kappa A_s]$
+\EndFor
+\If{$v\equiv0$} \State 退化为全程50等分（方法二）并返回 \EndIf
+\State 拼接可见时段得 $\varphi(\tau)=\int_0^\tau v$，$D_{eff}=\varphi(D)$，锚点 $a_k=kD_{eff}/49$
+\State 三路只保留可见时段内的帧（词元按均匀发音取时刻），时间戳映射为 $\varphi(\tau_i)$
+\State 按式(\ref{eq:tri})把三路特征重采样到 $a_0,\dots,a_{49}$
+\State \Return text $(50,768)$，audio $(50,74)$，vision $(50,35)$
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[H]
+\caption{连续段缺失掩码生成（M1）}
+\label{alg:m1}
+\begin{algorithmic}[1]
+\Require 序列长度 $T$，缺失率 $r$，Dirichlet 浓度 $0.6$
+\Ensure 缺失掩码 $M\in\{0,1\}^T$
+\State $M\gets\mathbf{0}$；抽取段数 $k\sim\mathcal{U}\{1,2,3\}$
+\State 抽取段长比例 $(\rho_1,\dots,\rho_k)\sim\mathrm{Dirichlet}(0.6\cdot\mathbf{1}_k)$
+\State 将 $[0,T)$ 划分为 $k$ 个互不相交的区块 $B_1,\dots,B_k$
+\For{$j=1$ \textbf{to} $k$}
+  \State $\ell_j\gets\max\big(1,\lfloor\rho_j\,rT\rfloor\big)$
+  \State 在区块 $B_j$ 内选取起点 $a_j$，使 $[a_j,a_j+\ell_j)$ 落在 $B_j$ 中
+  \State $M[a_j:a_j+\ell_j]\gets 1$
+\EndFor
+\State \Return $M$
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[H]
+\caption{干预式模态归因与片段扫描（问题三）}
+\label{alg:xai}
+\begin{algorithmic}[1]
+\Require 样本 $\mathbf{x}$，训练好的网络 $f$，窗口宽度 $w$，证据帧数 $k$
+\Ensure 作用程度 $s_m$，主导模态 $m^*$，裕度 $\mu$，关键证据
+\State 计算原始输出 $\hat y_{reg}(\mathbf{x})$、$p(c\,|\,\mathbf{x})$
+\For{$m\in\{l,a,v\}$}
+  \State 按训练时的缺失注入方式整条遮蔽模态 $m$，得到 $\mathbf{x}_{\setminus m}$
+  \State 按式(\ref{eq:dreg})(\ref{eq:dcls})计算 $\Delta_m^{reg}$、$\Delta_m^{cls}$
+\EndFor
+\State 按式(\ref{eq:share})计算 $s_m$、$m^*$、$\mu$
+\For{$m\in\{l,a,v\}$}
+  \For{有效帧 $t$（文本 $t\in[1,L)$，语音、视觉 $t<L_m$）}
+    \State 遮蔽模态 $m$ 的窗口 $[t,t+w)$，按式(\ref{eq:imp})计算 $\mathrm{Imp}_m(t)$
+  \EndFor
+\EndFor
+\State 取主导模态中 $\mathrm{Imp}$ 最大的 $k$ 帧，经帧—词元对应回指为原文词组或词级锚点
+\State \Return 解释卡
+\end{algorithmic}
+\end{algorithm}
+
+% ==================================================================
+\section{附件1全量特征提取结果}\label{app:q1}
+% ==================================================================
+
+下表由 tools/make\_q1\_table.py 读取三种方案的 .npz 文件后生成（results/q1\_summary.csv）。所有样本的特征维度均为 text $(50,768)$、audio $(50,74)$、vision $(50,35)$；对齐粒度方法一为词级，方法二、三为50个时间桶。表头含义：dur 为片段时长（s），L\_txt 为有效词元数，eff\_s 与 eff\_ratio 为方法三的有效时长与占比，n\_seg 为说话段数，nzA/nzV 为语音/视觉非零位置数，后缀 H、T50、V50 分别对应方法一、二、三。
+
+\IfFileExists{results/q1_summary.csv}{%
+  {\scriptsize\setlength{\tabcolsep}{2.5pt}\renewcommand{\arraystretch}{1.05}%
+  \csvautolongtable[respect all]{results/q1_summary.csv}}%
+}{%
+  \todo{运行 tools/make\_q1\_table.py 生成 results/q1\_summary.csv 后重新编译，这里会自动生成100条样本的汇总表}%
+}
+
+% ==================================================================
+\section{附件3全量预测结果}\label{app:att3}
+% ==================================================================
+
+下表由 results/attachment3\_predictions.csv 自动生成。
+
+\IfFileExists{results/attachment3_predictions.csv}{%
+  {\scriptsize\setlength{\tabcolsep}{3pt}\renewcommand{\arraystretch}{1.1}%
+  \csvautolongtable[respect all]{results/attachment3_predictions.csv}}%
+}{%
+  \todo{把 attachment3\_predictions.csv 放到 results/ 目录后重新编译，这里会自动生成30条样本的全量结果表}%
+}
+
+% ==================================================================
+\section{附件4全量预测与解释结果}\label{app:att4}
+% ==================================================================
+
+下表由 results/attachment4\_predictions.csv 自动生成，完整解释卡见 attachment4\_explanations.json。
+
+\IfFileExists{results/attachment4_predictions.csv}{%
+  {\scriptsize\setlength{\tabcolsep}{3pt}\renewcommand{\arraystretch}{1.1}%
+  \csvautolongtable[respect all]{results/attachment4_predictions.csv}}%
+}{%
+  \todo{把 attachment4\_predictions.csv 放到 results/ 目录后重新编译，这里会自动生成20条样本的全量结果表}%
+}
