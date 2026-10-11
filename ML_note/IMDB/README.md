@@ -1,5 +1,17 @@
 # IMDB情感分析：六模型实验、Kaggle提交与预训练模型扩展
 
+## 当前运行入口：三个模型一次 Run All
+
+**重新跑实验请使用 [官方 Trainer 三模型 Notebook](notebooks/imdb-three-models-official-trainer.ipynb)**，具体操作见[使用说明](official-trainer-three-models.md)。
+
+默认依次完整训练 **BERT 全量 → BERT LoRA → DeBERTa-v2-xxlarge LoRA**，每组3轮；不需要修改模型选择变量。使用官方 Transformers Trainer、PEFT、Datasets 和 PyTorch，不依赖仓库脚本，三个模型都从公开预训练权重重新初始化。
+
+在 Kaggle 导入这份Notebook，启动新Session，选择 **GPU T4 × 2**、打开 **Internet**，Add Input 添加 **word2vec-nlp-tutorial** 比赛数据后直接 **Run All**。需要 `labeledTrainData.tsv(.zip)`、`testData.tsv(.zip)` 和 `sampleSubmission.csv`，不需要GloVe或此前输出。
+
+三组共用本次20,000/5,000分层划分，按验证AUC恢复最佳模型，分别导出25,000条正类概率、最佳模型和日志，自动生成 `results.csv`。默认只使用一张逻辑GPU逐组运行；XXL用FP16底座、长度128、batch 1和梯度检查点控制显存，实际T4显存仍需实测。
+
+下方为此前学习与实验的归档，旧版手动选择模型的Notebook和旧结果保留来源，不作为本次重跑入口。
+
 这次练习把影评从原始文本变成模型输入，再完成训练、验证和预测导出。六个模型都已跑完20轮，原Notebook保留了代码、每轮结果与导出记录。
 
 **实验运行时间：2026-09-12 19:54—20:56（北京时间）**，来自Notebook的papermill元数据。**整理归档日期：2026-10-11**。这两个日期分别表示运行和归档时间。
@@ -7,7 +19,7 @@
 ## 材料入口
 
 - [原始Notebook：代码与完整运行输出](notebooks/imdb-glove-six-models-2026-09-12.ipynb)
-- [新增Kaggle Notebook：BERT、DeBERTa-v2-xxlarge与LoRA](notebooks/imdb-bert-deberta-lora.ipynb)
+- [历史预训练扩展Notebook：手动选择单模型](notebooks/imdb-bert-deberta-lora.ipynb)
 - [预训练模型共用代码](code/imdb_pretrained.py)与[依赖版本](code/requirements-pretrained.txt)
 - [六模型结果汇总](metrics/model_summary.csv)
 - [全部120条逐轮指标](metrics/training_history.csv)
@@ -141,7 +153,9 @@ $$
 
 上述问题本次只做核对与记录，没有改动历史Notebook，也没有把旧日志附到新代码上。特别是该Transformer为学习用的随机初始化编码器，不是BERT；本次结果不能代表完整Transformer方案的能力。
 
-## 6. 新增BERT、DeBERTa与LoRA代码
+## 6. 历史扩展：BERT、DeBERTa与LoRA代码
+
+**本节对应此前的单模型版本与已提供的历史日志。重新运行三模型请使用页面顶部的[官方Trainer Notebook](notebooks/imdb-three-models-official-trainer.ipynb)，无需按本节切换变量。**
 
 扩展版已经编写，独立于原六模型Notebook。**已收到BERT全量微调的真实Kaggle训练日志；BERT LoRA与DeBERTa本次结果尚未提供。** 此前另一次BERT训练的进展以实际材料为准，不能把它的成绩移到这份新代码上。
 
