@@ -8,6 +8,10 @@
 
 全部从公开预训练 checkpoint 重新初始化，每组默认 **3 轮、完整数据**；不需要切换 `MODEL_KEY`，不加载此前的训练结果。训练使用官方 Transformers `Trainer` / `TrainingArguments`、PEFT、Datasets、PyTorch 和 scikit-learn。无需下载仓库代码或使用自定义训练库。
 
+**Kaggle兼容修正版：** 安装单元自动卸载本实验不使用的可选量化包torchao，处理预装0.10.0与PEFT的冲突。BERT全量模型通过官方模型加载接口统一LayerNorm参数名，避免恢复最佳检查点时出现gamma/beta与weight/bias不匹配；预训练权重和分类头不会因此重新随机初始化。
+
+若此前已经运行旧版，请先下载或保存本次Output，再导入修正版，在新Kernel中从头Run All。初次加载预训练底座时的分类头MISSING、预训练任务头UNEXPECTED通常正常；训练完成后恢复最佳检查点时的LayerNorm缺失则不能直接忽略。
+
 ## Kaggle 操作
 
 1. 下载上面的 `.ipynb`，在 Kaggle 新建 Notebook 中导入。
