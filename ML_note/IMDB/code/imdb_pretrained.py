@@ -673,7 +673,7 @@ def load_run(output_dir: str | Path, *, device: Optional[str] = None,
 def _normalize_id(value: Any) -> str:
     if value is None or (isinstance(value, float) and math.isnan(value)):
         raise ValueError("Prediction IDs must not be missing")
-    result = str(value).strip().strip('"')
+    result = str(value).strip().strip('"').strip()
     if not result:
         raise ValueError("Prediction IDs must not be empty")
     return result
