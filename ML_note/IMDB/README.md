@@ -155,16 +155,30 @@ $$
 
 LoRA训练低秩权重增量：
 
-$$W=W_0+rac{alpha}{r}BA,qquad Ainmathbb{R}^{r	imes k},quad Binmathbb{R}^{d	imes r}.$$
+$$W=W_0+\frac{\alpha}{r}BA,\qquad A\in\mathbb{R}^{r\times k},\quad B\in\mathbb{R}^{d\times r}.$$
 
 `W_0`冻结，`A`与`B`更新。这里的`r=8`是增量矩阵的秩，不是8条规则，也不是把输入文本直接降到8维。DeBERTa有新建的任务pooler与分类头，两者一并训练和保存；可训练部分保持FP32，以配合FP16混合精度。
 
-### 在Kaggle怎么接着跑
+### 直接在Kaggle运行：需要哪些输入
 
-1. 下载新增`.ipynb`，在Kaggle用 **Import Notebook** 导入；挂载比赛数据，开启Internet和GPU。代码完整嵌入Notebook，不需要另外挂载脚本或原GloVe缓存。
-2. 在配置单元选择`MODEL_KEY`。默认`SMOKE_ONLY=True`，用128条训练样本、64条验证样本跑一轮，并预测16条，用于核对代码与显存；这种文件不要提交比赛。
-3. 小样本试跑通过后改为`SMOKE_ONLY=False`，重新运行配置及后续单元，用完整20,000/5,000划分训练，默认3轮，再导出25,000条预测。
-4. 保存Kaggle输出目录：逐轮指标、配置与版本、划分索引、最佳检查点、预测CSV、正类概率和显存峰值。完成Kaggle提交后再填写真实分数。
+下载[新增Notebook](notebooks/imdb-bert-deberta-lora.ipynb)，用 **Import Notebook** 导入Kaggle。它已完整嵌入模型代码与数据检查；无需另外上传Python脚本。
+
+在 **Input → Add Input → Competitions** 搜索并添加 **Bag of Words Meets Bags of Popcorn（word2vec-nlp-tutorial）**。如要求接受比赛规则，先接受；导入Notebook不会自动添加数据或开启GPU。
+
+| 必需文件 | 用途 | 行数 |
+| --- | --- | ---: |
+| `labeledTrainData.tsv.zip`，或解压后的`labeledTrainData.tsv` | 带0/1标签的影评，划分训练与验证集 | 25,000 |
+| `testData.tsv.zip`，或解压后的`testData.tsv` | 待预测的测试影评 | 25,000 |
+| `sampleSubmission.csv` | 提交ID和顺序模板 | 25,000 |
+
+添加[整个比赛数据](https://www.kaggle.com/competitions/word2vec-nlp-tutorial/data)即可，无需解压。`unlabeledTrainData.tsv.zip`本次不使用；**新版本不需要GloVe、pickle缓存、原Notebook输出或Hugging Face登录凭据**。
+
+1. 在设置中开启 **Internet**，选择 **GPU T4 ×2**。依赖、tokenizer和公开模型权重会自动联网下载；保留Kaggle已有的CUDA版PyTorch。
+2. 默认`MODEL_KEY="bert_full"`、`SMOKE_ONLY=False`，**Run All直接完整训练3轮**，按20,000/5,000划分验证，再导出25,000条预测。一次运行一种方法。
+3. 切换方法只需修改Notebook第7节的`MODEL_KEY`：`bert_full`、`bert_lora`或`deberta_v2_xxlarge`。默认XXL是LoRA微调；首次检查显存时可把`SMOKE_ONLY=True`，但其16条小样本预测不能提交比赛，完整训练要改回`False`。
+4. 下载并保留`/kaggle/working/result/本次运行目录/`：逐轮指标、配置与版本、数据来源、划分索引、最佳检查点、预测CSV、正类概率和显存峰值。使用其中的`submission.csv`提交；生成文件不会自动提交Kaggle。
+
+第1节在安装依赖、下载模型之前先检查输入：优先定位官方比赛目录，同时支持普通文件和ZIP；校验三份数据各25,000行、必需列、0/1标签、非空文本、唯一ID以及测试/模板ID集合。模板顺序不同允许通过，预测时会按模板顺序重排。缺数据、多份来源或坏输入会立即报出原因；自定义输入目录可在第1节填写`DATA_DIR`。
 
 原划分默认80%/20%、`random_state=0`、不分层；训练随机种子42。全量BERT与BERT LoRA共用默认长度和batch，学习率也先统一为`2e-5`。完整训练按验证AUC选最佳轮次，小样本试跑按accuracy选；训练结束恢复最佳参数再预测。验证准确率按样本计数，梯度累积的末尾不足一组也正确更新。
 
@@ -197,7 +211,7 @@ $$W=W_0+rac{alpha}{r}BA,qquad Ainmathbb{R}^{r	imes k},quad Binmathbb{R}^{d	imes
 - 实验依据为本目录原Notebook。数据处理见原第10—28个单元，训练与导出见第33—37个单元，六个模型与日志见第39—44个单元；编号按原Notebook从1开始计数。
 - 原下载Notebook SHA-256：`25a616584a4201c7ed62fb933729891e1f3ee8b774815ddc29c62da4b52d5ea7`；GitHub归档文件因末尾换行，SHA-256为`059d814ddfabea45d5f5b3fd6130598d951a9a0b586597608664e22c34e70897`。两者解析后的JSON内容一致。
 - [Kaggle比赛入口](https://www.kaggle.com/c/word2vec-nlp-tutorial)。运行需挂载比赛数据，并保留样本提交模板。
-- [GloVe官方说明与预训练向量](https://nlp.stanford.edu/projects/glove/)。本Notebook使用`glove.840B.300d.txt`，通过Kaggle数据集挂载；GloVe大文件、数据TSV、pickle缓存和权重不在此归档中。
-- [PyTorch TransformerEncoder接口](https://docs.pytorch.org/docs/stable/generated/torch.nn.TransformerEncoder.html)支持传入`src_key_padding_mask`；是否传入应以本Notebook实际代码为准，当前没有传入。
+- [GloVe官方说明与预训练向量](https://nlp.stanford.edu/projects/glove/)。原六模型Notebook使用`glove.840B.300d.txt`，通过Kaggle数据集挂载；GloVe大文件、数据TSV、pickle缓存和权重不在此归档中。
+- [PyTorch TransformerEncoder接口](https://docs.pytorch.org/docs/stable/generated/torch.nn.TransformerEncoder.html)支持传入`src_key_padding_mask`；是否传入应以原六模型Notebook实际代码为准，原版没有传入。
 
-在Kaggle按Notebook顺序运行，需开启GPU并允许安装所需依赖。代码含固定的Kaggle输入路径，迁移到本地需调整路径。原文件没有完整锁定依赖版本，因此保留输出不等于保证在任意新环境逐字复现同样的分数。
+原六模型Notebook含固定的Kaggle输入路径和GloVe依赖，迁移到本地需调整路径；原文件没有完整锁定依赖版本，因此保留输出不等于保证在任意新环境逐字复现同样的分数。新增预训练模型Notebook的输入和运行要求见第6节。
