@@ -143,7 +143,7 @@ $$
 
 ## 6. 新增BERT、DeBERTa与LoRA代码
 
-扩展版已经编写，独立于原六模型Notebook。**尚未在Kaggle运行新增实验，没有补写BERT、DeBERTa或LoRA分数。** 此前另一次BERT训练的进展以实际材料为准，不能把它的成绩移到这份新代码上。
+扩展版已经编写，独立于原六模型Notebook。**已收到BERT全量微调的真实Kaggle训练日志；BERT LoRA与DeBERTa本次结果尚未提供。** 此前另一次BERT训练的进展以实际材料为准，不能把它的成绩移到这份新代码上。
 
 仍然采用共用训练、验证和预测函数。预训练模型需要独立的子词tokenizer，因此不能把模型直接接到原GloVe词索引上；扩展版把底座和tokenizer配对，修改`MODEL_KEY`即可切换。
 
@@ -194,13 +194,37 @@ $$W=W_0+\frac{\alpha}{r}BA,\qquad A\in\mathbb{R}^{r\times k},\quad B\in\mathbb{R
 
 ### 目前验证到了哪里
 
-本地CPU以随机初始化的小BERT和DeBERTa-v2完成12项检查：全量/LoRA参数更新、任务层保存、最佳检查点恢复与重载、末尾梯度累积、按样本统计指标、AUC选择与单类别边界、预测ID顺序和概率输出均通过。真实BERT与DeBERTa-v2-xxlarge分词器也已检查，并补齐SentencePiece转换所需的protobuf依赖。未下载真实大模型权重，未在T4执行全量数据训练；GPU兼容性、速度与峰值显存以Kaggle实际运行结果为准。
+本地CPU以随机初始化的小BERT和DeBERTa-v2完成12项检查：全量/LoRA参数更新、任务层保存、最佳检查点恢复与重载、末尾梯度累积、按样本统计指标、AUC选择与单类别边界、预测ID顺序和概率输出均通过。真实BERT与DeBERTa-v2-xxlarge分词器也已检查，并补齐SentencePiece转换所需的protobuf依赖。上述本地检查未下载真实大模型权重。随后补充的Kaggle日志已确认BERT完成全量数据训练，峰值显存见下；LoRA和DeBERTa的GPU情况仍需对应的实际运行记录。
 
 | 新实验 | 验证accuracy / AUC | 最佳轮次 | 显存峰值 | Kaggle AUC |
 | --- | --- | --- | --- | --- |
-| BERT全量 | 待运行 | 待运行 | 待实测 | 待提交 |
-| BERT LoRA | 待运行 | 待运行 | 待实测 | 待提交 |
-| DeBERTa-v2-xxlarge LoRA | 待运行 | 待运行 | 待实测 | 待提交 |
+| BERT全量 | 0.9128 / 0.9736733349381915 | 3（按AUC） | allocated 2.73GiB / reserved 2.88GiB | 提交结果未提供 |
+| BERT LoRA | 运行结果未提供 | 运行结果未提供 | 显存记录未提供 | 提交结果未提供 |
+| DeBERTa-v2-xxlarge LoRA | 运行结果未提供 | 运行结果未提供 | 显存记录未提供 | 提交结果未提供 |
+
+### BERT全量：Kaggle实际训练结果
+
+2026-10-11收到运行日志，来源是本人粘贴的Kaggle输出；这是日志提供日期，执行时间未提供。[三轮指标CSV](metrics/bert_full_kaggle_report_2026-10-11.csv)保留表格显示精度。尚未取得本次保存的Notebook、提交CSV和完整配置文件，未填Kaggle排行榜分数。
+
+底座为`bert-base-uncased`，训练方式`full_fine_tuning`，109,483,778个参数全部参与训练；每轮20,000条训练影评、5,000条验证影评，共3轮。
+
+| epoch | 训练loss | 训练accuracy | 验证loss | 验证accuracy | 验证AUC |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 1 | 0.288101 | 0.88305 | 0.228602 | 0.9090 | 0.972725 |
+| 2 | 0.171451 | 0.94770 | 0.250490 | **0.9140** | 0.973270 |
+| 3 | 0.105459 | 0.97265 | 0.350316 | 0.9128 | **0.973673** |
+
+日志选中第3轮：验证loss的完整输出为`0.35031609143540265`，AUC为`0.9736733349381915`，accuracy为`0.9128`。按`monitor="auc"`选择最大验证AUC是当前规则，第2轮准确率最高不改变该选择。峰值allocated为2.73GiB，reserved为2.88GiB；这是本次BERT训练的PyTorch统计，不是所有模型的显存保证。
+
+训练loss持续降低而验证loss上升，已有过拟合迹象；AUC仍有小幅提高。AUC衡量排序，交叉熵还受预测置信程度影响，两者可以同时出现；单次日志没有错例和概率分布，暂不能确定具体哪些影评导致损失上升。三轮AUC总增幅约0.00095，还需多次运行评估稳定性。
+
+原提交记录是Kaggle测试集ROC-AUC；本次0.973673是5,000条验证影评上的ROC-AUC，评价数据不同，不直接与历史0.89996相减来宣称排行榜提升。预测导出和比赛提交的完成状态也需各自的结果确认。
+
+加载报告中的`cls.predictions.*`与`cls.seq_relationship.*`属于旧预训练任务头，本次不使用；`classifier.weight/bias`为新建情感分类头，随后参与微调。这一组UNEXPECTED/MISSING符合任务头替换。[Transformers加载说明](https://huggingface.co/docs/transformers/main_classes/model)
+
+每轮`optimizer_steps=1249`。若沿用默认batch=8、梯度累积2，每轮尝试更新1,250次；代码只统计AMP成功更新，符合每轮有一次跳步。可在`training_metadata.json`核对`skipped_amp_steps`，三轮按此配置预期为3；每轮`train_examples=20000`说明并非漏读一条训练batch。[PyTorch AMP机制](https://docs.pytorch.org/docs/stable/notes/amp_examples.html)
+
+接下来先核对本次最佳模型的25,000条预测导出与Kaggle提交结果，再在同一划分下运行BERT LoRA，比较验证AUC、accuracy、可训练参数量和显存峰值。
 
 先完成同底座BERT的全量/LoRA对照，再单独记录DeBERTa结果。预训练模型、分词方式与默认长度同时变化时，不能把分数差全部归因于LoRA。新版本的数学含义、训练参数量和实际实验结果接起来之后，再判断是否需要调秩、长度或学习率。
 
