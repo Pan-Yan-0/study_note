@@ -4,6 +4,8 @@
 
 **重新跑实验请使用 [官方 Trainer 三模型 Notebook](notebooks/imdb-three-models-official-trainer.ipynb)**，具体操作见[使用说明](official-trainer-three-models.md)。
 
+当前为Kaggle兼容修正版：已处理预装torchao依赖冲突，以及BERT恢复最佳检查点时的LayerNorm参数名不匹配。旧版已运行的Output请先保存，再导入此版本。
+
 默认依次完整训练 **BERT 全量 → BERT LoRA → DeBERTa-v2-xxlarge LoRA**，每组3轮；不需要修改模型选择变量。使用官方 Transformers Trainer、PEFT、Datasets 和 PyTorch，不依赖仓库脚本，三个模型都从公开预训练权重重新初始化。
 
 在 Kaggle 导入这份Notebook，启动新Session，选择 **GPU T4 × 2**、打开 **Internet**，Add Input 添加 **word2vec-nlp-tutorial** 比赛数据后直接 **Run All**。需要 `labeledTrainData.tsv(.zip)`、`testData.tsv(.zip)` 和 `sampleSubmission.csv`，不需要GloVe或此前输出。
