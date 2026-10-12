@@ -103,4 +103,6 @@ No further explanation or justification is required.
 
 ## 来源
 
-`metrics/` 中 Qwen 的文件由 Kaggle Notebook 导出，DeepSeek 的文件由同一脚本在本机运行导出。区间、召回率和配对检验由这些文件计算。本文由 Claude 整理。
+- 实验：两组都由潘岩运行，DeepSeek 在本机，Qwen 在 Kaggle；`metrics/` 中的文件由这两次运行导出。
+- 代码：评测脚本初版由 Claude 编写，GPT6.1sol 加入了实验指纹、更严格的答案解析和断点修复；Kaggle Notebook 由 GPT6.1sol 编写，Claude 补了 `apt-get update` 报错时的容错。
+- 本文：由 Claude 整理，参考了 DeepSeek 实验记录；区间、召回率和配对检验由 `metrics/` 中的文件计算。
