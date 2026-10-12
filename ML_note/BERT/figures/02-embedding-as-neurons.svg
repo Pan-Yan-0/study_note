@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="608" height="592" viewBox="0 0 380 370" role="img">
+<title>嵌入层展开成神经元：三组 one-hot 输入连到 4 个输出神经元</title>
+<desc>左侧是词表、位置、句子三组输入神经元，每组只有一个神经元为 1：love、位置 2、句子 A。它们各自连向右侧 4 个输出神经元，输出值是三条连线权重之和，分别为 0.9、0.2、0.0、0.4。</desc>
+<style>
+text{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC","Segoe UI",Helvetica,Arial,sans-serif}
+.t{font-size:14px;font-weight:400;fill:#2C2C2A}.ts{font-size:12px;font-weight:400;fill:#5F5E5A}.th{font-size:14px;font-weight:500;fill:#2C2C2A}
+.box{fill:#F1EFE8;stroke:#B4B2A9}.arr{stroke:#5F5E5A;stroke-width:1.5;fill:none}
+.c-purple>rect,.c-purple>circle,rect.c-purple,circle.c-purple{fill:#EEEDFE;stroke:#534AB7}.c-purple>.th,.c-purple>.t{fill:#3C3489}.c-purple>.ts{fill:#534AB7}
+.c-teal>rect,.c-teal>circle,rect.c-teal,circle.c-teal{fill:#E1F5EE;stroke:#0F6E56}.c-teal>.th,.c-teal>.t{fill:#085041}.c-teal>.ts{fill:#0F6E56}
+.c-coral>rect,.c-coral>circle,rect.c-coral,circle.c-coral{fill:#FAECE7;stroke:#993C1D}.c-coral>.th,.c-coral>.t{fill:#712B13}.c-coral>.ts{fill:#993C1D}
+</style>
+<rect x="0" y="0" width="380" height="370" fill="#FFFFFF"/>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#5F5E5A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+<line x1="121" y1="66" x2="276" y2="102" stroke="#C2C0B6" stroke-width="0.5" opacity="0.5"/>
+<line x1="121" y1="66" x2="276" y2="168" stroke="#C2C0B6" stroke-width="0.5" opacity="0.5"/>
+<line x1="121" y1="66" x2="276" y2="234" stroke="#C2C0B6" stroke-width="0.5" opacity="0.5"/>
+<line x1="121" y1="66" x2="276" y2="300" stroke="#C2C0B6" stroke-width="0.5" opacity="0.5"/>
+<line x1="121" y1="114" x2="276" y2="102" stroke="#C2C0B6" stroke-width="0.5" opacity="0.5"/>
+<line x1="121" y1="114" x2="276" y2="168" stroke="#C2C0B6" stroke-width="0.5" opacity="0.5"/>
+<line x1="121" y1="114" x2="276" y2="234" stroke="#C2C0B6" stroke-width="0.5" opacity="0.5"/>
+<line x1="121" y1="114" x2="276" y2="300" stroke="#C2C0B6" stroke-width="0.5" opacity="0.5"/>
+<line x1="121" y1="190" x2="276" y2="102" stroke="#C2C0B6" stroke-width="0.5" opacity="0.5"/>
+<line x1="121" y1="190" x2="276" y2="168" stroke="#C2C0B6" stroke-width="0.5" opacity="0.5"/>
+<line x1="121" y1="190" x2="276" y2="234" stroke="#C2C0B6" stroke-width="0.5" opacity="0.5"/>
+<line x1="121" y1="190" x2="276" y2="300" stroke="#C2C0B6" stroke-width="0.5" opacity="0.5"/>
+<line x1="121" y1="214" x2="276" y2="102" stroke="#C2C0B6" stroke-width="0.5" opacity="0.5"/>
+<line x1="121" y1="214" x2="276" y2="168" stroke="#C2C0B6" stroke-width="0.5" opacity="0.5"/>
+<line x1="121" y1="214" x2="276" y2="234" stroke="#C2C0B6" stroke-width="0.5" opacity="0.5"/>
+<line x1="121" y1="214" x2="276" y2="300" stroke="#C2C0B6" stroke-width="0.5" opacity="0.5"/>
+<line x1="121" y1="336" x2="276" y2="102" stroke="#C2C0B6" stroke-width="0.5" opacity="0.5"/>
+<line x1="121" y1="336" x2="276" y2="168" stroke="#C2C0B6" stroke-width="0.5" opacity="0.5"/>
+<line x1="121" y1="336" x2="276" y2="234" stroke="#C2C0B6" stroke-width="0.5" opacity="0.5"/>
+<line x1="121" y1="336" x2="276" y2="300" stroke="#C2C0B6" stroke-width="0.5" opacity="0.5"/>
+<line x1="121" y1="90" x2="276" y2="102" stroke="#D85A30" stroke-width="1.2" opacity="0.85"/>
+<line x1="121" y1="90" x2="276" y2="168" stroke="#D85A30" stroke-width="1.2" opacity="0.85"/>
+<line x1="121" y1="90" x2="276" y2="234" stroke="#D85A30" stroke-width="1.2" opacity="0.85"/>
+<line x1="121" y1="90" x2="276" y2="300" stroke="#D85A30" stroke-width="1.2" opacity="0.85"/>
+<line x1="121" y1="238" x2="276" y2="102" stroke="#D85A30" stroke-width="1.2" opacity="0.85"/>
+<line x1="121" y1="238" x2="276" y2="168" stroke="#D85A30" stroke-width="1.2" opacity="0.85"/>
+<line x1="121" y1="238" x2="276" y2="234" stroke="#D85A30" stroke-width="1.2" opacity="0.85"/>
+<line x1="121" y1="238" x2="276" y2="300" stroke="#D85A30" stroke-width="1.2" opacity="0.85"/>
+<line x1="121" y1="312" x2="276" y2="102" stroke="#D85A30" stroke-width="1.2" opacity="0.85"/>
+<line x1="121" y1="312" x2="276" y2="168" stroke="#D85A30" stroke-width="1.2" opacity="0.85"/>
+<line x1="121" y1="312" x2="276" y2="234" stroke="#D85A30" stroke-width="1.2" opacity="0.85"/>
+<line x1="121" y1="312" x2="276" y2="300" stroke="#D85A30" stroke-width="1.2" opacity="0.85"/>
+<text class="ts" x="40" y="44" dominant-baseline="central">词表：30,522 个</text>
+<text class="ts" x="97" y="66" text-anchor="end" dominant-baseline="central">i</text>
+<circle class="box" cx="112" cy="66" r="9" stroke-width="0.5"/><text class="ts" x="112" y="66" text-anchor="middle" dominant-baseline="central">0</text>
+<text class="ts" x="97" y="90" text-anchor="end" dominant-baseline="central">love</text>
+<g class="c-coral"><circle cx="112" cy="90" r="9" stroke-width="0.5"/><text class="th" x="112" y="90" text-anchor="middle" dominant-baseline="central">1</text></g>
+<text class="ts" x="97" y="114" text-anchor="end" dominant-baseline="central">this</text>
+<circle class="box" cx="112" cy="114" r="9" stroke-width="0.5"/><text class="ts" x="112" y="114" text-anchor="middle" dominant-baseline="central">0</text>
+<circle cx="112" cy="130" r="1.5" fill="#888780"/>
+<circle cx="112" cy="136" r="1.5" fill="#888780"/>
+<circle cx="112" cy="142" r="1.5" fill="#888780"/>
+<text class="ts" x="40" y="168" dominant-baseline="central">位置：512 个</text>
+<text class="ts" x="97" y="190" text-anchor="end" dominant-baseline="central">位置 0</text>
+<circle class="box" cx="112" cy="190" r="9" stroke-width="0.5"/><text class="ts" x="112" y="190" text-anchor="middle" dominant-baseline="central">0</text>
+<text class="ts" x="97" y="214" text-anchor="end" dominant-baseline="central">位置 1</text>
+<circle class="box" cx="112" cy="214" r="9" stroke-width="0.5"/><text class="ts" x="112" y="214" text-anchor="middle" dominant-baseline="central">0</text>
+<text class="ts" x="97" y="238" text-anchor="end" dominant-baseline="central">位置 2</text>
+<g class="c-coral"><circle cx="112" cy="238" r="9" stroke-width="0.5"/><text class="th" x="112" y="238" text-anchor="middle" dominant-baseline="central">1</text></g>
+<circle cx="112" cy="254" r="1.5" fill="#888780"/>
+<circle cx="112" cy="260" r="1.5" fill="#888780"/>
+<circle cx="112" cy="266" r="1.5" fill="#888780"/>
+<text class="ts" x="40" y="290" dominant-baseline="central">句子：2 个</text>
+<text class="ts" x="97" y="312" text-anchor="end" dominant-baseline="central">句子 A</text>
+<g class="c-coral"><circle cx="112" cy="312" r="9" stroke-width="0.5"/><text class="th" x="112" y="312" text-anchor="middle" dominant-baseline="central">1</text></g>
+<text class="ts" x="97" y="336" text-anchor="end" dominant-baseline="central">句子 B</text>
+<circle class="box" cx="112" cy="336" r="9" stroke-width="0.5"/><text class="ts" x="112" y="336" text-anchor="middle" dominant-baseline="central">0</text>
+<text class="th" x="290" y="44" text-anchor="middle" dominant-baseline="central">输出：4 个神经元</text>
+<g class="c-purple"><circle cx="290" cy="102" r="14" stroke-width="0.5"/><text class="th" x="290" y="102" text-anchor="middle" dominant-baseline="central">Σ</text></g>
+<text class="ts" x="312" y="93" dominant-baseline="central">维1</text>
+<text class="th" x="312" y="110" dominant-baseline="central">0.9</text>
+<g class="c-purple"><circle cx="290" cy="168" r="14" stroke-width="0.5"/><text class="th" x="290" y="168" text-anchor="middle" dominant-baseline="central">Σ</text></g>
+<text class="ts" x="312" y="159" dominant-baseline="central">维2</text>
+<text class="th" x="312" y="176" dominant-baseline="central">0.2</text>
+<g class="c-purple"><circle cx="290" cy="234" r="14" stroke-width="0.5"/><text class="th" x="290" y="234" text-anchor="middle" dominant-baseline="central">Σ</text></g>
+<text class="ts" x="312" y="225" dominant-baseline="central">维3</text>
+<text class="th" x="312" y="242" dominant-baseline="central">0.0</text>
+<g class="c-purple"><circle cx="290" cy="300" r="14" stroke-width="0.5"/><text class="th" x="290" y="300" text-anchor="middle" dominant-baseline="central">Σ</text></g>
+<text class="ts" x="312" y="291" dominant-baseline="central">维4</text>
+<text class="th" x="312" y="308" dominant-baseline="central">0.4</text>
+</svg>

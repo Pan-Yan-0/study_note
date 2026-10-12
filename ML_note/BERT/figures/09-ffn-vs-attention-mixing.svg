@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="608" height="627" viewBox="0 0 380 392" role="img">
+<title>前馈层只在一行内部混合，注意力在行与行之间混合</title>
+<desc>上图：X 是 6 行 4 列，乘 4 行 16 列的 W1，结果第 3 行 love 只用到 X 的第 3 行。下图：A 是 6 行 6 列的注意力权重，乘 6 行 2 列的 V，结果第 3 行 love 用到了 V 的全部 6 行。</desc>
+<style>
+text{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC","Segoe UI",Helvetica,Arial,sans-serif}
+.t{font-size:14px;font-weight:400;fill:#2C2C2A}.ts{font-size:12px;font-weight:400;fill:#5F5E5A}.th{font-size:14px;font-weight:500;fill:#2C2C2A}
+.box{fill:#F1EFE8;stroke:#B4B2A9}.arr{stroke:#5F5E5A;stroke-width:1.5;fill:none}
+.c-purple>rect,.c-purple>circle,rect.c-purple,circle.c-purple{fill:#EEEDFE;stroke:#534AB7}.c-purple>.th,.c-purple>.t{fill:#3C3489}.c-purple>.ts{fill:#534AB7}
+.c-teal>rect,.c-teal>circle,rect.c-teal,circle.c-teal{fill:#E1F5EE;stroke:#0F6E56}.c-teal>.th,.c-teal>.t{fill:#085041}.c-teal>.ts{fill:#0F6E56}
+.c-coral>rect,.c-coral>circle,rect.c-coral,circle.c-coral{fill:#FAECE7;stroke:#993C1D}.c-coral>.th,.c-coral>.t{fill:#712B13}.c-coral>.ts{fill:#993C1D}
+</style>
+<rect x="0" y="0" width="380" height="392" fill="#FFFFFF"/>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#5F5E5A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+<rect x="132" y="52" width="160" height="40" fill="#5DCAA5" fill-opacity="0.45" stroke="#0F6E56" stroke-width="0.5"/>
+<path d="M132 62h160M132 72h160M132 82h160M142 52v40M152 52v40M162 52v40M172 52v40M182 52v40M192 52v40M202 52v40M212 52v40M222 52v40M232 52v40M242 52v40M252 52v40M262 52v40M272 52v40M282 52v40" fill="none" stroke="#0F6E56" stroke-width="0.5"/>
+<rect class="box" x="80" y="104" width="40" height="60" stroke-width="0.5"/>
+<rect x="80" y="124" width="40" height="10" fill="#7F77DD" fill-opacity="0.8" stroke="#534AB7" stroke-width="0.5"/>
+<path d="M80 114h40M80 124h40M80 134h40M80 144h40M80 154h40M90 104v60M100 104v60M110 104v60" fill="none" stroke="#C2C0B6" stroke-width="0.5"/>
+<rect class="box" x="132" y="104" width="160" height="60" stroke-width="0.5"/>
+<rect x="132" y="124" width="160" height="10" fill="#7F77DD" fill-opacity="0.8" stroke="#534AB7" stroke-width="0.5"/>
+<path d="M132 114h160M132 124h160M132 134h160M132 144h160M132 154h160M142 104v60M152 104v60M162 104v60M172 104v60M182 104v60M192 104v60M202 104v60M212 104v60M222 104v60M232 104v60M242 104v60M252 104v60M262 104v60M272 104v60M282 104v60" fill="none" stroke="#C2C0B6" stroke-width="0.5"/>
+<text class="th" x="190" y="26" text-anchor="middle" dominant-baseline="central">前馈层：X × W₁</text>
+<text class="ts" x="124" y="72" text-anchor="end" dominant-baseline="central">W₁ 4×16</text>
+<text class="ts" x="100" y="178" text-anchor="middle" dominant-baseline="central">X 6×4</text>
+<text class="ts" x="212" y="178" text-anchor="middle" dominant-baseline="central">结果 6×16</text>
+<text class="ts" x="72" y="129" text-anchor="end" dominant-baseline="central">love</text>
+<rect x="192" y="228" width="20" height="60" fill="#F0997B" fill-opacity="0.6" stroke="#993C1D" stroke-width="0.5"/>
+<path d="M192 238h20M192 248h20M192 258h20M192 268h20M192 278h20M202 228v60" fill="none" stroke="#993C1D" stroke-width="0.5"/>
+<rect class="box" x="120" y="300" width="60" height="60" stroke-width="0.5"/>
+<rect x="120" y="320" width="60" height="10" fill="#7F77DD" fill-opacity="0.8" stroke="#534AB7" stroke-width="0.5"/>
+<path d="M120 310h60M120 320h60M120 330h60M120 340h60M120 350h60M130 300v60M140 300v60M150 300v60M160 300v60M170 300v60" fill="none" stroke="#C2C0B6" stroke-width="0.5"/>
+<rect class="box" x="192" y="300" width="20" height="60" stroke-width="0.5"/>
+<rect x="192" y="320" width="20" height="10" fill="#7F77DD" fill-opacity="0.8" stroke="#534AB7" stroke-width="0.5"/>
+<path d="M192 310h20M192 320h20M192 330h20M192 340h20M192 350h20M202 300v60" fill="none" stroke="#C2C0B6" stroke-width="0.5"/>
+<text class="th" x="190" y="204" text-anchor="middle" dominant-baseline="central">注意力：A × V</text>
+<text class="ts" x="184" y="258" text-anchor="end" dominant-baseline="central">V 6×2</text>
+<text class="ts" x="150" y="374" text-anchor="middle" dominant-baseline="central">A 6×6</text>
+<text class="ts" x="220" y="330" dominant-baseline="central">结果 6×2</text>
+<text class="ts" x="112" y="325" text-anchor="end" dominant-baseline="central">love</text>
+</svg>
