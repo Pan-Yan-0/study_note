@@ -1,188 +1,112 @@
-# IMDB情感分析：六模型实验、Kaggle提交与预训练模型结果
+# IMDB 情感分析实验
 
-本目录记录两组IMDB情感分析实验：一组是GloVe冻结词向量加六种网络（每个模型20轮）；另一组是预训练模型BERT全量、BERT LoRA与DeBERTa-v2-xxlarge LoRA，目前只有BERT全量的Kaggle日志，其余两项结果未提供。
+Kaggle 比赛 *Bag of Words Meets Bags of Popcorn*（`word2vec-nlp-tutorial`）：用 25,000 条有标签影评训练正负情感二分类，对 25,000 条测试影评提交预测，Kaggle 按测试集 ROC-AUC 评分。这里有两组实验：GloVe 词向量加六种网络，以及三个预训练模型（BERT 全量、BERT LoRA、DeBERTa-v2-xxlarge LoRA）。
 
-这次练习把影评从原始文本变成模型输入，再完成训练、验证和预测导出。六个模型都已跑完20轮，原Notebook保留了代码、每轮结果与导出记录。
+## 文件
 
-**实验运行时间：2026-09-12 19:54—20:56（北京时间）**，来自Notebook的papermill元数据。**整理归档日期：2026-10-11**。这两个日期分别表示运行和归档时间。
+| 文件 | 内容 |
+|---|---|
+| [notebooks/imdb-glove-six-models-2026-09-12.ipynb](notebooks/imdb-glove-six-models-2026-09-12.ipynb) | 六模型的代码与完整运行输出 |
+| [notebooks/imdb-three-models-official-trainer.ipynb](notebooks/imdb-three-models-official-trainer.ipynb) | 三个预训练模型依次训练（Transformers Trainer + PEFT），含 Kaggle 运行输出 |
+| [notebooks/imdb-bert-deberta-lora.ipynb](notebooks/imdb-bert-deberta-lora.ipynb)、[code/imdb_pretrained.py](code/imdb_pretrained.py) | 更早的预训练版本（手动选模型 + 共用训练代码），对应第 3 节的 BERT 日志 |
+| [code/requirements-pretrained.txt](code/requirements-pretrained.txt) | 预训练实验的依赖版本 |
+| [metrics/model_summary.csv](metrics/model_summary.csv)、[metrics/training_history.csv](metrics/training_history.csv) | 六模型的汇总与 120 条逐轮指标 |
+| [metrics/pretrained_three_models_summary.csv](metrics/pretrained_three_models_summary.csv)、[metrics/pretrained_three_models_epochs.csv](metrics/pretrained_three_models_epochs.csv) | 三个预训练模型的汇总与逐轮验证指标 |
+| [metrics/bert_full_kaggle_report_2026-10-11.csv](metrics/bert_full_kaggle_report_2026-10-11.csv) | 更早一次 BERT 全量的三轮日志 |
+| [metrics/kaggle_submissions.csv](metrics/kaggle_submissions.csv) | 全部 18 条 Kaggle 提交记录与版本链接 |
 
-## 材料入口
+相关笔记：[BERT 原理笔记](../BERT/BERT原理笔记.md)、[六模型实战与概念问答](../IMDB六模型实战与概念问答.md)。与 LoRA 论文、GMCM 实验的统一对照见[实验结果汇总](../实验结果汇总.md)。
 
-- [原始Notebook：代码与完整运行输出](notebooks/imdb-glove-six-models-2026-09-12.ipynb)
-- [历史预训练扩展Notebook：手动选择单模型](notebooks/imdb-bert-deberta-lora.ipynb)
-- [三模型官方Trainer Notebook](notebooks/imdb-three-models-official-trainer.ipynb)：BERT全量、BERT LoRA、DeBERTa-v2-xxlarge LoRA依次训练；运行结果未提供。
-- [预训练模型共用代码](code/imdb_pretrained.py)与[依赖版本](code/requirements-pretrained.txt)
-- [六模型结果汇总](metrics/model_summary.csv)
-- [全部120条逐轮指标](metrics/training_history.csv)
-- [Kaggle提交记录：15条，保留版本与来源](metrics/kaggle_submissions.csv)
-- [此前的六模型实战与概念问答](../IMDB六模型实战与概念问答.md)：历史对话整理，包含另一份5轮实验的排行榜成绩，不能与本次验证日志混用。
-- [实验结果汇总](../实验结果汇总.md)：本目录的结果与 LoRA 论文、GMCM 实验放在统一口径下的汇总。
+## 结果速览
 
-原Notebook的代码、输出与元数据均保留；网页归档在文件末尾补了一个换行。本次没有重跑原实验。指标表直接从原日志提取，精度保留到日志打印的4位小数。
+| 模型 | 验证 accuracy | 验证 AUC | Kaggle AUC | 提交内容 |
+|---|---:|---:|---:|---|
+| BiGRU（六模型最好） | 0.9031（batch 平均，第 8 轮） | — | 0.89996 | 0/1 标签 |
+| BERT 全量微调 | 0.9206 | 0.974062 | 0.97522 | 正类概率 |
+| BERT LoRA | 0.8766 | 0.949744 | 0.95315 | 正类概率 |
+| DeBERTa-v2-xxlarge LoRA | 0.9334 | 0.979953 | **0.98294** | 正类概率 |
 
-## 1. 整个流程做了什么
+提交 0/1 标签时，ROC-AUC 等于（真正率 + 真负率）/ 2，接近准确率；提交概率时才是排序意义上的 AUC。所以两组的 Kaggle 分数不能直接相减，两组的验证划分也不同。
 
-```mermaid
-flowchart LR
-  subgraph P[数据处理：产出模型输入]
-    A[影评与情感标签] --> B[去HTML、保留英文字母、小写分词]
-    B --> C[词表与词索引]
-    C --> D[截断或补齐到512个词]
-    D --> E[训练、验证、测试张量]
-    G[GloVe 300维词向量] --> H[Embedding权重矩阵]
-  end
-  subgraph M[模型与训练：产出分类预测]
-    E --> I[冻结的Embedding]
-    H --> I
-    I --> J[六种网络分别训练]
-    J --> K[二分类logits与交叉熵]
-    K --> L[反向传播与Adam更新]
-    L --> J
-    J --> V[验证日志]
-    J --> S[第20轮模型预测并导出CSV]
-  end
-```
+## 1. GloVe 词向量 + 六种网络
 
-数据处理负责把文本转换成数字，模型负责把这些数字转换成两个类别的分数。导出的`sentiment`通过`argmax`得到，是0/1类别，而不是正类概率。
+| 条件 | 设置 |
+|---|---|
+| 数据 | 有标签影评按 80% / 20% 划分训练与验证（`random_state=0`，不分层） |
+| 文本处理 | 去 HTML，只保留英文字母，小写分词；词表 101,399 个词（来自全部有标签文本和测试文本）；截断或补齐到 512 个词 |
+| 词向量 | GloVe 840B 300 维，六个模型都冻结；没有匹配的词为零向量 |
+| 训练 | batch 64，Adam，学习率 0.001，交叉熵，每个模型 20 轮 |
+| 预测 | 第 20 轮模型，`argmax` 导出 0/1 标签 |
 
-## 2. 数据和共同实验条件
+| 模型 | 结构 | 最高验证（轮次） | 第 20 轮验证 | Kaggle AUC：Version 2 / 修复 AttLSTM / epoch=20 |
+|---|---|---|---:|---|
+| CNN | 128 个宽 3 的卷积核，ReLU，全局最大池化 | 0.8977（7、10、11、15、20） | 0.8977 | 0.88880 / — / 0.89088 |
+| BiLSTM | 2 层双向 LSTM，隐藏 128，拼接首尾时间步 | 0.8995（10） | 0.8916 | 0.89128 / — / 0.89368 |
+| BiGRU | 2 层双向 GRU，隐藏 128，拼接首尾时间步 | 0.9031（8） | 0.8942 | **0.89996** / — / 0.89320 |
+| Attention-BiLSTM | 双向 LSTM 后按注意力权重沿时间加权求和 | 0.9021（4、5） | 0.8948 | 0.50004 / 0.89660 / 0.89388 |
+| CNN-BiLSTM | 卷积提取局部特征后接双向 LSTM | 0.8983（8） | 0.8756 | 0.88580 / — / 0.87208 |
+| TransformerEncoder | 300→128 投影，2 层编码器、8 头，序列平均池化 | 0.8869（4） | 0.8661 | 0.86944 / — / 0.85216 |
 
-| 项目 | 原Notebook中的设置 |
-| --- | --- |
-| 任务 | Kaggle Bag of Words Meets Bags of Popcorn，IMDB影评正负情感二分类 |
-| 数据文件 | `labeledTrainData.tsv`、无标签的`testData.tsv`；本次没有使用`unlabeledTrainData.tsv` |
-| 划分 | 有标签数据按80%/20%划分训练与验证，`random_state=0`，未设置分层抽样 |
-| 文本清洗 | BeautifulSoup去HTML，非英文字母替换为空格，小写并分词；未删除停用词 |
-| 词表 | 101,399个词，来自全部有标签文本与测试文本的并集 |
-| 输入长度 | 最长512个词，过长截断，过短在尾部补0 |
-| 词向量 | GloVe 840B 300d，六个模型都冻结Embedding；未匹配词向量的词保持零向量 |
-| 训练 | batch size 64，Adam，学习率0.001，交叉熵，每个模型20轮 |
-| 设备 | 实际单元输出为`cuda:0`；元数据中的GPU开关不能替代实际运行输出 |
-| 测试预测 | 校验25,000条预测及ID顺序，使用样本提交模板导出六份CSV |
+- 验证准确率是 Notebook 打印的 batch 平均值（每个 batch 等权，末尾不满 64 条的 batch 也一样），和按样本算的准确率略有差别。代码没有保存最佳检查点，导出的都是第 20 轮模型。
+- Version 2 的 Attention-BiLSTM 为 0.50004（随机水平），修复后为 0.89660。提交列表另有两条未标模型的记录：Version 2 的 0.88580、Version 1 的 0.88400。
+- 后期训练准确率上升而验证回落（BiGRU 验证从第 8 轮 0.9031 降到第 20 轮 0.8942，训练从 0.9723 升到 0.9947），20 轮版本的 Kaggle 分数也没有普遍更高，符合过拟合。只有单次运行，不同版本之间代码和随机状态也可能有变化。
+- 已知问题：循环网络没有按真实长度 pack，注意力和平均池化都包含 padding；TransformerEncoder 没有位置编码和 padding mask，它是随机初始化的学习用编码器，不是 BERT；只固定了划分种子；词表包含了验证和测试文本里的词。
 
-词索引0同时用作未知词与padding。词表在划分前建立，看到了验证集和无标签测试集中的词汇；构建词表时没有使用验证标签，但它也不是严格只用训练子集构建词表的设置。验证标签用于后续评估，测试文件没有提供标签。
+## 2. 三个预训练模型（Transformers Trainer）
 
-## 3. 六种模型与结果
+一次 Run All 依次训练三个模型，三组共用同一份划分和训练设置：
 
-这些数值是**Notebook打印的验证batch平均准确率**。每个batch的准确率被等权平均，末尾不足64条的batch与完整batch权重相同，因此不等于精确的全验证集样本准确率。
+| 条件 | 设置 |
+|---|---|
+| 数据 | 有标签影评分层划分（`random_state=42`）：20,000 训练 / 5,000 验证；只去 HTML，保留大小写和标点，交给各模型自己的 tokenizer |
+| 训练 | 3 轮；AdamW，学习率 2e-5，weight decay 0.01，线性衰减，前 10% 步数 warmup；FP16 混合精度；有效 batch 16 |
+| 选模型 | 每轮验证，按验证 AUC 选最佳轮次，权重在内存中保存，训练结束后恢复 |
+| LoRA | r = 8，α = 16，dropout 0.05 |
+| 提交 | `submission.csv` 为正类概率；另存阈值 0.5 的 `test_labels.csv` |
+| 环境 | Kaggle 单张 Tesla T4；torch 2.11.0、transformers 5.19.0、peft 0.21.2、accelerate 1.15.0、datasets 5.1.0 |
 
-| 模型 | 核心结构 | 最高验证日志 | 最高值轮数 | 第20轮验证日志 |
-| --- | --- | ---: | --- | ---: |
-| CNN | 128个宽度3的卷积核，ReLU，全局最大池化 | 0.8977 | 7、10、11、15、20 | 0.8977 |
-| BiLSTM | 2层双向LSTM，隐藏维度128，拼接首尾时间步输出 | 0.8995 | 10 | 0.8916 |
-| BiGRU | 2层双向GRU，隐藏维度128，拼接首尾时间步输出 | **0.9031** | 8 | 0.8942 |
-| Attention-BiLSTM | 双向LSTM后计算注意力权重，再沿时间维加权求和 | 0.9021 | 4、5 | 0.8948 |
-| CNN-BiLSTM | 卷积提取局部特征，再送入双向LSTM | 0.8983 | 8 | 0.8756 |
-| TransformerEncoder | 300→128投影，2层编码器、8个头，序列平均池化 | 0.8869 | 4 | 0.8661 |
+| 模型 | 训练方式 | 长度 / micro batch × 累积 | 可训练参数 | 最佳轮次 | 验证 accuracy / AUC | Kaggle AUC | 显存峰值 | 用时 |
+|---|---|---|---:|---:|---|---:|---:|---:|
+| BERT 全量 | `bert-base-uncased` 全部参数 | 256 / 8 × 2 | 109,483,778（100%） | 2 | 0.9206 / 0.974062 | 0.97522 | 2.69 GiB | 18 分钟 |
+| BERT LoRA | query、value 加 LoRA，训练分类头 | 256 / 8 × 2 | 296,450（0.27%） | 3 | 0.8766 / 0.949744 | 0.95315 | 1.24 GiB | 14 分钟 |
+| DeBERTa-v2-xxlarge LoRA | FP16 冻结底座，query_proj、value_proj 加 LoRA，训练 pooler 和分类头，开梯度检查点 | 128 / 16 × 1 | 4,723,202（0.30%） | 3 | 0.9334 / 0.979953 | **0.98294** | 4.44 GiB | 2.3 小时 |
 
-本次单次运行中，GRU的最高验证日志为90.31%。代码没有保存最佳检查点，而是在20轮训练完成后直接返回模型，所以**六份预测CSV使用的都是第20轮模型**，不能把表中的最高值写成实际导出模型的分数。
+逐轮验证（训练 loss 是 Trainer 每 100 步记录的最近一次值）：
 
-原Notebook本身没有排行榜成绩、提交回执或测试标签。`saved: result/*.csv`记录了预测导出，CSV内容没有嵌入Notebook。现已根据补充提供的Kaggle提交列表归档提交分数，见下表；这些分数与验证日志属于两种评价来源。
+| 模型 | 轮次 | 训练 loss | 验证 loss | 验证 accuracy | 验证 AUC |
+|---|---:|---:|---:|---:|---:|
+| BERT 全量 | 1 | 0.2601 | 0.2328 | 0.9120 | 0.971985 |
+| | 2 | 0.1627 | 0.2525 | 0.9206 | **0.974062** |
+| | 3 | 0.0955 | 0.3468 | 0.9212 | 0.973945 |
+| BERT LoRA | 1 | 0.3567 | 0.3355 | 0.8594 | 0.935947 |
+| | 2 | 0.3157 | 0.3034 | 0.8744 | 0.947399 |
+| | 3 | 0.2879 | 0.2989 | 0.8766 | **0.949744** |
+| DeBERTa-v2-xxlarge LoRA | 1 | 0.2221 | 0.2213 | 0.9274 | 0.975361 |
+| | 2 | 0.1988 | 0.1949 | 0.9338 | 0.979054 |
+| | 3 | 0.2141 | 0.1969 | 0.9334 | **0.979953** |
 
-### Kaggle实际提交结果
+- **BERT 全量**：第 2 轮之后训练 loss 继续下降、验证 loss 上升（0.2525 → 0.3468），开始过拟合，按 AUC 选回了第 2 轮。
+- **BERT LoRA 对全量**：同底座、同划分、同长度、同学习率，只差训练方式。LoRA 只训练 0.27% 的参数，显存不到全量的一半，但验证 AUC 低 0.024，Kaggle AUC 低 0.022。它的验证 AUC 到第 3 轮仍在上升；学习率沿用了全量微调的 2e-5，而 LoRA 论文 GLUE 实验给 RoBERTa-base 的 LoRA 用 4e-4 到 5e-4。学习率偏小、训练不足是候选解释，需要加大学习率或轮数来验证。
+- **DeBERTa-v2-xxlarge LoRA**：分数最高，三轮内没有明显过拟合。它和 BERT 的底座、分词方式、截断长度（128 对 256）同时不同，差距不能只归因于 LoRA。
+- 三个模型的 Kaggle AUC 都比验证 AUC 略高（+0.001 到 +0.003），两者一致。
+- 可训练参数与 LoRA 公式完全对上：BERT 为 12 层 × 2 × 8 × (768 + 768) = 294,912，加分类头 1,538；DeBERTa 为 48 层 × 2 × 8 × (1536 + 1536) = 2,359,296，加 pooler 2,360,832 和分类头 3,074。
 
-以下分数来自2026-10-11补充提供的提交列表。保留原始五位小数，记为 **Kaggle ROC-AUC**，不改称本地验证准确率。[比赛评分说明](https://www.kaggle.com/competitions/word2vec-nlp-tutorial/overview/evaluation)明确以ROC曲线下面积评分；指标表中的`kaggle_score`也对应此指标。0.89996不能直接写成准确率89.996%。版本链接能定位Notebook版本；一个版本可对应多份不同模型的提交文件。原列表的“1mo ago”不构成准确提交日期，故不据此补写日期。
+这一版 Notebook 比上一版改了三处才在 Kaggle 跑通：彻底清理 Kaggle 预装 torchao 的残留元数据（否则 PEFT 版本检查报错）；最佳权重改为在内存中保存和恢复（从磁盘回载 BERT 检查点时，LayerNorm 的 gamma/beta 命名转换会让这部分权重漏载）；DeBERTa 从 batch 1 × 累积 16 改为 batch 16 × 累积 1，有效 batch 不变，Notebook 记录 batch 1 时慢十倍左右。
 
-| 模型 | Version 2 · 349236507 | 修复ATTLSTM · 349247611 | epoch=20 · 349264392 |
-| --- | ---: | ---: | ---: |
-| CNN | 0.88880 | — | 0.89088 |
-| BiLSTM | 0.89128 | — | 0.89368 |
-| BiGRU | **0.89996** | — | 0.89320 |
-| Attention-BiLSTM | 0.50004 | **0.89660** | **0.89388** |
-| CNN-BiLSTM | 0.88580 | — | 0.87208 |
-| TransformerEncoder | 0.86944 | — | 0.85216 |
+## 3. 更早一次 BERT 全量（共用代码版本）
 
-- [Version 2](https://www.kaggle.com/code/plpany/bag-of-words-meets-bags-of-popcorn-by-the-imdb?scriptVersionId=349236507)：六条标明模型的记录，另有一条未标明模型的0.88580；后者单独保留，不根据分数相同就认定是CNN-BiLSTM。
-- [修复ATTLSTM](https://www.kaggle.com/code/plpany/bag-of-words-meets-bags-of-popcorn-by-the-imdb?scriptVersionId=349247611)：0.89660。对照原版本0.50004，说明修复后成绩明显恢复；提交列表不能单独证明具体是哪一处代码导致了变化。
-- [epoch=20](https://www.kaggle.com/code/plpany/bag-of-words-meets-bags-of-popcorn-by-the-imdb?scriptVersionId=349264392)：六条标明模型的记录。此组最高是ATTLSTM的0.89388。
-- [Version 1](https://www.kaggle.com/code/plpany/bag-of-words-meets-bags-of-popcorn-by-the-imdb?scriptVersionId=348564596)：0.88400，原列表未标明模型。
+用[单模型 Notebook](notebooks/imdb-bert-deberta-lora.ipynb)和[共用代码](code/imdb_pretrained.py)跑的 BERT 全量微调：不分层划分（`random_state=0`），没有学习率调度，长度 256、batch 8 × 累积 2、学习率 2e-5；日志从 Kaggle 输出粘贴，没有提交分数。
 
-现有提交记录中，最高分为Version 2的GRU：0.89996。GRU、CNN-LSTM与简化Transformer在20轮版本中的提交分数均低于Version 2，ATTLSTM也低于单独修复版本；增加训练轮数并未带来一致提高。结合原Notebook后期验证分数回落，过拟合是值得检查的解释，但不同版本还可能改变了代码、随机状态与配置，不能把分数差值直接当作仅由epoch导致的效果。
-
-20轮提交列表和原Notebook都表明使用了训练结束后的模型，但当前没有每份提交CSV及其哈希，尚不能逐字核对其与附件导出文件的对应关系。训练日志、提交分数和版本编号分别保留，便于后续追溯。
-
-## 4. 已处理的问题和已知局限
-
-原训练函数的注释保留了修复记录，包括初始化batch计数、修正损失函数变量、修正`.cpu()`调用和返回模型。Attention-LSTM的分类头改为256维，CNN-LSTM的输入维度改为卷积输出的128维。六个模型均有完整训练与预测成功输出，说明这些代码路径在当次运行中已跑通。
-
-| 观察或问题 | 依据与目前状态 |
-| --- | --- |
-| 后期训练分数升高，验证分数回落 | GRU训练准确率从第8轮0.9723升到第20轮0.9947，验证日志从0.9031降到0.8942；符合过拟合的常见表现，但没有多次运行确认 |
-| 准确率统计不够准确 | 训练函数对batch准确率等权平均 |
-| padding参与状态与聚合 | 循环网络没有按真实长度pack；注意力没有屏蔽padding |
-| 简化Transformer缺少位置与padding处理 | 无位置编码、无`src_key_padding_mask`，平均池化也包括padding |
-| 改长度参数会出现不一致 | `pad_samples`截断用`maxlen`，补齐却引用全局`max_len`；默认512时可运行 |
-| 结果复现条件不完整 | 只固定划分种子，没有固定训练种子；词表来自无序set；没有保存模型权重 |
-| GloVe读取产生warning | 有重复词警告和NumPy数组不可写警告，训练未中断 |
-
-上述问题本次只做核对与记录，没有改动历史Notebook，也没有把旧日志附到新代码上。特别是该Transformer为学习用的随机初始化编码器，不是BERT；本次结果不能代表完整Transformer方案的能力。
-
-## 5. 预训练模型实验：BERT全量、BERT LoRA与DeBERTa-v2-xxlarge LoRA
-
-扩展版已经编写，独立于原六模型Notebook。**已收到BERT全量微调的真实Kaggle训练日志；BERT LoRA与DeBERTa本次结果尚未提供。** 此前另一次BERT训练的进展以实际材料为准，不能把它的成绩移到这份新代码上。
-
-预训练模型需要独立的子词tokenizer，不能直接接到原GloVe词索引上，因此扩展版把底座和tokenizer配对，并沿用共用的训练、验证和预测函数。
-
-| MODEL_KEY | 底座与训练方式 | 默认batch / 长度 / 累积 |
-| --- | --- | --- |
-| `bert_full` | `bert-base-uncased`，全量微调 | 8 / 256 / 2 |
-| `bert_lora` | 同一BERT，query/value上加LoRA，同时训练分类头 | 8 / 256 / 2 |
-| `deberta_v2_xxlarge` | `microsoft/deberta-v2-xxlarge`，默认FP16冻结底座，以LoRA微调query_proj/value_proj，训练pooler及classifier | 1 / 128 / 16 |
-
-LoRA训练低秩权重增量：
-
-$$W=W_0+\frac{\alpha}{r}BA,\qquad A\in\mathbb{R}^{r\times k},\quad B\in\mathbb{R}^{d\times r}.$$
-
-`W_0`冻结，`A`与`B`更新；代码默认`r=8`。DeBERTa有新建的任务pooler与分类头，两者一并训练和保存；可训练部分保持FP32，以配合FP16混合精度。
-
-### 运行条件
-
-以下为代码默认值；本次日志对应的Notebook版本和完整配置文件尚未取得（见下）。目标设备为Kaggle双T4（每张16GB），代码一次使用一张。数据划分默认80%/20%、`random_state=0`、不分层，训练随机种子42。全量BERT与BERT LoRA共用默认长度和batch，学习率先统一为`2e-5`。完整训练按验证AUC选最佳轮次，训练结束恢复最佳参数再预测；验证准确率按样本计数，梯度累积末尾不足一组时也正确更新。
-
-默认`submission.csv`保留0/1的`sentiment`，另有概率文件以`positive_probability`保存正类概率。两种预测方式的分数需分别说明，不能混用。
-
-### 目前验证到了哪里
-
-本地CPU以随机初始化的小BERT和DeBERTa-v2完成12项检查：全量/LoRA参数更新、任务层保存、最佳检查点恢复与重载、末尾梯度累积、按样本统计指标、AUC选择与单类别边界、预测ID顺序和概率输出均通过。真实BERT与DeBERTa-v2-xxlarge分词器也已检查，并补齐SentencePiece转换所需的protobuf依赖。上述本地检查未下载真实大模型权重。随后补充的Kaggle日志已确认BERT完成全量数据训练，峰值显存见下；LoRA和DeBERTa的GPU运行记录未提供。
-
-| 新实验 | 验证accuracy / AUC | 最佳轮次 | 显存峰值 | Kaggle AUC |
-| --- | --- | --- | --- | --- |
-| BERT全量 | 0.9128 / 0.9736733349381915 | 3（按AUC） | allocated 2.73GiB / reserved 2.88GiB | 提交结果未提供 |
-| BERT LoRA | 运行结果未提供 | 运行结果未提供 | 显存记录未提供 | 提交结果未提供 |
-| DeBERTa-v2-xxlarge LoRA | 运行结果未提供 | 运行结果未提供 | 显存记录未提供 | 提交结果未提供 |
-
-### BERT全量：Kaggle实际训练结果
-
-2026-10-11收到运行日志，来源是本人粘贴的Kaggle输出；这是日志提供日期，执行时间未提供。[三轮指标CSV](metrics/bert_full_kaggle_report_2026-10-11.csv)保留表格显示精度。尚未取得本次保存的Notebook、提交CSV和完整配置文件，未填Kaggle排行榜分数。
-
-底座为`bert-base-uncased`，训练方式`full_fine_tuning`，109,483,778个参数全部参与训练；每轮20,000条训练影评、5,000条验证影评，共3轮。
-
-| epoch | 训练loss | 训练accuracy | 验证loss | 验证accuracy | 验证AUC |
-| --- | ---: | ---: | ---: | ---: | ---: |
+| 轮次 | 训练 loss | 训练 accuracy | 验证 loss | 验证 accuracy | 验证 AUC |
+|---:|---:|---:|---:|---:|---:|
 | 1 | 0.288101 | 0.88305 | 0.228602 | 0.9090 | 0.972725 |
-| 2 | 0.171451 | 0.94770 | 0.250490 | **0.9140** | 0.973270 |
+| 2 | 0.171451 | 0.94770 | 0.250490 | 0.9140 | 0.973270 |
 | 3 | 0.105459 | 0.97265 | 0.350316 | 0.9128 | **0.973673** |
 
-日志选中第3轮：验证loss的完整输出为`0.35031609143540265`，AUC为`0.9736733349381915`，accuracy为`0.9128`。按`monitor="auc"`选择最大验证AUC是当前规则，第2轮准确率最高不改变该选择。峰值allocated为2.73GiB，reserved为2.88GiB；这是本次BERT训练的PyTorch统计，不是所有模型的显存保证。
+和第 2 节的 BERT 全量接近（验证 AUC 0.9737 对 0.9741），第 2 轮之后验证 loss 上升的趋势也一样。显存峰值 allocated 2.73 GiB / reserved 2.88 GiB。
 
-训练loss持续降低而验证loss上升，已有过拟合迹象；AUC仍有小幅提高。AUC衡量排序，交叉熵还受预测置信程度影响，两者可以同时出现；单次日志没有错例和概率分布，暂不能确定具体哪些影评导致损失上升。三轮AUC总增幅约0.00095；只有单次运行，稳定性未评估。
+## 来源
 
-原提交记录是Kaggle测试集ROC-AUC；本次0.973673是5,000条验证影评上的ROC-AUC，评价数据不同，不直接与历史0.89996相减来宣称排行榜提升。预测导出和比赛提交的完成状态也需各自的结果确认。
-
-加载报告中的`cls.predictions.*`与`cls.seq_relationship.*`属于旧预训练任务头，本次不使用；`classifier.weight/bias`为新建情感分类头，随后参与微调。这一组UNEXPECTED/MISSING符合任务头替换。[Transformers加载说明](https://huggingface.co/docs/transformers/main_classes/model)
-
-每轮`optimizer_steps=1249`。若沿用默认batch=8、梯度累积2，每轮尝试更新1,250次；代码只统计AMP成功更新，符合每轮有一次跳步。`training_metadata.json`中的`skipped_amp_steps`未提供，按此配置三轮预期为3；每轮`train_examples=20000`说明并非漏读一条训练batch。[PyTorch AMP机制](https://docs.pytorch.org/docs/stable/notes/amp_examples.html)
-
-DeBERTa-v2-xxlarge与BERT的底座、分词方式和默认长度同时不同，两者的分数差不能全部归因于LoRA。
-
-方法与实现依据：[PEFT LoRA配置](https://huggingface.co/docs/peft/en/package_reference/lora)、[混合精度问题处理](https://huggingface.co/docs/peft/en/developer_guides/troubleshooting)、[DeBERTa-v2分类实现](https://github.com/huggingface/transformers/blob/main/src/transformers/models/deberta_v2/modeling_deberta_v2.py)。依赖固定Transformers 5.19.0 / PEFT 0.21.2 / Accelerate 1.15.0；Kaggle保留CUDA版PyTorch≥2.6。本地检查使用PyTorch 2.14.1 CPU版，这不是Kaggle安装要求。
-
-## 6. 来源与复现条件
-
-- 实验依据为本目录原Notebook。数据处理见原第10—28个单元，训练与导出见第33—37个单元，六个模型与日志见第39—44个单元；编号按原Notebook从1开始计数。
-- 原下载Notebook SHA-256：`25a616584a4201c7ed62fb933729891e1f3ee8b774815ddc29c62da4b52d5ea7`；GitHub归档文件因末尾换行，SHA-256为`059d814ddfabea45d5f5b3fd6130598d951a9a0b586597608664e22c34e70897`。两者解析后的JSON内容一致。
-- [Kaggle比赛入口](https://www.kaggle.com/c/word2vec-nlp-tutorial)。运行需挂载比赛数据，并保留样本提交模板。
-- [GloVe官方说明与预训练向量](https://nlp.stanford.edu/projects/glove/)。原六模型Notebook使用`glove.840B.300d.txt`，通过Kaggle数据集挂载；GloVe大文件、数据TSV、pickle缓存和权重不在此归档中。
-- [PyTorch TransformerEncoder接口](https://docs.pytorch.org/docs/stable/generated/torch.nn.TransformerEncoder.html)支持传入`src_key_padding_mask`；是否传入应以原六模型Notebook实际代码为准，原版没有传入。
-
-原六模型Notebook含固定的Kaggle输入路径和GloVe依赖，迁移到本地需调整路径；原文件没有完整锁定依赖版本，因此保留输出不等于保证在任意新环境逐字复现同样的分数。
+- 六模型 Notebook：数据处理在第 10—28 个单元，训练与导出函数在第 36、37 个，六个模型在第 39—44 个（从 1 开始计数）。
+- [Kaggle 比赛](https://www.kaggle.com/c/word2vec-nlp-tutorial)，[评分说明](https://www.kaggle.com/competitions/word2vec-nlp-tutorial/overview/evaluation)为 ROC 曲线下面积；[GloVe](https://nlp.stanford.edu/projects/glove/)，Notebook 用的是 `glove.840B.300d.txt`。数据、GloVe 文件和模型权重不在仓库里。
+- Kaggle 分数来自本人提供的提交列表，每条的版本链接见 `metrics/kaggle_submissions.csv`。
