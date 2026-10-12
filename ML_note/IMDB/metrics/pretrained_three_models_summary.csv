@@ -1,0 +1,4 @@
+model,checkpoint,training,max_length,micro_batch,gradient_accumulation,best_epoch_by_auc,validation_accuracy,validation_auc,trainable_params,total_params_reported,peak_train_allocated_gib,peak_train_reserved_gib,elapsed_seconds,kaggle_test_auc
+BERT full,bert-base-uncased,full,256,8,2,2,0.9206,0.974062,109483778,109483778,2.690450,2.841797,1088.276576,0.97522
+BERT LoRA,bert-base-uncased,"lora r=8 alpha=16 (query,value) + classifier",256,8,2,3,0.8766,0.949744,296450,109780228,1.235274,1.328125,853.641522,0.95315
+DeBERTa-v2-xxlarge LoRA,microsoft/deberta-v2-xxlarge,"lora r=8 alpha=16 (query_proj,value_proj) + pooler + classifier; fp16 frozen base",128,16,1,3,0.9334,0.979953,4723202,1571636740,4.444650,4.691406,8143.836366,0.98294
