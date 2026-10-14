@@ -1,0 +1,482 @@
+[START] 2026-10-14T09:13:52.509450+08:00
+Script SHA-256: 187d2f88d294e70ab427c694dc0dff6f54b85e3eac3849cba43eef15fc0d5906
+Data SHA-256: a7a3bfee7fc80566578791dfea290715934cc82f436c893361c4d0108a3554f8
+Demo cot/on already completed with visible reasoning; separate demo TXT retained.
+Credentials loaded into process memory only; no credential file written.
+Cached basic/off n20 and all872 will be reused; original full JSONL must remain byte-identical.
+
+[COMMAND 2026-10-14T09:13:52.515555+08:00] python sst2_instruction_eval.py --data-file data\sst2_validation.tsv --prompt basic --think off --n 20
+
+=== deepseek_deepseek-flash_basic_think-off_n20_f96d0ab80cc2
+    共 20 条，断点里已有 20 条；并发 8，max_tokens 64，temperature 0.0
+    准确率 0.9500（19/20），无效输出 0，请求失败 0，被截断 0
+    真实 -1：预测 -1 10 条，预测 1 0 条，无效 0 条
+    真实  1：预测 -1 1 条，预测 1 9 条，无效 0 条
+    tokens：输入 2,359，输出 31（含思考）；单条请求平均 1.35 秒
+    明细：results\deepseek_deepseek-flash_basic_think-off_n20_f96d0ab80cc2.csv
+[WALL TIME] 1.312 seconds; exit=0
+[CHECK PASSED] deepseek_deepseek-flash_basic_think-off_n20_f96d0ab80cc2: correct=19/20; reasoning_chars=0; truncated=0; errors=0; invalid=0
+
+[COMMAND 2026-10-14T09:13:53.828282+08:00] python sst2_instruction_eval.py --data-file data\sst2_validation.tsv --prompt basic --think on --n 20
+
+=== deepseek_deepseek-flash_basic_think-on_n20_ff1b8595a6b1
+    共 20 条，断点里已有 0 条；并发 8，max_tokens 4096，temperature 0.6
+
+    --- 样本 idx=4，真实标签 -1
+    句子：it 's slow -- very , very slow .
+    思考：We need answer only single number -1 or 1. Text clearly negative. Need output -1.
+    回答：-1
+    解析：-1（exact），正确
+
+    --- 样本 idx=1，真实标签 -1
+    句子：unflinchingly bleak and desperate
+    思考：We need answer only -1 or 1. Text "unflinchingly bleak and desperate" clearly negative. So -1.
+    回答：-1
+    解析：-1（exact），正确
+
+    --- 样本 idx=5，真实标签 1
+    句子：although laced with humor and a few fanciful touches , the film is a refreshingly serious look at young women .
+    思考：We need answer single number. Need determine sentiment polarity. Text: "although laced with humor and a few fanciful touches , the film is a refreshingly serious look at young women ." Positive? "refreshingly serious" positive. Although concession. Overall positive. Return 1. Must only number.
+    回答：1
+    解析：1（exact），正确
+
+    [   5/20] 准确率 1.0000  无效 0  0.33 秒/条  还要约 0.1 分钟
+    [  10/20] 准确率 1.0000  无效 0  0.25 秒/条  还要约 0.0 分钟
+    [  15/20] 准确率 1.0000  无效 0  0.21 秒/条  还要约 0.0 分钟
+    [  20/20] 准确率 1.0000  无效 0  0.23 秒/条
+    准确率 1.0000（20/20），无效输出 0，请求失败 0，被截断 0
+    真实 -1：预测 -1 10 条，预测 1 0 条，无效 0 条
+    真实  1：预测 -1 0 条，预测 1 10 条，无效 0 条
+    tokens：输入 2,879，输出 1,090（含思考）；单条请求平均 1.39 秒
+    明细：results\deepseek_deepseek-flash_basic_think-on_n20_ff1b8595a6b1.csv
+[WALL TIME] 5.969 seconds; exit=0
+[CHECK PASSED] deepseek_deepseek-flash_basic_think-on_n20_ff1b8595a6b1: correct=20/20; reasoning_chars=4329; truncated=0; errors=0; invalid=0
+
+[COMMAND 2026-10-14T09:13:59.799351+08:00] python sst2_instruction_eval.py --data-file data\sst2_validation.tsv --prompt cot --think off --n 20
+
+=== deepseek_deepseek-flash_cot_think-off_n20_8b56b1fe46ae
+    共 20 条，断点里已有 0 条；并发 8，max_tokens 1024，temperature 0.0
+
+    --- 样本 idx=0，真实标签 1
+    句子：it 's a charming and often affecting journey .
+    回答：Let's go through this step by step. 1. The text is: "it 's a charming and often affecting journey ." 2. Words like "charming" and "affecting" generally carry positive connotations. 3. There are no negative words or negation present. 4. The overall tone feels appreciative and positive. Therefore, the……
+    解析：1（last_number），正确
+
+    --- 样本 idx=5，真实标签 1
+    句子：although laced with humor and a few fanciful touches , the film is a refreshingly serious look at young women .
+    回答：Let's break this down step by step: 1. The text says "although laced with humor and a few fanciful touches" — this acknowledges some light elements but sets up a contrast. 2. The main clause is "the film is a refreshingly serious look at young women." 3. "Refreshingly serious" is a positive phrase —……
+    解析：1（last_number），正确
+
+    --- 样本 idx=4，真实标签 -1
+    句子：it 's slow -- very , very slow .
+    回答：Let's break this down step by step. 1. The text says: "it 's slow -- very , very slow ." 2. The word "slow" is repeated and emphasized with "very, very." 3. In the context of an online review, calling something "slow" is generally a complaint or criticism. 4. The repetition and emphasis make the neg……
+    解析：-1（last_number），正确
+
+    [   5/20] 准确率 1.0000  无效 0  0.38 秒/条  还要约 0.1 分钟
+    [  10/20] 准确率 1.0000  无效 0  0.33 秒/条  还要约 0.1 分钟
+    [  15/20] 准确率 1.0000  无效 0  0.24 秒/条  还要约 0.0 分钟
+    [  20/20] 准确率 1.0000  无效 0  0.27 秒/条
+    准确率 1.0000（20/20），无效输出 0，请求失败 0，被截断 0
+    真实 -1：预测 -1 10 条，预测 1 0 条，无效 0 条
+    真实  1：预测 -1 0 条，预测 1 10 条，无效 0 条
+    tokens：输入 2,520，输出 2,255（含思考）；单条请求平均 1.77 秒
+    明细：results\deepseek_deepseek-flash_cot_think-off_n20_8b56b1fe46ae.csv
+[WALL TIME] 6.593 seconds; exit=0
+[CHECK PASSED] deepseek_deepseek-flash_cot_think-off_n20_8b56b1fe46ae: correct=20/20; reasoning_chars=0; truncated=0; errors=0; invalid=0
+
+[COMMAND 2026-10-14T09:14:06.406421+08:00] python sst2_instruction_eval.py --data-file data\sst2_validation.tsv --prompt cot --think on --n 20
+
+=== deepseek_deepseek-flash_cot_think-on_n20_595f8ae83eeb
+    共 20 条，断点里已有 0 条；并发 8，max_tokens 4096，temperature 0.6
+
+    --- 样本 idx=4，真实标签 -1
+    句子：it 's slow -- very , very slow .
+    思考：We need answer single number -1 or 1. Need analyze sentiment. Text "it 's slow -- very , very slow ." Negative. Return -1. Must follow instruction maybe include only number. Need final.
+    回答：-1
+    解析：-1（exact），正确
+
+    --- 样本 idx=1，真实标签 -1
+    句子：unflinchingly bleak and desperate
+    思考：We need answer sentiment polarity. Text "unflinchingly bleak and desperate" likely negative. Need return single number -1 or 1. Need think step by step but final just number. Ensure no extra.
+    回答：-1
+    解析：-1（exact），正确
+
+    --- 样本 idx=0，真实标签 1
+    句子：it 's a charming and often affecting journey .
+    思考：We need answer. Need comply with instruction. They ask analyze sentiment, return single number -1 or 1. Input: "it 's a charming and often affecting journey ." Positive. Return 1. Need maybe no chain thoughts? User asks think carefully and create step-by-step chain thoughts. But final only number. W……
+    回答：1
+    解析：1（exact），正确
+
+    [   5/20] 准确率 1.0000  无效 0  0.35 秒/条  还要约 0.1 分钟
+    [  10/20] 准确率 1.0000  无效 0  0.28 秒/条  还要约 0.0 分钟
+    [  15/20] 准确率 0.9333  无效 0  0.27 秒/条  还要约 0.0 分钟
+    [  20/20] 准确率 0.9500  无效 0  0.25 秒/条
+    准确率 0.9500（19/20），无效输出 0，请求失败 0，被截断 0
+    真实 -1：预测 -1 10 条，预测 1 0 条，无效 0 条
+    真实  1：预测 -1 1 条，预测 1 9 条，无效 0 条
+    tokens：输入 3,040，输出 1,800（含思考）；单条请求平均 1.71 秒
+    明细：results\deepseek_deepseek-flash_cot_think-on_n20_595f8ae83eeb.csv
+[WALL TIME] 6.297 seconds; exit=0
+[CHECK PASSED] deepseek_deepseek-flash_cot_think-on_n20_595f8ae83eeb: correct=19/20; reasoning_chars=7855; truncated=0; errors=0; invalid=0
+
+[COMMAND 2026-10-14T09:14:12.711351+08:00] python sst2_instruction_eval.py --data-file data\sst2_validation.tsv --prompt role_cot --think off --n 20
+
+=== deepseek_deepseek-flash_role_cot_think-off_n20_6d25ed0b6383
+    共 20 条，断点里已有 0 条；并发 8，max_tokens 1024，temperature 0.0
+
+    --- 样本 idx=6，真实标签 -1
+    句子：a sometimes tedious film .
+    回答：Let’s break this down: 1. The phrase is “a sometimes tedious film.” 2. “Tedious” means boring, monotonous, or tiresome — a negative descriptor. 3. The word “sometimes” softens it slightly, but the overall sentiment is still negative. 4. Since the main descriptive word is negative, the polarity shoul……
+    解析：-1（last_number），正确
+
+    --- 样本 idx=4，真实标签 -1
+    句子：it 's slow -- very , very slow .
+    回答：Let's break this down step by step: 1. The text says: "it 's slow -- very , very slow ." 2. The word "slow" is repeated and intensified with "very, very." 3. In most consumer contexts, describing something as "slow" is a complaint — it indicates dissatisfaction. 4. The repetition and emphasis make t……
+    解析：-1（last_number），正确
+
+    --- 样本 idx=2，真实标签 1
+    句子：allows us to hope that nolan is poised to embark a major career as a commercial yet inventive filmmaker .
+    回答：Let’s break this down step by step. 1. **Identify the main subject and tone** — The sentence talks about Nolan and his potential career as a “commercial yet inventive filmmaker.” 2. **Look for sentiment-bearing words** — “hope,” “poised,” “major career,” “commercial yet inventive” all carry positive……
+    解析：1（last_number），正确
+
+    [   5/20] 准确率 1.0000  无效 0  0.42 秒/条  还要约 0.1 分钟
+    [  10/20] 准确率 1.0000  无效 0  0.33 秒/条  还要约 0.1 分钟
+    [  15/20] 准确率 1.0000  无效 0  0.26 秒/条  还要约 0.0 分钟
+    [  20/20] 准确率 0.9500  无效 0  0.28 秒/条
+    准确率 0.9500（19/20），无效输出 0，请求失败 0，被截断 0
+    真实 -1：预测 -1 10 条，预测 1 0 条，无效 0 条
+    真实  1：预测 -1 1 条，预测 1 9 条，无效 0 条
+    tokens：输入 2,680，输出 2,269（含思考）；单条请求平均 1.82 秒
+    明细：results\deepseek_deepseek-flash_role_cot_think-off_n20_6d25ed0b6383.csv
+[WALL TIME] 6.875 seconds; exit=0
+[CHECK PASSED] deepseek_deepseek-flash_role_cot_think-off_n20_6d25ed0b6383: correct=19/20; reasoning_chars=0; truncated=0; errors=0; invalid=0
+
+[COMMAND 2026-10-14T09:14:19.599969+08:00] python sst2_instruction_eval.py --data-file data\sst2_validation.tsv --prompt role_cot --think on --n 20
+
+=== deepseek_deepseek-flash_role_cot_think-on_n20_ff758a958fe7
+    共 20 条，断点里已有 0 条；并发 8，max_tokens 4096，temperature 0.6
+
+    --- 样本 idx=4，真实标签 -1
+    句子：it 's slow -- very , very slow .
+    思考：We need answer single number -1 or 1. Need analyze review. Text: "it 's slow -- very , very slow ." Sentiment negative. Return -1. Need only number. We can think step by step but final just -1. Ensure no extra.
+    回答：-1
+    解析：-1（exact），正确
+
+    --- 样本 idx=0，真实标签 1
+    句子：it 's a charming and often affecting journey .
+    思考：We need answer. Need analyze sentiment. Input: "it 's a charming and often affecting journey ." Positive. Need return single number either -1 or 1. So 1. Need maybe no extra. Ensure only number.
+    回答：1
+    解析：1（exact），正确
+
+    --- 样本 idx=2，真实标签 1
+    句子：allows us to hope that nolan is poised to embark a major career as a commercial yet inventive filmmaker .
+    思考：We need answer. Need analyze sentiment polarity. Text: "allows us to hope that nolan is poised to embark a major career as a commercial yet inventive filmmaker." This seems positive. Need return single number either -1 or 1. We should maybe just output 1. Need ensure no extra. But system says before……
+    回答：1
+    解析：1（exact），正确
+
+    [   5/20] 准确率 1.0000  无效 0  0.37 秒/条  还要约 0.1 分钟
+    [  10/20] 准确率 1.0000  无效 0  0.30 秒/条  还要约 0.0 分钟
+    [  15/20] 准确率 1.0000  无效 0  0.30 秒/条  还要约 0.0 分钟
+    [  20/20] 准确率 1.0000  无效 0  0.26 秒/条
+    准确率 1.0000（20/20），无效输出 0，请求失败 0，被截断 0
+    真实 -1：预测 -1 10 条，预测 1 0 条，无效 0 条
+    真实  1：预测 -1 0 条，预测 1 10 条，无效 0 条
+    tokens：输入 3,200，输出 1,963（含思考）；单条请求平均 1.79 秒
+    明细：results\deepseek_deepseek-flash_role_cot_think-on_n20_ff758a958fe7.csv
+[WALL TIME] 6.656 seconds; exit=0
+[CHECK PASSED] deepseek_deepseek-flash_role_cot_think-on_n20_ff758a958fe7: correct=20/20; reasoning_chars=8504; truncated=0; errors=0; invalid=0
+[PHASE PASSED] all six n20 groups satisfy the checks; starting full872.
+
+[COMMAND 2026-10-14T09:14:26.275247+08:00] python sst2_instruction_eval.py --data-file data\sst2_validation.tsv --prompt basic --think off
+
+=== deepseek_deepseek-flash_basic_think-off_all_a4d72f5968bf
+    共 872 条，断点里已有 872 条；并发 8，max_tokens 64，temperature 0.0
+    准确率 0.9518（830/872），无效输出 0，请求失败 0，被截断 0
+    真实 -1：预测 -1 421 条，预测 1 7 条，无效 0 条
+    真实  1：预测 -1 35 条，预测 1 409 条，无效 0 条
+    tokens：输入 104,380，输出 1,328（含思考）；单条请求平均 1.00 秒
+    明细：results\deepseek_deepseek-flash_basic_think-off_all_a4d72f5968bf.csv
+[WALL TIME] 1.344 seconds; exit=0
+[CHECK PASSED] deepseek_deepseek-flash_basic_think-off_all_a4d72f5968bf: correct=830/872; reasoning_chars=0; truncated=0; errors=0; invalid=0
+
+[COMMAND 2026-10-14T09:14:27.631505+08:00] python sst2_instruction_eval.py --data-file data\sst2_validation.tsv --prompt basic --think on
+
+=== deepseek_deepseek-flash_basic_think-on_all_7944d434b636
+    共 872 条，断点里已有 0 条；并发 8，max_tokens 4096，temperature 0.6
+
+    --- 样本 idx=3，真实标签 1
+    句子：the acting , costumes , music , cinematography and sound are all astounding given the production 's austere locales .
+    思考：We need answer only -1 or 1. Need analyze sentiment. Text: "the acting , costumes , music , cinematography and sound are all astounding given the production 's austere locales ." Astounding positive. So polarity 1. Must return single number.
+    回答：1
+    解析：1（exact），正确
+
+    --- 样本 idx=0，真实标签 1
+    句子：it 's a charming and often affecting journey .
+    思考：We need answer only -1 or 1. Text positive. Response 1.
+    回答：1
+    解析：1（exact），正确
+
+    --- 样本 idx=6，真实标签 -1
+    句子：a sometimes tedious film .
+    思考：We need answer single number. Text "a sometimes tedious film ." Sentiment likely negative. Return -1.
+    回答：-1
+    解析：-1（exact），正确
+
+    [  87/872] 准确率 1.0000  无效 0  0.17 秒/条  还要约 2.3 分钟
+    [ 174/872] 准确率 0.9828  无效 0  0.17 秒/条  还要约 2.0 分钟
+    [ 261/872] 准确率 0.9847  无效 0  0.18 秒/条  还要约 1.8 分钟
+    [ 348/872] 准确率 0.9741  无效 0  0.18 秒/条  还要约 1.6 分钟
+    [ 435/872] 准确率 0.9724  无效 0  0.18 秒/条  还要约 1.3 分钟
+    [ 522/872] 准确率 0.9674  无效 0  0.18 秒/条  还要约 1.1 分钟
+    [ 609/872] 准确率 0.9704  无效 0  0.18 秒/条  还要约 0.8 分钟
+    [ 696/872] 准确率 0.9698  无效 0  0.18 秒/条  还要约 0.5 分钟
+    [ 783/872] 准确率 0.9668  无效 0  0.18 秒/条  还要约 0.3 分钟
+    [ 870/872] 准确率 0.9609  无效 0  0.18 秒/条  还要约 0.0 分钟
+    [ 872/872] 准确率 0.9610  无效 0  0.18 秒/条
+    准确率 0.9610（838/872），无效输出 0，请求失败 0，被截断 0
+    真实 -1：预测 -1 421 条，预测 1 7 条，无效 0 条
+    真实  1：预测 -1 27 条，预测 1 417 条，无效 0 条
+    tokens：输入 127,052，输出 69,993（含思考）；单条请求平均 1.43 秒
+    明细：results\deepseek_deepseek-flash_basic_think-on_all_7944d434b636.csv
+[WALL TIME] 157.906 seconds; exit=0
+[CHECK PASSED] deepseek_deepseek-flash_basic_think-on_all_7944d434b636: correct=838/872; reasoning_chars=293967; truncated=0; errors=0; invalid=0
+
+[COMMAND 2026-10-14T09:17:05.544113+08:00] python sst2_instruction_eval.py --data-file data\sst2_validation.tsv --prompt cot --think off
+
+=== deepseek_deepseek-flash_cot_think-off_all_8b104c166673
+    共 872 条，断点里已有 0 条；并发 8，max_tokens 1024，temperature 0.0
+
+    --- 样本 idx=6，真实标签 -1
+    句子：a sometimes tedious film .
+    回答：Let's break this down step by step. 1. The text is: "a sometimes tedious film." 2. The key word here is "tedious," which means boring, tiresome, or monotonous. 3. The word "sometimes" softens it slightly, but the overall description is still negative. 4. Since the main sentiment expressed is negativ……
+    解析：-1（last_number），正确
+
+    --- 样本 idx=1，真实标签 -1
+    句子：unflinchingly bleak and desperate
+    回答：Let's break this down: 1. The phrase is "unflinchingly bleak and desperate." 2. "Bleak" generally means grim, depressing, or without hope — a negative descriptor. 3. "Desperate" also carries negative connotations of despair or hopelessness. 4. "Unflinchingly" here emphasizes the intensity of the ble……
+    解析：-1（last_number），正确
+
+    --- 样本 idx=7，真实标签 -1
+    句子：or doing last year 's taxes with your ex-wife .
+    回答：Let's break this down step by step. 1. The phrase mentions "doing last year's taxes" — taxes are often seen as a tedious or unpleasant task. 2. It adds "with your ex-wife" — interactions with an ex-spouse can often be stressful or negative, especially in contexts like finances. 3. The overall tone s……
+    解析：-1（last_number），正确
+
+    [  87/872] 准确率 0.9885  无效 1  0.23 秒/条  还要约 3.1 分钟
+    [ 174/872] 准确率 0.9713  无效 2  0.23 秒/条  还要约 2.6 分钟
+    [ 261/872] 准确率 0.9732  无效 2  0.23 秒/条  还要约 2.3 分钟
+    [ 348/872] 准确率 0.9655  无效 2  0.22 秒/条  还要约 2.0 分钟
+    [ 435/872] 准确率 0.9632  无效 3  0.22 秒/条  还要约 1.6 分钟
+    [ 522/872] 准确率 0.9579  无效 3  0.22 秒/条  还要约 1.3 分钟
+    [ 609/872] 准确率 0.9639  无效 3  0.22 秒/条  还要约 1.0 分钟
+    [ 696/872] 准确率 0.9641  无效 3  0.22 秒/条  还要约 0.6 分钟
+    [ 783/872] 准确率 0.9591  无效 4  0.22 秒/条  还要约 0.3 分钟
+    [ 870/872] 准确率 0.9552  无效 5  0.22 秒/条  还要约 0.0 分钟
+    [ 872/872] 准确率 0.9553  无效 5  0.22 秒/条
+    准确率 0.9553（833/872），无效输出 5，请求失败 0，被截断 0
+    真实 -1：预测 -1 416 条，预测 1 10 条，无效 2 条
+    真实  1：预测 -1 24 条，预测 1 417 条，无效 3 条
+    tokens：输入 111,384，输出 108,182（含思考）；单条请求平均 1.77 秒
+    明细：results\deepseek_deepseek-flash_cot_think-off_all_8b104c166673.csv
+    [注意] 5 条回答里没找到 -1/1，CSV 的 answer 列可以看原文
+[WALL TIME] 194.734 seconds; exit=0
+[CHECK PASSED] deepseek_deepseek-flash_cot_think-off_all_8b104c166673: correct=833/872; reasoning_chars=0; truncated=0; errors=0; invalid=5
+
+[COMMAND 2026-10-14T09:20:20.286255+08:00] python sst2_instruction_eval.py --data-file data\sst2_validation.tsv --prompt cot --think on
+
+=== deepseek_deepseek-flash_cot_think-on_all_b77435b2aaa8
+    共 872 条，断点里已有 0 条；并发 8，max_tokens 4096，temperature 0.6
+
+    --- 样本 idx=4，真实标签 -1
+    句子：it 's slow -- very , very slow .
+    思考：We need answer sentiment polarity -1 or 1. Need analyze text: "it 's slow -- very , very slow ." Negative. Return single number -1. Need comply.
+    回答：-1
+    解析：-1（exact），正确
+
+    --- 样本 idx=3，真实标签 1
+    句子：the acting , costumes , music , cinematography and sound are all astounding given the production 's austere locales .
+    思考：We need answer single number -1 or 1. Need analyze sentiment. Text: "the acting , costumes , music , cinematography and sound are all astounding given the production 's austere locales ." Astounding is positive. So polarity 1. Need output single number. Ensure no extra.
+    回答：1
+    解析：1（exact），正确
+
+    --- 样本 idx=5，真实标签 1
+    句子：although laced with humor and a few fanciful touches , the film is a refreshingly serious look at young women .
+    思考：We need answer sentiment polarity single number -1 or 1. Need analyze text. "although laced with humor and a few fanciful touches , the film is a refreshingly serious look at young women ." Positive? "refreshingly serious" positive. So 1. Need final only number maybe. Ensure no extra.
+    回答：1
+    解析：1（exact），正确
+
+    [  87/872] 准确率 1.0000  无效 0  0.20 秒/条  还要约 2.6 分钟
+    [ 174/872] 准确率 0.9828  无效 0  0.20 秒/条  还要约 2.4 分钟
+    [ 261/872] 准确率 0.9847  无效 0  0.20 秒/条  还要约 2.1 分钟
+    [ 348/872] 准确率 0.9770  无效 0  0.20 秒/条  还要约 1.8 分钟
+    [ 435/872] 准确率 0.9793  无效 0  0.20 秒/条  还要约 1.5 分钟
+    [ 522/872] 准确率 0.9713  无效 0  0.20 秒/条  还要约 1.2 分钟
+    [ 609/872] 准确率 0.9754  无效 0  0.20 秒/条  还要约 0.9 分钟
+    [ 696/872] 准确率 0.9756  无效 0  0.20 秒/条  还要约 0.6 分钟
+    [ 783/872] 准确率 0.9706  无效 0  0.21 秒/条  还要约 0.3 分钟
+    [ 870/872] 准确率 0.9667  无效 1  0.22 秒/条  还要约 0.0 分钟
+    [ 872/872] 准确率 0.9644  无效 1  0.23 秒/条
+    准确率 0.9644（841/872），无效输出 1，请求失败 0，被截断 1
+    真实 -1：预测 -1 421 条，预测 1 7 条，无效 0 条
+    真实  1：预测 -1 23 条，预测 1 420 条，无效 1 条
+    tokens：输入 134,056，输出 106,350（含思考）；单条请求平均 1.71 秒
+    明细：results\deepseek_deepseek-flash_cot_think-on_all_b77435b2aaa8.csv
+    [注意] 1 条写到 max_tokens 上限被截断，可加大 --max-tokens 并加 --fresh 重跑
+    [注意] 1 条回答里没找到 -1/1，CSV 的 answer 列可以看原文
+[WALL TIME] 200.469 seconds; exit=0
+[RETRY] truncated responses; retain current files and run a new --max-tokens 8192 variant.
+
+[COMMAND 2026-10-14T09:23:40.767765+08:00] python sst2_instruction_eval.py --data-file data\sst2_validation.tsv --prompt cot --think on --max-tokens 8192
+
+=== deepseek_deepseek-flash_cot_think-on_all_cb39e1849fae
+    共 872 条，断点里已有 0 条；并发 8，max_tokens 8192，temperature 0.6
+
+    --- 样本 idx=0，真实标签 1
+    句子：it 's a charming and often affecting journey .
+    思考：We need answer sentiment polarity single number -1 or 1. Input "it 's a charming and often affecting journey ." Positive. Need final only number likely 1. Ensure no extra.
+    回答：1
+    解析：1（exact），正确
+
+    --- 样本 idx=3，真实标签 1
+    句子：the acting , costumes , music , cinematography and sound are all astounding given the production 's austere locales .
+    思考：We need answer sentiment polarity single number -1 or 1. Need analyze. Text: "the acting, costumes, music, cinematography and sound are all astounding given the production's austere locales." Clearly positive. Return 1. Need only number. Ensure no extra.
+    回答：1
+    解析：1（exact），正确
+
+    --- 样本 idx=6，真实标签 -1
+    句子：a sometimes tedious film .
+    思考：We need answer. Need determine sentiment polarity. Text "a sometimes tedious film ." Tedious negative. Overall likely negative. Need return single number -1 or 1. Must maybe no chain? User asks think carefully but final just number. We can answer -1. Ensure no extra.
+    回答：-1
+    解析：-1（exact），正确
+
+    [  87/872] 准确率 1.0000  无效 0  0.22 秒/条  还要约 2.8 分钟
+    [ 174/872] 准确率 0.9770  无效 0  0.21 秒/条  还要约 2.4 分钟
+    [ 261/872] 准确率 0.9808  无效 0  0.22 秒/条  还要约 2.3 分钟
+    [ 348/872] 准确率 0.9713  无效 0  0.23 秒/条  还要约 2.0 分钟
+    [ 435/872] 准确率 0.9701  无效 0  0.23 秒/条  还要约 1.6 分钟
+    [ 522/872] 准确率 0.9655  无效 0  0.22 秒/条  还要约 1.3 分钟
+    [ 609/872] 准确率 0.9704  无效 0  0.22 秒/条  还要约 1.0 分钟
+    [ 696/872] 准确率 0.9684  无效 0  0.22 秒/条  还要约 0.6 分钟
+    [ 783/872] 准确率 0.9642  无效 0  0.22 秒/条  还要约 0.3 分钟
+    [ 870/872] 准确率 0.9598  无效 0  0.22 秒/条  还要约 0.0 分钟
+    [ 872/872] 准确率 0.9587  无效 0  0.24 秒/条
+    准确率 0.9587（836/872），无效输出 0，请求失败 0，被截断 0
+    真实 -1：预测 -1 420 条，预测 1 8 条，无效 0 条
+    真实  1：预测 -1 28 条，预测 1 416 条，无效 0 条
+    tokens：输入 134,056，输出 108,975（含思考）；单条请求平均 1.76 秒
+    明细：results\deepseek_deepseek-flash_cot_think-on_all_cb39e1849fae.csv
+[WALL TIME] 209.704 seconds; exit=0
+[CHECK PASSED] deepseek_deepseek-flash_cot_think-on_all_cb39e1849fae: correct=836/872; reasoning_chars=476244; truncated=0; errors=0; invalid=0
+
+[COMMAND 2026-10-14T09:27:10.488997+08:00] python sst2_instruction_eval.py --data-file data\sst2_validation.tsv --prompt role_cot --think off
+
+=== deepseek_deepseek-flash_role_cot_think-off_all_a8fa96abda4f
+    共 872 条，断点里已有 0 条；并发 8，max_tokens 1024，temperature 0.0
+
+    --- 样本 idx=6，真实标签 -1
+    句子：a sometimes tedious film .
+    回答：Let's break this down: 1. The text is "a sometimes tedious film." 2. The key word here is "tedious," which means boring, tiresome, or monotonous — clearly a negative descriptor. 3. The word "sometimes" softens it slightly, but the overall sentiment is still negative. 4. Since the instruction require……
+    解析：-1（last_number），正确
+
+    --- 样本 idx=1，真实标签 -1
+    句子：unflinchingly bleak and desperate
+    回答：Let's break this down: 1. The phrase is "unflinchingly bleak and desperate." 2. "Bleak" generally conveys a sense of hopelessness, emptiness, or negativity. 3. "Desperate" also carries negative connotations of despair or urgency in a bad way. 4. "Unflinchingly" here intensifies the bleakness rather ……
+    解析：-1（last_number），正确
+
+    --- 样本 idx=4，真实标签 -1
+    句子：it 's slow -- very , very slow .
+    回答：Let's break this down step by step: 1. The text says: "it 's slow -- very , very slow ." 2. The word "slow" is generally negative in a consumer review context, implying dissatisfaction with performance. 3. The repetition "very, very slow" intensifies the negativity. 4. There are no positive words or……
+    解析：-1（last_number），正确
+
+    [  87/872] 准确率 0.9770  无效 0  0.24 秒/条  还要约 3.1 分钟
+    [ 174/872] 准确率 0.9598  无效 0  0.24 秒/条  还要约 2.8 分钟
+    [ 261/872] 准确率 0.9693  无效 0  0.24 秒/条  还要约 2.4 分钟
+    [ 348/872] 准确率 0.9626  无效 0  0.23 秒/条  还要约 2.0 分钟
+    [ 435/872] 准确率 0.9632  无效 0  0.23 秒/条  还要约 1.7 分钟
+    [ 522/872] 准确率 0.9579  无效 0  0.23 秒/条  还要约 1.4 分钟
+    [ 609/872] 准确率 0.9639  无效 0  0.23 秒/条  还要约 1.0 分钟
+    [ 696/872] 准确率 0.9641  无效 0  0.23 秒/条  还要约 0.7 分钟
+    [ 783/872] 准确率 0.9591  无效 0  0.24 秒/条  还要约 0.3 分钟
+    [ 870/872] 准确率 0.9552  无效 0  0.24 秒/条  还要约 0.0 分钟
+    [ 872/872] 准确率 0.9553  无效 0  0.24 秒/条
+    准确率 0.9553（833/872），无效输出 0，请求失败 0，被截断 0
+    真实 -1：预测 -1 416 条，预测 1 12 条，无效 0 条
+    真实  1：预测 -1 27 条，预测 1 417 条，无效 0 条
+    tokens：输入 118,360，输出 114,690（含思考）；单条请求平均 1.89 秒
+    明细：results\deepseek_deepseek-flash_role_cot_think-off_all_a8fa96abda4f.csv
+[WALL TIME] 207.735 seconds; exit=0
+[CHECK PASSED] deepseek_deepseek-flash_role_cot_think-off_all_a8fa96abda4f: correct=833/872; reasoning_chars=0; truncated=0; errors=0; invalid=0
+
+[COMMAND 2026-10-14T09:30:38.248714+08:00] python sst2_instruction_eval.py --data-file data\sst2_validation.tsv --prompt role_cot --think on
+
+=== deepseek_deepseek-flash_role_cot_think-on_all_45d3fb2f895c
+    共 872 条，断点里已有 0 条；并发 8，max_tokens 4096，temperature 0.6
+
+    --- 样本 idx=5，真实标签 1
+    句子：although laced with humor and a few fanciful touches , the film is a refreshingly serious look at young women .
+    思考：We need answer only? Need analyze sentiment polarity -1 or 1. Need think step-by-step but final single number. Text: "although laced with humor and a few fanciful touches , the film is a refreshingly serious look at young women." Positive: "refreshingly serious look" likely positive. Need output sin……
+    回答：1
+    解析：1（exact），正确
+
+    --- 样本 idx=2，真实标签 1
+    句子：allows us to hope that nolan is poised to embark a major career as a commercial yet inventive filmmaker .
+    思考：We need answer single number -1 or 1. Need analyze sentiment. Text: "allows us to hope that nolan is poised to embark a major career as a commercial yet inventive filmmaker." Positive. Return 1. Need final only? They requested step-by-step chain thoughts but final likely just number. We can include ……
+    回答：1
+    解析：1（exact），正确
+
+    --- 样本 idx=6，真实标签 -1
+    句子：a sometimes tedious film .
+    思考：We need answer single number -1 or 1. Need analyze "a sometimes tedious film ." Sentiment likely negative because tedious. Even "sometimes" hedges but overall negative. Return -1. Must only number? User asks return single number. Need final.
+    回答：-1
+    解析：-1（exact），正确
+
+    [  87/872] 准确率 1.0000  无效 0  0.22 秒/条  还要约 2.9 分钟
+    [ 174/872] 准确率 0.9770  无效 0  0.21 秒/条  还要约 2.5 分钟
+    [ 261/872] 准确率 0.9770  无效 0  0.22 秒/条  还要约 2.2 分钟
+    [ 348/872] 准确率 0.9713  无效 0  0.22 秒/条  还要约 2.0 分钟
+    [ 435/872] 准确率 0.9724  无效 0  0.22 秒/条  还要约 1.6 分钟
+    [ 522/872] 准确率 0.9655  无效 0  0.22 秒/条  还要约 1.3 分钟
+    [ 609/872] 准确率 0.9704  无效 0  0.22 秒/条  还要约 1.0 分钟
+    [ 696/872] 准确率 0.9713  无效 0  0.22 秒/条  还要约 0.6 分钟
+    [ 783/872] 准确率 0.9668  无效 0  0.22 秒/条  还要约 0.3 分钟
+    [ 870/872] 准确率 0.9632  无效 0  0.22 秒/条  还要约 0.0 分钟
+    [ 872/872] 准确率 0.9610  无效 0  0.22 秒/条
+    准确率 0.9610（838/872），无效输出 0，请求失败 0，被截断 0
+    真实 -1：预测 -1 419 条，预测 1 9 条，无效 0 条
+    真实  1：预测 -1 25 条，预测 1 419 条，无效 0 条
+    tokens：输入 141,032，输出 103,202（含思考）；单条请求平均 1.75 秒
+    明细：results\deepseek_deepseek-flash_role_cot_think-on_all_45d3fb2f895c.csv
+[WALL TIME] 194.844 seconds; exit=0
+[CHECK PASSED] deepseek_deepseek-flash_role_cot_think-on_all_45d3fb2f895c: correct=838/872; reasoning_chars=454324; truncated=0; errors=0; invalid=0
+
+[COMMAND 2026-10-14T09:33:53.091219+08:00] python sst2_instruction_eval.py --report
+| 后端 | 模型 | 模板 | 思考 | 数据 | 生成设置 | 样本数 | 准确率 | 无效 | 平均秒/条 | 输出 tokens | 解析统计 |
+|---|---|---|---|---|---|---:|---:|---:|---:|---:|---|
+| deepseek | deepseek-flash | basic | off | data\sst2_validation.tsv | temperature=0.0, max_tokens=64 | 20 | 0.9500 | 0 | 1.35 | 31 | exact=20 |
+| deepseek | deepseek-flash | basic | off | data\sst2_validation.tsv | temperature=0.0, max_tokens=64 | 872 | 0.9518 | 0 | 1.00 | 1,328 | exact=872 |
+| deepseek | deepseek-flash | basic | on | data\sst2_validation.tsv | temperature=0.6, max_tokens=4096 | 20 | 1.0000 | 0 | 1.39 | 1,090 | exact=20 |
+| deepseek | deepseek-flash | basic | on | data\sst2_validation.tsv | temperature=0.6, max_tokens=4096 | 872 | 0.9610 | 0 | 1.43 | 69,993 | exact=872 |
+| deepseek | deepseek-flash | cot | off | data\sst2_validation.tsv | temperature=0.0, max_tokens=1024 | 20 | 1.0000 | 0 | 1.77 | 2,255 | last_number=20 |
+| deepseek | deepseek-flash | cot | off | data\sst2_validation.tsv | temperature=0.0, max_tokens=1024 | 872 | 0.9553 | 5 | 1.77 | 108,182 | exact=2, invalid=5, last_number=865 |
+| deepseek | deepseek-flash | cot | on | data\sst2_validation.tsv | temperature=0.6, max_tokens=4096 | 20 | 0.9500 | 0 | 1.71 | 1,800 | exact=20 |
+| deepseek | deepseek-flash | cot | on | data\sst2_validation.tsv | temperature=0.6, max_tokens=4096 | 872 | 0.9644 | 1 | 1.71 | 106,350 | empty=1, exact=871 |
+| deepseek | deepseek-flash | cot | on | data\sst2_validation.tsv | temperature=0.6, max_tokens=8192 | 872 | 0.9587 | 0 | 1.76 | 108,975 | exact=872 |
+| deepseek | deepseek-flash | role_cot | off | data\sst2_validation.tsv | temperature=0.0, max_tokens=1024 | 20 | 0.9500 | 0 | 1.82 | 2,269 | exact=1, last_number=19 |
+| deepseek | deepseek-flash | role_cot | off | data\sst2_validation.tsv | temperature=0.0, max_tokens=1024 | 872 | 0.9553 | 0 | 1.89 | 114,690 | exact=6, last_number=866 |
+| deepseek | deepseek-flash | role_cot | on | data\sst2_validation.tsv | temperature=0.6, max_tokens=4096 | 20 | 1.0000 | 0 | 1.79 | 1,963 | exact=20 |
+| deepseek | deepseek-flash | role_cot | on | data\sst2_validation.tsv | temperature=0.6, max_tokens=4096 | 872 | 0.9610 | 0 | 1.75 | 103,202 | exact=872 |
+
+已保存到 results\report.md
+[WALL TIME] 0.172 seconds; exit=0
+
+[FINAL FULL872 TABLE] prompt | thinking | correct/n | accuracy | wall_seconds | max_tokens
+basic | off | 830/872 | 0.9518 | 1.344 | 64
+basic | on | 838/872 | 0.9610 | 157.906 | 4096
+cot | off | 833/872 | 0.9553 | 194.734 | 1024
+cot | on | 841/872 | 0.9644 | 200.469 | 4096
+cot | on | 836/872 | 0.9587 | 209.704 | 8192
+role_cot | off | 833/872 | 0.9553 | 207.735 | 1024
+role_cot | on | 838/872 | 0.9610 | 194.844 | 4096
+basic/off all872 reuses 2026-10-12 predictions, with no new inference requests.
+Thinking-on temperature=0.6 is a request parameter; the DeepSeek service ignores it in thinking mode.
+[PRESERVATION] pinned script, data, and original baseline JSONL unchanged.
+[FINISH] 2026-10-14T09:33:53.259788+08:00
