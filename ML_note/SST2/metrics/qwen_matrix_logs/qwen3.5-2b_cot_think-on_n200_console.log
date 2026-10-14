@@ -1,0 +1,90 @@
+
+2026-10-14T05:48:16.704186+00:00  /usr/bin/python3 /kaggle/working/sst2_remaining/scripts/sst2_instruction_eval.py --provider ollama --base-url http://127.0.0.1:11434 --data-file /kaggle/working/sst2_remaining/data/sst2_validation.tsv --workers 1 --timeout 600 --out-dir /kaggle/working/sst2_remaining/ollama_results/qwen3.5-2b_0689d44085e0 --model qwen3.5:2b --prompt cot --think on --n 200 --show 2
+
+=== ollama_qwen3.5-2b_cot_think-on_n200_3b785a2f31a2
+    共 200 条，断点里已有 0 条；并发 1，max_tokens 4096，temperature 0.6
+
+    --- 样本 idx=0，真实标签 1
+    句子：it 's a charming and often affecting journey .
+    思考：Thinking Process: 1. **Analyze the Request:** * Task: Analyze an online review text and determine sentiment polarity. * Output Format: A single number (-1 for negative, 1 for positive). * Input Text: "it 's a charming and often affecting journey ." * Constraint: Think step-by-step first (chain of th……
+    回答：Step 1: Analyze the key adjectives in the text. The phrase "charming" is a strong positive descriptor indicating attraction and pleasantness. Step 2: Evaluate the second adjective "often affecting." In the context of reviews, this typically suggests emotional resonance or impact on the reader's feel……
+    解析：1（last_number），正确
+
+    [   1/200] 准确率 1.0000  无效 0  41.57 秒/条  还要约 137.9 分钟
+
+    --- 样本 idx=1，真实标签 -1
+    句子：unflinchingly bleak and desperate
+    思考：Thinking Process: 1. **Analyze the Request:** * Task: Analyze an online review text to determine sentiment polarity. * Output Format: Return a single number (-1 for negative, 1 for positive). * Input Text: "unflinchingly bleak and desperate" * Constraint: Think step-by-step before answering (chain o……
+    回答：Step-by-step chain of thoughts: 1. **Analyze the Input Text:** The text provided is "unflinchingly bleak and desperate". This consists of two adjectives describing a condition or experience. 2. **Evaluate "Unflinchingly Bleak":** "Bleak" describes a situation lacking hope or comfort, while "unflinch……
+    解析：-1（last_number），正确
+    [   3/200] 准确率 1.0000  无效 0  30.05 秒/条  还要约 98.7 分钟
+    [   4/200] 准确率 1.0000  无效 0  32.15 秒/条  还要约 105.0 分钟
+    [   5/200] 准确率 1.0000  无效 0  33.46 秒/条  还要约 108.7 分钟
+    [   7/200] 准确率 1.0000  无效 0  31.87 秒/条  还要约 102.5 分钟
+    [   8/200] 准确率 1.0000  无效 0  33.01 秒/条  还要约 105.6 分钟
+    [   9/200] 准确率 1.0000  无效 0  34.79 秒/条  还要约 110.8 分钟
+    [  11/200] 准确率 1.0000  无效 0  32.13 秒/条  还要约 101.2 分钟
+    [  12/200] 准确率 0.9167  无效 1  34.51 秒/条  还要约 108.1 分钟
+    [  13/200] 准确率 0.9231  无效 1  35.04 秒/条  还要约 109.2 分钟
+    [  14/200] 准确率 0.8571  无效 2  36.87 秒/条  还要约 114.3 分钟
+    [  15/200] 准确率 0.8667  无效 2  37.05 秒/条  还要约 114.2 分钟
+    [  16/200] 准确率 0.8750  无效 2  37.54 秒/条  还要约 115.1 分钟
+    [  18/200] 准确率 0.8333  无效 2  37.74 秒/条  还要约 114.5 分钟
+    [  19/200] 准确率 0.7895  无效 3  38.95 秒/条  还要约 117.5 分钟
+    [  20/200] 准确率 0.8000  无效 3  38.56 秒/条  还要约 115.7 分钟
+    [  21/200] 准确率 0.7619  无效 4  39.61 秒/条  还要约 118.2 分钟
+    [  22/200] 准确率 0.7727  无效 4  40.12 秒/条  还要约 119.0 分钟
+    [  23/200] 准确率 0.7391  无效 5  41.00 秒/条  还要约 121.0 分钟
+    [  24/200] 准确率 0.7083  无效 6  41.82 秒/条  还要约 122.7 分钟
+    [  25/200] 准确率 0.7200  无效 6  41.96 秒/条  还要约 122.4 分钟
+    [  26/200] 准确率 0.6923  无效 7  42.69 秒/条  还要约 123.8 分钟
+    [  27/200] 准确率 0.6667  无效 8  43.39 秒/条  还要约 125.1 分钟
+    [  29/200] 准确率 0.6897  无效 8  42.78 秒/条  还要约 121.9 分钟
+    [  31/200] 准确率 0.7097  无效 8  41.22 秒/条  还要约 116.1 分钟
+    [  33/200] 准确率 0.7273  无效 8  40.34 秒/条  还要约 112.3 分钟
+    [  34/200] 准确率 0.7353  无效 8  40.77 秒/条  还要约 112.8 分钟
+    [  35/200] 准确率 0.7143  无效 9  41.34 秒/条  还要约 113.7 分钟
+    [  36/200] 准确率 0.7222  无效 9  41.64 秒/条  还要约 113.8 分钟
+    [  37/200] 准确率 0.7027  无效 10  42.16 秒/条  还要约 114.5 分钟
+    [  38/200] 准确率 0.6842  无效 11  42.64 秒/条  还要约 115.1 分钟
+    [  40/200] 准确率 0.6750  无效 12  42.30 秒/条  还要约 112.8 分钟
+    [  41/200] 准确率 0.6829  无效 12  42.61 秒/条  还要约 112.9 分钟
+    [  43/200] 准确率 0.6977  无效 12  41.82 秒/条  还要约 109.4 分钟
+    [  45/200] 准确率 0.6889  无效 13  41.44 秒/条  还要约 107.1 分钟
+    [  46/200] 准确率 0.6957  无效 13  41.42 秒/条  还要约 106.3 分钟
+    [  47/200] 准确率 0.7021  无效 13  41.73 秒/条  还要约 106.4 分钟
+    [  48/200] 准确率 0.7083  无效 13  41.56 秒/条  还要约 105.3 分钟
+    [  49/200] 准确率 0.7143  无效 13  41.36 秒/条  还要约 104.1 分钟
+    [  51/200] 准确率 0.7059  无效 14  41.12 秒/条  还要约 102.1 分钟
+    [  52/200] 准确率 0.6923  无效 15  41.29 秒/条  还要约 101.8 分钟
+    [  53/200] 准确率 0.6792  无效 16  41.67 秒/条  还要约 102.1 分钟
+    [  54/200] 准确率 0.6667  无效 17  42.02 秒/条  还要约 102.3 分钟
+    [  55/200] 准确率 0.6727  无效 17  42.33 秒/条  还要约 102.3 分钟
+    [  57/200] 准确率 0.6667  无效 18  41.71 秒/条  还要约 99.4 分钟
+    [  58/200] 准确率 0.6552  无效 19  42.04 秒/条  还要约 99.5 分钟
+    [  59/200] 准确率 0.6610  无效 19  42.00 秒/条  还要约 98.7 分钟
+    [  60/200] 准确率 0.6667  无效 19  42.26 秒/条  还要约 98.6 分钟
+    [  62/200] 准确率 0.6774  无效 19  41.50 秒/条  还要约 95.4 分钟
+    [  63/200] 准确率 0.6667  无效 20  41.35 秒/条  还要约 94.4 分钟
+    [  64/200] 准确率 0.6719  无效 20  41.38 秒/条  还要约 93.8 分钟
+    [  65/200] 准确率 0.6769  无效 20  41.59 秒/条  还要约 93.6 分钟
+    [  66/200] 准确率 0.6667  无效 21  41.89 秒/条  还要约 93.5 分钟
+    [  67/200] 准确率 0.6716  无效 21  42.08 秒/条  还要约 93.3 分钟
+    [  68/200] 准确率 0.6618  无效 22  42.36 秒/条  还要约 93.2 分钟
+    [  70/200] 准确率 0.6571  无效 23  41.97 秒/条  还要约 90.9 分钟
+    [  71/200] 准确率 0.6620  无效 23  42.01 秒/条  还要约 90.3 分钟
+    [  72/200] 准确率 0.6667  无效 23  42.16 秒/条  还要约 89.9 分钟
+    [  73/200] 准确率 0.6712  无效 23  42.19 秒/条  还要约 89.3 分钟
+    [  74/200] 准确率 0.6757  无效 23  42.18 秒/条  还要约 88.6 分钟
+    [  76/200] 准确率 0.6842  无效 23  41.54 秒/条  还要约 85.8 分钟
+    [  78/200] 准确率 0.6923  无效 23  40.91 秒/条  还要约 83.2 分钟
+    [  79/200] 准确率 0.6835  无效 23  41.03 秒/条  还要约 82.8 分钟
+    [  80/200] 准确率 0.6875  无效 23  41.19 秒/条  还要约 82.4 分钟
+    [  81/200] 准确率 0.6914  无效 23  41.22 秒/条  还要约 81.8 分钟
+    [  82/200] 准确率 0.6829  无效 24  41.46 秒/条  还要约 81.5 分钟
+    [  83/200] 准确率 0.6867  无效 24  41.39 秒/条  还要约 80.7 分钟
+    [  84/200] 准确率 0.6905  无效 24  41.48 秒/条  还要约 80.2 分钟
+    [  85/200] 准确率 0.6941  无效 24  41.61 秒/条  还要约 79.8 分钟
+    [  86/200] 准确率 0.6860  无效 25  41.83 秒/条  还要约 79.5 分钟
+
+已中断。完成的 86 条已存进 /kaggle/working/sst2_remaining/ollama_results/qwen3.5-2b_0689d44085e0/ollama_qwen3.5-2b_cot_think-on_n200_3b785a2f31a2.jsonl，同样的命令再跑会接着跑。

@@ -1,0 +1,52 @@
+
+2026-10-14T09:47:59.533951+00:00  /usr/bin/python3 /kaggle/working/sst2_remaining/scripts/sst2_instruction_eval.py --provider ollama --base-url http://127.0.0.1:11434 --data-file /kaggle/working/sst2_remaining/data/sst2_validation.tsv --workers 1 --timeout 600 --out-dir /kaggle/working/sst2_remaining/ollama_results/qwen3.5-9b_56671c2ab938 --model qwen3.5:9b --prompt basic --think on --n 200 --show 2
+
+=== ollama_qwen3.5-9b_basic_think-on_n200_5194c28620c6
+    共 200 条，断点里已有 0 条；并发 1，max_tokens 4096，temperature 0.6
+
+    --- 样本 idx=0，真实标签 1
+    句子：it 's a charming and often affecting journey .
+    思考：Thinking Process: 1. **Analyze the Request:** * Task: Analyze the given text from an online review and determine sentiment polarity. * Input Text: "it 's a charming and often affecting journey ." * Output Format: A single number (-1 for negative, 1 for positive). * Constraint: No further explanation……
+    回答：1
+    解析：1（exact），正确
+
+    --- 样本 idx=1，真实标签 -1
+    句子：unflinchingly bleak and desperate
+    思考：Thinking Process: 1. **Analyze the Request:** * Task: Analyze the given text from an online review to determine sentiment polarity. * Input: "unflinchingly bleak and desperate What's the sentiment polarity of the text?" (The actual review text is "unflinchingly bleak and desperate"). * Output Format……
+    回答：-1
+    解析：-1（exact），正确
+
+    [   2/200] 准确率 1.0000  无效 0  17.80 秒/条  还要约 58.8 分钟
+    [   4/200] 准确率 1.0000  无效 0  17.26 秒/条  还要约 56.4 分钟
+    [   6/200] 准确率 1.0000  无效 0  16.71 秒/条  还要约 54.0 分钟
+    [   8/200] 准确率 0.8750  无效 1  39.69 秒/条  还要约 127.0 分钟
+    [  10/200] 准确率 0.9000  无效 1  34.99 秒/条  还要约 110.8 分钟
+    [  12/200] 准确率 0.9167  无效 1  31.80 秒/条  还要约 99.6 分钟
+    [  14/200] 准确率 0.8571  无效 1  38.07 秒/条  还要约 118.0 分钟
+    [  16/200] 准确率 0.8750  无效 1  35.60 秒/条  还要约 109.2 分钟
+    [  17/200] 准确率 0.8824  无效 1  35.64 秒/条  还要约 108.7 分钟
+    [  19/200] 准确率 0.8947  无效 1  33.52 秒/条  还要约 101.1 分钟
+    [  21/200] 准确率 0.9048  无效 1  33.09 秒/条  还要约 98.7 分钟
+    [  22/200] 准确率 0.8636  无效 2  40.85 秒/条  还要约 121.2 分钟
+    [  23/200] 准确率 0.8261  无效 3  47.94 秒/条  还要约 141.4 分钟
+    [  25/200] 准确率 0.8400  无效 3  45.42 秒/条  还要约 132.5 分钟
+    [  27/200] 准确率 0.8519  无效 3  43.51 秒/条  还要约 125.5 分钟
+    [  29/200] 准确率 0.8621  无效 3  41.73 秒/条  还要约 118.9 分钟
+    [  31/200] 准确率 0.8710  无效 3  40.16 秒/条  还要约 113.1 分钟
+    [  33/200] 准确率 0.8788  无效 3  38.80 秒/条  还要约 108.0 分钟
+    [  35/200] 准确率 0.8857  无效 3  37.75 秒/条  还要约 103.8 分钟
+    [  37/200] 准确率 0.8919  无效 3  36.76 秒/条  还要约 99.9 分钟
+    [  39/200] 准确率 0.8974  无效 3  36.18 秒/条  还要约 97.1 分钟
+    [  41/200] 准确率 0.9024  无效 3  35.25 秒/条  还要约 93.4 分钟
+    [  43/200] 准确率 0.9070  无效 3  34.48 秒/条  还要约 90.2 分钟
+    [  45/200] 准确率 0.9111  无效 3  33.65 秒/条  还要约 86.9 分钟
+    [  47/200] 准确率 0.9149  无效 3  33.03 秒/条  还要约 84.2 分钟
+    [  49/200] 准确率 0.9184  无效 3  32.44 秒/条  还要约 81.6 分钟
+    [  51/200] 准确率 0.9216  无效 3  31.91 秒/条  还要约 79.2 分钟
+    [  53/200] 准确率 0.9245  无效 3  31.45 秒/条  还要约 77.1 分钟
+    [  55/200] 准确率 0.9273  无效 3  30.96 秒/条  还要约 74.8 分钟
+    [  57/200] 准确率 0.9298  无效 3  30.46 秒/条  还要约 72.6 分钟
+    [  58/200] 准确率 0.9310  无效 3  30.89 秒/条  还要约 73.1 分钟
+    [  60/200] 准确率 0.9333  无效 3  30.43 秒/条  还要约 71.0 分钟
+
+已中断。完成的 60 条已存进 /kaggle/working/sst2_remaining/ollama_results/qwen3.5-9b_56671c2ab938/ollama_qwen3.5-9b_basic_think-on_n200_5194c28620c6.jsonl，同样的命令再跑会接着跑。

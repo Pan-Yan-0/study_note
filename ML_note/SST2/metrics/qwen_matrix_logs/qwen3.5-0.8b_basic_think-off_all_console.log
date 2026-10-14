@@ -1,0 +1,34 @@
+
+2026-10-14T01:22:52.687247+00:00  /usr/bin/python3 /kaggle/working/sst2_remaining/scripts/sst2_instruction_eval.py --provider ollama --base-url http://127.0.0.1:11434 --data-file /kaggle/working/sst2_remaining/data/sst2_validation.tsv --workers 1 --timeout 600 --out-dir /kaggle/working/sst2_remaining/ollama_results/qwen3.5-0.8b_de63045f2975 --model qwen3.5:0.8b --prompt basic --think off --n 0 --show 2
+
+=== ollama_qwen3.5-0.8b_basic_think-off_all_8808a639c2ba
+    共 872 条，断点里已有 0 条；并发 1，max_tokens 64，temperature 0.0
+
+    --- 样本 idx=0，真实标签 1
+    句子：it 's a charming and often affecting journey .
+    回答：1
+    解析：1（exact），正确
+
+    [   1/872] 准确率 1.0000  无效 0  103.37 秒/条  还要约 1500.6 分钟
+
+    --- 样本 idx=1，真实标签 -1
+    句子：unflinchingly bleak and desperate
+    回答：-1
+    解析：-1（exact），正确
+    [  88/872] 准确率 0.7273  无效 0  1.26 秒/条  还要约 16.5 分钟
+    [ 175/872] 准确率 0.7429  无效 0  0.68 秒/条  还要约 7.9 分钟
+    [ 262/872] 准确率 0.7519  无效 0  0.48 秒/条  还要约 4.9 分钟
+    [ 349/872] 准确率 0.7564  无效 1  0.39 秒/条  还要约 3.4 分钟
+    [ 436/872] 准确率 0.7775  无效 1  0.33 秒/条  还要约 2.4 分钟
+    [ 523/872] 准确率 0.7820  无效 1  0.29 秒/条  还要约 1.7 分钟
+    [ 610/872] 准确率 0.7902  无效 1  0.26 秒/条  还要约 1.1 分钟
+    [ 697/872] 准确率 0.7819  无效 2  0.24 秒/条  还要约 0.7 分钟
+    [ 784/872] 准确率 0.7883  无效 2  0.22 秒/条  还要约 0.3 分钟
+    [ 871/872] 准确率 0.7887  无效 2  0.21 秒/条  还要约 0.0 分钟
+    [ 872/872] 准确率 0.7878  无效 2  0.21 秒/条
+    准确率 0.7878（687/872），无效输出 2，请求失败 0，被截断 0
+    真实 -1：预测 -1 372 条，预测 1 54 条，无效 2 条
+    真实  1：预测 -1 129 条，预测 1 315 条，无效 0 条
+    tokens：输入 116,559，输出 2,247（含思考）；单条请求平均 0.21 秒
+    明细：/kaggle/working/sst2_remaining/ollama_results/qwen3.5-0.8b_de63045f2975/ollama_qwen3.5-0.8b_basic_think-off_all_8808a639c2ba.csv
+    [注意] 2 条回答里没找到 -1/1，CSV 的 answer 列可以看原文

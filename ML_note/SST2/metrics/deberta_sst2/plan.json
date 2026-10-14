@@ -1,0 +1,356 @@
+{
+  "data": {
+    "train": {
+      "source": "nyu-mll/glue sst2 train",
+      "hf_endpoint": "default",
+      "rows": 67349,
+      "sha256": "58c46a6626e2a0ebaa4d7d9282f17f1929b2c0b564ed7e04d3dbf06ced7ad7f4",
+      "label_counts": {
+        "0": 29780,
+        "1": 37569
+      }
+    },
+    "validation": {
+      "file": "/kaggle/working/sst2_remaining/data/sst2_validation.tsv",
+      "rows": 872,
+      "sha256": "f8283cbd816eda3439ca62be80e680bd8df75526a9201c1b8f4817f0b9f1b54b",
+      "checked": true,
+      "matches_hf_validation": true,
+      "hf_rows": 872
+    }
+  },
+  "runs": [
+    {
+      "name": "n16_seed13",
+      "size": "16",
+      "n_train": 16,
+      "seed": 13,
+      "learning_rate": 2e-05,
+      "batch_size": 8,
+      "steps": 1000,
+      "warmup_steps": 100,
+      "schedule": "1000 步",
+      "eval_at": [
+        200,
+        400,
+        600,
+        800,
+        1000
+      ],
+      "weight_decay": 0.01,
+      "max_length": 128,
+      "model": "microsoft/deberta-v3-base"
+    },
+    {
+      "name": "n16_seed21",
+      "size": "16",
+      "n_train": 16,
+      "seed": 21,
+      "learning_rate": 2e-05,
+      "batch_size": 8,
+      "steps": 1000,
+      "warmup_steps": 100,
+      "schedule": "1000 步",
+      "eval_at": [
+        200,
+        400,
+        600,
+        800,
+        1000
+      ],
+      "weight_decay": 0.01,
+      "max_length": 128,
+      "model": "microsoft/deberta-v3-base"
+    },
+    {
+      "name": "n16_seed42",
+      "size": "16",
+      "n_train": 16,
+      "seed": 42,
+      "learning_rate": 2e-05,
+      "batch_size": 8,
+      "steps": 1000,
+      "warmup_steps": 100,
+      "schedule": "1000 步",
+      "eval_at": [
+        200,
+        400,
+        600,
+        800,
+        1000
+      ],
+      "weight_decay": 0.01,
+      "max_length": 128,
+      "model": "microsoft/deberta-v3-base"
+    },
+    {
+      "name": "n64_seed13",
+      "size": "64",
+      "n_train": 64,
+      "seed": 13,
+      "learning_rate": 2e-05,
+      "batch_size": 8,
+      "steps": 1000,
+      "warmup_steps": 100,
+      "schedule": "1000 步",
+      "eval_at": [
+        200,
+        400,
+        600,
+        800,
+        1000
+      ],
+      "weight_decay": 0.01,
+      "max_length": 128,
+      "model": "microsoft/deberta-v3-base"
+    },
+    {
+      "name": "n64_seed21",
+      "size": "64",
+      "n_train": 64,
+      "seed": 21,
+      "learning_rate": 2e-05,
+      "batch_size": 8,
+      "steps": 1000,
+      "warmup_steps": 100,
+      "schedule": "1000 步",
+      "eval_at": [
+        200,
+        400,
+        600,
+        800,
+        1000
+      ],
+      "weight_decay": 0.01,
+      "max_length": 128,
+      "model": "microsoft/deberta-v3-base"
+    },
+    {
+      "name": "n64_seed42",
+      "size": "64",
+      "n_train": 64,
+      "seed": 42,
+      "learning_rate": 2e-05,
+      "batch_size": 8,
+      "steps": 1000,
+      "warmup_steps": 100,
+      "schedule": "1000 步",
+      "eval_at": [
+        200,
+        400,
+        600,
+        800,
+        1000
+      ],
+      "weight_decay": 0.01,
+      "max_length": 128,
+      "model": "microsoft/deberta-v3-base"
+    },
+    {
+      "name": "n256_seed13",
+      "size": "256",
+      "n_train": 256,
+      "seed": 13,
+      "learning_rate": 2e-05,
+      "batch_size": 8,
+      "steps": 1000,
+      "warmup_steps": 100,
+      "schedule": "1000 步",
+      "eval_at": [
+        200,
+        400,
+        600,
+        800,
+        1000
+      ],
+      "weight_decay": 0.01,
+      "max_length": 128,
+      "model": "microsoft/deberta-v3-base"
+    },
+    {
+      "name": "n256_seed21",
+      "size": "256",
+      "n_train": 256,
+      "seed": 21,
+      "learning_rate": 2e-05,
+      "batch_size": 8,
+      "steps": 1000,
+      "warmup_steps": 100,
+      "schedule": "1000 步",
+      "eval_at": [
+        200,
+        400,
+        600,
+        800,
+        1000
+      ],
+      "weight_decay": 0.01,
+      "max_length": 128,
+      "model": "microsoft/deberta-v3-base"
+    },
+    {
+      "name": "n256_seed42",
+      "size": "256",
+      "n_train": 256,
+      "seed": 42,
+      "learning_rate": 2e-05,
+      "batch_size": 8,
+      "steps": 1000,
+      "warmup_steps": 100,
+      "schedule": "1000 步",
+      "eval_at": [
+        200,
+        400,
+        600,
+        800,
+        1000
+      ],
+      "weight_decay": 0.01,
+      "max_length": 128,
+      "model": "microsoft/deberta-v3-base"
+    },
+    {
+      "name": "n1024_seed13",
+      "size": "1024",
+      "n_train": 1024,
+      "seed": 13,
+      "learning_rate": 2e-05,
+      "batch_size": 8,
+      "steps": 1000,
+      "warmup_steps": 100,
+      "schedule": "1000 步",
+      "eval_at": [
+        200,
+        400,
+        600,
+        800,
+        1000
+      ],
+      "weight_decay": 0.01,
+      "max_length": 128,
+      "model": "microsoft/deberta-v3-base"
+    },
+    {
+      "name": "n1024_seed21",
+      "size": "1024",
+      "n_train": 1024,
+      "seed": 21,
+      "learning_rate": 2e-05,
+      "batch_size": 8,
+      "steps": 1000,
+      "warmup_steps": 100,
+      "schedule": "1000 步",
+      "eval_at": [
+        200,
+        400,
+        600,
+        800,
+        1000
+      ],
+      "weight_decay": 0.01,
+      "max_length": 128,
+      "model": "microsoft/deberta-v3-base"
+    },
+    {
+      "name": "n1024_seed42",
+      "size": "1024",
+      "n_train": 1024,
+      "seed": 42,
+      "learning_rate": 2e-05,
+      "batch_size": 8,
+      "steps": 1000,
+      "warmup_steps": 100,
+      "schedule": "1000 步",
+      "eval_at": [
+        200,
+        400,
+        600,
+        800,
+        1000
+      ],
+      "weight_decay": 0.01,
+      "max_length": 128,
+      "model": "microsoft/deberta-v3-base"
+    },
+    {
+      "name": "nfull_seed13",
+      "size": "full",
+      "n_train": 67349,
+      "seed": 13,
+      "learning_rate": 2e-05,
+      "batch_size": 32,
+      "steps": 6315,
+      "warmup_steps": 632,
+      "schedule": "3 轮",
+      "eval_at": [
+        2105,
+        4210,
+        6315
+      ],
+      "weight_decay": 0.01,
+      "max_length": 128,
+      "model": "microsoft/deberta-v3-base"
+    },
+    {
+      "name": "nfull_seed21",
+      "size": "full",
+      "n_train": 67349,
+      "seed": 21,
+      "learning_rate": 2e-05,
+      "batch_size": 32,
+      "steps": 6315,
+      "warmup_steps": 632,
+      "schedule": "3 轮",
+      "eval_at": [
+        2105,
+        4210,
+        6315
+      ],
+      "weight_decay": 0.01,
+      "max_length": 128,
+      "model": "microsoft/deberta-v3-base"
+    },
+    {
+      "name": "nfull_seed42",
+      "size": "full",
+      "n_train": 67349,
+      "seed": 42,
+      "learning_rate": 2e-05,
+      "batch_size": 32,
+      "steps": 6315,
+      "warmup_steps": 632,
+      "schedule": "3 轮",
+      "eval_at": [
+        2105,
+        4210,
+        6315
+      ],
+      "weight_decay": 0.01,
+      "max_length": 128,
+      "model": "microsoft/deberta-v3-base"
+    }
+  ],
+  "args": {
+    "val_file": "/kaggle/working/sst2_remaining/data/sst2_validation.tsv",
+    "out_dir": "/kaggle/working/sst2_remaining/deberta/main",
+    "train_file": null,
+    "model": "microsoft/deberta-v3-base",
+    "sizes": "16,64,256,1024,full",
+    "seeds": "13,21,42",
+    "max_length": 128,
+    "few_lr": 2e-05,
+    "few_batch": 8,
+    "few_steps": 1000,
+    "full_lr": 2e-05,
+    "full_batch": 32,
+    "full_epochs": 3.0,
+    "warmup": 0.1,
+    "weight_decay": 0.01,
+    "eval_batch": 128,
+    "eval_points": 5,
+    "fp32": false,
+    "deadline_unix": 1791976726.0672586,
+    "smoke": false,
+    "dry_run": false
+  }
+}

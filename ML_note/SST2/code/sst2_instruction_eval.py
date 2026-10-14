@@ -88,14 +88,25 @@ PROVIDERS = {
 # ======================= 2. 从回答里取出 -1 或 1 =======================
 _ONLY_NUM = re.compile(r"^[+-]?1(?:\.0+)?$")
 _BOXED = re.compile(r"\\boxed\{\s*([+-]?)1(?:\.0+)?\s*\}")
-_ANSWER_MARKER = (r"(?:final\s+(?:answer|label|prediction)|answer|sentiment(?:\s+polarity)?|"
-                  r"polarity|prediction|label|output|result)")
+# 答案标记：answer / sentiment polarity / response 等，可带 value、score，
+# 以及 “of the text”“for this review” 这类修饰（Qwen 和 DeepSeek 实际输出里都出现过）。
+_ANSWER_MARKER = (r"(?:final\s+(?:answer|label|prediction)|answer|response|"
+                  r"(?:sentiment|polarity)(?:\s+polarity)?(?:\s+(?:value|score))?|"
+                  r"prediction|label|output|result)"
+                  r"(?:\s+(?:of|for)\s+(?:the|this)\s+(?:provided\s+|given\s+)?"
+                  r"(?:text|review|sentence|input))?")
+# “is” “is:” “should be” “:” “=” 都算明确作答
+_LINK = r"\s*(?:(?:is|should\s+be|would\s+be)\s*:?|:|=)\s*"
+_LABEL_WORD = r"(positive|negative|正面|积极|负面|消极)"
+_NUM = r"([+-]?1(?:\.0+)?)"
 _EXPLICIT_NUM = re.compile(
-    r"\b" + _ANSWER_MARKER + r"\s*(?:is|:|=)\s*([+-]?1(?:\.0+)?)\s*[.!。]?\s*$", re.I)
+    r"\b" + _ANSWER_MARKER + _LINK + _NUM + r"(?:\s*\(" + _LABEL_WORD + r"\))?\s*[.!。]?\s*$", re.I)
 _WORD_ONLY = re.compile(r"positive|negative|正面|积极|负面|消极", re.I)
 _EXPLICIT_WORD = re.compile(
-    r"\b" + _ANSWER_MARKER + r"\s*(?:is|:|=)\s*(positive|negative|正面|积极|负面|消极)"
-    r"\s*[.!。]?\s*$", re.I)
+    r"\b" + _ANSWER_MARKER + _LINK + _LABEL_WORD + r"(?:\s*\(" + _NUM + r"\))?\s*[.!。]?\s*$", re.I)
+# 末行只有数字再跟一个冒号，如 “1:” 或 “1: 1”（Qwen 模仿 “### Response:” 时会这样写）
+_NUM_COLON = re.compile(r"^([+-]?1)(?:\.0+)?\s*:(?:\s*([+-]?1)(?:\.0+)?)?$")
+_NEGATIVE_WORDS = ("negative", "负面", "消极")
 # 数学负号、长短破折号、全角符号统一成普通的 - 和 1
 _DASHES = str.maketrans({"\u2212": "-", "\u2013": "-", "\u2014": "-", "\uff0d": "-", "\uff11": "1"})
 
@@ -135,31 +146,51 @@ def parse_label(text: str) -> tuple[int | None, str]:
     first = lines[0].rstrip(" .。") if lines else ""
     if _ONLY_NUM.match(first):
         # 首行作答后又明确改成另一个标签，不能继续把首行当作最终答案。
+        first_value = -1 if first.startswith("-") else 1
         for line in lines[1:]:
-            tail = line.rstrip(" .。")
-            explicit = _EXPLICIT_NUM.search(tail)
-            candidate = tail if _ONLY_NUM.fullmatch(tail) else explicit.group(1) if explicit else None
-            if candidate is not None and candidate.startswith("-") != first.startswith("-"):
+            value, _ = line_label(line.rstrip(" .。"))
+            if value == "conflict" or (value is not None and value != first_value):
                 return None, "ambiguous"
-            word = _WORD_ONLY.fullmatch(tail)
-            explicit_word = _EXPLICIT_WORD.search(tail)
-            if word or explicit_word:
-                value = word.group(0) if word else explicit_word.group(1)
-                negative = value.lower() in ("negative", "负面", "消极")
-                if negative != first.startswith("-"):
-                    return None, "ambiguous"
-        return (-1 if first.startswith("-") else 1), ("exact" if len(lines) == 1 else "first_line")
-    last = lines[-1].rstrip(" .。") if lines else ""
-    explicit = _EXPLICIT_NUM.search(last)
-    candidate = last if _ONLY_NUM.fullmatch(last) else explicit.group(1) if explicit else None
-    if candidate is not None:
-        return (-1 if candidate.startswith("-") else 1), "last_number"
-    word = _WORD_ONLY.fullmatch(last)
-    explicit_word = _EXPLICIT_WORD.search(last)
-    if word or explicit_word:
-        value = word.group(0) if word else explicit_word.group(1)
-        return (1 if value.lower() in ("positive", "正面", "积极") else -1), "word"
+        return first_value, ("exact" if len(lines) == 1 else "first_line")
+    value, method = line_label(lines[-1].rstrip(" .。") if lines else "")
+    if value == "conflict":
+        return None, "ambiguous"
+    if value is not None:
+        return value, method
     return None, "invalid"
+
+
+def _sign(number: str) -> int:
+    return -1 if number.startswith("-") else 1
+
+
+def _word_value(word: str) -> int:
+    return -1 if word.lower() in _NEGATIVE_WORDS else 1
+
+
+def line_label(line: str) -> tuple[int | str | None, str]:
+    """从一行里取明确的答案：(-1/1, 方式)；没有答案是 (None, "")；数字和括号里的词矛盾是 ("conflict", "")。"""
+    if _ONLY_NUM.fullmatch(line):
+        return _sign(line), "last_number"
+    m = _NUM_COLON.match(line)
+    if m:
+        if m.group(2) is not None and _sign(m.group(2)) != _sign(m.group(1)):
+            return "conflict", ""
+        return _sign(m.group(1)), "last_number"
+    m = _EXPLICIT_NUM.search(line)
+    if m:
+        if m.group(2) is not None and _word_value(m.group(2)) != _sign(m.group(1)):
+            return "conflict", ""
+        return _sign(m.group(1)), "last_number"
+    m = _WORD_ONLY.fullmatch(line)
+    if m:
+        return _word_value(m.group(0)), "word"
+    m = _EXPLICIT_WORD.search(line)
+    if m:
+        if m.group(2) is not None and _sign(m.group(2)) != _word_value(m.group(1)):
+            return "conflict", ""
+        return _word_value(m.group(1)), "word"
+    return None, ""
 
 
 # ======================= 3. 读数据 =======================

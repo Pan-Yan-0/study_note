@@ -1,0 +1,49 @@
+01:19:20 训练集 67,349 条（nyu-mll/glue sst2 train），验证集 64 条；共 1 组
+01:19:20   n16_seed13: 16 条，10 步（10 步），batch 8，学习率 2e-05
+01:19:45 GPU：Tesla T4；torch 2.11.0+cu128；transformers 5.19.0
+01:19:47 验证集最长 42 个词片
+01:19:47 ========== [1/1] n16_seed13 ==========
+01:19:47 [n16_seed13] 训练 16 条（正面 8），10 步，共 10 步，batch 8，学习率 2e-05
+01:20:00     n16_seed13 第 10/10 步  loss 0.6841  学习率 0.00e+00  已用 0.1 分钟，预计还要 0.0 分钟
+01:20:00     n16_seed13 第 10 步验证准确率 0.4844（只记录，不用于挑模型）
+01:20:00 [n16_seed13] completed：准确率 0.4844（31/64），训练 0.1 分钟
+| 训练条数 | 完成的种子 | 准确率（均值 ± 标准差） | 最低 | 最高 | 各种子 |
+|---|---:|---:|---:|---:|---|
+| 16 | 1/1 | 0.4844 ± 0.0000 | 0.4844 | 0.4844 | 13: 0.4844 |
+01:20:00 全部结束，用时 0.2 分钟
+SMOKE OK accuracy=0.4844
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+
+Generating train split:   0%|          | 0/67349 [00:00<?, ? examples/s]
+Generating train split: 100%|██████████| 67349/67349 [00:00<00:00, 1355955.69 examples/s]
+
+Generating validation split:   0%|          | 0/872 [00:00<?, ? examples/s]
+Generating validation split: 100%|██████████| 872/872 [00:00<00:00, 318869.49 examples/s]
+
+Generating test split:   0%|          | 0/1821 [00:00<?, ? examples/s]
+Generating test split: 100%|██████████| 1821/1821 [00:00<00:00, 452183.27 examples/s]
+
+Loading weights:   0%|          | 0/198 [00:00<?, ?it/s]
+Loading weights: 100%|██████████| 198/198 [00:00<00:00, 13587.79it/s]
+[transformers] [1mDebertaV2ForSequenceClassification LOAD REPORT[0m from: microsoft/deberta-v3-base
+Key                                     | Status     | 
+----------------------------------------+------------+-
+mask_predictions.dense.weight           | UNEXPECTED | 
+mask_predictions.classifier.bias        | UNEXPECTED | 
+lm_predictions.lm_head.LayerNorm.bias   | UNEXPECTED | 
+lm_predictions.lm_head.dense.bias       | UNEXPECTED | 
+lm_predictions.lm_head.LayerNorm.weight | UNEXPECTED | 
+lm_predictions.lm_head.dense.weight     | UNEXPECTED | 
+mask_predictions.LayerNorm.bias         | UNEXPECTED | 
+mask_predictions.dense.bias             | UNEXPECTED | 
+mask_predictions.LayerNorm.weight       | UNEXPECTED | 
+mask_predictions.classifier.weight      | UNEXPECTED | 
+lm_predictions.lm_head.bias             | UNEXPECTED | 
+pooler.dense.bias                       | MISSING    | 
+pooler.dense.weight                     | MISSING    | 
+classifier.weight                       | MISSING    | 
+classifier.bias                         | MISSING    | 
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+- MISSING:	those params were newly initialized because missing from the checkpoint. Consider training on your downstream task.

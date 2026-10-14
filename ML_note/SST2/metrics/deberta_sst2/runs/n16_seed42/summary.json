@@ -1,0 +1,82 @@
+{
+  "name": "n16_seed42",
+  "size": "16",
+  "n_train": 16,
+  "seed": 42,
+  "learning_rate": 2e-05,
+  "batch_size": 8,
+  "steps": 1000,
+  "warmup_steps": 100,
+  "schedule": "1000 步",
+  "eval_at": [
+    200,
+    400,
+    600,
+    800,
+    1000
+  ],
+  "weight_decay": 0.01,
+  "max_length": 128,
+  "model": "microsoft/deberta-v3-base",
+  "torch": "2.11.0+cu128",
+  "transformers": "5.19.0",
+  "gpu": "Tesla T4",
+  "cuda_visible_devices": "1",
+  "train_label_counts": {
+    "0": 8,
+    "1": 8
+  },
+  "train_idx": [
+    17930,
+    8188,
+    3557,
+    3802,
+    1833,
+    20225,
+    25844,
+    10341,
+    16392,
+    49521,
+    55051,
+    11124,
+    47448,
+    64092,
+    12134,
+    10198
+  ],
+  "started_at": "2026-10-14 01:26:02",
+  "status": "completed",
+  "accuracy": 0.5791284403669725,
+  "correct": 505,
+  "n_eval": 872,
+  "steps_done": 1000,
+  "train_seconds": 160.4,
+  "steps_per_second": 6.233,
+  "nonfinite_losses": 0,
+  "fp16": true,
+  "curve": [
+    {
+      "step": 200,
+      "accuracy": 0.7270642201834863
+    },
+    {
+      "step": 400,
+      "accuracy": 0.7362385321100917
+    },
+    {
+      "step": 600,
+      "accuracy": 0.7488532110091743
+    },
+    {
+      "step": 800,
+      "accuracy": 0.5630733944954128
+    },
+    {
+      "step": 1000,
+      "accuracy": 0.5791284403669725
+    }
+  ],
+  "model_commit": null,
+  "peak_memory_gb": 3.47,
+  "finished_at": "2026-10-14 01:28:45"
+}

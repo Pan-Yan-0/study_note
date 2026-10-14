@@ -1,0 +1,42 @@
+
+2026-10-14T06:48:16.714886+00:00  /usr/bin/python3 /kaggle/working/sst2_remaining/scripts/sst2_instruction_eval.py --provider ollama --base-url http://127.0.0.1:11434 --data-file /kaggle/working/sst2_remaining/data/sst2_validation.tsv --workers 1 --timeout 600 --out-dir /kaggle/working/sst2_remaining/ollama_results/qwen3.5-9b_56671c2ab938 --model qwen3.5:9b --prompt cot --think on --n 200 --show 2
+
+=== ollama_qwen3.5-9b_cot_think-on_n200_7bb4e18c58f6
+    共 200 条，断点里已有 0 条；并发 1，max_tokens 4096，temperature 0.6
+
+    --- 样本 idx=0，真实标签 1
+    句子：it 's a charming and often affecting journey .
+    思考：Thinking Process: 1. **Analyze the Request:** * Task: Analyze text from an online review to determine sentiment polarity. * Output Format: A single number (-1 for negative, 1 for positive). * Input Text: "it 's a charming and often affecting journey ." * Constraint: Think carefully about the questio……
+    回答：1
+    解析：1（exact），正确
+
+    [   1/200] 准确率 1.0000  无效 0  155.71 秒/条  还要约 516.4 分钟
+
+    --- 样本 idx=1，真实标签 -1
+    句子：unflinchingly bleak and desperate
+    思考：Thinking Process: 1. **Analyze the Request:** * Task: Determine sentiment polarity of a given text from an online review. * Output Format: A single number (-1 for negative, 1 for positive). * Input Text: "unflinchingly bleak and desperate" * Constraint: Think step-by-step before answering. 2. **Anal……
+    回答：-1
+    解析：-1（exact），正确
+    [   2/200] 准确率 1.0000  无效 0  146.87 秒/条  还要约 484.7 分钟
+    [   3/200] 准确率 0.6667  无效 1  165.83 秒/条  还要约 544.5 分钟
+    [   4/200] 准确率 0.7500  无效 1  162.62 秒/条  还要约 531.2 分钟
+    [   5/200] 准确率 0.8000  无效 1  148.98 秒/条  还要约 484.2 分钟
+    [   6/200] 准确率 0.8333  无效 1  154.41 秒/条  还要约 499.3 分钟
+    [   7/200] 准确率 0.8571  无效 1  152.45 秒/条  还要约 490.4 分钟
+    [   8/200] 准确率 0.7500  无效 2  158.73 秒/条  还要约 507.9 分钟
+    [   9/200] 准确率 0.7778  无效 2  160.65 秒/条  还要约 511.4 分钟
+    [  10/200] 准确率 0.8000  无效 2  150.44 秒/条  还要约 476.4 分钟
+    [  11/200] 准确率 0.8182  无效 2  147.02 秒/条  还要约 463.1 分钟
+    [  12/200] 准确率 0.7500  无效 3  151.71 秒/条  还要约 475.4 分钟
+    [  13/200] 准确率 0.7692  无效 3  150.05 秒/条  还要约 467.7 分钟
+    [  14/200] 准确率 0.7143  无效 3  153.50 秒/条  还要约 475.9 分钟
+    [  15/200] 准确率 0.6667  无效 4  157.00 秒/条  还要约 484.1 分钟
+    [  16/200] 准确率 0.6875  无效 4  151.16 秒/条  还要约 463.6 分钟
+    [  17/200] 准确率 0.7059  无效 4  153.38 秒/条  还要约 467.8 分钟
+    [  18/200] 准确率 0.7222  无效 4  155.05 秒/条  还要约 470.3 分钟
+    [  19/200] 准确率 0.7368  无效 4  151.04 秒/条  还要约 455.6 分钟
+    [  20/200] 准确率 0.7500  无效 4  152.83 秒/条  还要约 458.5 分钟
+    [  21/200] 准确率 0.7619  无效 4  154.25 秒/条  还要约 460.2 分钟
+    [  22/200] 准确率 0.7273  无效 5  156.53 秒/条  还要约 464.4 分钟
+
+已中断。完成的 22 条已存进 /kaggle/working/sst2_remaining/ollama_results/qwen3.5-9b_56671c2ab938/ollama_qwen3.5-9b_cot_think-on_n200_7bb4e18c58f6.jsonl，同样的命令再跑会接着跑。

@@ -1,0 +1,55 @@
+{
+  "name": "nfull_seed13",
+  "size": "full",
+  "n_train": 67349,
+  "seed": 13,
+  "learning_rate": 2e-05,
+  "batch_size": 32,
+  "steps": 6315,
+  "warmup_steps": 632,
+  "schedule": "3 轮",
+  "eval_at": [
+    2105,
+    4210,
+    6315
+  ],
+  "weight_decay": 0.01,
+  "max_length": 128,
+  "model": "microsoft/deberta-v3-base",
+  "torch": "2.11.0+cu128",
+  "transformers": "5.19.0",
+  "gpu": "Tesla T4",
+  "cuda_visible_devices": "1",
+  "train_label_counts": {
+    "0": 29780,
+    "1": 37569
+  },
+  "train_idx": null,
+  "started_at": "2026-10-14 01:52:39",
+  "status": "completed",
+  "accuracy": 0.9564220183486238,
+  "correct": 834,
+  "n_eval": 872,
+  "steps_done": 6315,
+  "train_seconds": 1138.2,
+  "steps_per_second": 5.548,
+  "nonfinite_losses": 0,
+  "fp16": true,
+  "curve": [
+    {
+      "step": 2105,
+      "accuracy": 0.9495412844036697
+    },
+    {
+      "step": 4210,
+      "accuracy": 0.9529816513761468
+    },
+    {
+      "step": 6315,
+      "accuracy": 0.9564220183486238
+    }
+  ],
+  "model_commit": null,
+  "peak_memory_gb": 4.39,
+  "finished_at": "2026-10-14 02:11:43"
+}

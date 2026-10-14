@@ -1,0 +1,42 @@
+
+2026-10-14T03:37:36.436443+00:00  /usr/bin/python3 /kaggle/working/sst2_remaining/scripts/sst2_instruction_eval.py --provider ollama --base-url http://127.0.0.1:11434 --data-file /kaggle/working/sst2_remaining/data/sst2_validation.tsv --workers 1 --timeout 600 --out-dir /kaggle/working/sst2_remaining/ollama_results/qwen3.5-4b_d8b0f5e9760c --model qwen3.5:4b --prompt role_cot --think off --n 200 --show 2
+
+=== ollama_qwen3.5-4b_role_cot_think-off_n200_818616711ace
+    共 200 条，断点里已有 0 条；并发 1，max_tokens 1024，temperature 0.0
+
+    --- 样本 idx=0，真实标签 1
+    句子：it 's a charming and often affecting journey .
+    回答：To determine the sentiment polarity of the review "it 's a charming and often affecting journey", I will analyze the key adjectives used in the text. The word "charming" is inherently positive, suggesting something delightful or attractive. Similarly, "affecting" in this context implies emotionally ……
+    解析：1（last_number），正确
+
+    --- 样本 idx=1，真实标签 -1
+    句子：unflinchingly bleak and desperate
+    回答：-1
+    解析：-1（exact），正确
+
+    [  12/200] 准确率 0.7500  无效 3  2.85 秒/条  还要约 8.9 分钟
+    [  21/200] 准确率 0.6667  无效 5  3.07 秒/条  还要约 9.2 分钟
+    [  37/200] 准确率 0.7297  无效 8  2.73 秒/条  还要约 7.4 分钟
+    [  46/200] 准确率 0.7609  无效 9  2.91 秒/条  还要约 7.5 分钟
+    [  54/200] 准确率 0.7407  无效 12  3.07 秒/条  还要约 7.5 分钟
+    [  64/200] 准确率 0.7500  无效 14  3.09 秒/条  还要约 7.0 分钟
+    [  74/200] 准确率 0.7432  无效 17  3.10 秒/条  还要约 6.5 分钟
+    [  86/200] 准确率 0.7209  无效 21  3.03 秒/条  还要约 5.8 分钟
+    [  93/200] 准确率 0.6882  无效 25  3.21 秒/条  还要约 5.7 分钟
+    [ 103/200] 准确率 0.6796  无效 27  3.26 秒/条  还要约 5.3 分钟
+    [ 114/200] 准确率 0.6930  无效 28  3.21 秒/条  还要约 4.6 分钟
+    [ 124/200] 准确率 0.6855  无效 30  3.19 秒/条  还要约 4.0 分钟
+    [ 134/200] 准确率 0.6866  无效 32  3.18 秒/条  还要约 3.5 分钟
+    [ 147/200] 准确率 0.7007  无效 33  3.12 秒/条  还要约 2.8 分钟
+    [ 155/200] 准确率 0.7097  无效 34  3.16 秒/条  还要约 2.4 分钟
+    [ 165/200] 准确率 0.7212  无效 35  3.15 秒/条  还要约 1.8 分钟
+    [ 174/200] 准确率 0.7126  无效 38  3.20 秒/条  还要约 1.4 分钟
+    [ 185/200] 准确率 0.7189  无效 40  3.19 秒/条  还要约 0.8 分钟
+    [ 195/200] 准确率 0.7128  无效 42  3.21 秒/条  还要约 0.3 分钟
+    [ 200/200] 准确率 0.7050  无效 43  3.20 秒/条
+    准确率 0.7050（141/200），无效输出 43，请求失败 0，被截断 0
+    真实 -1：预测 -1 95 条，预测 1 2 条，无效 4 条
+    真实  1：预测 -1 14 条，预测 1 46 条，无效 39 条
+    tokens：输入 30,067，输出 25,859（含思考）；单条请求平均 3.20 秒
+    明细：/kaggle/working/sst2_remaining/ollama_results/qwen3.5-4b_d8b0f5e9760c/ollama_qwen3.5-4b_role_cot_think-off_n200_818616711ace.csv
+    [注意] 43 条回答里没找到 -1/1，CSV 的 answer 列可以看原文
