@@ -1,0 +1,35 @@
+
+2026-10-14T15:37:02.887287+00:00  /usr/bin/python3 /kaggle/working/sst2_finish/scripts/sst2_instruction_eval.py --provider ollama --base-url http://127.0.0.1:11435 --data-file /kaggle/working/sst2_finish/data/sst2_validation.tsv --workers 1 --timeout 1800 --out-dir /kaggle/working/sst2_finish/ollama_results/qwen3.5-0.8b_de63045f2975 --model qwen3.5:0.8b --prompt role_cot --think off --n 200 --show 1
+
+=== ollama_qwen3.5-0.8b_role_cot_think-off_n200_7ab8bd177637
+    共 200 条，断点里已有 0 条；并发 1，max_tokens 1024，temperature 0.0
+
+    --- 样本 idx=0，真实标签 1
+    句子：it 's a charming and often affecting journey .
+    回答：To determine the sentiment polarity of the text "it 's a charming and often affecting journey," I will analyze the key words and their semantic meaning: 1. **Identify the core subject**: The phrase "journey" indicates that the review is about an experience, trip, or travel event. 2. **Analyze the ad……
+    解析：1（last_number），正确
+
+    [  11/200] 准确率 0.8182  无效 1  2.75 秒/条  还要约 8.7 分钟
+    [  25/200] 准确率 0.8000  无效 1  2.45 秒/条  还要约 7.2 分钟
+    [  39/200] 准确率 0.7949  无效 2  2.46 秒/条  还要约 6.6 分钟
+    [  53/200] 准确率 0.7736  无效 3  2.40 秒/条  还要约 5.9 分钟
+    [  65/200] 准确率 0.7385  无效 4  2.43 秒/条  还要约 5.5 分钟
+    [  76/200] 准确率 0.7105  无效 5  2.48 秒/条  还要约 5.1 分钟
+    [  89/200] 准确率 0.6966  无效 5  2.48 秒/条  还要约 4.6 分钟
+    [ 101/200] 准确率 0.7030  无效 5  2.48 秒/条  还要约 4.1 分钟
+    [ 114/200] 准确率 0.7193  无效 5  2.47 秒/条  还要约 3.5 分钟
+    [ 126/200] 准确率 0.7063  无效 5  2.48 秒/条  还要约 3.1 分钟
+    [ 139/200] 准确率 0.7266  无效 5  2.46 秒/条  还要约 2.5 分钟
+    [ 151/200] 准确率 0.7483  无效 5  2.48 秒/条  还要约 2.0 分钟
+    [ 164/200] 准确率 0.7622  无效 5  2.46 秒/条  还要约 1.5 分钟
+    [ 173/200] 准确率 0.7630  无效 7  2.51 秒/条  还要约 1.1 分钟
+    [ 187/200] 准确率 0.7701  无效 7  2.50 秒/条  还要约 0.5 分钟
+    [ 198/200] 准确率 0.7727  无效 7  2.51 秒/条  还要约 0.1 分钟
+    [ 200/200] 准确率 0.7750  无效 7  2.51 秒/条
+    准确率 0.7750（155/200），无效输出 7，请求失败 0，被截断 1
+    真实 -1：预测 -1 86 条，预测 1 11 条，无效 4 条
+    真实  1：预测 -1 27 条，预测 1 69 条，无效 3 条
+    tokens：输入 30,067，输出 44,673（含思考）；单条请求平均 2.51 秒
+    明细：/kaggle/working/sst2_finish/ollama_results/qwen3.5-0.8b_de63045f2975/ollama_qwen3.5-0.8b_role_cot_think-off_n200_7ab8bd177637.csv
+    [注意] 1 条写到 max_tokens 上限被截断，可加大 --max-tokens 并加 --fresh 重跑
+    [注意] 7 条回答里没找到 -1/1，CSV 的 answer 列可以看原文

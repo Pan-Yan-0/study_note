@@ -1,0 +1,45 @@
+{
+  "run": "ollama_qwen3.5-4b_role_cot_think-on_n200_5be799124791",
+  "provider": "ollama",
+  "model": "qwen3.5:4b",
+  "base_url": "http://127.0.0.1:11434",
+  "fingerprint": "5be799124791733f67bc87adb0dc8e52aa6e1ea08124e1283ed26a06fabf6c96",
+  "data_fingerprint": "9f8a6a13e5d16cbe1a3dd75b2f71621fd71be541b2b2ae772a723b13864ed9ad",
+  "target_n": 200,
+  "completed": true,
+  "prompt": "role_cot",
+  "think": "on",
+  "data": "/kaggle/working/sst2_finish/data/sst2_validation.tsv",
+  "max_tokens": 4096,
+  "temperature": 0.6,
+  "finished_at": "2026-10-14 18:12:55",
+  "n": 200,
+  "accuracy": 0.85,
+  "correct": 170,
+  "invalid": 25,
+  "accuracy_on_valid": 0.9714,
+  "errors": 0,
+  "truncated": 25,
+  "parse_counts": {
+    "exact": 170,
+    "empty": 24,
+    "last_number": 5,
+    "invalid": 1
+  },
+  "confusion": {
+    "label=-1": {
+      "pred=-1": 88,
+      "pred=1": 2,
+      "invalid": 11
+    },
+    "label=1": {
+      "pred=-1": 3,
+      "pred=1": 82,
+      "invalid": 14
+    }
+  },
+  "prompt_tokens": 29667,
+  "completion_tokens": 325168,
+  "reasoning_chars": 1407447,
+  "avg_seconds": 36.038
+}

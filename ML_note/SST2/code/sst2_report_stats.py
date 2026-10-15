@@ -116,22 +116,29 @@ def main() -> None:
     compare("0.8b 对 2b", q[("0.8b", "basic", "off")], q[("2b", "basic", "off")], ALL)
     compare("2b 对 4b", q[("2b", "basic", "off")], q[("4b", "basic", "off")], ALL)
     compare("4b 对 9b", q[("4b", "basic", "off")], q[("9b", "basic", "off")], ALL)
-    print("4b 的模板与思考（前 200 条；没跑完的组用共同的前若干条）")
-    b = q[("4b", "basic", "off")]
-    compare("basic 对 cot（都关思考）", b, q[("4b", "cot", "off")], FIRST200)
-    compare("basic 对 role_cot（都关思考）", b, q[("4b", "role_cot", "off")], FIRST200)
-    compare("cot 对 role_cot（都关思考）", q[("4b", "cot", "off")], q[("4b", "role_cot", "off")], FIRST200)
-    compare("basic 关思考 对 开思考", b, q[("4b", "basic", "on")], FIRST200)
-    compare("cot 关思考 对 开思考", q[("4b", "cot", "off")], q[("4b", "cot", "on")], range(86))
-    compare("role_cot 关思考 对 开思考", q[("4b", "role_cot", "off")], q[("4b", "role_cot", "on")], range(99))
-    print("开思考：只看没被截断的条目，和同一批条目上的 basic 关思考配对")
-    for key in [k for k in q if k[2] == "on"]:
-        rows, base = q[key], q[(key[0], "basic", "off")]
-        kept = [i for i in rows if rows[i]["finish"] != "length"]
-        cut = [i for i in rows if rows[i]["finish"] == "length"]
-        compare(f"{'/'.join(key)}：basic 关思考 对 本组", base, rows, kept)
-        if cut:
-            print(f"    被截断的 {len(cut)}/{len(rows)} 条上，basic 关思考的准确率 {acc(base, cut):.1%}")
+    sizes = ("0.8b", "2b", "4b", "9b")
+    print("各尺寸的模板（都关思考，前 200 条）")
+    for s in sizes:
+        b, c, r = q[(s, "basic", "off")], q[(s, "cot", "off")], q[(s, "role_cot", "off")]
+        compare(f"{s} basic 对 cot", b, c, FIRST200)
+        compare(f"{s} basic 对 role_cot", b, r, FIRST200)
+        compare(f"{s} cot 对 role_cot", c, r, FIRST200)
+    print("cot / role_cot 关思考时直接只答一个数字（输出不超过 5 个 token）的条数")
+    for s in sizes:
+        print(f"  {s}：" + "，".join(
+            f"{p} {sum(q[(s, p, 'off')][i]['tokens'] <= 5 for i in FIRST200)}/200" for p in ("cot", "role_cot")))
+    print("思考开关：同一模板关思考对开思考。先比全部条目（截断算错），再只比开思考时没被截断的条目")
+    for s in sizes:
+        for p in ("basic", "cot", "role_cot"):
+            off, on = q[(s, p, "off")], q[(s, p, "on")]
+            done = [i for i in FIRST200 if i in on]  # 9b 的两组没跑完，只比跑到的条目
+            kept = [i for i in done if on[i]["finish"] != "length"]
+            cut = [i for i in done if on[i]["finish"] == "length"]
+            compare(f"{s} {p} 全部", off, on, done)
+            compare(f"{s} {p} 没截断的", off, on, kept)
+            print(f"    截断 {len(cut)}/{len(done)} 条（{len(cut) / len(done):.0%}）；这些条目关思考时的准确率 "
+                  f"{acc(off, cut) if cut else float('nan'):.1%}；开思考输出 token 中位数 "
+                  f"{statistics.median(on[i]['tokens'] for i in done):.0f}")
     print("DeepSeek 两两比较（872 条）")
     dsb = ds[("basic", "off", "a4d7")]
     compare("basic 关 对 basic 开", dsb, ds[("basic", "on", "7944")], ALL)

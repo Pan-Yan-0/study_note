@@ -2,41 +2,46 @@
   "run": "ollama_qwen3.5-2b_cot_think-on_n200_3b785a2f31a2",
   "provider": "ollama",
   "model": "qwen3.5:2b",
+  "base_url": "http://127.0.0.1:11434",
+  "fingerprint": "3b785a2f31a2dfd4610bb165413b12347ed3d51d308d40d035d5ea529d00d900",
+  "data_fingerprint": "9f8a6a13e5d16cbe1a3dd75b2f71621fd71be541b2b2ae772a723b13864ed9ad",
+  "target_n": 200,
+  "completed": true,
   "prompt": "cot",
   "think": "on",
-  "target_n": 200,
-  "completed": false,
+  "data": "/kaggle/working/sst2_finish/data/sst2_validation.tsv",
   "max_tokens": 4096,
   "temperature": 0.6,
+  "finished_at": "2026-10-14 21:41:13",
   "rescored_offline": true,
-  "parser_script_sha256": "301d0bb32aafe27a525fe228b687aedc353411135fb71f8077298fc92089bed2",
-  "n": 86,
-  "accuracy": 0.7558,
-  "correct": 65,
-  "invalid": 18,
-  "accuracy_on_valid": 0.9559,
+  "parser_script_sha256": "868a576e848bfe70407fbf506eab85767fee31402d801e3e78a3c766dc3c96b1",
+  "n": 200,
+  "accuracy": 0.685,
+  "correct": 137,
+  "invalid": 54,
+  "accuracy_on_valid": 0.9384,
   "errors": 0,
-  "truncated": 18,
+  "truncated": 54,
   "parse_counts": {
-    "last_number": 62,
-    "exact": 6,
-    "empty": 17,
-    "invalid": 1
+    "last_number": 129,
+    "exact": 17,
+    "empty": 47,
+    "invalid": 7
   },
   "confusion": {
     "label=-1": {
-      "pred=-1": 30,
-      "pred=1": 1,
-      "invalid": 11
+      "pred=-1": 68,
+      "pred=1": 4,
+      "invalid": 29
     },
     "label=1": {
-      "pred=-1": 2,
-      "pred=1": 35,
-      "invalid": 7
+      "pred=-1": 5,
+      "pred=1": 69,
+      "invalid": 25
     }
   },
-  "prompt_tokens": 11944,
-  "completion_tokens": 239693,
-  "reasoning_chars": 1004232,
-  "avg_seconds": 41.836
+  "prompt_tokens": 27867,
+  "completion_tokens": 580996,
+  "reasoning_chars": 2444053,
+  "avg_seconds": 43.418
 }

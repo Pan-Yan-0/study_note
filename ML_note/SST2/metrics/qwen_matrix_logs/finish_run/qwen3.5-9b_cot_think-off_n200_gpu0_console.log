@@ -1,0 +1,42 @@
+
+2026-10-14T15:19:33.567204+00:00  /usr/bin/python3 /kaggle/working/sst2_finish/scripts/sst2_instruction_eval.py --provider ollama --base-url http://127.0.0.1:11434 --data-file /kaggle/working/sst2_finish/data/sst2_validation.tsv --workers 1 --timeout 1800 --out-dir /kaggle/working/sst2_finish/ollama_results/qwen3.5-9b_56671c2ab938 --model qwen3.5:9b --prompt cot --think off --n 200 --show 1
+
+=== ollama_qwen3.5-9b_cot_think-off_n200_028407195a0b
+    共 200 条，断点里已有 0 条；并发 1，max_tokens 1024，temperature 0.0
+
+    --- 样本 idx=0，真实标签 1
+    句子：it 's a charming and often affecting journey .
+    回答：1. **Analyze the input text**: The text provided is "it 's a charming and often affecting journey ." 2. **Identify key adjectives and descriptors**: The words "charming" and "affecting" are used to describe the subject (likely a movie, book, or experience). 3. **Determine the connotation of these wo……
+    解析：1（last_number），正确
+
+    [   1/200] 准确率 1.0000  无效 0  52.99 秒/条  还要约 175.7 分钟
+    [   9/200] 准确率 1.0000  无效 0  9.38 秒/条  还要约 29.9 分钟
+    [  19/200] 准确率 0.9474  无效 0  6.04 秒/条  还要约 18.2 分钟
+    [  28/200] 准确率 0.9286  无效 0  5.29 秒/条  还要约 15.2 分钟
+    [  39/200] 准确率 0.9487  无效 0  4.69 秒/条  还要约 12.6 分钟
+    [  44/200] 准确率 0.9545  无效 0  4.91 秒/条  还要约 12.8 分钟
+    [  54/200] 准确率 0.9444  无效 1  4.72 秒/条  还要约 11.5 分钟
+    [  64/200] 准确率 0.9531  无效 1  4.54 秒/条  还要约 10.3 分钟
+    [  73/200] 准确率 0.9315  无效 1  4.44 秒/条  还要约 9.4 分钟
+    [  78/200] 准确率 0.9231  无效 1  4.81 秒/条  还要约 9.8 分钟
+    [  85/200] 准确率 0.9294  无效 1  4.83 秒/条  还要约 9.2 分钟
+    [  92/200] 准确率 0.9239  无效 1  4.90 秒/条  还要约 8.8 分钟
+    [  98/200] 准确率 0.9286  无效 1  4.99 秒/条  还要约 8.5 分钟
+    [ 107/200] 准确率 0.9252  无效 1  4.92 秒/条  还要约 7.6 分钟
+    [ 123/200] 准确率 0.9187  无效 2  4.53 秒/条  还要约 5.8 分钟
+    [ 133/200] 准确率 0.9248  无效 2  4.45 秒/条  还要约 5.0 分钟
+    [ 150/200] 准确率 0.9267  无效 2  4.16 秒/条  还要约 3.5 分钟
+    [ 153/200] 准确率 0.9216  无效 3  4.28 秒/条  还要约 3.4 分钟
+    [ 167/200] 准确率 0.9222  无效 4  4.21 秒/条  还要约 2.3 分钟
+    [ 175/200] 准确率 0.9257  无效 4  4.22 秒/条  还要约 1.8 分钟
+    [ 186/200] 准确率 0.9247  无效 4  4.16 秒/条  还要约 1.0 分钟
+    [ 188/200] 准确率 0.9255  无效 4  4.29 秒/条  还要约 0.9 分钟
+    [ 195/200] 准确率 0.9282  无效 4  4.29 秒/条  还要约 0.4 分钟
+    [ 200/200] 准确率 0.9250  无效 5  4.24 秒/条
+    准确率 0.9250（185/200），无效输出 5，请求失败 0，被截断 1
+    真实 -1：预测 -1 99 条，预测 1 2 条，无效 0 条
+    真实  1：预测 -1 8 条，预测 1 86 条，无效 5 条
+    tokens：输入 28,267，输出 21,629（含思考）；单条请求平均 4.24 秒
+    明细：/kaggle/working/sst2_finish/ollama_results/qwen3.5-9b_56671c2ab938/ollama_qwen3.5-9b_cot_think-off_n200_028407195a0b.csv
+    [注意] 1 条写到 max_tokens 上限被截断，可加大 --max-tokens 并加 --fresh 重跑
+    [注意] 5 条回答里没找到 -1/1，CSV 的 answer 列可以看原文

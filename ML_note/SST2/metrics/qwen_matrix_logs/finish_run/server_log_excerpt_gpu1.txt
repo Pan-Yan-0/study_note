@@ -1,0 +1,44 @@
+# 摘自 ollama_server_gpu1.log（原文件 17065130 字节，未入库）：服务启动设置、每次加载模型的命令行与并行警告
+2:===== 2026-10-14T15:16:04.679798+00:00 启动服务：GPU 1，OLLAMA_NUM_PARALLEL=1，OLLAMA_CONTEXT_LENGTH=8192
+188:load_tensors: offloaded 33/33 layers to GPU
+197:llama_context: n_seq_max             = 1
+199:llama_context: n_ctx_seq             = 8192
+210:llama_context: n_ctx_seq (8192) < n_ctx_train (262144) -- the full capacity of the model will not be utilized
+13561:load_tensors: offloaded 25/25 layers to GPU
+13570:llama_context: n_seq_max             = 1
+13572:llama_context: n_ctx_seq             = 8192
+13583:llama_context: n_ctx_seq (8192) < n_ctx_train (262144) -- the full capacity of the model will not be utilized
+13738:load_tensors: offloaded 26/26 layers to GPU
+13742:llama_context: n_seq_max             = 1
+13744:llama_context: n_ctx_seq             = 8192
+13755:llama_context: n_ctx_seq (8192) < n_ctx_train (262144) -- the full capacity of the model will not be utilized
+47276:load_tensors: offloaded 25/25 layers to GPU
+47285:llama_context: n_seq_max             = 1
+47287:llama_context: n_ctx_seq             = 8192
+47298:llama_context: n_ctx_seq (8192) < n_ctx_train (262144) -- the full capacity of the model will not be utilized
+77636:===== 2026-10-14T15:57:28.672032+00:00 启动服务：GPU 1，OLLAMA_NUM_PARALLEL=4，OLLAMA_CONTEXT_LENGTH=8192
+77649:time=2026-10-14T15:57:34.073Z level=WARN source=sched.go:519 msg="model architecture does not currently support parallel requests" architecture=qwen35
+77822:load_tensors: offloaded 25/25 layers to GPU
+77831:llama_context: n_seq_max             = 1
+77833:llama_context: n_ctx_seq             = 8192
+77844:llama_context: n_ctx_seq (8192) < n_ctx_train (262144) -- the full capacity of the model will not be utilized
+77999:load_tensors: offloaded 26/26 layers to GPU
+78003:llama_context: n_seq_max             = 1
+78005:llama_context: n_ctx_seq             = 8192
+78016:llama_context: n_ctx_seq (8192) < n_ctx_train (262144) -- the full capacity of the model will not be utilized
+114991:time=2026-10-14T17:57:56.142Z level=WARN source=sched.go:519 msg="model architecture does not currently support parallel requests" architecture=qwen35
+115160:load_tensors: offloaded 25/25 layers to GPU
+115169:llama_context: n_seq_max             = 1
+115171:llama_context: n_ctx_seq             = 8192
+115182:llama_context: n_ctx_seq (8192) < n_ctx_train (262144) -- the full capacity of the model will not be utilized
+155452:time=2026-10-14T20:30:17.849Z level=WARN source=sched.go:519 msg="model architecture does not currently support parallel requests" architecture=qwen35
+155623:load_tensors: offloaded 33/33 layers to GPU
+155632:llama_context: n_seq_max             = 1
+155634:llama_context: n_ctx_seq             = 8192
+155645:llama_context: n_ctx_seq (8192) < n_ctx_train (262144) -- the full capacity of the model will not be utilized
+20:time=2026-10-14T15:18:36.941Z level=INFO source=llama_server.go:436 msg="starting llama-server" cmd="/usr/local/lib/ollama/llama-server --model … --port 46499 --host 127.0.0.1 --no-webui --offline -c 8192 -np 1 --log-verbosity 4 --no-log-prefix --no-log-timestamps --no-jinja --chat-template chatml --mmproj … --load-mode none --flash-attn auto -b 1024 -ub 1024 --context-shift --keep 4"
+13390:time=2026-10-14T15:36:56.859Z level=INFO source=llama_server.go:436 msg="starting llama-server" cmd="/usr/local/lib/ollama/llama-server --model … --port 42749 --host 127.0.0.1 --no-webui --offline -c 8192 -np 1 --log-verbosity 4 --no-log-prefix --no-log-timestamps --no-jinja --chat-template chatml --mmproj … --spec-type draft-mtp --spec-draft-n-max 2 --spec-draft-backend-sampling --spec-draft-model … --flash-attn auto -b 1024 -ub 1024 --context-shift --keep 4"
+47109:time=2026-10-14T15:45:28.420Z level=INFO source=llama_server.go:436 msg="starting llama-server" cmd="/usr/local/lib/ollama/llama-server --model … --port 44763 --host 127.0.0.1 --no-webui --offline -c 8192 -np 1 --log-verbosity 4 --no-log-prefix --no-log-timestamps --no-jinja --chat-template chatml --mmproj … --flash-attn auto -b 1024 -ub 1024 --context-shift --keep 4"
+77651:time=2026-10-14T15:57:34.297Z level=INFO source=llama_server.go:436 msg="starting llama-server" cmd="/usr/local/lib/ollama/llama-server --model … --port 35549 --host 127.0.0.1 --no-webui --offline -c 8192 -np 1 --log-verbosity 4 --no-log-prefix --no-log-timestamps --no-jinja --chat-template chatml --mmproj … --spec-type draft-mtp --spec-draft-n-max 2 --spec-draft-backend-sampling --spec-draft-model … --flash-attn auto -b 1024 -ub 1024 --context-shift --keep 4"
+114993:time=2026-10-14T17:57:56.248Z level=INFO source=llama_server.go:436 msg="starting llama-server" cmd="/usr/local/lib/ollama/llama-server --model … --port 41511 --host 127.0.0.1 --no-webui --offline -c 8192 -np 1 --log-verbosity 4 --no-log-prefix --no-log-timestamps --no-jinja --chat-template chatml --mmproj … --flash-attn auto -b 1024 -ub 1024 --context-shift --keep 4"
+155455:time=2026-10-14T20:30:17.948Z level=INFO source=llama_server.go:436 msg="starting llama-server" cmd="/usr/local/lib/ollama/llama-server --model … --port 41317 --host 127.0.0.1 --no-webui --offline -c 8192 -np 1 --log-verbosity 4 --no-log-prefix --no-log-timestamps --no-jinja --chat-template chatml --mmproj … --load-mode none --flash-attn auto -b 1024 -ub 1024 --context-shift --keep 4"

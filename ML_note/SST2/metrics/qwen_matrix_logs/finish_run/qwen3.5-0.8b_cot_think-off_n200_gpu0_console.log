@@ -1,0 +1,33 @@
+
+2026-10-14T15:34:03.997306+00:00  /usr/bin/python3 /kaggle/working/sst2_finish/scripts/sst2_instruction_eval.py --provider ollama --base-url http://127.0.0.1:11434 --data-file /kaggle/working/sst2_finish/data/sst2_validation.tsv --workers 1 --timeout 1800 --out-dir /kaggle/working/sst2_finish/ollama_results/qwen3.5-0.8b_de63045f2975 --model qwen3.5:0.8b --prompt cot --think off --n 200 --show 1
+
+=== ollama_qwen3.5-0.8b_cot_think-off_n200_2c1236ba3a00
+    共 200 条，断点里已有 0 条；并发 1，max_tokens 1024，temperature 0.0
+
+    --- 样本 idx=0，真实标签 1
+    句子：it 's a charming and often affecting journey .
+    回答：To determine the sentiment polarity of the text "it 's a charming and often affecting journey," I will analyze the key words and their semantic meaning: 1. **Identify the core subject**: The phrase "journey" indicates an experience, travel, or life event. 2. **Analyze the adjectives**: * **"Charming……
+    解析：1（last_number），正确
+
+    [  10/200] 准确率 0.9000  无效 0  3.13 秒/条  还要约 9.9 分钟
+    [  23/200] 准确率 0.8696  无效 0  2.67 秒/条  还要约 7.9 分钟
+    [  36/200] 准确率 0.8611  无效 0  2.61 秒/条  还要约 7.1 分钟
+    [  45/200] 准确率 0.8444  无效 0  2.76 秒/条  还要约 7.1 分钟
+    [  59/200] 准确率 0.7966  无效 0  2.64 秒/条  还要约 6.2 分钟
+    [  72/200] 准确率 0.8194  无效 0  2.63 秒/条  还要约 5.6 分钟
+    [  86/200] 准确率 0.8023  无效 0  2.59 秒/条  还要约 4.9 分钟
+    [  98/200] 准确率 0.7653  无效 0  2.59 秒/条  还要约 4.4 分钟
+    [ 110/200] 准确率 0.7818  无效 0  2.58 秒/条  还要约 3.9 分钟
+    [ 123/200] 准确率 0.7642  无效 1  2.56 秒/条  还要约 3.3 分钟
+    [ 135/200] 准确率 0.7630  无效 2  2.56 秒/条  还要约 2.8 分钟
+    [ 147/200] 准确率 0.7687  无效 2  2.56 秒/条  还要约 2.3 分钟
+    [ 160/200] 准确率 0.7750  无效 3  2.54 秒/条  还要约 1.7 分钟
+    [ 173/200] 准确率 0.7688  无效 3  2.54 秒/条  还要约 1.1 分钟
+    [ 187/200] 准确率 0.7647  无效 3  2.51 秒/条  还要约 0.5 分钟
+    [ 200/200] 准确率 0.7750  无效 3  2.49 秒/条
+    准确率 0.7750（155/200），无效输出 3，请求失败 0，被截断 0
+    真实 -1：预测 -1 85 条，预测 1 15 条，无效 1 条
+    真实  1：预测 -1 27 条，预测 1 70 条，无效 2 条
+    tokens：输入 28,267，输出 43,904（含思考）；单条请求平均 2.50 秒
+    明细：/kaggle/working/sst2_finish/ollama_results/qwen3.5-0.8b_de63045f2975/ollama_qwen3.5-0.8b_cot_think-off_n200_2c1236ba3a00.csv
+    [注意] 3 条回答里没找到 -1/1，CSV 的 answer 列可以看原文

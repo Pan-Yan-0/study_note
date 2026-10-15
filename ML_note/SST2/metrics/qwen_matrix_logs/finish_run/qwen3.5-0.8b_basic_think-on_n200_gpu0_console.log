@@ -1,0 +1,49 @@
+
+2026-10-14T15:55:18.406266+00:00  /usr/bin/python3 /kaggle/working/sst2_finish/scripts/sst2_instruction_eval.py --provider ollama --base-url http://127.0.0.1:11434 --data-file /kaggle/working/sst2_finish/data/sst2_validation.tsv --workers 1 --timeout 1800 --out-dir /kaggle/working/sst2_finish/ollama_results/qwen3.5-0.8b_de63045f2975 --model qwen3.5:0.8b --prompt basic --think on --n 200 --show 1
+
+=== ollama_qwen3.5-0.8b_basic_think-on_n200_b64dc64a59d6
+    共 200 条，断点里已有 152 条；并发 1，max_tokens 4096，temperature 0.6
+
+    --- 样本 idx=152，真实标签 1
+    句子：a difficult , absorbing film that manages to convey more substance despite its repetitions and inconsistencies than do most films than are far more pointed and clear .
+    思考：Thinking Process: 1. **Analyze the Request:** * Task: Analyze the provided text from an online review to determine sentiment polarity. * Output Format: A single number (-1 for negative, 1 for positive). * Input Text: "a difficult , absorbing film that manages to convey more substance despite its rep……
+    回答：
+    解析：None（empty），错误
+
+    [ 153/200] 准确率 0.5882  无效 54  39.70 秒/条  还要约 31.1 分钟
+    [ 155/200] 准确率 0.5871  无效 55  33.73 秒/条  还要约 25.3 分钟
+    [ 157/200] 准确率 0.5924  无效 55  28.48 秒/条  还要约 20.4 分钟
+    [ 159/200] 准确率 0.5912  无效 56  28.31 秒/条  还要约 19.3 分钟
+    [ 160/200] 准确率 0.5875  无效 57  29.80 秒/条  还要约 19.9 分钟
+    [ 162/200] 准确率 0.5864  无效 58  30.18 秒/条  还要约 19.1 分钟
+    [ 164/200] 准确率 0.5854  无效 59  28.79 秒/条  还要约 17.3 分钟
+    [ 165/200] 准确率 0.5818  无效 60  29.78 秒/条  还要约 17.4 分钟
+    [ 166/200] 准确率 0.5783  无效 61  30.50 秒/条  还要约 17.3 分钟
+    [ 168/200] 准确率 0.5774  无效 61  29.82 秒/条  还要约 15.9 分钟
+    [ 169/200] 准确率 0.5740  无效 62  30.49 秒/条  还要约 15.8 分钟
+    [ 171/200] 准确率 0.5789  无效 62  29.33 秒/条  还要约 14.2 分钟
+    [ 172/200] 准确率 0.5814  无效 62  29.79 秒/条  还要约 13.9 分钟
+    [ 174/200] 准确率 0.5862  无效 62  29.41 秒/条  还要约 12.7 分钟
+    [ 176/200] 准确率 0.5852  无效 63  29.45 秒/条  还要约 11.8 分钟
+    [ 178/200] 准确率 0.5843  无效 64  29.80 秒/条  还要约 10.9 分钟
+    [ 181/200] 准确率 0.5912  无效 64  27.97 秒/条  还要约 8.9 分钟
+    [ 183/200] 准确率 0.5902  无效 65  28.01 秒/条  还要约 7.9 分钟
+    [ 185/200] 准确率 0.5838  无效 66  27.99 秒/条  还要约 7.0 分钟
+    [ 187/200] 准确率 0.5829  无效 66  27.43 秒/条  还要约 5.9 分钟
+    [ 188/200] 准确率 0.5851  无效 66  27.60 秒/条  还要约 5.5 分钟
+    [ 189/200] 准确率 0.5820  无效 67  27.97 秒/条  还要约 5.1 分钟
+    [ 190/200] 准确率 0.5789  无效 68  28.40 秒/条  还要约 4.7 分钟
+    [ 192/200] 准确率 0.5781  无效 69  28.08 秒/条  还要约 3.7 分钟
+    [ 194/200] 准确率 0.5722  无效 69  27.66 秒/条  还要约 2.8 分钟
+    [ 195/200] 准确率 0.5692  无效 70  27.97 秒/条  还要约 2.3 分钟
+    [ 196/200] 准确率 0.5663  无效 71  28.21 秒/条  还要约 1.9 分钟
+    [ 197/200] 准确率 0.5635  无效 72  28.48 秒/条  还要约 1.4 分钟
+    [ 199/200] 准确率 0.5678  无效 72  28.00 秒/条  还要约 0.5 分钟
+    [ 200/200] 准确率 0.5650  无效 73  28.28 秒/条
+    准确率 0.5650（113/200），无效输出 73，请求失败 0，被截断 73
+    真实 -1：预测 -1 65 条，预测 1 5 条，无效 31 条
+    真实  1：预测 -1 9 条，预测 1 48 条，无效 42 条
+    tokens：输入 26,267，输出 523,697（含思考）；单条请求平均 24.66 秒
+    明细：/kaggle/working/sst2_finish/ollama_results/qwen3.5-0.8b_de63045f2975/ollama_qwen3.5-0.8b_basic_think-on_n200_b64dc64a59d6.csv
+    [注意] 73 条写到 max_tokens 上限被截断，可加大 --max-tokens 并加 --fresh 重跑
+    [注意] 73 条回答里没找到 -1/1，CSV 的 answer 列可以看原文
