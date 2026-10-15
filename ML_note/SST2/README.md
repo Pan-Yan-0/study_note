@@ -27,6 +27,7 @@
 | [notebooks/teacher_sst2_ollama.ipynb](notebooks/teacher_sst2_ollama.ipynb) | 结果一里 Qwen3.5 4B 那次运行的 Kaggle Notebook |
 | [notebooks/sst2_remaining_experiments.ipynb](notebooks/sst2_remaining_experiments.ipynb) | 结果二、三、五的 Kaggle Notebook（Qwen 各组的第一次运行和 DeBERTa） |
 | [notebooks/sst2_finish_experiments.ipynb](notebooks/sst2_finish_experiments.ipynb) | 结果三剩余各组的 Kaggle Notebook（从第一次的断点接着跑） |
+| [notebooks/sst2_more_models.ipynb](notebooks/sst2_more_models.ipynb) | Mistral、Llama、Gemma、Phi-4 四个系列的 Notebook（Colab 或 Kaggle）：basic 全部 872 条、cot 前 200 条；不设时间限制，跑完的组跳过，没跑完的组从断点接着跑 |
 | `metrics/` 根目录 | 结果一和结果四：DeepSeek 7 次全量运行和 Qwen 4B 第一次运行的逐条 `.csv`、`_summary.json`、`_errors.csv` |
 | [metrics/qwen_matrix/](metrics/qwen_matrix/) | Qwen 24 组的逐条结果、汇总和错例；没跑完的两组汇总里 `completed` 为 false |
 | [metrics/qwen_matrix_logs/](metrics/qwen_matrix_logs/) | Qwen 各组的终端输出、模型信息（量化方式、文件摘要）、执行状态和 `nvidia-smi`；[finish_run/](metrics/qwen_matrix_logs/finish_run/) 是第二次运行的记录，含服务日志摘录 |
@@ -279,8 +280,9 @@ Just "1".
 
 - 整段只有一个数字、第一行只有一个数字（后面的行不能改成另一个答案），或 `\boxed{1}`。
 - 最后一行是明确的作答：答案标记（answer、response、sentiment polarity、value、number、conclusion 等，可带 “of the text”“for this review”）加连接词（is、is:、should be、of、:、=）加 ±1 或 positive / negative，如 “The answer is: **1**”“Response: 1”“the corresponding number is -1”。
-- 末行是 “1:”“Return `1`.”“1 (Positive)”；括号里的词必须和数字一致，`1: -1` 这样前后矛盾的算无效。单独成行的 `<final_answer>` 这类标签忽略。
-- 不从推理文字中猜答案：回答 `0`、`-2`，被截断没有答案，或只是复述规则（“-1 represents negative sentiment.”）都算无效。
+- 末行是 “1:”“Return `1`.”“1 (Positive)”“-1 (Negative sentiment)”；括号里的词必须和数字一致，`1: -1` 这样前后矛盾的算无效。单独成行的 `<final_answer>` 这类标签忽略。
+- 明确作答后紧跟一句同向的说明也算，如 “The sentiment polarity of the given text is -1, indicating a negative sentiment.”，说明里的词必须和数字一致；`$\boxed{1}$` 按 `\boxed{1}` 算。这两种写法和上一条的 “(Negative sentiment)” 出现在 Llama、Mistral 的回答里，用这一版规则（`c3c96be1…`）重新判分，Qwen 和 DeepSeek 的 31 组结果一条都没有变。
+- 不从推理文字中猜答案：回答 `0`、`-2`，被截断没有答案，只是复述规则（“-1 represents negative sentiment.”），或最后一行在答案后面又接着写解释（“… is -1, indicating a negative sentiment. The reviewer …”），都算无效。
 
 本文所有数字都用这套规则，从 `metrics/raw/` 的原始返回重新判分（[code/rescore_offline.py](code/rescore_offline.py)）。和运行时较早版本的规则相比，变化大的几组：
 
@@ -295,7 +297,7 @@ Just "1".
 ## 缺少的数据
 
 - 9b 的 cot 开思考和 role_cot 开思考缺 16 条和 32 条。
-- 材料要求的 Llama、Gemma、Phi-4、Mistral 没有运行，只有 Qwen 和 DeepSeek。
+- 材料要求的 Llama、Gemma、Phi-4、Mistral 正在用 [sst2_more_models.ipynb](notebooks/sst2_more_models.ipynb) 运行，结果还没有整理进本文。
 - 开思考只用了 4096 个 token 的输出上限，没有更大上限的对照，思考本身的作用和截断没有完全分开。
 - 每种设置只运行了一次（DeBERTa 除外）；开思考时采样有随机性，几个百分点以内的差别没有重复运行来确认。
 
