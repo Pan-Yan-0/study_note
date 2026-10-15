@@ -302,10 +302,10 @@ Just "1".
 ## 来源
 
 - 实验：
-  - 结果一的两组由Pan-Yan-0运行：DeepSeek 在本机，Qwen 在 Kaggle。
-  - 结果二、三、五由Pan-Yan-0在 Kaggle 上运行 [sst2_remaining_experiments.ipynb](notebooks/sst2_remaining_experiments.ipynb)（两张 T4，共 9 小时），导出的结果包里核对了脚本（`187d2f88…`、`fb581c22…`）和数据（`a7a3bfee…`）的 SHA-256。
-  - 结果三的剩余部分由Pan-Yan-0在 Kaggle 上运行 [sst2_finish_experiments.ipynb](notebooks/sst2_finish_experiments.ipynb)（两张 T4，共 11.2 小时），结果包里核对了脚本（`301d0bb3…`、`beb4cc0b…`）和数据的 SHA-256；接着跑的 7 组，第一次已有的条目与仓库里的原始返回逐条一致。
-  - 结果四的 DeepSeek 组合由 GPT6astra 在Pan-Yan-0的本机运行，用的是同一版评测脚本和同一份数据，终端记录见 [metrics/deepseek_matrix_logs/](metrics/deepseek_matrix_logs/)。
+  - 结果一的两组由 Pan-Yan-0 运行：DeepSeek 在本机，Qwen 在 Kaggle。
+  - 结果二、三、五由 Pan-Yan-0 在 Kaggle 上运行 [sst2_remaining_experiments.ipynb](notebooks/sst2_remaining_experiments.ipynb)（两张 T4，共 9 小时），导出的结果包里核对了脚本（`187d2f88…`、`fb581c22…`）和数据（`a7a3bfee…`）的 SHA-256。
+  - 结果三的剩余部分由 Pan-Yan-0 在 Kaggle 上运行 [sst2_finish_experiments.ipynb](notebooks/sst2_finish_experiments.ipynb)（两张 T4，共 11.2 小时），结果包里核对了脚本（`301d0bb3…`、`beb4cc0b…`）和数据的 SHA-256；接着跑的 7 组，第一次已有的条目与仓库里的原始返回逐条一致。
+  - 结果四的 DeepSeek 组合由 GPT6astra 在 Pan-Yan-0 的本机运行，用的是同一版评测脚本和同一份数据，终端记录见 [metrics/deepseek_matrix_logs/](metrics/deepseek_matrix_logs/)。
 - 代码：
   - 评测脚本初版由 Claude 编写，GPT6.1sol 加入了实验指纹、更严格的答案解析和断点修复；解析规则的修正由 Claude 完成。
   - 结果一的 Kaggle Notebook 由 GPT6.1sol 编写，Claude 补了 `apt-get update` 报错时的容错。
