@@ -15,7 +15,7 @@ Kaggle 比赛 *Bag of Words Meets Bags of Popcorn*（`word2vec-nlp-tutorial`）�
 | [metrics/bert_full_kaggle_report_2026-10-11.csv](metrics/bert_full_kaggle_report_2026-10-11.csv) | 更早一次 BERT 全量的三轮日志 |
 | [metrics/kaggle_submissions.csv](metrics/kaggle_submissions.csv) | 全部 18 条 Kaggle 提交记录与版本链接 |
 
-相关笔记：[BERT 原理笔记](../BERT/BERT原理笔记.md)、[六模型实战与概念问答](../IMDB六模型实战与概念问答.md)、[DeBERTa 与 IMDB 三条路学习笔记](../DeBERTa/DeBERTa与IMDB三条路学习笔记.md)。与 LoRA 论文、GMCM 实验的统一对照见[实验结果汇总](../实验结果汇总.md)。
+相关笔记：[BERT 原理笔记](../BERT/BERT原理笔记.md)、[六模型实战与概念问答](../IMDB六模型实战与概念问答.md)、[DeBERTa 与 IMDB 三条路学习笔记](../DeBERTa/DeBERTa与IMDB三条路学习笔记.md)、[解码器大模型与路线 C 学习笔记](../LLM/解码器大模型与路线C学习笔记.md)。与 LoRA 论文、GMCM 实验的统一对照见[实验结果汇总](../实验结果汇总.md)。
 
 ## 结果速览
 
