@@ -17,7 +17,7 @@
 3. （教学类约定，已移入私有 skill `cognitive-tutoring`）
 4. （教学类约定，已移入私有 skill `cognitive-tutoring`）
 5. （教学类约定，已移入私有 skill `cognitive-tutoring`）
-6. **笔记工作流**：用户口述笔记和疑问 → agent 整理成结构化 Markdown + 逐题答疑 → 推送到 GitHub `Pan-Yan-0/study_note` 的 `note` 分支（ML_note/ 目录）。
+6. **笔记工作流**：用户口述笔记和疑问 → agent 整理成结构化 Markdown + 逐题答疑 → 推送到 GitHub `Pan-Yan-0/study_note` 的 `note` 分支（ML_note/ 目录）。每次提交笔记时同时按私有 skill 第 3 节更新画像（2026-10-15 用户要求）。每晚约 21:51（北京时间）有定时任务「每晚提交学习笔记」在学习对话里自动整理并提交，每次运行先预约下一晚。
 7. 中文交流，教程/页面用中文。
 8. 学习安排写入现有 HTML，按阶段、任务、交付物与验收标准组织；不设具体日期或固定时长，允许中断后通过“下一步”记录接续。
 9. **提交署名**（2026-10-12 用户要求）：推送到 GitHub 的提交以用户为作者：`git commit --author="Pan Yan <112330427+Pan-Yan-0@users.noreply.github.com>"`，提交者仍是 Claude，信息末尾保留 Claude 的署名；提交内容含 GPT 写的代码、Notebook 或文字时，再加 `Co-authored-by: GPT6.1sol <noreply@openai.com>`。文档的“来源”一节写清谁运行了实验、谁写了哪部分代码。已推送的提交不为补署名而强制改写历史。
