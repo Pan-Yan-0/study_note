@@ -1,6 +1,6 @@
 # IMDB 情感分析实验
 
-Kaggle 比赛 *Bag of Words Meets Bags of Popcorn*（`word2vec-nlp-tutorial`）：用 25,000 条有标签影评训练正负情感二分类，对 25,000 条测试影评提交预测，Kaggle 按测试集 ROC-AUC 评分。这里有两组实验：GloVe 词向量加六种网络，以及三个预训练模型（BERT 全量、BERT LoRA、DeBERTa-v2-xxlarge LoRA）。
+Kaggle 比赛 *Bag of Words Meets Bags of Popcorn*（`word2vec-nlp-tutorial`）：用 25,000 条有标签影评训练正负情感二分类，对 25,000 条测试影评提交预测，Kaggle 按测试集 ROC-AUC 评分。这里有三组实验：GloVe 词向量加六种网络；三个预训练编码器（BERT 全量、BERT LoRA、DeBERTa-v2-xxlarge LoRA）；Qwen3-4B-Base 指令微调。
 
 ## 文件
 
@@ -8,12 +8,14 @@ Kaggle 比赛 *Bag of Words Meets Bags of Popcorn*（`word2vec-nlp-tutorial`）�
 |---|---|
 | [notebooks/imdb-glove-six-models-2026-09-12.ipynb](notebooks/imdb-glove-six-models-2026-09-12.ipynb) | 六模型的代码与完整运行输出 |
 | [notebooks/imdb-three-models-official-trainer.ipynb](notebooks/imdb-three-models-official-trainer.ipynb) | 三个预训练模型依次训练（Transformers Trainer + PEFT），含 Kaggle 运行输出 |
-| [notebooks/imdb-qwen3-4b-sft.ipynb](notebooks/imdb-qwen3-4b-sft.ipynb) | Qwen3-4B-Base 指令微调（LoRA，只在答案 token 上算损失），见第 4 节；尚未运行 |
+| [notebooks/imdb-qwen3-4b-sft.ipynb](notebooks/imdb-qwen3-4b-sft.ipynb) | Qwen3-4B-Base 指令微调（LoRA，只在答案 token 上算损失），含 Colab 运行输出，见第 4 节 |
+| [code/qwen3_sft_report.py](code/qwen3_sft_report.py) | 从 `metrics/qwen3_4b_sft/` 复算第 4 节的数字 |
 | [notebooks/imdb-bert-deberta-lora.ipynb](notebooks/imdb-bert-deberta-lora.ipynb)、[code/imdb_pretrained.py](code/imdb_pretrained.py) | 更早的预训练版本（手动选模型 + 共用训练代码），对应第 3 节的 BERT 日志 |
 | [code/requirements-pretrained.txt](code/requirements-pretrained.txt) | 预训练实验的依赖版本 |
 | [metrics/model_summary.csv](metrics/model_summary.csv)、[metrics/training_history.csv](metrics/training_history.csv) | 六模型的汇总与 120 条逐轮指标 |
 | [metrics/pretrained_three_models_summary.csv](metrics/pretrained_three_models_summary.csv)、[metrics/pretrained_three_models_epochs.csv](metrics/pretrained_three_models_epochs.csv) | 三个预训练模型的汇总与逐轮验证指标 |
 | [metrics/bert_full_kaggle_report_2026-10-11.csv](metrics/bert_full_kaggle_report_2026-10-11.csv) | 更早一次 BERT 全量的三轮日志 |
+| [metrics/qwen3_4b_sft/](metrics/qwen3_4b_sft/) | Qwen3-4B 的汇总 `summary.json`、配置、训练日志、验证集逐条概率（训练前与训练后）、提交文件 |
 | [metrics/kaggle_submissions.csv](metrics/kaggle_submissions.csv) | 全部 18 条 Kaggle 提交记录与版本链接 |
 
 相关笔记：[BERT 原理笔记](../BERT/BERT原理笔记.md)、[六模型实战与概念问答](../IMDB六模型实战与概念问答.md)、[DeBERTa 与 IMDB 三条路学习笔记](../DeBERTa/DeBERTa与IMDB三条路学习笔记.md)、[解码器大模型与路线 C 学习笔记](../LLM/解码器大模型与路线C学习笔记.md)。与 LoRA 论文、GMCM 实验的统一对照见[实验结果汇总](../实验结果汇总.md)。
@@ -26,8 +28,10 @@ Kaggle 比赛 *Bag of Words Meets Bags of Popcorn*（`word2vec-nlp-tutorial`）�
 | BERT 全量微调 | 0.9206 | 0.974062 | 0.97522 | 正类概率 |
 | BERT LoRA | 0.8766 | 0.949744 | 0.95315 | 正类概率 |
 | DeBERTa-v2-xxlarge LoRA | 0.9334 | 0.979953 | **0.98294** | 正类概率 |
+| Qwen3-4B-Base 零样本（不训练） | 0.9440 | 0.984729 | — | — |
+| Qwen3-4B-Base 指令微调（LoRA） | 0.9686 | **0.994138** | 待提交 | 正类概率 |
 
-提交 0/1 标签时，ROC-AUC 等于（真正率 + 真负率）/ 2，接近准确率；提交概率时才是排序意义上的 AUC。所以两组的 Kaggle 分数不能直接相减，两组的验证划分也不同。
+提交 0/1 标签时，ROC-AUC 等于（真正率 + 真负率）/ 2，接近准确率；提交概率时才是排序意义上的 AUC。所以两组的 Kaggle 分数不能直接相减，两组的验证划分也不同。第 2 节和第 4 节用的是同一份验证集，验证指标可以直接对照。
 
 ## 1. GloVe 词向量 + 六种网络
 
@@ -106,21 +110,38 @@ Kaggle 比赛 *Bag of Words Meets Bags of Popcorn*（`word2vec-nlp-tutorial`）�
 
 和第 2 节的 BERT 全量接近（验证 AUC 0.9737 对 0.9741），第 2 轮之后验证 loss 上升的趋势也一样。显存峰值 allocated 2.73 GiB / reserved 2.88 GiB。
 
-## 4. Qwen3-4B 指令微调（尚未运行）
+## 4. Qwen3-4B 指令微调
 
 把影评套进 Alpaca 指令模版，让解码器模型在 `### Response:` 之后接着写 `positive` 或 `negative`。损失只算答案这一个 token，提示词和影评部分都不计损失。
 
 | 条件 | 设置 |
 |---|---|
-| 模型 | `Qwen/Qwen3-4B-Base`，fp16 冻结底座 + LoRA（r = 16，α = 32，q/k/v/o/gate/up/down 七个投影层） |
+| 模型 | `Qwen/Qwen3-4B-Base`，fp16 冻结底座 + LoRA（r = 16，α = 32，q/k/v/o/gate/up/down 七个投影层，33,030,144 个参数，占 0.81%） |
 | 数据 | 与第 2 节相同的分层划分（`random_state=42`）：20,000 训练 / 5,000 验证 |
-| 截断 | 超过 512 个 token 的影评保留开头 128 + 结尾 384 个 token，模版本身不截断 |
-| 训练 | 1 轮，有效 batch 16（8 × 累积 2），AdamW，学习率 1e-4，前 5% warmup 后线性衰减，FP16，梯度检查点 |
+| 截断 | 超过 512 个 token 的影评保留开头 128 + 结尾 384 个 token，模版本身不截断；约 12% 的影评被截断，加上模版平均 315 个 token |
+| 训练 | 1 轮（1,250 步），有效 batch 16（8 × 累积 2），AdamW，学习率 1e-4，前 5% warmup 后线性衰减，FP16，梯度检查点 |
 | 损失 | 答案位置在整个词表上的交叉熵，标签为 `positive` / `negative` 对应的 token |
 | 预测 | 读答案位置上两个词的 logit：p(positive) = softmax(logit_pos, logit_neg)，提交概率 |
-| 对照 | 训练前先在同一验证集上测一次 zero-shot（LoRA 初始时 B = 0，等于原模型） |
+| 对照 | 训练前先在同一验证集上测一次零样本（LoRA 初始时 B = 0，等于原模型） |
+| 环境 | Colab 单张 Tesla T4；torch 2.11.0、transformers 5.19.0、peft 0.21.2；模型的 Hub 版本号没有记录下来 |
 
-与导师脚本（Unsloth + TRL `SFTTrainer`）的区别：
+### 结果
+
+| | 验证 accuracy | 验证 AUC [95% 区间] | 答案位置的交叉熵 | 两个答案词的概率之和 | 最可能的下一个 token 是答案词 |
+|---|---:|---:|---:|---:|---:|
+| 零样本（训练前） | 0.9440 | 0.9847 [0.9816, 0.9877] | 0.999 | 0.436 | 88.6% |
+| 指令微调后 | 0.9686 | 0.9941 [0.9924, 0.9957] | 0.093 | 0.9998 | 100% |
+
+Kaggle AUC 待提交，提交文件是 `metrics/qwen3_4b_sft/submission.csv.gz`。区间是对验证集按条重抽样 2,000 次得到的；本节数字可用 `code/qwen3_sft_report.py` 复算。
+
+- **零样本已经很强**：不训练，验证 AUC 就有 0.9847，高于第 2 节最好的 DeBERTa-v2-xxlarge LoRA（0.9800）。但两个答案词平均只占答案位置 43.6% 的概率；11.4% 的影评，模型最想写的下一个 token 不是这两个词，这些影评的准确率只有 71.4%（其余 97.4%）。只比较两个词的概率，排序仍然很准。
+- **微调后**：两个答案词几乎占满答案位置的概率。错的从 280 条降到 157 条（改对 162 条、改错 39 条，McNemar 精确检验 p ≈ 5×10⁻¹⁹），AUC 提高 0.0094 [0.0074, 0.0117]。
+- **训练曲线**：第 10 步 loss 0.835，第 20 步 0.200（这时只见过 320 条）；第 51–200 步平均 0.117，最后 250 步平均 0.094，梯度范数从 2.36 降到 0.65。答案格式在最初几十步就学会了，之后是慢慢提高判断。验证集答案位置的交叉熵 0.093 与最后阶段的训练 loss 相当，一轮之内没有过拟合的迹象。
+- **校准**：Brier 0.043 → 0.025，ECE（10 个分箱）0.018 → 0.008；但微调后有 12 条以 ≥ 0.99 的置信度判错，零样本是 5 条。
+- **不能只归因于训练方法的地方**：和 DeBERTa 相比，底座（40 亿参数的解码器对 15 亿参数的编码器）、输入长度（最多 512 个影评 token 对 128 个）和损失形式同时不同。Qwen3 的预训练语料可能包含 IMDB 影评（这个数据集 2011 年就公开了），零样本表现好可能部分来自见过这些文本，无法排除。只有一次运行、一个种子、一轮，超参数没有调；验证集没有参与选模型。
+- **用时与显存**：分词 2.6 分钟，零样本验证 14.5 分钟，训练 222 分钟（10.7 秒/步，约 473 token/秒），微调后验证 17.4 分钟，测试 87 分钟，合计约 5.7 小时（不含下载和加载模型）；显存峰值 10.44 GiB。按每个 token 的计算量折算，T4 实际跑到约 10–13 TFLOPS（训练约 10），低于事前估计时假设的 12–20，所以总时长比估计的 3.5–5.5 小时略长。
+
+### 与导师脚本（Unsloth + TRL `SFTTrainer`）的区别
 
 | 项目 | 导师脚本 | 本 Notebook |
 |---|---|---|
@@ -131,17 +152,20 @@ Kaggle 比赛 *Bag of Words Meets Bags of Popcorn*（`word2vec-nlp-tutorial`）�
 | 划分 | `random_state=3407`，不分层 | 与第 2 节相同 |
 | 轮数 / 学习率 | 3 轮 / 2e-5 | 1 轮 / 1e-4（第 2 节 BERT LoRA 用 2e-5 时验证 AUC 到第 3 轮仍在上升） |
 
-运行方式（同一个 Notebook 在 Colab 和 Kaggle 上都能跑）：
+### 运行方式
+
+同一个 Notebook 在 Colab 和 Kaggle 上都能跑：
 
 - Colab：运行时类型选 T4 GPU。把比赛的 `labeledTrainData.tsv.zip`、`testData.tsv.zip`、`sampleSubmission.csv` 放进 Google Drive 的 `MyDrive/word2vec-nlp-tutorial/`，否则 Notebook 用 `kagglehub` 自己下载（Colab「密钥」里有 `KAGGLE_USERNAME` / `KAGGLE_KEY` 时直接下载，没有就弹出登录框，登录后重新运行第一个单元）。输出写在 `MyDrive/imdb_qwen3_sft/`。
 - Kaggle：选 GPU T4 x2（只用一张）并打开网络，添加比赛数据 `word2vec-nlp-tutorial`，输出写在 `/kaggle/working/`。
 - 先把 `SMOKE = True` 跑一遍查错，再改回 `False` 正式跑。
 - 断开后重新从头运行全部单元即可续跑：已完成的阶段直接跳过，训练从最近的检查点（每 250 步一个）继续，推理从缓存继续。配置改了会报错，需要换 `RUN_NAME`。
 
-输出目录里有 `summary.json`（训练前后验证指标、用时、显存、每次会话的环境）、验证集逐条概率、`submission.csv`（正类概率）和 LoRA 权重 `adapter/`。
+输出目录里有 `summary.json`（训练前后验证指标、用时、显存、每次会话的环境）、验证集逐条概率、`submission.csv`（正类概率）和 LoRA 权重 `adapter/`（约 130 MB，不在仓库里）。
 
 ## 来源
 
 - 六模型 Notebook：数据处理在第 10—28 个单元，训练与导出函数在第 36、37 个，六个模型在第 39—44 个（从 1 开始计数）。
 - [Kaggle 比赛](https://www.kaggle.com/c/word2vec-nlp-tutorial)，[评分说明](https://www.kaggle.com/competitions/word2vec-nlp-tutorial/overview/evaluation)为 ROC 曲线下面积；[GloVe](https://nlp.stanford.edu/projects/glove/)，Notebook 用的是 `glove.840B.300d.txt`。数据、GloVe 文件和模型权重不在仓库里。
 - Kaggle 分数来自本人提供的提交列表，每条的版本链接见 `metrics/kaggle_submissions.csv`。
+- Qwen3-4B Notebook 由 Claude 根据导师的 Unsloth 脚本改写，Pan-Yan-0 在 Colab 单张 T4 上运行；导师脚本不在仓库里。
