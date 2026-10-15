@@ -8,6 +8,7 @@ Kaggle 比赛 *Bag of Words Meets Bags of Popcorn*（`word2vec-nlp-tutorial`）�
 |---|---|
 | [notebooks/imdb-glove-six-models-2026-09-12.ipynb](notebooks/imdb-glove-six-models-2026-09-12.ipynb) | 六模型的代码与完整运行输出 |
 | [notebooks/imdb-three-models-official-trainer.ipynb](notebooks/imdb-three-models-official-trainer.ipynb) | 三个预训练模型依次训练（Transformers Trainer + PEFT），含 Kaggle 运行输出 |
+| [notebooks/imdb-qwen3-4b-sft.ipynb](notebooks/imdb-qwen3-4b-sft.ipynb) | Qwen3-4B-Base 指令微调（LoRA，只在答案 token 上算损失），见第 4 节；尚未运行 |
 | [notebooks/imdb-bert-deberta-lora.ipynb](notebooks/imdb-bert-deberta-lora.ipynb)、[code/imdb_pretrained.py](code/imdb_pretrained.py) | 更早的预训练版本（手动选模型 + 共用训练代码），对应第 3 节的 BERT 日志 |
 | [code/requirements-pretrained.txt](code/requirements-pretrained.txt) | 预训练实验的依赖版本 |
 | [metrics/model_summary.csv](metrics/model_summary.csv)、[metrics/training_history.csv](metrics/training_history.csv) | 六模型的汇总与 120 条逐轮指标 |
@@ -104,6 +105,33 @@ Kaggle 比赛 *Bag of Words Meets Bags of Popcorn*（`word2vec-nlp-tutorial`）�
 | 3 | 0.105459 | 0.97265 | 0.350316 | 0.9128 | **0.973673** |
 
 和第 2 节的 BERT 全量接近（验证 AUC 0.9737 对 0.9741），第 2 轮之后验证 loss 上升的趋势也一样。显存峰值 allocated 2.73 GiB / reserved 2.88 GiB。
+
+## 4. Qwen3-4B 指令微调（尚未运行）
+
+把影评套进 Alpaca 指令模版，让解码器模型在 `### Response:` 之后接着写 `positive` 或 `negative`。损失只算答案这一个 token，提示词和影评部分都不计损失。
+
+| 条件 | 设置 |
+|---|---|
+| 模型 | `Qwen/Qwen3-4B-Base`，fp16 冻结底座 + LoRA（r = 16，α = 32，q/k/v/o/gate/up/down 七个投影层） |
+| 数据 | 与第 2 节相同的分层划分（`random_state=42`）：20,000 训练 / 5,000 验证 |
+| 截断 | 超过 512 个 token 的影评保留开头 128 + 结尾 384 个 token，模版本身不截断 |
+| 训练 | 1 轮，有效 batch 16（8 × 累积 2），AdamW，学习率 1e-4，前 5% warmup 后线性衰减，FP16，梯度检查点 |
+| 损失 | 答案位置在整个词表上的交叉熵，标签为 `positive` / `negative` 对应的 token |
+| 预测 | 读答案位置上两个词的 logit：p(positive) = softmax(logit_pos, logit_neg)，提交概率 |
+| 对照 | 训练前先在同一验证集上测一次 zero-shot（LoRA 初始时 B = 0，等于原模型） |
+
+与导师脚本（Unsloth + TRL `SFTTrainer`）的区别：
+
+| 项目 | 导师脚本 | 本 Notebook |
+|---|---|---|
+| 损失范围 | 整段文本（含影评与模版）都算损失 | 只算答案 token |
+| 底座精度 | Unsloth 4-bit | fp16（T4 显存够，沿用第 2 节已跑通的 transformers 5.19 + PEFT 环境，不额外装 Unsloth / bitsandbytes） |
+| 预测 | `generate` 3 个 token 后做字符串匹配，解析失败记为 0 | 直接读两个答案词的概率，不生成 |
+| 截断 | 整段 2048 token，从右侧截断，超长时会切掉 `### Response:` | 只截影评，模版完整保留 |
+| 划分 | `random_state=3407`，不分层 | 与第 2 节相同 |
+| 轮数 / 学习率 | 3 轮 / 2e-5 | 1 轮 / 1e-4（第 2 节 BERT LoRA 用 2e-5 时验证 AUC 到第 3 轮仍在上升） |
+
+运行方式：Kaggle 选 GPU T4 x2（只用一张）并打开网络，添加比赛数据 `word2vec-nlp-tutorial`。先把 `SMOKE = True` 交互运行一遍查错，再改回 `False` 用 Save & Run All。输出目录里有 `summary.json`（训练前后验证指标、用时、显存）、验证集逐条概率、`submission.csv`（正类概率）和 LoRA 权重 `adapter/`。
 
 ## 来源
 
