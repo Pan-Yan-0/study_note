@@ -12,7 +12,7 @@
 主要结论：
 
 - **模型大小**：basic 指令、关思考时，0.8b 78.78%，2b 83.14%，4b 93.81%，9b 93.35%。从 2b 到 4b 提升明显，4b 和 9b 之间没有显著差别（p = 0.64）。DeepSeek 95.18%，比 9b 显著更高（p = 0.014），比 4b 高但不显著（p = 0.081）。
-- **指令模板**（关思考）：要求先一步步推理的 cot 模板主要帮了小模型，0.8b 提高 3.5 个百分点、2b 提高 5.5 个百分点（p = 0.36、0.061）；4b、9b 和 DeepSeek 上差别都在 2.5 个百分点以内，都不显著。模型越大越常无视这句要求，9b 有一半多的条目直接只答一个数字。之前看到的“cot 让 Qwen 4b 掉到 72%”是解析规则的漏洞造成的，修正后是 94.5%（见“解析规则的修正”）。
+- **指令模板**（关思考）：要求先一步步推理的 cot 模板主要帮了小模型，0.8b 提高 3.5 个百分点、2b 提高 5.5 个百分点（p = 0.36、0.061）；4b、9b 和 DeepSeek 上差别都在 2.5 个百分点以内，都不显著。模型越大越常无视这句要求，9b 有一半多的条目直接只答一个数字。
 - **思考开关**：在 4096 个输出 token 的上限内，Qwen 的 basic 模板开思考，整体准确率和关思考差不多（0.8b 除外）；cot、role_cot 模板再开思考，模型要推理两遍，大量条目写不完被截断，所有尺寸都变差，最多掉 39 个百分点。每条还要慢几十到几百倍。只看写完的条目，开思考不比关思考差，但这个比较本身偏向开思考。DeepSeek 开不开思考差别不显著。
 - **和微调比**：DeBERTa-v3-base 用全部训练集微调后是 95.60%，和 DeepSeek 打平（p ≈ 0.7）。只用 1024 条训练的 DeBERTa（92.97%）和直接提问的 Qwen 4b（93.81%）差不多（p = 0.35–0.46）。只用 16 条时只有 61.62%，种子之间也差得多。
 
@@ -20,22 +20,22 @@
 
 | 文件 | 内容 |
 |---|---|
-| [code/sst2_instruction_eval.py](code/sst2_instruction_eval.py) | 评测脚本：DeepSeek API、Ollama 和其他 OpenAI 兼容服务通用；三种指令模板，断点续跑，导出逐条 CSV 与汇总 JSON。答案解析规则已按下文修正，当前版本 SHA-256 `868a576e…`，Qwen 24 组用这一版重新判分（DeepSeek 用的 `301d0bb3…` 版在 DeepSeek 的结果上与它完全相同）。第一次实验运行时用的是修正前的版本（`187d2f88…`），第二次是 `301d0bb3…` |
+| [code/sst2_instruction_eval.py](code/sst2_instruction_eval.py) | 评测脚本：DeepSeek API、Ollama 和其他 OpenAI 兼容服务通用；三种指令模板，断点续跑，导出逐条 CSV 与汇总 JSON |
 | [code/rescore_offline.py](code/rescore_offline.py) | 用当前解析规则，从保存的原始返回离线重新判分，不重新调用模型 |
 | [code/sst2_report_stats.py](code/sst2_report_stats.py) | 复算本文的统计数字（区间、召回、配对检验、DeBERTa 均值与标准差），只用 Python 标准库 |
 | [code/deberta_sst2.py](code/deberta_sst2.py) | DeBERTa 对照组的训练与评测脚本 |
 | [notebooks/teacher_sst2_ollama.ipynb](notebooks/teacher_sst2_ollama.ipynb) | 结果一里 Qwen3.5 4B 那次运行的 Kaggle Notebook |
-| [notebooks/sst2_remaining_experiments.ipynb](notebooks/sst2_remaining_experiments.ipynb) | 结果二、三、五的第一次 Kaggle 运行：两张 T4，一张跑 Ollama 的 24 组，另一张同时训练 DeBERTa。内置运行时的评测脚本（修正前）、DeBERTa 脚本和 872 条数据 |
-| [notebooks/sst2_finish_experiments.ipynb](notebooks/sst2_finish_experiments.ipynb) | 结果三的第二次 Kaggle 运行：从本仓库下载第一次的断点（校验 SHA-256）接着跑，并跑完没开始的组；两张 T4 各起一个 Ollama 服务，最后统一重新判分。内置当时的评测脚本（`301d0bb3…`）和离线判分脚本 |
-| `metrics/` 根目录 | 结果一和结果四：DeepSeek 7 次全量运行和 Qwen 4B 第一次运行的逐条 `.csv`、`_summary.json`、`_errors.csv`。cot + 关思考这组已按修正后的规则重新判分 |
-| [metrics/qwen_matrix/](metrics/qwen_matrix/) | Qwen 24 组的逐条结果、汇总和错例，用当前解析规则重新判分；没跑完的两组也在内（汇总里 `completed` 为 false） |
-| [metrics/qwen_matrix_logs/](metrics/qwen_matrix_logs/) | 第一次运行：每组的终端输出、模型信息（量化方式、文件摘要）、24 组的执行状态、`nvidia-smi`、Notebook 自己生成的汇总（重新判分前）。[finish_run/](metrics/qwen_matrix_logs/finish_run/) 是第二次运行的同类记录，另有断点来源（`checkpoints.json`）、两个服务的设置与加载检查，以及服务日志的摘录 |
+| [notebooks/sst2_remaining_experiments.ipynb](notebooks/sst2_remaining_experiments.ipynb) | 结果二、三、五的 Kaggle Notebook（Qwen 各组的第一次运行和 DeBERTa） |
+| [notebooks/sst2_finish_experiments.ipynb](notebooks/sst2_finish_experiments.ipynb) | 结果三剩余各组的 Kaggle Notebook（从第一次的断点接着跑） |
+| `metrics/` 根目录 | 结果一和结果四：DeepSeek 7 次全量运行和 Qwen 4B 第一次运行的逐条 `.csv`、`_summary.json`、`_errors.csv` |
+| [metrics/qwen_matrix/](metrics/qwen_matrix/) | Qwen 24 组的逐条结果、汇总和错例；没跑完的两组汇总里 `completed` 为 false |
+| [metrics/qwen_matrix_logs/](metrics/qwen_matrix_logs/) | Qwen 各组的终端输出、模型信息（量化方式、文件摘要）、执行状态和 `nvidia-smi`；[finish_run/](metrics/qwen_matrix_logs/finish_run/) 是第二次运行的记录，含服务日志摘录 |
 | [metrics/deberta_sst2/](metrics/deberta_sst2/) | DeBERTa 15 次运行的汇总（`runs.csv`、`summary.md`）、每次的设置与学习曲线（`summary.json`）、872 条逐条预测和正类概率（`predictions.csv`）、训练日志和库版本 |
-| [metrics/raw/](metrics/raw/) | DeepSeek 7 次和 Qwen 24 组的原始返回（含思考内容，gzip 压缩的 jsonl；Qwen 是两次运行合并后的最终断点），以及运行时导出的原汇总；重新判分从这里读 |
-| [metrics/deepseek_matrix_logs/](metrics/deepseek_matrix_logs/) | DeepSeek 组合实验的终端输出（开头核对了脚本和数据的 SHA-256）、cot + 思考的单条完整返回、脚本生成的汇总表 |
+| [metrics/raw/](metrics/raw/) | DeepSeek 7 次和 Qwen 24 组的原始返回（含思考内容，gzip 压缩的 jsonl）和运行时导出的原汇总 |
+| [metrics/deepseek_matrix_logs/](metrics/deepseek_matrix_logs/) | DeepSeek 组合实验的终端输出、cot + 思考的单条完整返回、汇总表 |
 | [metrics/kaggle_env/](metrics/kaggle_env/) | 结果一里 Qwen3.5 4B 那次 Kaggle 运行的环境 |
 
-文件名末尾的 12 位编号是实验指纹，由后端、服务地址、模型、模板、思考开关、生成参数和有序数据一起算出；改动任何一项都会存成新文件。
+文件名末尾的 12 位编号是实验指纹，由后端、服务地址、模型、模板、思考开关、生成参数和有序数据一起算出。
 
 ## 设置
 
@@ -46,9 +46,9 @@
 | 不思考 | temperature 0；basic 最多输出 64 个 token，cot 和 role_cot 最多 1024 个 |
 | 思考 | 请求里写 temperature 0.6；最多输出 4096 个 token（含思考），DeepSeek 的 cot + 思考另用 8192 重跑了一次。DeepSeek 思考模式不支持 temperature（设了不报错也不起作用），top_p 最低只能到 0.95，所以采样的随机性关不掉 |
 | DeepSeek | `deepseek-flash`，官方 API，8 路并发，在本机运行 |
-| Qwen | Ollama 0.40.3，Kaggle T4，单路请求，每个请求的上下文 8192。0.8b、2b 为 Q8_0 量化，4b、9b 为 Q4_K_M。四个尺寸的 basic + 关思考跑全部 872 条，其余组合只跑前 200 条。第一次运行只用一张卡（另一张给 DeBERTa），每组有时间上限（关思考 30–45 分钟，开思考 60 分钟），总预算 9 小时；第二次两张卡各起一个服务，不设每组上限，总预算 11.2 小时。两次的模型版本（digest）相同 |
+| Qwen | Ollama 0.40.3，Kaggle T4，逐条请求，每个请求的上下文 8192。0.8b、2b 为 Q8_0 量化，4b、9b 为 Q4_K_M。四个尺寸的 basic + 关思考跑全部 872 条，其余组合只跑前 200 条。分两次运行，第二次从第一次的断点接着跑，模型版本（digest）相同 |
 | DeBERTa | `microsoft/deberta-v3-base` 加分类头，全部参数参与训练；训练数据取自 GLUE SST-2 训练集（67,349 条）。少样本组按正负各半抽样，batch 8 训练 1000 步；全量组 batch 32 训练 3 轮（6,315 步）。学习率 2e-5，前 10% 步数线性升温后线性下降，weight decay 0.01，fp16，最长 128 个 token。报告最后一步的结果，不按验证集挑选 |
-| 判分 | 从回答中解析 -1 / 1，解析不出（包括被截断、没有答案）按错误计。本文所有数字都用修正后的解析规则，从原始返回重新判分 |
+| 判分 | 从回答中解析 -1 / 1，解析不出（包括被截断、没有答案）按错误计；规则见“解析规则” |
 
 `basic` 模板原文（`{影评}` 处填入句子）：
 
@@ -106,7 +106,7 @@ Analyze the given text from an online review and determine the sentiment polarit
 - DeepSeek 多对 12 条（1.38 个百分点）。McNemar 精确检验只看两个模型意见不一致的 40 条（26 对 14），双侧 p = 0.081，在 0.05 水平上不显著。
 - 两个模型对 832 条（95.4%）给出相同预测，Cohen κ = 0.91。
 - 两个模型的错误都以正面判成负面为主（35 条、34 条）；负面判成正面 DeepSeek 7 条、Qwen 20 条。
-- 后来在另一个 Kaggle 会话里用同样的设置又跑了一次 Qwen 4B（结果二里的 4b），872 条预测完全相同：temperature 0 时结果可以重现。
+- 同样设置在另一个 Kaggle 会话里重跑 Qwen 4B（结果二里的 4b），872 条预测完全相同。
 - token：DeepSeek 输入 104,380、输出 1,328；Qwen 输入 116,559、输出 2,186（每条回答 2–3 个 token）。两者的分词器和对话模板不同，输入 token 数不能直接比较。
 
 ### 错例
@@ -151,14 +151,11 @@ basic 指令，关思考，全部 872 条。
 - **小模型偏向判负面**：0.8b 和 2b 的正面召回只有 71% 和 70%，负面召回 87% 和 97%。4b 和 9b 两类召回都在 90% 以上。
 - **无效输出**：2b 有 12 条回答 `0`（材料只允许 -1 和 1），0.8b 有 2 条回答 `-2`。
 - **和 DeepSeek 比**：Qwen 9b 不一致的 38 条里是 11 对 27，p = 0.014；Qwen 4b 是 14 对 26，p = 0.081。
-- 0.8b 每条比 2b 还慢。日志显示 0.8b 的所有层都在 GPU 上，但这个模型包另带了一个推测解码用的草稿模型，可能与此有关，没有进一步查。
+- 0.8b 每条比 2b 还慢；0.8b 的所有层都在 GPU 上，它的模型包另带一个推测解码用的草稿模型。
 
 ## 结果三：Qwen 的模板 × 思考
 
-除了四个尺寸的 basic + 关思考（结果二，全部 872 条），其余组合只跑验证集前 200 条。分两次在 Kaggle 上运行：
-
-- 第一次（`sst2_remaining_experiments.ipynb`，9 小时）：开思考的每组只有 60 分钟，7 组没跑完；总时间用完后，0.8b、2b、9b 的 cot / role_cot 关思考和 role_cot 开思考共 9 组没有开始。
-- 第二次（`sst2_finish_experiments.ipynb`，11.2 小时）：从断点接着跑完那 7 组，新跑那 9 组。断点从本仓库下载，校验 SHA-256 后使用，第一次已有的条目一条没变（模型版本、Ollama 版本、模板、生成参数都和第一次相同）。9b 的 cot 开思考和 role_cot 开思考到时间仍没跑完，分别跑到 184 条和 168 条；Kaggle 的 GPU 额度用完，没有再补。
+除了四个尺寸的 basic + 关思考（结果二，全部 872 条），其余组合只跑验证集前 200 条。9b 的 cot 开思考和 role_cot 开思考只跑到 184 条和 168 条。
 
 前 200 条准确率（截断、无效都按错误计）：
 
@@ -227,8 +224,7 @@ Just "1".
 - **cot、role_cot 模板再开思考，所有尺寸都变差了**：除了 4b role_cot 掉 5 个百分点（p = 0.087），其余掉 14–39 个百分点，都非常显著。差别几乎全部来自截断：模型在思考里推理一遍，正文里按模板要求再推理一遍，0.8b 有一半以上、2b 和 9b 将近三成写不完。
 - **被截断的不一定是难句**。basic 模板下被截断的条目，关思考时只对了 22–60%，确实偏难；cot、role_cot 模板下被截断的条目，关思考时对了 74–91%，9b cot 开被截断的 55 条里关思考对了 91%。所以后者主要是推理写得太长，不是句子难。
 - **只看没截断的条目，开思考不比关思考差**，12 组里有 3 组显著更准（2b basic、0.8b cot、4b role_cot）。但这个比较也偏向开思考：留下的是开思考自己写完了的条目，写完的往往是它比较有把握的句子。所以只能说“写得完的时候，思考没有坏处”，不能说思考让模型更准。
-- **代价**：开思考每条 15–46 秒，9b 的 cot、role_cot 开思考每条约 2 分钟，是关思考的几十到几百倍。第二次运行原本打算让每张卡同时处理 4 条来提速，但 Ollama 0.40.3 不支持 Qwen3.5 这种结构的并行请求（日志：`model architecture does not currently support parallel requests architecture=qwen35`），只能逐条跑，两张卡各跑一部分。
-- 要把思考的作用比清楚，需要加大输出上限（例如 16384）或限制思考长度，并且每种设置重复运行几次。
+- **代价**：开思考每条 15–46 秒，9b 的 cot、role_cot 开思考每条约 2 分钟，是关思考的几十到几百倍。
 
 ## 结果四：DeepSeek 的三个模板 × 思考开关
 
@@ -244,12 +240,12 @@ Just "1".
 | role_cot | 关 | 833 | 95.53% [93.94, 96.71] | 97.20% | 93.92% | 0 | 96.5% | 128 | 1.89 秒 |
 | role_cot | 开 | 838 | 96.10% [94.60, 97.20] | 97.90% | 94.37% | 0 | 97.5% | 89 | 1.75 秒 |
 
-cot + 关思考原来有 5 条没解析出答案（按错误计为 833 条、95.53%），修正解析规则后它们都是对的，见“解析规则的修正”。开思考时输出 token 含思考部分。cot + 思考两次运行的唯一设置差别是输出上限，4096 那次有 1 条写满上限被截断、没有答案（idx 830，思考写了 17,025 个字符），所以 8192 那次作为这一格的主结果。
+开思考时输出 token 含思考部分。cot + 思考两次运行的唯一设置差别是输出上限，4096 那次有 1 条写满上限被截断、没有答案（idx 830，思考写了 17,025 个字符），所以 8192 那次作为这一格的主结果。
 
 - **思考开关**：basic 开思考多对 8 条（不一致的 18 条里 13 对 5，p = 0.096）；role_cot 多对 5 条（9 对 4，p = 0.27）；cot 开思考（8192）反而少对 2 条（4 对 6，p = 0.75）。都不显著。
 - **模板（关思考）**：cot 比 basic 多对 8 条（13 对 5，p = 0.096），role_cot 比 basic 多对 3 条（13 对 10，p = 0.68），cot 比 role_cot 多对 5 条（11 对 6，p = 0.33）。开思考时三个模板的正确数在 836–838 之间（重复运行那次 841）。
 - 7 次运行两两比较共 21 对，只有关思考的 basic 对 cot + 思考的重复运行 p < 0.05（17 对 6，p = 0.035）；同一设置的另一次运行对 basic 不显著。比较了 21 对，出现一个 p < 0.05 并不奇怪，不能当作显著。
-- **同一设置重跑也会变**：思考模式的采样关不掉，cot + 思考两次运行有 6 条预测不同。除了被截断的 idx 830，另外 5 条是重新采样带来的变化（4096 那次多对 5 条，p = 0.062）。所以单次运行相差几条、0.5 个百分点左右，都在噪声之内；要比较这些设置，需要每种设置重复运行几次。
+- **同一设置重跑也会变**：思考模式的采样关不掉，cot + 思考两次运行有 6 条预测不同。除了被截断的 idx 830，另外 5 条是重新采样带来的变化（4096 那次多对 5 条，p = 0.062）。所以单次运行相差几条、0.5 个百分点左右，都在噪声之内。
 - **思考很短**：DeepSeek 思考内容的中位数是 238–385 个字符（大约 60–90 个 token），最长的有 1.5 万–2 万字符。和 Qwen 小模型相比，几乎不会写到上限。
 - **共同的错例**：24 条在 6 种设置（不含重复运行）下全都判错，其中 20 条的标签是正面。例如 112 “hilariously inept and ridiculous .”、230 “reign of fire looks as if it was made without much thought -- and is best watched that way .” 的标签是正面，377 “nothing is sacred in this gut-buster .” 的标签是负面。这类句子单看很难判对，换模板、开思考都没有改变结果。
 - **开思考改对和改错的例子**（basic）：改对 13 条，如 667 “good film , but very glum .”、143 “a solid film ... but more conscientious than it is truly stirring .”、683 “true tale of courage ... is a harrowing drama ...”；改错 5 条，如 675 “slick piece of cross-promotion .”（标签正面）、95 “this riveting world war ii moral suspense story deals with the shadow side of american culture ...”（标签负面）。
@@ -277,45 +273,31 @@ cot + 关思考原来有 5 条没解析出答案（按错误计为 833 条、95.
 - **都判错的句子**：DeepSeek、Qwen 4b、Qwen 9b（basic 关思考）和全量 DeBERTa（种子 13）都错的有 13 条，其中 10 条标签是正面。有几条单看句子更像负面，例如 271 “as unseemly as its title suggests .”、282 “... this jerry bruckheimer production has little else to offer”、699 “... routine , harmless diversion and little else .”，标签可能本身有争议。
 - 训练过程没有出现 NaN（fp16 的非有限 loss 计数全为 0），显存峰值 3.5–4.4 GB。15 次运行共 89.5 分钟。
 
-## 解析规则的修正
+## 解析规则
 
-评测脚本只从回答里取明确的答案：整段只有一个数字、第一行只有一个数字、`\boxed{1}`，或最后一行是 “answer is 1”“Sentiment: positive” 这类明确的作答。运行时的版本漏掉了几种写法，导致明确给了答案的回答被判成无效、按错误计：
+评测脚本（[code/sst2_instruction_eval.py](code/sst2_instruction_eval.py) 的 `parse_label`、`line_label`）只从回答里取明确的答案：
 
-| 最后一行的写法 | 出现次数 | 主要出现在 |
-|---|---:|---|
-| `Response: 1`、`**Response:** 1` | 80 | Qwen cot / role_cot（模仿模板里的 `### Response:`） |
-| `1:`、`1: 1` | 22 | Qwen cot / role_cot |
-| `The answer is: **1**`、`The sentiment polarity is: **-1**`、`should be **1**`、`the appropriate response is: 1` | 6 | DeepSeek cot 关思考（5 条），Qwen 0.8b cot 开思考（1 条） |
-| `the sentiment polarity of the text is -1`、`for this review is -1`、`sentiment value is -1`、`Sentiment Value: -1`、`polarity value is 1` | 7 | Qwen 0.8b、2b cot 开思考，4b role_cot 关思考 |
-| `the sentiment polarity is 1 (positive)`、`is positive (1)` | 2 | Qwen 0.8b cot 开思考 |
+- 整段只有一个数字、第一行只有一个数字（后面的行不能改成另一个答案），或 `\boxed{1}`。
+- 最后一行是明确的作答：答案标记（answer、response、sentiment polarity、value、number、conclusion 等，可带 “of the text”“for this review”）加连接词（is、is:、should be、of、:、=）加 ±1 或 positive / negative，如 “The answer is: **1**”“Response: 1”“the corresponding number is -1”。
+- 末行是 “1:”“Return `1`.”“1 (Positive)”；括号里的词必须和数字一致，`1: -1` 这样前后矛盾的算无效。单独成行的 `<final_answer>` 这类标签忽略。
+- 不从推理文字中猜答案：回答 `0`、`-2`，被截断没有答案，或只是复述规则（“-1 represents negative sentiment.”）都算无效。
 
-修正后的规则（[code/sst2_instruction_eval.py](code/sst2_instruction_eval.py) 第 88–110 行、`line_label` 函数）：
+本文所有数字都用这套规则，从 `metrics/raw/` 的原始返回重新判分（[code/rescore_offline.py](code/rescore_offline.py)）。和运行时较早版本的规则相比，变化大的几组：
 
-- 答案标记增加 `response`，以及 `sentiment value`、`polarity of the text`、`for this review` 这类说法。
-- 连接词除了 `is`、`:`、`=`，也接受 `is:`、`should be`、`would be`。
-- 末行只有数字加冒号（`1:`）算作答；`1: -1` 这样前后矛盾的算无效。
-- 数字后面括号里的词（`1 (positive)`）必须和数字一致，否则算无效。
-- 仍然不从推理文字中猜答案：回答 `0`、`-2`，被截断没有答案，或只是复述规则（“-1 represents negative sentiment.”）都算无效。
-- 第二次运行又出现了几种写法，规则再补了一次：答案标记增加 `value`、`number`、`conclusion`，连接词增加 `of`，接受 “the number 1”、末行 “Return `1`.”、“1 (Positive)”，并忽略单独成行的 `<final_answer>` 这类标签。这一版在第二次运行的数据上多认出 22 条（19 条答对），对第一次运行和 DeepSeek 的结果没有任何改变。
-
-用 [code/rescore_offline.py](code/rescore_offline.py) 从 `metrics/raw/` 的原始返回重新判分：一共多解析出 117 条（DeepSeek 5 条，Qwen 112 条），原来已经解析出的预测一条都没有改变。变化大的几组：
-
-| 组 | 原来 | 重新判分后 |
+| 组 | 运行时的规则 | 本文的规则 |
 |---|---:|---:|
-| Qwen 4b cot 关（200 条） | 72.0%（无效 49） | 94.5%（无效 0） |
+| Qwen 4b cot 关（200 条） | 72.0%（无效 49，多为 “Response: 1”“1:”） | 94.5%（无效 0） |
 | Qwen 4b role_cot 关（200 条） | 70.5%（无效 43） | 90.0%（无效 1） |
-| Qwen 0.8b cot 开（109 条） | 27.5% | 39.4% |
-| Qwen 2b cot 开（86 条） | 68.6% | 75.6% |
-| DeepSeek cot 关（872 条） | 95.53% | 96.10% |
+| DeepSeek cot 关（872 条） | 95.53%（5 条 “The answer is: **1**” 这类） | 96.10% |
 
-这说明“无效输出”多的时候要先看原文：cot 模板下 4b 并不是不会判断，而是写答案的格式和解析规则对不上。
+重新判分时，原来已经解析出的预测一条都没有改变。
 
-## 尚缺
+## 缺少的数据
 
-- 9b 的 cot 开思考和 role_cot 开思考还差 16 条和 32 条（单卡约 1.5 小时）；Kaggle 额度用完，暂时没补。
-- 开思考的各组在更大的输出上限（或限制思考长度）下重跑，才能把思考本身的作用和截断分开。
-- 每种设置只运行了一次（DeBERTa 除外）。DeepSeek 和 Qwen 开思考时采样有随机性，比较几个百分点以内的差别需要重复运行。
-- 把同一套对比搬到 IMDB（长影评）上。
+- 9b 的 cot 开思考和 role_cot 开思考缺 16 条和 32 条。
+- 材料要求的 Llama、Gemma、Phi-4、Mistral 没有运行，只有 Qwen 和 DeepSeek。
+- 开思考只用了 4096 个 token 的输出上限，没有更大上限的对照，思考本身的作用和截断没有完全分开。
+- 每种设置只运行了一次（DeBERTa 除外）；开思考时采样有随机性，几个百分点以内的差别没有重复运行来确认。
 
 ## 来源
 
