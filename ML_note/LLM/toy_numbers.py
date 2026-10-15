@@ -63,3 +63,14 @@ cost = inp / 1e6 * 1 + out / 1e6 * 4
 print(f"IMDB：输入 {inp:,}，输出 {out:,}，约 {cost:.2f} 元；API 8 路 {25_000 * 1 / 8 / 60:.0f} 分钟；"
       f"Ollama 单路 {25_000 * 0.4 / 3600:.1f} 小时")
 print("agent：50 次 × 10 万 token =", f"{50 * 100_000:,}", "输入 token，约", 50 * 100_000 / 1e6, "元")
+
+# 8. SFT：整段都算损失时，答案 token 只占 1/301 的权重
+print(f"整段平均：{(300 * 3.0 + 0.7) / 301:.4f}，答案权重 {1 / 301:.2%}；只算答案：0.7")
+print(f"p(positive)=0.6、negative=0.3：损失 {-math.log(0.6):.3f}，两词之间归一化 {0.6 / 0.9:.3f}")
+for name, loss in (("零样本", 0.9986), ("SFT 后", 0.0930)):
+    print(f"{name}：答案平均交叉熵 {loss}，几何平均概率 {math.exp(-loss):.3f}")
+
+# 9. T4 用时：每个 token 训练约 6N（前向、重算、反向各 2N），推理约 2N；N 取 36 亿
+N = 3.6e9
+train_flops = 20_000 * 315 * 6 * N
+print(f"训练约 {train_flops:.2e} 次运算；实测 222 分钟 → {train_flops / (222.2 * 60) / 1e12:.1f} TFLOPS")
