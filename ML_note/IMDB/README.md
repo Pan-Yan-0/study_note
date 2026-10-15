@@ -131,7 +131,14 @@ Kaggle 比赛 *Bag of Words Meets Bags of Popcorn*（`word2vec-nlp-tutorial`）�
 | 划分 | `random_state=3407`，不分层 | 与第 2 节相同 |
 | 轮数 / 学习率 | 3 轮 / 2e-5 | 1 轮 / 1e-4（第 2 节 BERT LoRA 用 2e-5 时验证 AUC 到第 3 轮仍在上升） |
 
-运行方式：Kaggle 选 GPU T4 x2（只用一张）并打开网络，添加比赛数据 `word2vec-nlp-tutorial`。先把 `SMOKE = True` 交互运行一遍查错，再改回 `False` 用 Save & Run All。输出目录里有 `summary.json`（训练前后验证指标、用时、显存）、验证集逐条概率、`submission.csv`（正类概率）和 LoRA 权重 `adapter/`。
+运行方式（同一个 Notebook 在 Colab 和 Kaggle 上都能跑）：
+
+- Colab：运行时类型选 T4 GPU。把比赛的 `labeledTrainData.tsv.zip`、`testData.tsv.zip`、`sampleSubmission.csv` 放进 Google Drive 的 `MyDrive/word2vec-nlp-tutorial/`，或者在「密钥」里添加 `KAGGLE_USERNAME` / `KAGGLE_KEY` 让它自己下载。输出写在 `MyDrive/imdb_qwen3_sft/`。
+- Kaggle：选 GPU T4 x2（只用一张）并打开网络，添加比赛数据 `word2vec-nlp-tutorial`，输出写在 `/kaggle/working/`。
+- 先把 `SMOKE = True` 跑一遍查错，再改回 `False` 正式跑。
+- 断开后重新从头运行全部单元即可续跑：已完成的阶段直接跳过，训练从最近的检查点（每 250 步一个）继续，推理从缓存继续。配置改了会报错，需要换 `RUN_NAME`。
+
+输出目录里有 `summary.json`（训练前后验证指标、用时、显存、每次会话的环境）、验证集逐条概率、`submission.csv`（正类概率）和 LoRA 权重 `adapter/`。
 
 ## 来源
 
