@@ -16,7 +16,7 @@ Kaggle 比赛 *Bag of Words Meets Bags of Popcorn*（`word2vec-nlp-tutorial`）�
 | [metrics/pretrained_three_models_summary.csv](metrics/pretrained_three_models_summary.csv)、[metrics/pretrained_three_models_epochs.csv](metrics/pretrained_three_models_epochs.csv) | 三个预训练模型的汇总与逐轮验证指标 |
 | [metrics/bert_full_kaggle_report_2026-10-11.csv](metrics/bert_full_kaggle_report_2026-10-11.csv) | 更早一次 BERT 全量的三轮日志 |
 | [metrics/qwen3_4b_sft/](metrics/qwen3_4b_sft/) | Qwen3-4B 的汇总 `summary.json`、配置、训练日志、验证集逐条概率（训练前与训练后）、提交文件 |
-| [metrics/kaggle_submissions.csv](metrics/kaggle_submissions.csv) | 全部 18 条 Kaggle 提交记录与版本链接 |
+| [metrics/kaggle_submissions.csv](metrics/kaggle_submissions.csv) | 全部 19 条 Kaggle 提交记录与版本链接 |
 
 相关笔记：[BERT 原理笔记](../BERT/BERT原理笔记.md)、[六模型实战与概念问答](../IMDB六模型实战与概念问答.md)、[DeBERTa 与 IMDB 三条路学习笔记](../DeBERTa/DeBERTa与IMDB三条路学习笔记.md)、[解码器大模型与路线 C 学习笔记](../LLM/解码器大模型与路线C学习笔记.md)。与 LoRA 论文、GMCM 实验的统一对照见[实验结果汇总](../实验结果汇总.md)。
 
@@ -27,9 +27,9 @@ Kaggle 比赛 *Bag of Words Meets Bags of Popcorn*（`word2vec-nlp-tutorial`）�
 | BiGRU（六模型最好） | 0.9031（batch 平均，第 8 轮） | — | 0.89996 | 0/1 标签 |
 | BERT 全量微调 | 0.9206 | 0.974062 | 0.97522 | 正类概率 |
 | BERT LoRA | 0.8766 | 0.949744 | 0.95315 | 正类概率 |
-| DeBERTa-v2-xxlarge LoRA | 0.9334 | 0.979953 | **0.98294** | 正类概率 |
+| DeBERTa-v2-xxlarge LoRA | 0.9334 | 0.979953 | 0.98294 | 正类概率 |
 | Qwen3-4B-Base 零样本（不训练） | 0.9440 | 0.984729 | — | — |
-| Qwen3-4B-Base 指令微调（LoRA） | 0.9686 | **0.994138** | 待提交 | 正类概率 |
+| Qwen3-4B-Base 指令微调（LoRA） | 0.9686 | **0.994138** | **0.99493** | 正类概率 |
 
 提交 0/1 标签时，ROC-AUC 等于（真正率 + 真负率）/ 2，接近准确率；提交概率时才是排序意义上的 AUC。所以两组的 Kaggle 分数不能直接相减，两组的验证划分也不同。第 2 节和第 4 节用的是同一份验证集，验证指标可以直接对照。
 
@@ -132,7 +132,7 @@ Kaggle 比赛 *Bag of Words Meets Bags of Popcorn*（`word2vec-nlp-tutorial`）�
 | 零样本（训练前） | 0.9440 | 0.9847 [0.9816, 0.9877] | 0.999 | 0.436 | 88.6% |
 | 指令微调后 | 0.9686 | 0.9941 [0.9924, 0.9957] | 0.093 | 0.9998 | 100% |
 
-Kaggle AUC 待提交，提交文件是 `metrics/qwen3_4b_sft/submission.csv.gz`。区间是对验证集按条重抽样 2,000 次得到的；本节数字可用 `code/qwen3_sft_report.py` 复算。
+Kaggle AUC **0.99493**（提交文件 `metrics/qwen3_4b_sft/submission.csv.gz`），比验证 AUC 高 0.0008，与第 2 节三个模型 Kaggle 略高于验证的情况一致；比 DeBERTa-v2-xxlarge LoRA 的 0.98294 高 0.012。区间是对验证集按条重抽样 2,000 次得到的；本节数字可用 `code/qwen3_sft_report.py` 复算。
 
 - **零样本已经很强**：不训练，验证 AUC 就有 0.9847，高于第 2 节最好的 DeBERTa-v2-xxlarge LoRA（0.9800）。但两个答案词平均只占答案位置 43.6% 的概率；11.4% 的影评，模型最想写的下一个 token 不是这两个词，这些影评的准确率只有 71.4%（其余 97.4%）。只比较两个词的概率，排序仍然很准。
 - **微调后**：两个答案词几乎占满答案位置的概率。错的从 280 条降到 157 条（改对 162 条、改错 39 条，McNemar 精确检验 p ≈ 5×10⁻¹⁹），AUC 提高 0.0094 [0.0074, 0.0117]。
