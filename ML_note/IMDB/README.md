@@ -133,7 +133,7 @@ Kaggle 比赛 *Bag of Words Meets Bags of Popcorn*（`word2vec-nlp-tutorial`）�
 
 运行方式（同一个 Notebook 在 Colab 和 Kaggle 上都能跑）：
 
-- Colab：运行时类型选 T4 GPU。把比赛的 `labeledTrainData.tsv.zip`、`testData.tsv.zip`、`sampleSubmission.csv` 放进 Google Drive 的 `MyDrive/word2vec-nlp-tutorial/`，或者在「密钥」里添加 `KAGGLE_USERNAME` / `KAGGLE_KEY` 让它自己下载。输出写在 `MyDrive/imdb_qwen3_sft/`。
+- Colab：运行时类型选 T4 GPU。把比赛的 `labeledTrainData.tsv.zip`、`testData.tsv.zip`、`sampleSubmission.csv` 放进 Google Drive 的 `MyDrive/word2vec-nlp-tutorial/`，否则 Notebook 用 `kagglehub` 自己下载（Colab「密钥」里有 `KAGGLE_USERNAME` / `KAGGLE_KEY` 时直接下载，没有就弹出登录框，登录后重新运行第一个单元）。输出写在 `MyDrive/imdb_qwen3_sft/`。
 - Kaggle：选 GPU T4 x2（只用一张）并打开网络，添加比赛数据 `word2vec-nlp-tutorial`，输出写在 `/kaggle/working/`。
 - 先把 `SMOKE = True` 跑一遍查错，再改回 `False` 正式跑。
 - 断开后重新从头运行全部单元即可续跑：已完成的阶段直接跳过，训练从最近的检查点（每 250 步一个）继续，推理从缓存继续。配置改了会报错，需要换 `RUN_NAME`。
