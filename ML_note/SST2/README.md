@@ -20,7 +20,7 @@
 
 | 文件 | 内容 |
 |---|---|
-| [code/sst2_instruction_eval.py](code/sst2_instruction_eval.py) | 评测脚本：DeepSeek API、Ollama 和其他 OpenAI 兼容服务通用；三种指令模板，断点续跑，导出逐条 CSV 与汇总 JSON。答案解析规则已按下文修正（SHA-256 `301d0bb3…`）；所有实验运行时用的是修正前的版本（`187d2f88…`） |
+| [code/sst2_instruction_eval.py](code/sst2_instruction_eval.py) | 评测脚本：DeepSeek API、Ollama 和其他 OpenAI 兼容服务通用；三种指令模板，断点续跑，导出逐条 CSV 与汇总 JSON。答案解析规则已按下文修正（当前版本 SHA-256 `868a576e…`；本文的数字用 `301d0bb3…` 版重新判分，两版在这些结果上完全相同）；本文的实验运行时用的是修正前的版本（`187d2f88…`） |
 | [code/rescore_offline.py](code/rescore_offline.py) | 用当前解析规则，从保存的原始返回离线重新判分，不重新调用模型 |
 | [code/sst2_report_stats.py](code/sst2_report_stats.py) | 复算本文的统计数字（区间、召回、配对检验、DeBERTa 均值与标准差），只用 Python 标准库 |
 | [code/deberta_sst2.py](code/deberta_sst2.py) | DeBERTa 对照组的训练与评测脚本 |
@@ -275,6 +275,7 @@ cot + 关思考原来有 5 条没解析出答案（按错误计为 833 条、95.
 - 末行只有数字加冒号（`1:`）算作答；`1: -1` 这样前后矛盾的算无效。
 - 数字后面括号里的词（`1 (positive)`）必须和数字一致，否则算无效。
 - 仍然不从推理文字中猜答案：回答 `0`、`-2`，被截断没有答案，或只是复述规则（“-1 represents negative sentiment.”）都算无效。
+- 之后补跑剩余组时又出现了几种写法，规则再补了一次：答案标记增加 `value`、`number`、`conclusion`，连接词增加 `of`，接受 “the number 1”、末行 “Return `1`.”、“1 (Positive)”，并忽略单独成行的 `<final_answer>` 这类标签。用这一版重新判分本文已有的全部运行，没有一条结果改变。
 
 用 [code/rescore_offline.py](code/rescore_offline.py) 从 `metrics/raw/` 的原始返回重新判分：一共多解析出 117 条（DeepSeek 5 条，Qwen 112 条），原来已经解析出的预测一条都没有改变。变化大的几组：
 

@@ -92,11 +92,12 @@ _BOXED = re.compile(r"\\boxed\{\s*([+-]?)1(?:\.0+)?\s*\}")
 # 以及 “of the text”“for this review” 这类修饰（Qwen 和 DeepSeek 实际输出里都出现过）。
 _ANSWER_MARKER = (r"(?:final\s+(?:answer|label|prediction)|answer|response|"
                   r"(?:sentiment|polarity)(?:\s+polarity)?(?:\s+(?:value|score))?|"
-                  r"prediction|label|output|result)"
-                  r"(?:\s+(?:of|for)\s+(?:the|this)\s+(?:provided\s+|given\s+)?"
-                  r"(?:text|review|sentence|input))?")
-# “is” “is:” “should be” “:” “=” 都算明确作答
-_LINK = r"\s*(?:(?:is|should\s+be|would\s+be)\s*:?|:|=)\s*"
+                  r"prediction|label|output|result|value|number|conclusion)"
+                  r"(?:\s+(?:of|for|on)\s+(?:the|this)\s+(?:provided\s+|given\s+)?"
+                  r"(?:text|review|sentence|input|scale))?")
+# “is” “is:” “should be” “of” “:” “=” 都算明确作答，后面可以跟 “the number”
+_LINK = (r"\s*(?:(?:is|should\s+be|would\s+be|of)\s*:?|:|=)\s*"
+         r"(?:the\s+)?(?:single\s+)?(?:number\s+|value\s+)?")
 _LABEL_WORD = r"(positive|negative|正面|积极|负面|消极)"
 _NUM = r"([+-]?1(?:\.0+)?)"
 _EXPLICIT_NUM = re.compile(
@@ -106,6 +107,10 @@ _EXPLICIT_WORD = re.compile(
     r"\b" + _ANSWER_MARKER + _LINK + _LABEL_WORD + r"(?:\s*\(" + _NUM + r"\))?\s*[.!。]?\s*$", re.I)
 # 末行只有数字再跟一个冒号，如 “1:” 或 “1: 1”（Qwen 模仿 “### Response:” 时会这样写）
 _NUM_COLON = re.compile(r"^([+-]?1)(?:\.0+)?\s*:(?:\s*([+-]?1)(?:\.0+)?)?$")
+# 末行是 “Return the number 1.” “Return `1`.” 或 “1 (Positive)”
+_RETURN = re.compile(r"\breturn\s+(?:the\s+)?(?:single\s+)?(?:number\s+|value\s+)?" + _NUM + r"\s*[.!。]?\s*$", re.I)
+_NUM_WORD = re.compile(r"^" + _NUM + r"\s*\(" + _LABEL_WORD + r"\)$", re.I)
+_TAG_LINE = re.compile(r"</?[A-Za-z_][\w-]*>?")  # <final_answer> 这类单独成行的标签
 _NEGATIVE_WORDS = ("negative", "负面", "消极")
 # 数学负号、长短破折号、全角符号统一成普通的 - 和 1
 _DASHES = str.maketrans({"\u2212": "-", "\u2013": "-", "\u2014": "-", "\uff0d": "-", "\uff11": "1"})
@@ -142,7 +147,7 @@ def parse_label(text: str) -> tuple[int | None, str]:
     if m and not answer[m.end():].strip(" \t\r\n.!。*`\"'"):
         return (-1 if m.group(1) == "-" else 1), "boxed"
     lines = [ln.replace("**", "").replace("`", "").strip(" \t*#>\"'") for ln in answer.splitlines()]
-    lines = [ln for ln in lines if ln]
+    lines = [ln for ln in lines if ln and not _TAG_LINE.fullmatch(ln)]
     first = lines[0].rstrip(" .。") if lines else ""
     if _ONLY_NUM.match(first):
         # 首行作答后又明确改成另一个标签，不能继续把首行当作最终答案。
@@ -177,10 +182,13 @@ def line_label(line: str) -> tuple[int | str | None, str]:
         if m.group(2) is not None and _sign(m.group(2)) != _sign(m.group(1)):
             return "conflict", ""
         return _sign(m.group(1)), "last_number"
-    m = _EXPLICIT_NUM.search(line)
+    m = _EXPLICIT_NUM.search(line) or _NUM_WORD.match(line)
     if m:
         if m.group(2) is not None and _word_value(m.group(2)) != _sign(m.group(1)):
             return "conflict", ""
+        return _sign(m.group(1)), "last_number"
+    m = _RETURN.search(line)
+    if m:
         return _sign(m.group(1)), "last_number"
     m = _WORD_ONLY.fullmatch(line)
     if m:
