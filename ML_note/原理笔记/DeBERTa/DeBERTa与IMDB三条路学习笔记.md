@@ -693,7 +693,7 @@ LayerNorm 和前馈层不会变，它们每行单独算；注意力层会变，b
 ## 来源
 
 - 学习过程：Pan-Yan-0 对照网页《IMDB 情感分类三条路》逐节学习，与 Claude 问答。第 6 节“我的作答”是 Pan-Yan-0 回答的摘要，其余讲解由 Claude 整理。
-- 数字：玩具数字和特征缩放模拟由 [toy_numbers.py](toy_numbers.py)（Claude 编写）生成；实验结果来自 [IMDB 实验](../IMDB/README.md) 和 [SST-2 实验](../SST2/README.md)。
+- 数字：玩具数字和特征缩放模拟由 [toy_numbers.py](toy_numbers.py)（Claude 编写）生成；实验结果来自 [IMDB 实验](../../实验/IMDB/README.md) 和 [SST-2 实验](../../实验/SST2/README.md)。
 - He 等，*DeBERTa: Decoding-enhanced BERT with Disentangled Attention*，[arXiv:2006.03654](https://arxiv.org/abs/2006.03654)：P 表各层共享、δ 的定义、√(3d)、去掉位置→位置、store / mall 例子、EMD 两层共享权重。
 - He 等，*DeBERTaV3*，[arXiv:2111.09543](https://arxiv.org/abs/2111.09543)：拔河现象、GDES、E_Δ 初始化为零并在训练后合并、生成器层数减半、GLUE 91.37。
 - Clark 等，*ELECTRA*，[arXiv:2003.10555](https://arxiv.org/abs/2003.10555)：替换词检测，生成器猜对时标为“原”。

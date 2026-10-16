@@ -1,6 +1,6 @@
 # 解码器大模型与路线 C 学习笔记
 
-接着 [DeBERTa 与 IMDB 三条路学习笔记](../DeBERTa/DeBERTa与IMDB三条路学习笔记.md)，这一份学了路线 B 的成本（§5.4）和路线 C（§5.5），中间补了解码器的结构、上下文和 agent。文中的玩具数字都可以用 [toy_numbers.py](toy_numbers.py) 复算，实验数字来自 [SST-2 实验](../SST2/README.md)。
+接着 [DeBERTa 与 IMDB 三条路学习笔记](../DeBERTa/DeBERTa与IMDB三条路学习笔记.md)，这一份学了路线 B 的成本（§5.4）和路线 C（§5.5），中间补了解码器的结构、上下文和 agent。文中的玩具数字都可以用 [toy_numbers.py](toy_numbers.py) 复算，实验数字来自 [SST-2 实验](../../实验/SST2/README.md)。
 
 | 路线 | 做法 | 本笔记 |
 |---|---|---|
@@ -238,7 +238,7 @@ SFT 和预训练用同一个损失（下一个 token 的交叉熵），模型结
 
 **和 BERT 分类的区别。** BERT 微调是在 [CLS] 上新加一个 768 → 2 的分类头，标签是 0/1；SFT 不加新部件，标签是 `positive`、`negative` 这两个词，由原来的 LM 头输出。
 
-**IMDB 上的结果**（Qwen3-4B-Base，LoRA，1 轮，见 [IMDB README](../IMDB/README.md) 第 4 节）：
+**IMDB 上的结果**（Qwen3-4B-Base，LoRA，1 轮，见 [IMDB README](../../实验/IMDB/README.md) 第 4 节）：
 
 | | 答案位置的平均交叉熵 | 几何平均下正确答案的概率 | 两个答案词的概率之和 | 验证 AUC | Kaggle AUC |
 |---|---:|---:|---:|---:|---:|
@@ -329,5 +329,5 @@ LM 头：把最后一层的隐藏向量映射到整个词表，Qwen3 的词表�
 - Zhang & Sennrich, *Root Mean Square Layer Normalization*, [arXiv:1910.07467](https://arxiv.org/abs/1910.07467)
 - Hinton 等, *Distilling the Knowledge in a Neural Network*, [arXiv:1503.02531](https://arxiv.org/abs/1503.02531)
 - Qwen3-0.6B 的结构：基于它的模型配置 [config.json](https://huggingface.co/brygotti/MNLP_M2_mcqa_model/blob/main/config.json)（`Qwen3ForCausalLM`，隐藏维度 1024、词表 151,936、28 层、`tie_word_embeddings: true`）；参数量 5.96 亿见 [Keras 模型卡](https://huggingface.co/keras/qwen3_0.6b_en/blob/main/README.md)
-- 实验数字：[SST-2 实验](../SST2/README.md)
+- 实验数字：[SST-2 实验](../../实验/SST2/README.md)
 - 本文由 Claude 根据两天的问答整理；“我的作答”取自原话的意思。
