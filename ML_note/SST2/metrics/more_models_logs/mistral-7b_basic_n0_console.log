@@ -1,0 +1,38 @@
+
+=== ollama_mistral-7b_basic_think-off_all_a6097b990784
+    共 872 条，断点里已有 0 条；并发 1，max_tokens 64，temperature 0.0
+
+    --- 样本 idx=0，真实标签 1
+    句子：it 's a charming and often affecting journey .
+    回答：1 (Positive)
+    解析：1（last_number），正确
+
+    [   1/872] 准确率 1.0000  无效 0  84.42 秒/条  还要约 1225.4 分钟
+
+    --- 样本 idx=1，真实标签 -1
+    句子：unflinchingly bleak and desperate
+    回答：-1 (Negative Sentiment)
+    解析：None（invalid），错误
+
+    --- 样本 idx=2，真实标签 1
+    句子：allows us to hope that nolan is poised to embark a major career as a commercial yet inventive filmmaker .
+    回答：1 (Positive)
+    解析：1（last_number），正确
+    [  88/872] 准确率 0.4091  无效 52  1.23 秒/条  还要约 16.1 分钟
+    [ 175/872] 准确率 0.3943  无效 106  0.77 秒/条  还要约 8.9 分钟
+    [ 261/872] 准确率 0.4138  无效 153  0.63 秒/条  还要约 6.4 分钟
+    [ 348/872] 准确率 0.4167  无效 201  0.54 秒/条  还要约 4.7 分钟
+    [ 435/872] 准确率 0.4138  无效 252  0.49 秒/条  还要约 3.6 分钟
+    [ 522/872] 准确率 0.4157  无效 299  0.47 秒/条  还要约 2.7 分钟
+    [ 609/872] 准确率 0.4039  无效 357  0.44 秒/条  还要约 1.9 分钟
+    [ 696/872] 准确率 0.3966  无效 411  0.43 秒/条  还要约 1.2 分钟
+    [ 783/872] 准确率 0.3921  无效 466  0.41 秒/条  还要约 0.6 分钟
+    [ 870/872] 准确率 0.3966  无效 512  0.40 秒/条  还要约 0.0 分钟
+    [ 872/872] 准确率 0.3968  无效 513  0.40 秒/条
+    准确率 0.3968（346/872），无效输出 513，请求失败 0，被截断 1
+    真实 -1：预测 -1 16 条，预测 1 10 条，无效 402 条
+    真实  1：预测 -1 3 条，预测 1 330 条，无效 111 条
+    tokens：输入 121,284，输出 7,116（含思考）；单条请求平均 0.40 秒
+    明细：/content/drive/MyDrive/sst2_more_models/ollama_results/mistral-7b_6577803aa9a0/ollama_mistral-7b_basic_think-off_all_a6097b990784.csv
+    [注意] 1 条写到 max_tokens 上限被截断，可加大 --max-tokens 并加 --fresh 重跑
+    [注意] 513 条回答里没找到 -1/1，CSV 的 answer 列可以看原文

@@ -6,7 +6,7 @@
 
 | 实验 | 内容 | 主要结果 |
 |---|---|---|
-| [SST-2 指令学习](ML_note/SST2/README.md) | 《1-使用大模型进行指令学习》任务：DeepSeek 与 Qwen3.5 0.8b / 2b / 4b / 9b 在三个指令模板（basic / cot / role_cot）× 思考开关下的准确率；DeBERTa-v3-base 全量与 16 / 64 / 256 / 1024 条少样本微调对照 | 验证集 872 条：DeepSeek 95.18%，Qwen 4b 93.81%；DeBERTa 全量 95.60%，1024 条 92.97%，16 条 61.62% |
+| [SST-2 指令学习](ML_note/SST2/README.md) | 《1-使用大模型进行指令学习》任务：DeepSeek 与 Qwen3.5 0.8b / 2b / 4b / 9b 在三个指令模板（basic / cot / role_cot）× 思考开关下的准确率；Mistral、Llama、Gemma、Phi-4 四个系列；DeBERTa-v3-base 全量与 16 / 64 / 256 / 1024 条少样本微调对照 | 验证集 872 条：DeepSeek 95.18%，Gemma 3 12B 94.61%，Qwen 4b 93.81%，Phi-4 93.00%，Llama 3.1 8B 92.43%，Mistral 7B 90.60%；DeBERTa 全量 95.60%，1024 条 92.97%，16 条 61.62% |
 | [IMDB 情感分析](ML_note/IMDB/README.md) | Kaggle *Bag of Words Meets Bags of Popcorn*：GloVe + 六种网络；BERT 全量、BERT LoRA、DeBERTa-v2-xxlarge LoRA；Qwen3-4B-Base 指令微调（LoRA，只算答案 token 的损失） | 编码器最高 Kaggle AUC 0.98294（DeBERTa-v2-xxlarge LoRA）；Qwen3-4B 指令微调 Kaggle AUC 0.99493（验证 0.9941，零样本 0.9847） |
 | [实验结果汇总](ML_note/实验结果汇总.md) | LoRA 论文报告的结果与本仓库全部实验放在一起对照，说明哪些数字可以比、哪些不能 | — |
 

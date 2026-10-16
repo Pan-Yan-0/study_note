@@ -2,18 +2,20 @@
 
 不训练模型，把影评填进一段指令，让大模型直接回答 -1（负面）或 1（正面），在 GLUE SST-2 验证集全部 872 条上统计准确率。任务来自导师的《1-使用大模型进行指令学习》材料。为了知道这个准确率算高还是低，另外用同一份验证集做了微调对照组。
 
-已完成四部分：
+已完成五部分：
 
 1. `basic` 指令、关闭思考时，DeepSeek 与 Qwen3.5 4B 的对比。
 2. Qwen3.5 的 0.8b、2b、4b、9b 四个尺寸，以及它们在三个指令模板（basic / cot / role_cot）× 思考开关下的全部 24 种组合。除 basic + 关思考外都只跑前 200 条；9b 的 cot、role_cot 开思考没跑完（184、168 条）。
 3. DeepSeek 在三个模板 × 思考开关下的全部组合。
 4. DeBERTa-v3-base 微调对照组：只用 16 / 64 / 256 / 1024 条训练数据和用全部 67,349 条，各 3 个种子。
+5. 材料要求的另外四个模型系列：Mistral 7B、Llama 3.1 8B、Gemma 3 12B、Phi-4 14B，basic 跑全部 872 条，cot 跑前 200 条，都关思考。
 
 主要结论：
 
 - **模型大小**：basic 指令、关思考时，0.8b 78.78%，2b 83.14%，4b 93.81%，9b 93.35%。从 2b 到 4b 提升明显，4b 和 9b 之间没有显著差别（p = 0.64）。DeepSeek 95.18%，比 9b 显著更高（p = 0.014），比 4b 高但不显著（p = 0.081）。
 - **指令模板**（关思考）：要求先一步步推理的 cot 模板主要帮了小模型，0.8b 提高 3.5 个百分点、2b 提高 5.5 个百分点（p = 0.36、0.061）；4b、9b 和 DeepSeek 上差别都在 2.5 个百分点以内，都不显著。模型越大越常无视这句要求，9b 有一半多的条目直接只答一个数字。
 - **思考开关**：在 4096 个输出 token 的上限内，Qwen 的 basic 模板开思考，整体准确率和关思考差不多（0.8b 除外）；cot、role_cot 模板再开思考，模型要推理两遍，大量条目写不完被截断，所有尺寸都变差，最多掉 39 个百分点。每条还要慢几十到几百倍。只看写完的条目，开思考不比关思考差，但这个比较本身偏向开思考。DeepSeek 开不开思考差别不显著。
+- **五个模型系列**：basic 关思考时，Gemma 3 12B 94.61%、Phi-4 93.00%、Llama 3.1 8B 92.43%、Mistral 7B 90.60%。Gemma 和 DeepSeek（95.18%）、Qwen 4b（93.81%）都没有显著差别；Phi-4、Llama 和 Qwen 4b、9b 差不多，但显著低于 DeepSeek；Mistral 显著低于除 Llama 以外的所有模型。cot 模板对 Gemma、Phi-4 没有影响，Mistral、Llama 变差，主要是因为很多回答没有按规则写出明确的答案。
 - **和微调比**：DeBERTa-v3-base 用全部训练集微调后是 95.60%，和 DeepSeek 打平（p ≈ 0.7）。只用 1024 条训练的 DeBERTa（92.97%）和直接提问的 Qwen 4b（93.81%）差不多（p = 0.35–0.46）。只用 16 条时只有 61.62%，种子之间也差得多。
 
 ## 文件
@@ -30,9 +32,11 @@
 | [notebooks/sst2_more_models.ipynb](notebooks/sst2_more_models.ipynb)、[.py](notebooks/sst2_more_models.py) | Mistral、Llama、Gemma、Phi-4 四个系列的 Notebook 和同内容的脚本（Colab、Kaggle 或其他带 GPU 的 Linux）：basic 全部 872 条、cot 前 200 条；不设时间限制，跑完的组跳过，没跑完的组从断点接着跑，换平台时先导入上一次的结果包 |
 | `metrics/` 根目录 | 结果一和结果四：DeepSeek 7 次全量运行和 Qwen 4B 第一次运行的逐条 `.csv`、`_summary.json`、`_errors.csv` |
 | [metrics/qwen_matrix/](metrics/qwen_matrix/) | Qwen 24 组的逐条结果、汇总和错例；没跑完的两组汇总里 `completed` 为 false |
+| [metrics/more_models/](metrics/more_models/) | 结果六：四个系列 8 组的逐条结果、汇总和错例 |
+| [metrics/more_models_logs/](metrics/more_models_logs/) | 结果六的终端输出、模型信息（量化方式、文件摘要）、运行记录、两个平台的 `nvidia-smi` 和服务日志摘录 |
 | [metrics/qwen_matrix_logs/](metrics/qwen_matrix_logs/) | Qwen 各组的终端输出、模型信息（量化方式、文件摘要）、执行状态和 `nvidia-smi`；[finish_run/](metrics/qwen_matrix_logs/finish_run/) 是第二次运行的记录，含服务日志摘录 |
 | [metrics/deberta_sst2/](metrics/deberta_sst2/) | DeBERTa 15 次运行的汇总（`runs.csv`、`summary.md`）、每次的设置与学习曲线（`summary.json`）、872 条逐条预测和正类概率（`predictions.csv`）、训练日志和库版本 |
-| [metrics/raw/](metrics/raw/) | DeepSeek 7 次和 Qwen 24 组的原始返回（含思考内容，gzip 压缩的 jsonl）和运行时导出的原汇总 |
+| [metrics/raw/](metrics/raw/) | DeepSeek 7 次、Qwen 24 组和另外四个系列 8 组的原始返回（含思考内容，gzip 压缩的 jsonl）和运行时导出的原汇总 |
 | [metrics/deepseek_matrix_logs/](metrics/deepseek_matrix_logs/) | DeepSeek 组合实验的终端输出、cot + 思考的单条完整返回、汇总表 |
 | [metrics/kaggle_env/](metrics/kaggle_env/) | 结果一里 Qwen3.5 4B 那次 Kaggle 运行的环境 |
 
@@ -274,6 +278,56 @@ Just "1".
 - **都判错的句子**：DeepSeek、Qwen 4b、Qwen 9b（basic 关思考）和全量 DeBERTa（种子 13）都错的有 13 条，其中 10 条标签是正面。有几条单看句子更像负面，例如 271 “as unseemly as its title suggests .”、282 “... this jerry bruckheimer production has little else to offer”、699 “... routine , harmless diversion and little else .”，标签可能本身有争议。
 - 训练过程没有出现 NaN（fp16 的非有限 loss 计数全为 0），显存峰值 3.5–4.4 GB。15 次运行共 89.5 分钟。
 
+## 结果六：Mistral、Llama、Gemma、Phi-4
+
+关思考，temperature 0，Ollama 0.40.3，T4，逐条请求，每个请求的上下文 8192。四个模型都是 Q4_K_M 量化，所有层都在 GPU 上。
+
+basic 指令，全部 872 条：
+
+| 模型 | 参数量 | 正确 / 872 | 准确率 [Wilson 95%] | 负面召回 | 正面召回 | 无效 | 前 200 条 | 单条请求耗时 |
+|---|---:|---:|---|---:|---:|---:|---:|---:|
+| `mistral:7b` | 7.2B | 790 | 90.60% [88.48, 92.36] | 96.03% | 85.36% | 11 | 91.0% | 0.40 秒 |
+| `llama3.1:8b` | 8.0B | 806 | 92.43% [90.48, 94.01] | 87.38% | 97.30% | 0 | 92.5% | 0.14 秒 |
+| `gemma3:12b` | 11.8B | 825 | 94.61% [92.91, 95.92] | 97.66% | 91.67% | 1 | 95.0% | 0.57 秒 |
+| `phi4:14b` | 14.7B | 811 | 93.00% [91.12, 94.52] | 93.46% | 92.57% | 26 | 93.0% | 0.34 秒 |
+| `qwen3.5:4b`（参照） | — | 818 | 93.81% [92.01, 95.22] | 95.33% | 92.34% | 0 | 92.0% | 0.24 秒 |
+| `qwen3.5:9b`（参照） | — | 814 | 93.35% [91.50, 94.82] | 96.96% | 89.86% | 0 | 94.0% | 0.33 秒 |
+| `deepseek-flash`（参照） | — | 830 | 95.18% [93.55, 96.42] | 98.36% | 92.12% | 0 | 96.5% | 1.00 秒 |
+
+逐条配对比较（McNemar 精确检验，括号里是两个模型意见不一致的条目中，前者对、后者对的条数）：
+
+| 模型 | 对 Qwen 4b | 对 Qwen 9b | 对 DeepSeek |
+|---|---|---|---|
+| Mistral 7B | 25 对 53，p = 0.002 | 19 对 43，p = 0.003 | 6 对 46，p < 10⁻⁷ |
+| Llama 3.1 8B | 26 对 38，p = 0.17 | 35 对 43，p = 0.43 | 25 对 49，p = 0.007 |
+| Gemma 3 12B | 21 对 14，p = 0.31 | 23 对 12，p = 0.090 | 8 对 13，p = 0.38 |
+| Phi-4 14B | 22 对 29，p = 0.40 | 25 对 28，p = 0.78 | 13 对 32，p = 0.007 |
+
+- **Gemma 3 12B 最高**，和 DeepSeek、Qwen 4b、Qwen 9b 都没有显著差别。Phi-4 和 Llama 与 Qwen 4b、9b 差不多，但都显著低于 DeepSeek。
+- **四个系列之间**：Mistral 显著低于 Gemma（10 对 45，p < 10⁻⁵）和 Phi-4（28 对 49，p = 0.022），和 Llama 差别不显著（45 对 61，p = 0.15）。Gemma 比 Llama（45 对 26，p = 0.032）和 Phi-4（29 对 15，p = 0.049）略好，但这是 6 次两两比较中的两次，p 都接近 0.05，不能当作确定的差别。
+- **偏向**：Mistral 偏向判负面（负面召回 96%，正面只有 85%），Llama 偏向判正面（正面召回 97%，负面 87%）。Gemma、Phi-4 两类比较均衡。
+- **无效输出**：Phi-4 的 26 条全是回答 `0`，有的后面还附一句“文本是中性的”，只看有效条目是 95.86%。Mistral 11 条，有的在答案后又接着写解释，有的回答 `0 (Neutral)`；Gemma 1 条回答 `0`。
+- **Mistral 的写法**：Mistral 把负面写成 “-1 (Negative sentiment)”。按原来的解析规则，括号里多了 sentiment 就不认，它只有 39.68%（513 条无效）。把这种写法加进规则后（见“解析规则”），Qwen 和 DeepSeek 的结果没有变化。
+
+cot 指令，前 200 条（basic 取 872 条那次运行的前 200 条）：
+
+| 模型 | basic | cot | 不一致的条目（basic 对 / cot 对） | p | cot 无效 | 只看 cot 有效的条目 | cot 输出 token 中位数 | cot 每条耗时 |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| Mistral 7B | 91.0% | 68.5% | 48 / 3 | < 10⁻¹⁰ | 56 | 95.1%（144 条） | 10 | 1.3 秒 |
+| Llama 3.1 8B | 92.5% | 83.5% | 28 / 10 | 0.005 | 23 | 94.4%（177 条） | 215 | 8.4 秒 |
+| Gemma 3 12B | 95.0% | 95.0% | 3 / 3 | 1 | 0 | 95.0%（200 条） | 172 | 11.3 秒 |
+| Phi-4 14B | 93.0% | 93.5% | 4 / 5 | 1 | 2 | 94.4%（198 条） | 256 | 17.3 秒 |
+
+- **cot 对 Gemma、Phi-4 没有影响**；Mistral、Llama 变差，主要来自无效输出。只看写出了明确答案的条目，四个模型都在 94–95%，但这个比较偏向 cot，留下的是格式写对了的条目。
+- **无效的是什么**：
+  - Mistral 的 56 条：33 条最后一行其实有一个 ±1，但写法规则不认，多是答案后面又接着写解释，或 “The score would be -1.”；12 条回答 `0`、“中性”或小数；11 条最后一行没有数字。它常常开头先答 “1 (Positive Sentiment)”，再写几句理由，输出 token 中位数只有 10。
+  - Llama 的 23 条：7 条最后一行有一个 ±1（如 “… is -1, indicating a strong negative sentiment.”）；5 条回答 `0`、“中性”或 0.7 这样的小数；11 条最后一行没有数字。
+  - 就算把最后一行里那个 ±1 都算作答案，Mistral 是 84.0%、Llama 是 87.0%，仍然低于各自的 basic（91.0%、92.5%）。
+- 和 Qwen 不同：cot 帮了 Qwen 0.8b、2b 这样的小模型，对这四个 7–14B 的模型、Qwen 4b、9b 和 DeepSeek 都没有提升（结果三、四）。
+- **都判错的句子**：四个系列、Qwen 4b、Qwen 9b 和 DeepSeek（basic 关思考）都错的有 10 条，其中 8 条标签是正面，包括结果五提到的 282、699，以及 230 “reign of fire looks as if it was made without much thought -- and is best watched that way .”。
+
+运行：basic 四组、Mistral 和 Llama 的 cot，以及 Gemma cot 的前 99 条在 Colab 的 T4 上运行；Gemma cot 的后 101 条和 Phi-4 cot 在腾讯 Cloud Studio 的 T4 上运行。两边的 Ollama 版本和模型 digest 相同；Cloud Studio 上 `ollama pull` 被拦（下载地址被解析成内网地址），模型文件改用 curl 从同一个仓库下载，逐个核对了 SHA-256。接着跑时，第一次已有的条目与重新导出的结果逐条一致。
+
 ## 解析规则
 
 评测脚本（[code/sst2_instruction_eval.py](code/sst2_instruction_eval.py) 的 `parse_label`、`line_label`）只从回答里取明确的答案：
@@ -297,7 +351,7 @@ Just "1".
 ## 缺少的数据
 
 - 9b 的 cot 开思考和 role_cot 开思考缺 16 条和 32 条。
-- 材料要求的 Llama、Gemma、Phi-4、Mistral 正在用 [sst2_more_models.ipynb](notebooks/sst2_more_models.ipynb) 运行，结果还没有整理进本文。
+- 另外四个系列只跑了关思考，每个系列只用一个尺寸；cot 只跑了前 200 条。
 - 开思考只用了 4096 个 token 的输出上限，没有更大上限的对照，思考本身的作用和截断没有完全分开。
 - 每种设置只运行了一次（DeBERTa 除外）；开思考时采样有随机性，几个百分点以内的差别没有重复运行来确认。
 
@@ -308,9 +362,10 @@ Just "1".
   - 结果二、三、五由 Pan-Yan-0 在 Kaggle 上运行 [sst2_remaining_experiments.ipynb](notebooks/sst2_remaining_experiments.ipynb)（两张 T4，共 9 小时），导出的结果包里核对了脚本（`187d2f88…`、`fb581c22…`）和数据（`a7a3bfee…`）的 SHA-256。
   - 结果三的剩余部分由 Pan-Yan-0 在 Kaggle 上运行 [sst2_finish_experiments.ipynb](notebooks/sst2_finish_experiments.ipynb)（两张 T4，共 11.2 小时），结果包里核对了脚本（`301d0bb3…`、`beb4cc0b…`）和数据的 SHA-256；接着跑的 7 组，第一次已有的条目与仓库里的原始返回逐条一致。
   - 结果四的 DeepSeek 组合由 GPT6astra 在 Pan-Yan-0 的本机运行，用的是同一版评测脚本和同一份数据，终端记录见 [metrics/deepseek_matrix_logs/](metrics/deepseek_matrix_logs/)。
+  - 结果六由 Pan-Yan-0 运行 [sst2_more_models.ipynb](notebooks/sst2_more_models.ipynb)（先在 Colab，补跑在腾讯 Cloud Studio，都是一张 T4），结果包里核对了脚本（`c3c96be1…`）和数据（`a7a3bfee…`）的 SHA-256，运行记录见 [metrics/more_models_logs/](metrics/more_models_logs/)。
 - 代码：
   - 评测脚本初版由 Claude 编写，GPT6.1sol 加入了实验指纹、更严格的答案解析和断点修复；解析规则的修正由 Claude 完成。
   - 结果一的 Kaggle Notebook 由 GPT6.1sol 编写，Claude 补了 `apt-get update` 报错时的容错。
-  - `sst2_remaining_experiments.ipynb`、`sst2_finish_experiments.ipynb`、`deberta_sst2.py`、`rescore_offline.py`、`sst2_report_stats.py` 由 Claude 编写。
+  - `sst2_remaining_experiments.ipynb`、`sst2_finish_experiments.ipynb`、`sst2_more_models.ipynb`、`deberta_sst2.py`、`rescore_offline.py`、`sst2_report_stats.py` 由 Claude 编写。
 - DeBERTa-v3-base 的参数量（12 层、隐藏维度 768、主干 8600 万、词嵌入 9800 万）取自模型说明：[microsoft/deberta-v3-base（Azure AI 模型目录）](https://ai.azure.com/catalog/models/microsoft-deberta-v3-base)。
 - 本文：由 Claude 整理，参考了 DeepSeek 实验记录；所有准确率、区间、召回率、配对检验和 DeBERTa 统计都可以用 `python code/sst2_report_stats.py` 从 `metrics/` 中的逐条结果复算。

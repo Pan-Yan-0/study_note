@@ -183,6 +183,33 @@ def main() -> None:
     same = sum(first[i]["pred"] == q[("4b", "basic", "off")][i]["pred"] for i in ALL)
     print(f"Qwen 4b basic 关思考两次运行（结果一那次与本次 Kaggle）：{same}/872 条预测相同")
 
+    print("另外四个系列（Ollama，关思考，重新判分后）")
+    fam = {}
+    for name in ("mistral-7b", "llama3.1-8b", "gemma3-12b", "phi4-14b"):
+        for prompt, size in (("basic", "all"), ("cot", "n200")):
+            fam[(name, prompt)] = one(f"ollama_{name}_{prompt}_think-off_{size}_*", M / "more_models")
+            describe(f"{name}/{prompt}", fam[(name, prompt)])
+    names = ("mistral-7b", "llama3.1-8b", "gemma3-12b", "phi4-14b")
+    print("和 Qwen、DeepSeek 比（basic 关思考，872 条）")
+    for n in names:
+        b = fam[(n, "basic")]
+        compare(f"{n} 对 Qwen 4b", b, q[("4b", "basic", "off")], ALL)
+        compare(f"{n} 对 Qwen 9b", b, q[("9b", "basic", "off")], ALL)
+        compare(f"{n} 对 DeepSeek", b, dsb, ALL)
+    print("四个系列两两比较（basic，872 条）")
+    for i, a in enumerate(names):
+        for b in names[i + 1:]:
+            compare(f"{a} 对 {b}", fam[(a, "basic")], fam[(b, "basic")], ALL)
+    print("basic 对 cot（关思考，前 200 条）；cot 直接只答一个数字（输出不超过 5 个 token）的条数")
+    for n in names:
+        compare(f"{n} basic 对 cot", fam[(n, "basic")], fam[(n, "cot")], FIRST200)
+        print(f"    cot 直接只答数字 {sum(fam[(n, 'cot')][i]['tokens'] <= 5 for i in FIRST200)}/200，"
+              f"cot 每条平均 {statistics.mean(fam[(n, 'cot')][i]['seconds'] for i in FIRST200):.1f} 秒")
+    eight = [fam[(n, "basic")] for n in names] + [q[("4b", "basic", "off")], q[("9b", "basic", "off")], dsb]
+    wrong = [i for i in ALL if all(not s[i]["correct"] for s in eight)]
+    print(f"  四个系列、Qwen 4b、Qwen 9b、DeepSeek（basic 关思考）都错：{len(wrong)} 条，"
+          f"标签 {dict(Counter(dsb[i]['label'] for i in wrong))}，idx {wrong}")
+
 
 if __name__ == "__main__":
     main()
