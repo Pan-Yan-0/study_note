@@ -1,0 +1,45 @@
+
+=== ollama_qwen3.5-9b_cot_think-on_n200_7bb4e18c58f6
+    共 200 条，断点里已有 184 条；并发 1，max_tokens 4096，temperature 0.6
+
+    --- 样本 idx=184，真实标签 -1
+    句子：though perry and hurley make inspiring efforts to breathe life into the disjointed , haphazard script by jay scherick and david ronn , neither the actors nor director reginald hudlin can make it more than fitfully entertaining .
+    思考：Thinking Process: 1. **Analyze the Request:** * Task: Analyze the sentiment of a given text (an online review). * Input Text: "though perry and hurley make inspiring efforts to breathe life into the disjointed , haphazard script by jay scherick and david ronn , neither the actors nor director regina……
+    回答：-1
+    解析：-1（exact），正确
+
+    [ 185/200] 准确率 0.6703  无效 56  109.63 秒/条  还要约 27.4 分钟
+
+    --- 样本 idx=185，真实标签 1
+    句子：a must-see for the david mamet enthusiast and for anyone who appreciates intelligent , stylish moviemaking .
+    思考：Thinking Process: 1. **Analyze the Request:** * Task: Analyze the sentiment polarity of a given text (online review). * Output Format: A single number, either -1 (negative) or 1 (positive). * Input Text: "a must-see for the david mamet enthusiast and for anyone who appreciates intelligent , stylish ……
+    回答：The input text expresses a strong recommendation ("must-see") and uses positive adjectives ("intelligent", "stylish") to describe the filmmaking. It targets specific audiences who would appreciate these qualities, indicating a favorable opinion of the movie. Therefore, the sentiment is positive. 1
+    解析：1（last_number），正确
+    [ 186/200] 准确率 0.6720  无效 56  115.14 秒/条  还要约 26.9 分钟
+
+    --- 样本 idx=186，真实标签 1
+    句子：pacino is brilliant as the sleep-deprived dormer , his increasing weariness as much existential as it is physical .
+    思考：Thinking Process: 1. **Analyze the Request:** * Task: Analyze text from an online review and determine sentiment polarity. * Input Text: "pacino is brilliant as the sleep-deprived dormer , his increasing weariness as much existential as it is physical ." * Output Format: A single number, either -1 (……
+    回答：1
+    解析：1（exact），正确
+    [ 187/200] 准确率 0.6738  无效 56  105.90 秒/条  还要约 22.9 分钟
+    [ 188/200] 准确率 0.6702  无效 57  114.78 秒/条  还要约 23.0 分钟
+    [ 189/200] 准确率 0.6720  无效 57  111.53 秒/条  还要约 20.4 分钟
+    [ 190/200] 准确率 0.6737  无效 57  115.49 秒/条  还要约 19.2 分钟
+    [ 191/200] 准确率 0.6754  无效 57  104.16 秒/条  还要约 15.6 分钟
+    [ 192/200] 准确率 0.6771  无效 57  98.23 秒/条  还要约 13.1 分钟
+    [ 193/200] 准确率 0.6788  无效 57  96.57 秒/条  还要约 11.3 分钟
+    [ 194/200] 准确率 0.6753  无效 58  101.00 秒/条  还要约 10.1 分钟
+    [ 195/200] 准确率 0.6769  无效 58  102.79 秒/条  还要约 8.6 分钟
+    [ 196/200] 准确率 0.6735  无效 59  105.98 秒/条  还要约 7.1 分钟
+    [ 197/200] 准确率 0.6751  无效 59  108.40 秒/条  还要约 5.4 分钟
+    [ 198/200] 准确率 0.6768  无效 59  110.51 秒/条  还要约 3.7 分钟
+    [ 199/200] 准确率 0.6784  无效 59  107.04 秒/条  还要约 1.8 分钟
+    [ 200/200] 准确率 0.6800  无效 59  106.09 秒/条
+    准确率 0.6800（136/200），无效输出 59，请求失败 0，被截断 58
+    真实 -1：预测 -1 70 条，预测 1 2 条，无效 29 条
+    真实  1：预测 -1 3 条，预测 1 66 条，无效 30 条
+    tokens：输入 27,867，输出 603,647（含思考）；单条请求平均 110.98 秒
+    明细：/workspace/sst2_qwen9b_finish/ollama_results/qwen3.5-9b_56671c2ab938/ollama_qwen3.5-9b_cot_think-on_n200_7bb4e18c58f6.csv
+    [注意] 58 条写到 max_tokens 上限被截断，可加大 --max-tokens 并加 --fresh 重跑
+    [注意] 59 条回答里没找到 -1/1，CSV 的 answer 列可以看原文

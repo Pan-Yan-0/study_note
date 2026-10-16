@@ -5,7 +5,7 @@
 已完成五部分：
 
 1. `basic` 指令、关闭思考时，DeepSeek 与 Qwen3.5 4B 的对比。
-2. Qwen3.5 的 0.8b、2b、4b、9b 四个尺寸，以及它们在三个指令模板（basic / cot / role_cot）× 思考开关下的全部 24 种组合。除 basic + 关思考外都只跑前 200 条；9b 的 cot、role_cot 开思考没跑完（184、168 条）。
+2. Qwen3.5 的 0.8b、2b、4b、9b 四个尺寸，以及它们在三个指令模板（basic / cot / role_cot）× 思考开关下的全部 24 种组合。除 basic + 关思考外都只跑前 200 条。
 3. DeepSeek 在三个模板 × 思考开关下的全部组合。
 4. DeBERTa-v3-base 微调对照组：只用 16 / 64 / 256 / 1024 条训练数据和用全部 67,349 条，各 3 个种子。
 5. 材料要求的另外四个模型系列：Mistral 7B、Llama 3.1 8B、Gemma 3 12B、Phi-4 14B，basic 跑全部 872 条，cot 跑前 200 条，都关思考。
@@ -32,7 +32,7 @@
 | [notebooks/sst2_more_models.ipynb](notebooks/sst2_more_models.ipynb)、[.py](notebooks/sst2_more_models.py) | Mistral、Llama、Gemma、Phi-4 四个系列的 Notebook 和同内容的脚本（Colab、Kaggle 或其他带 GPU 的 Linux）：basic 全部 872 条、cot 前 200 条；不设时间限制，跑完的组跳过，没跑完的组从断点接着跑，换平台时先导入上一次的结果包 |
 | [notebooks/sst2_qwen9b_finish.py](notebooks/sst2_qwen9b_finish.py) | 补跑 Qwen 9b 开思考的 cot、role_cot 剩下的条目：内置第一次的断点，沿用原来的服务地址和模型版本，从断点接着跑 |
 | `metrics/` 根目录 | 结果一和结果四：DeepSeek 7 次全量运行和 Qwen 4B 第一次运行的逐条 `.csv`、`_summary.json`、`_errors.csv` |
-| [metrics/qwen_matrix/](metrics/qwen_matrix/) | Qwen 24 组的逐条结果、汇总和错例；没跑完的两组汇总里 `completed` 为 false |
+| [metrics/qwen_matrix/](metrics/qwen_matrix/) | Qwen 24 组的逐条结果、汇总和错例 |
 | [metrics/more_models/](metrics/more_models/) | 结果六：四个系列 8 组的逐条结果、汇总和错例 |
 | [metrics/more_models_logs/](metrics/more_models_logs/) | 结果六的终端输出、模型信息（量化方式、文件摘要）、运行记录、两个平台的 `nvidia-smi` 和服务日志摘录 |
 | [metrics/qwen_matrix_logs/](metrics/qwen_matrix_logs/) | Qwen 各组的终端输出、模型信息（量化方式、文件摘要）、执行状态和 `nvidia-smi`；[finish_run/](metrics/qwen_matrix_logs/finish_run/) 是第二次运行的记录，含服务日志摘录 |
@@ -161,7 +161,7 @@ basic 指令，关思考，全部 872 条。
 
 ## 结果三：Qwen 的模板 × 思考
 
-除了四个尺寸的 basic + 关思考（结果二，全部 872 条），其余组合只跑验证集前 200 条。9b 的 cot 开思考和 role_cot 开思考只跑到 184 条和 168 条。
+除了四个尺寸的 basic + 关思考（结果二，全部 872 条），其余组合只跑验证集前 200 条。
 
 前 200 条准确率（截断、无效都按错误计）：
 
@@ -170,7 +170,7 @@ basic 指令，关思考，全部 872 条。
 | 0.8b | 74.5% | 56.5% | 78.0% | 42.5% | 79.0% | 40.0% |
 | 2b | 83.5% | 85.5% | 89.0% | 68.5% | 88.5% | 68.0% |
 | 4b | 92.0% | 92.5% | 94.5% | 80.5% | 90.0% | 85.0% |
-| 9b | 94.0% | 95.0% | 93.5% | 66.8%（184 条） | 94.0% | 70.8%（168 条） |
+| 9b | 94.0% | 95.0% | 93.5% | 68.0% | 94.0% | 68.5% |
 
 basic + 关思考取的是 872 条那次运行的前 200 条。最高的几格（9b basic 开 95.0%、4b cot 关 94.5%、9b basic 关和 role_cot 关 94.0%）彼此之间没有显著差别。
 
@@ -221,14 +221,14 @@ Just "1".
 | 4b cot | 200 | 33（16%） | 94.5% → 80.5% | 95.8% → 96.4%（167 条） | 1 对 2 | 1 | 87.9% | 1,292 |
 | 4b role_cot | 200 | 25（12%） | 90.0% → 85.0% | 92.0% → 97.1%（175 条） | 0 对 9 | 0.004 | 76.0% | 981 |
 | 9b basic | 200 | 5（2%） | 94.0% → 95.0% | 94.9% → 97.4%（195 条） | 0 对 5 | 0.063 | 60.0% | 368 |
-| 9b cot | 184 | 55（30%） | 93.5% → 66.8% | 94.6% → 95.3%（129 条） | 2 对 3 | 1 | 90.9% | 3,286 |
-| 9b role_cot | 168 | 48（29%） | 94.0% → 70.8% | 96.7% → 99.2%（120 条） | 0 对 3 | 0.25 | 87.5% | 3,304 |
+| 9b cot | 200 | 58（29%） | 93.5% → 68.0% | 95.1% → 95.8%（142 条） | 2 对 3 | 1 | 89.7% | 3,286 |
+| 9b role_cot | 200 | 62（31%） | 94.0% → 68.5% | 96.4% → 99.3%（138 条） | 0 对 4 | 0.13 | 88.7% | 3,450 |
 
-“不一致的条目”是在没截断的条目上，只有关思考对和只有开思考对的条数。9b 的两组没跑完，只比跑到的条目。
+“不一致的条目”是在没截断的条目上，只有关思考对和只有开思考对的条数。
 
 - **basic 模板开思考，整体差别不大**：2b、4b、9b 开不开思考差 0.5–2 个百分点，都不显著；只有 0.8b 截断太多，掉了 18 个百分点。
 - **cot、role_cot 模板再开思考，所有尺寸都变差了**：除了 4b role_cot 掉 5 个百分点（p = 0.087），其余掉 14–39 个百分点，都非常显著。差别几乎全部来自截断：模型在思考里推理一遍，正文里按模板要求再推理一遍，0.8b 有一半以上、2b 和 9b 将近三成写不完。
-- **被截断的不一定是难句**。basic 模板下被截断的条目，关思考时只对了 22–60%，确实偏难；cot、role_cot 模板下被截断的条目，关思考时对了 74–91%，9b cot 开被截断的 55 条里关思考对了 91%。所以后者主要是推理写得太长，不是句子难。
+- **被截断的不一定是难句**。basic 模板下被截断的条目，关思考时只对了 22–60%，确实偏难；cot、role_cot 模板下被截断的条目，关思考时对了 74–90%，9b cot 开被截断的 58 条里关思考对了 90%。所以后者主要是推理写得太长，不是句子难。
 - **只看没截断的条目，开思考不比关思考差**，12 组里有 3 组显著更准（2b basic、0.8b cot、4b role_cot）。但这个比较也偏向开思考：留下的是开思考自己写完了的条目，写完的往往是它比较有把握的句子。所以只能说“写得完的时候，思考没有坏处”，不能说思考让模型更准。
 - **代价**：开思考每条 15–46 秒，9b 的 cot、role_cot 开思考每条约 2 分钟，是关思考的几十到几百倍。
 
@@ -351,7 +351,6 @@ cot 指令，前 200 条（basic 取 872 条那次运行的前 200 条）：
 
 ## 缺少的数据
 
-- 9b 的 cot 开思考和 role_cot 开思考缺 16 条和 32 条。
 - 另外四个系列只跑了关思考，每个系列只用一个尺寸；cot 只跑了前 200 条。
 - 开思考只用了 4096 个 token 的输出上限，没有更大上限的对照，思考本身的作用和截断没有完全分开。
 - 每种设置只运行了一次（DeBERTa 除外）；开思考时采样有随机性，几个百分点以内的差别没有重复运行来确认。
@@ -363,6 +362,7 @@ cot 指令，前 200 条（basic 取 872 条那次运行的前 200 条）：
   - 结果二、三、五由 Pan-Yan-0 在 Kaggle 上运行 [sst2_remaining_experiments.ipynb](notebooks/sst2_remaining_experiments.ipynb)（两张 T4，共 9 小时），导出的结果包里核对了脚本（`187d2f88…`、`fb581c22…`）和数据（`a7a3bfee…`）的 SHA-256。
   - 结果三的剩余部分由 Pan-Yan-0 在 Kaggle 上运行 [sst2_finish_experiments.ipynb](notebooks/sst2_finish_experiments.ipynb)（两张 T4，共 11.2 小时），结果包里核对了脚本（`301d0bb3…`、`beb4cc0b…`）和数据的 SHA-256；接着跑的 7 组，第一次已有的条目与仓库里的原始返回逐条一致。
   - 结果四的 DeepSeek 组合由 GPT6astra 在 Pan-Yan-0 的本机运行，用的是同一版评测脚本和同一份数据，终端记录见 [metrics/deepseek_matrix_logs/](metrics/deepseek_matrix_logs/)。
+  - 结果三里 9b 的 cot、role_cot 开思考，第一次在 Kaggle 上跑到 184 条和 168 条；剩下的 16 条、32 条由 Pan-Yan-0 在腾讯 Cloud Studio 的一张 T4 上运行 [sst2_qwen9b_finish.py](notebooks/sst2_qwen9b_finish.py) 补齐。模型版本、Ollama 版本和全部生成参数与第一次相同（实验指纹一致），第一次已有的条目逐条保留；开思考时采样有随机性，补跑的条目只是同一设置下的一次采样。记录见 [metrics/qwen_matrix_logs/qwen9b_finish_run/](metrics/qwen_matrix_logs/qwen9b_finish_run/)。
   - 结果六由 Pan-Yan-0 运行 [sst2_more_models.ipynb](notebooks/sst2_more_models.ipynb)（先在 Colab，补跑在腾讯 Cloud Studio，都是一张 T4），结果包里核对了脚本（`c3c96be1…`）和数据（`a7a3bfee…`）的 SHA-256，运行记录见 [metrics/more_models_logs/](metrics/more_models_logs/)。
 - 代码：
   - 评测脚本初版由 Claude 编写，GPT6.1sol 加入了实验指纹、更严格的答案解析和断点修复；解析规则的修正由 Claude 完成。

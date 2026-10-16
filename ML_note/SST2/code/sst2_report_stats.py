@@ -131,7 +131,7 @@ def main() -> None:
     for s in sizes:
         for p in ("basic", "cot", "role_cot"):
             off, on = q[(s, p, "off")], q[(s, p, "on")]
-            done = [i for i in FIRST200 if i in on]  # 9b 的两组没跑完，只比跑到的条目
+            done = [i for i in FIRST200 if i in on]  # 只比开思考跑到的条目（现在两边都是 200 条）
             kept = [i for i in done if on[i]["finish"] != "length"]
             cut = [i for i in done if on[i]["finish"] == "length"]
             compare(f"{s} {p} 全部", off, on, done)
