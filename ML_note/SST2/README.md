@@ -30,6 +30,7 @@
 | [notebooks/sst2_remaining_experiments.ipynb](notebooks/sst2_remaining_experiments.ipynb) | 结果二、三、五的 Kaggle Notebook（Qwen 各组的第一次运行和 DeBERTa） |
 | [notebooks/sst2_finish_experiments.ipynb](notebooks/sst2_finish_experiments.ipynb) | 结果三剩余各组的 Kaggle Notebook（从第一次的断点接着跑） |
 | [notebooks/sst2_more_models.ipynb](notebooks/sst2_more_models.ipynb)、[.py](notebooks/sst2_more_models.py) | Mistral、Llama、Gemma、Phi-4 四个系列的 Notebook 和同内容的脚本（Colab、Kaggle 或其他带 GPU 的 Linux）：basic 全部 872 条、cot 前 200 条；不设时间限制，跑完的组跳过，没跑完的组从断点接着跑，换平台时先导入上一次的结果包 |
+| [notebooks/sst2_qwen9b_finish.py](notebooks/sst2_qwen9b_finish.py) | 补跑 Qwen 9b 开思考的 cot、role_cot 剩下的条目：内置第一次的断点，沿用原来的服务地址和模型版本，从断点接着跑 |
 | `metrics/` 根目录 | 结果一和结果四：DeepSeek 7 次全量运行和 Qwen 4B 第一次运行的逐条 `.csv`、`_summary.json`、`_errors.csv` |
 | [metrics/qwen_matrix/](metrics/qwen_matrix/) | Qwen 24 组的逐条结果、汇总和错例；没跑完的两组汇总里 `completed` 为 false |
 | [metrics/more_models/](metrics/more_models/) | 结果六：四个系列 8 组的逐条结果、汇总和错例 |
