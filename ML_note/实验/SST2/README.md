@@ -275,7 +275,7 @@ Just "1".
 - **和指令学习比**：
   - 全量微调的 DeBERTa（95.60%）和 DeepSeek basic 关思考（95.18%）没有显著差别（三个种子 p = 0.67–0.77），比 Qwen 4b（93.81%）显著更高（p = 0.03）。
   - 只用 1024 条的 DeBERTa（92.97%）和 Qwen 4b 没有显著差别（p = 0.35–0.46）。粗略地说，在这个任务上，直接问 Qwen 4b 的效果，相当于拿一千条左右的标注数据去微调 DeBERTa-v3-base（主干约 8600 万参数，加上词嵌入约 1.8 亿）。
-  - 参照 LoRA 论文表 2 同一验证集上的微调结果：RoBERTa-base 全量 94.8、LoRA 95.1，RoBERTa-large LoRA 96.2，DeBERTa-XXL LoRA 96.9（5 个种子的中位数，取最佳 epoch；见[实验结果汇总](../../实验结果汇总.md) 1.3 节）。本组只用最后一步、不挑 epoch，统计方式不同。
+  - 参照 LoRA 论文表 2 同一验证集上的微调结果：RoBERTa-base 全量 94.8、LoRA 95.1，RoBERTa-large LoRA 96.2，DeBERTa-XXL LoRA 96.9（5 个种子的中位数，取最佳 epoch；见[实验结果汇总](../../实验结果汇总.md) 3.3 节）。本组只用最后一步、不挑 epoch，统计方式不同。
 - **都判错的句子**：DeepSeek、Qwen 4b、Qwen 9b（basic 关思考）和全量 DeBERTa（种子 13）都错的有 13 条，其中 10 条标签是正面。有几条单看句子更像负面，例如 271 “as unseemly as its title suggests .”、282 “... this jerry bruckheimer production has little else to offer”、699 “... routine , harmless diversion and little else .”，标签可能本身有争议。
 - 训练过程没有出现 NaN（fp16 的非有限 loss 计数全为 0），显存峰值 3.5–4.4 GB。15 次运行共 89.5 分钟。
 
