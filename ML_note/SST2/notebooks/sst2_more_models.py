@@ -42,13 +42,25 @@ DATA_DIR, META_DIR, RESULTS = ROOT / "data", ROOT / "metadata", ROOT / "ollama_r
 for directory in (ROOT, DATA_DIR, META_DIR, RESULTS, MODEL_DIR):
     directory.mkdir(parents=True, exist_ok=True)
 
-# 换了平台时，把上一次的结果包放在 sst2_more_models 文件夹旁边（Kaggle 上可以作为 Dataset 挂上），
-# 这里会先把它解压进来，已经跑完的组就会跳过，没跑完的组接着跑。
-PREVIOUS_ZIP = "sst2_more_models_results.zip"
+# 换了平台时，把上一次的结果包（sst2_more_models_results*.zip）放在当前目录或 sst2_more_models 旁边
+# （Kaggle 上可以作为 Dataset 挂上），这里先把它解压进来：跑完的组跳过，没跑完的组接着跑。
+def results_in(path):
+    try:
+        with zipfile.ZipFile(path) as archive:
+            return sum(n.startswith("sst2_more_models/ollama_results/") and n.endswith(".jsonl") for n in archive.namelist())
+    except zipfile.BadZipFile:
+        return -1
+
+
 if not any(RESULTS.rglob("*.jsonl")):
-    candidates = [ROOT.parent / PREVIOUS_ZIP, Path.cwd() / PREVIOUS_ZIP, Path.home() / PREVIOUS_ZIP]
-    candidates += sorted(Path("/kaggle/input").rglob(PREVIOUS_ZIP)) if Path("/kaggle/input").is_dir() else []
-    previous = next((c for c in candidates if c.is_file()), None)
+    places = {ROOT.parent, Path.cwd(), Path.home()}
+    found = sorted({z for place in places for z in place.glob("sst2_more_models_results*.zip")})
+    if Path("/kaggle/input").is_dir():
+        found += sorted(Path("/kaggle/input").rglob("sst2_more_models_results*.zip"))
+    counts = {z: results_in(z) for z in found}
+    for z, k in counts.items():
+        print(f"找到结果包 {z}：" + ("文件损坏，没法打开" if k < 0 else f"里面有 {k} 组的结果"))
+    previous = max((z for z in counts if counts[z] > 0), key=counts.get, default=None)
     if previous:
         with zipfile.ZipFile(previous) as archive:
             names = [n for n in archive.namelist() if n.startswith("sst2_more_models/") and ".." not in n
@@ -58,9 +70,9 @@ if not any(RESULTS.rglob("*.jsonl")):
                 if not target.exists():
                     target.parent.mkdir(parents=True, exist_ok=True)
                     target.write_bytes(archive.read(name))
-        print(f"已从 {previous} 导入上一次的结果（{len(names)} 个文件）")
+        print(f"已从 {previous} 导入上一次的结果（{counts[previous]} 组）")
     else:
-        print("没有找到上一次的结果包，所有组从头跑")
+        print("没有找到带结果的结果包，所有组从头跑。要接着上次跑，请先停下，把上次的结果包放到当前目录再运行。")
 EVAL_SCRIPT = ROOT / "sst2_instruction_eval.py"
 DATA = DATA_DIR / "sst2_validation.tsv"
 HOST = "http://127.0.0.1:11434"  # 与 Qwen 各组相同（实验指纹里含这个地址）
@@ -209,13 +221,55 @@ def rows_done(family, prompt, n):
                 for path in group_files(family, prompt, n, ".jsonl")), default=0)
 
 
+REGISTRY = "https://registry.ollama.ai"
+
+
+def manual_pull(tag):
+    """ollama pull 失败时，用 curl 从同一个 registry 下载清单和文件，放进 Ollama 的模型目录。
+
+    清单按原样保存，所以模型的 digest 和 ollama pull 下载的一样。"""
+    name, _, ref = tag.partition(":")
+    ref = ref or "latest"
+    manifest_url = f"{REGISTRY}/v2/library/{name}/manifests/{ref}"
+    raw = subprocess.run(["curl", "-fsSL", "--retry", "3", "-H",
+                          "Accept: application/vnd.docker.distribution.manifest.v2+json", manifest_url],
+                         capture_output=True, check=True, timeout=300).stdout
+    manifest = json.loads(raw)
+    blobs = MODEL_DIR / "blobs"
+    blobs.mkdir(parents=True, exist_ok=True)
+    for layer in [manifest["config"]] + manifest["layers"]:
+        digest = layer["digest"]
+        path = blobs / digest.replace(":", "-")
+        if path.exists() and path.stat().st_size == layer["size"]:
+            continue
+        part = path.with_name(path.name + ".partial")
+        print(f"  下载 {digest[:19]}…（{layer['size'] / 2 ** 30:.2f} GB）", flush=True)
+        subprocess.run(["curl", "-fL", "--retry", "5", "--retry-delay", "5", "-C", "-", "-s", "-S",
+                        "-o", str(part), f"{REGISTRY}/v2/library/{name}/blobs/{digest}"], check=True)
+        sha = hashlib.sha256()
+        with part.open("rb") as f:
+            for chunk in iter(lambda: f.read(1 << 24), b""):
+                sha.update(chunk)
+        if "sha256:" + sha.hexdigest() != digest:
+            part.unlink()
+            raise RuntimeError(f"{digest} 校验失败，已删除，重跑会重新下载")
+        part.rename(path)
+    target = MODEL_DIR / "manifests" / "registry.ollama.ai" / "library" / name / ref
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_bytes(raw)
+
+
 def pull(family):
     for tag in FAMILIES[family]:
         started = time.monotonic()
         result = subprocess.run(["ollama", "pull", tag], env=ENV, capture_output=True, text=True, timeout=3600)
         if result.returncode != 0:
-            note(f"{tag} 下载失败：{' '.join((result.stdout + result.stderr).split())[-300:]}")
-            continue
+            note(f"{tag}：ollama pull 失败（{' '.join((result.stdout + result.stderr).split())[-160:]}），改用 curl 直接下载")
+            try:
+                manual_pull(tag)
+            except (subprocess.CalledProcessError, subprocess.TimeoutExpired, RuntimeError, KeyError, ValueError) as e:
+                note(f"{tag} 用 curl 下载也失败：{str(e)[-300:]}")
+                continue
         entry = next((m for m in api("/api/tags").get("models", []) if tag in (m.get("name"), m.get("model"))), None)
         if not entry or not entry.get("digest"):
             note(f"{tag} 下载后找不到 digest")
@@ -308,7 +362,8 @@ try:
         subprocess.run(["nvidia-smi"], capture_output=True, text=True).stdout, encoding="utf-8")
 except OSError as e:
     print("记录 nvidia-smi 失败：", e)
-ZIP_PATH = ROOT.parent / "sst2_more_models_results.zip"
+# 文件名带时间，不会覆盖上传来的旧结果包
+ZIP_PATH = ROOT.parent / f"sst2_more_models_results_{datetime.now(timezone.utc).strftime('%Y%m%d-%H%M')}.zip"
 allowed = {".json", ".jsonl", ".csv", ".tsv", ".txt", ".log", ".py"}
 with zipfile.ZipFile(ZIP_PATH, "w", compression=zipfile.ZIP_DEFLATED) as archive:
     for path in sorted(p for p in ROOT.rglob("*") if p.is_file() and p.suffix.lower() in allowed):
