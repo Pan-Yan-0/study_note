@@ -30,7 +30,7 @@ ML_note/
 | [LoRA 论文笔记](ML_note/原理笔记/LoRA/LoRA论文笔记.md) | 方法、公式与补充推导 |
 | [BERT 原理笔记](ML_note/原理笔记/BERT/BERT原理笔记.md) | 嵌入、注意力、一层的数据流，配图和玩具数字脚本 |
 | [DeBERTa 与 IMDB 三条路学习笔记](ML_note/原理笔记/DeBERTa/DeBERTa与IMDB三条路学习笔记.md) | AUC，DeBERTa（解耦注意力、EMD、RTD、GDES），微调要点，大模型零样本与少样本 |
-| [解码器大模型与路线 C 学习笔记](ML_note/原理笔记/LLM/解码器大模型与路线C学习笔记.md) | 因果掩码与上下文、agent、提示的成本、解码器结构、cot 与概率、LoRA 分类器 / 嵌入 + 逻辑回归 / 蒸馏、指令微调（SFT）与 T4 用时估算 |
+| [解码器大模型与路线 C 学习笔记](ML_note/原理笔记/LLM/解码器大模型与路线C学习笔记.md) | 因果掩码与上下文、agent、提示的成本、解码器结构、cot 与概率、LoRA 分类器 / 嵌入 + 逻辑回归 / 蒸馏、指令微调（SFT）与 T4 用时估算、交叉熵与熵、开思考为什么常被截断 |
 | [IMDB 六模型实战与概念问答](ML_note/实验/IMDB/notes/IMDB六模型实战与概念问答.md) | GloVe 六模型的概念问答整理 |
 
 ## 吴恩达机器学习课程笔记
