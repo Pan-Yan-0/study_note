@@ -52,22 +52,26 @@
 
 **揭示金标之后**
 
-1. **词对自己的关系，常常和原短语的金标不同。** 两人对词对关系意见一致的 26 个家族里，有 16 个和原短语的金标不同。例如 workers–members 两人都判 O，原短语 "Red Cross workers ‖ Red Cross members" 的金标是 E；8–4 都判 O，"8 dead ‖ 4 dead" 的金标是 F。
-   - 在"去掉其余词后变错"的格子里，两人有共识的 8 个家族中，6 个属于这种情况。
-   - 所以第二组"只给词对时，与原短语金标的一致率下降"，有很大一部分不是模型变差：换了输入以后，正确答案本来就变了。
+1. **词对和完整短语有时会得到不同的判断，但第二组一致率的下降里各种原因各占多少，这批样本估计不了。**
+   - 两人对词对关系有共识的 26 个家族里，16 个和原短语的金标不同。再看这 16 个家族的完整短语：
+     - 8 个：两人对短语的共识和词对相同，也和金标不同。例如 workers–members 和 "Red Cross workers ‖ Red Cross members" 两人都判 O，金标 E。这是审阅判断和金标的分歧，不是"换了输入，答案变了"。
+     - 7 个：两人对短语没有共识。
+     - 1 个：短语的共识和金标相同、和词对不同。ledge–sill 判 B，"on the window ledge ‖ on the window sill" 判 E，金标 E。
+   - 45 个家族里，两张表都有共识的 17 个：15 个词对和短语判断相同，2 个不同。另一个是 Red–passenger 判 O、"Red double decker bus ‖ Double decker passenger bus" 判 F，金标 O。
+   - 样本是从三个出错的格子各抽 15 个，不代表那 460 行，也没有保留各格子的比例，又有不少"无法确定"。所以 16 / 26 和 2 / 17 都不能用来推断第二组下降的原因。
    - 只给词对时，模型 3 个种子的多数票和两人共识相同的是 14 / 26。
-2. **完整短语上，两人和金标也常常不一致。** Claude 45 项里有 25 项和金标相同（去掉非盲 20 / 39）；GPT 给了确定标签的 29 项里 16 项相同（去掉非盲 12 / 24）。两人意见一致、却都和金标不同的有 11 个家族：
+2. **两人共同提出的标签疑问：11 个家族。** Claude 45 项里有 25 项和金标相同（去掉非盲 20 / 39）；GPT 给了确定标签的 29 项里 16 项相同（去掉非盲 12 / 24）。两人对短语意见一致、却都和金标不同的有 11 个家族。不据此改金标，也不称为已证实的标注错误：
    - 金标 E，两人认为不等价：近义或相似的说法（field–plain、metal band–metal bar、workers–members），同一个人的不同称呼（American / Pro football player Aaron Hernandez，Fashion designer / Designer, Socialite Lilly Pulitzer）；brown markings–brown spots 两人判 B。
    - 金标 O，两人认为有单向蕴含：sheep–lamb、hillside–hill、in Iraq–across Iraq、Red double decker bus–Double decker passenger bus。
    - 方向相反：four–several computer monitors，金标是 several 推出 four，两人都判 four 推出 several。
-3. **计数按"至少"读，在训练集上没有例外**（[code/label_conventions.py](code/label_conventions.py)）。三个计数短语（6 dead–One dead、8 dead–4 dead、4,000–6,000 Cuban doctors），Claude 按"恰好"判 O，GPT 填无法确定，金标都是数大的一侧推出数小的一侧。英语训练集里只差一个数的短语对共 26 对：
-   - 数的是人或物（dead、soldiers、troops、dogs、doctors）的 15 对，全部是数大的一侧推出数小的一侧；
-   - 数值是读数（震级、汇率、百分比、日期等）的 11 对，全部是 NEGATIVE_OTHER。
-   - 这两类是看了这 26 对之后归纳的。
+3. **计数：训练集里一条没有反例的候选规则**（[code/label_conventions.py](code/label_conventions.py)）。样本里三个计数短语（6 dead–One dead、8 dead–4 dead、4,000–6,000 Cuban doctors），Claude 按"恰好"判 O，GPT 填无法确定，金标都是数大的一侧推出数小的一侧。用一个有限的数字词表、"两侧只差一个数"的规则，在英语训练集里筛出 26 对：
+   - 数的是人或物（dead、soldiers、troops、dogs、doctors 等）的 15 对，都是数大的一侧推出数小的一侧；
+   - 数值是读数（震级、汇率、百分比、日期等）的 11 对，都是 NEGATIVE_OTHER。
+   - 边界：这两类是看过标签后归纳的，不是独立验证。15 对里有 2 对原文就写了 "At least"，不能当成"裸数也按至少读"的证据。"to 15 ‖ to 11" 这类单独看不出计量对象。exactly、at most、否定数量、多个数字都没有覆盖。所以它只是从训练标签归纳的候选规则，不是官方口径。
    - 另一个看起来像规律的现象不成立：样本里"介词短语对名词短语"的 4 个家族（如 with a dog–A brown dog）金标都是 O，但在训练集里，一侧以介词开头、另一侧不是的短语对只有 28% 是 NEGATIVE_OTHER，两侧都不以介词开头的是 23%。
-4. **能确认的模型错误**：两人都同意金标、模型却在完整短语上判错的，主要在"去掉其余词后变对"的格子：A dog–A collie、3–three U.S. diplomats、of men–of guys、pay–pays tribute、in Cairo–in Egypt、court ruling–top court。只给这两个词时模型能答对，加上共同的词以后反而错了。前 4 个是 Claude 非盲的家族，但 GPT 是盲审，判断也和金标相同。
+4. **两人都同意金标、模型却判错的**，主要在"去掉其余词后变对"的格子：A dog–A collie、3–three U.S. diplomats、of men–of guys、pay–pays tribute、in Cairo–in Egypt、court ruling–top court。只给这两个词时模型能答对，加上共同的词以后反而错了。前 4 个是 Claude 非盲的家族，但 GPT 是盲审，判断也和金标相同。
 
-**结论**：这批样本里，模型的难例很多取决于这份数据的标注口径（计数怎么读、近义词算不算等价），或者金标本身有疑问，不只是缺词汇知识。计数的口径已经在训练集上核对；其余几类是标注指南的口径还是噪声，还分不开。
+**结论**：词对和完整短语有时会得到不同的判断；同时，有一部分案例是审阅判断和官方标签的分歧（11 个家族）。现有的抽样和不确定项，不足以估计两者各占第二组下降的多少。计数在训练集里有一条没有反例的候选规则，第三组把它写进了一个提示词条件；它来自训练标签，报告时要注明。
 
 ### 第二组：英语折外诊断（[notebooks/dico_diagnostics.ipynb](notebooks/dico_diagnostics.ipynb)）
 
@@ -203,10 +207,10 @@ e12 是"最多训练 12 轮、在内部验证上选最好的一轮"，不是固�
    - 每个方法都报两行：原方向预测的三个指标，和对称化后的三个指标。比较模型本身的一致性时看原方向的 SoftCons；对称化后的 SoftCons 照官方口径报，但只说明避免了预测 NEGATIVE_OTHER。
 3. **难点在 NEGATIVE_OTHER 的边界和单词替换，但不只是缺词汇知识。**
    - 被替换的词是同义词、上下位词，还是只是相似或对比，很大程度上决定了标签。dev 的 90 个替换词对里，只有 9 个在训练集出现过。
-   - 盲审显示，这类难例很多取决于标注口径：计数按"至少"读，读数不比大小；近义或相似的说法、同一个人的不同称呼常标成 EQUIVALENCE，有些上下位关系却标成 NEGATIVE_OTHER。
+   - 盲审显示，有些难例是审阅判断和官方标签的分歧：近义或相似的说法、同一个人的不同称呼常标成 EQUIVALENCE，有些上下位关系却标成 NEGATIVE_OTHER。计数在训练集里有一条候选规则：数人或物时，数大的推出数小的；读数不同则互不蕴含。
    - "两侧只差一个词"这条规则抓到的行里，有 128 行（28%）抽出的词至少有一个在虚词表里。规则只保证两侧各多一个词，以后用这个切片时，要先把这些行分出来。
 4. **一部分金标和字面逻辑不一致。**
-   - 盲审里两位标注者意见一致、却和金标不同的有 11 个家族（见"盲审"一节）。计数这一类在训练集上核对过，是统一的口径，不是噪声；其余几类是标注指南的口径还是噪声，还分不开。
+   - 盲审里两位标注者意见一致、却和金标不同的有 11 个家族（见"盲审"一节）。计数这一类，训练集筛出的 26 对里没有反例，但规则是看过标签后归纳的；其余几类是标注指南的口径还是噪声，还分不开。
    - PhrasIS 的作者稿写明，对齐的短语对是脱离原句语境重新标注的，所以不能归因于"丢了原句语境"。这一条由 GPT 查到，Claude 没有取到原文。
    - 剩下的可能：标注指南有自己的口径、标注噪声、DiCo 转换时出的问题。不能因为模型全错、或者两个 AI 意见一致，就改金标。
 5. **NEGATIVE_OTHER 的反向标签没有定义。**
@@ -229,11 +233,11 @@ e12 是"最多训练 12 轮、在内部验证上选最好的一轮"，不是固�
 按导师的清单依次做。每项都和当前最好的设置对照，一次只改一处；训练类实验跑 3 个种子，看同一种子下的配对差值，要写进结论的比较补到 5 个种子。方法选择只看训练集上的验证（折外预测或内部验证），dev 只报告。单词替换这条线的诊断到盲审为止，不再追加。
 
 1. **大模型 instruct 和 Qwen（导师清单第 1 项）**：
-   - 先做 Qwen 零样本、少样本和 CoT（CoT 是清单第 2 项）。notebook 已写好：[notebooks/dico_llm_instruct.ipynb](notebooks/dico_llm_instruct.ipynb)，等 GPT 审过代码再跑，先跑 SMOKE。
-     - 模型 `Qwen/Qwen3-4B-Instruct-2507`：纯文本、只有非思考模式。Qwen3.5 的小模型带视觉编码器、用 Gated DeltaNet，在 T4 上用 transformers 读概率风险大，这一组不用。
-     - 四种提示词：`zero`；`zero_rules`（只多一段标注口径：计数按"至少"读、读数不比大小）；`few`（只多 8 个训练集例子）；`cot`（先写推理）。
-     - 不解析回答文本：在回答开头替模型写上 "Answer:"，读下一个 token 是 A–D 的概率，所以能和编码器一样做对称化；同时报告四个字母占的概率（answer mass），检查模型是否按要求作答。
-     - 四个赛道都在官方 dev 上跑，用官方评分，dev 只报告；`zero`、`zero_rules`、`few` 另在英语训练集上跑（去掉例子所在的家族），提示词之间的选择看这里。
+   - 先做 Qwen 零样本、少样本和 CoT（CoT 是清单第 2 项）。notebook：[notebooks/dico_llm_instruct.ipynb](notebooks/dico_llm_instruct.ipynb)。GPT 审过第一版，第二版已按它的意见修改；下一步先在 GPU 上跑 SMOKE，看过原始输出和显存再正式跑。
+     - 只做指令提示，不训练。模型 `Qwen/Qwen3-4B-Instruct-2507`：纯文本、只有非思考模式，`cot` 是让它把推理写出来的提示。Qwen3.5 的小模型带视觉编码器、用 Gated DeltaNet，在 T4 上用 transformers 读概率风险大，这一组不用。
+     - 四种提示词：`zero`；`zero_rules`（只多一段从训练标签归纳的计数启发式，报告时称"训练标签归纳规则提示"）；`few`（只多 8 个训练集例子）；`cot`（先写推理，最多 320 个 token 后强制作答）。
+     - 不解析回答文本：在回答开头替模型写上 "Answer:"，读下一个 token 是 A–D 的概率，所以能和编码器一样做对称化。answer mass 报均值、低分位数和最低的几条，检查模型是否按要求作答。
+     - 先跑英语训练集，再跑 dev。训练集评估去掉例子所在的家族，再分成 `select`（另外去掉计数规则的 26 个来源家族）和 `rule_source` 两部分；按事先定好的规则，在 `select` 上用对称化 WF1 选提示词。dev 四个赛道只报告，不改这个选择；`cot` 不在训练集上跑，是事先声明的独立对照。
    - 再做 LoRA SFT，沿用 IMDB 的代码。
    - 之后试 Pan-Yan-0 提出的"大模型当分类器"和"蒸馏给 mDeBERTa"。
 2. **训练技巧（清单第 2 项）**：在 mDeBERTa 上逐个加 R-Drop、SCL、MoCo。
@@ -258,10 +262,10 @@ e12 是"最多训练 12 轮、在内部验证上选最好的一轮"，不是固�
 - `code/slice_oracle.py`：切片 oracle。
 - `code/diag_subgroups.py`：单词替换诊断的探索性拆分（是否命中虚词表）。
 - `code/blind_review.py`：盲审对照，输出对照表和汇总。
-- `code/label_conventions.py`：在英语训练集上核对计数和介词短语的标注口径。
+- `code/label_conventions.py`：在英语训练集上统计只差一个数的短语对、介词短语对名词短语的金标分布，并列出计数规则的 26 个来源 pair。
 - `notebooks/dico_encoders.py` / `.ipynb`：第一组编码器实验，可以断点续跑。
 - `notebooks/dico_diagnostics.py` / `.ipynb`：第二组，英语折外诊断与训练配方比较，可以断点续跑。
-- `notebooks/dico_llm_instruct.py` / `.ipynb`：第三组，Qwen 指令学习（零样本、少样本、CoT），可以断点续跑；还没运行。
+- `notebooks/dico_llm_instruct.py` / `.ipynb`：第三组，Qwen 指令提示（零样本、少样本、CoT，不训练），可以断点续跑；还没运行。
 - `metrics/baselines/`：基线逐种子分数。
 - `metrics/encoders/`：
   - `summary.json`：编码器的汇总；
@@ -278,7 +282,7 @@ e12 是"最多训练 12 轮、在内部验证上选最好的一轮"，不是固�
     - `对照表.csv`：每个家族一行，两人的标签、金标、模型预测和格子；
     - `summary.json`：一致率、和金标的对照、按格子的统计。
 - `metrics/probes/summary.json`：探针分数。
-- `metrics/analysis/`：错例统计、切片 oracle、单词替换诊断的拆分、标注口径核对（`label_conventions.json`）。
+- `metrics/analysis/`：错例统计、切片 oracle、单词替换诊断的拆分、计数和介词短语的金标统计（`label_conventions.json`）。
 
 ## 来源
 
@@ -286,5 +290,6 @@ e12 是"最多训练 12 轮、在内部验证上选最好的一轮"，不是固�
 - 编码器实验和第二组诊断由 Pan-Yan-0 在 GPU（T4）上运行，第二组共 36 次训练、约 89 分钟。两个 notebook 和基线、探针、错例分析、切片 oracle 的脚本由 Claude 编写；这些脚本由 Claude 运行。
 - GPT 复核了第一版分析，指出了几处问题：PhrasIS 脱离语境重新标注、South Africa 冲突的方向、切片上限的算法、二元头的表达能力、增广时类别权重的混杂、汇总里的标准差口径、重复对的归一化口径、赛道 4 同一输入的概率不一致。本页已按这些意见修改。GPT 还从保存的结果独立复算了编码器的分数和切片 oracle。
 - 盲审由 Claude 和 GPT 各自独立标注；对照脚本和口径核对脚本由 Claude 编写并运行。GPT 交卷时对第二组的措辞提了三点：虚词子组的叫法、触发词命中数不是上限、子组拆分不是因果分解。本页已照改。
+- GPT 复核盲审对照时，独立复算了全部计数，并指出 Claude 原来的结论"16 个不同，说明第二组的下降很大一部分是正确答案变了"不成立：把词对和短语的判断配对后，16 个里只有 1 个是判断随短语改变。GPT 还指出，计数规则是看过训练标签后归纳的，应注明来源和适用范围。本页已按这两点改写。
 - PhrasIS：López-Gazpio et al., *PhrasIS: Phrase Inference and Similarity benchmark*, Logic Journal of the IGPL, doi:10.1093/jigpal/jzae037。
 - Glockner, Shwartz, Goldberg. *Breaking NLI Systems with Sentences that Require Simple Lexical Inferences*. ACL 2018. https://aclanthology.org/P18-2103/

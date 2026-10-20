@@ -167,6 +167,25 @@ def main(diag_dir, reference=None):
                                                  and x["B_同意金标的人数"] == 0],
             "A_consensus_vs_phrase_gold": dict(Counter(x["A_共识与短语金标"] or "无共识" for x in rs)),
         }
+    # 词对共识和短语金标不同时，再看两人对完整短语的共识：判断是随短语变了，还是本来就和金标有分歧
+    def consensus(x, s):
+        a, b = x[f"Claude_{s}"], x[f"GPT_{s}"]
+        return a if a == b and a != "无法确定" else None
+    differ = [x for x in rows if consensus(x, "A") and consensus(x, "A") != x["金标"]]
+    summary["A_consensus_not_gold_vs_phrase"] = {
+        "families": len(differ),
+        "B_no_consensus": sum(consensus(x, "B") is None for x in differ),
+        "B_same_as_A_not_gold": sum(consensus(x, "B") == consensus(x, "A") for x in differ),
+        "B_equals_gold_not_A": sum(consensus(x, "B") == x["金标"] for x in differ),
+    }
+    both = [x for x in rows if consensus(x, "A") and consensus(x, "B")]
+    summary["A_and_B_consensus"] = {
+        "families": len(both),
+        "same": sum(consensus(x, "A") == consensus(x, "B") for x in both),
+        "changed": [{k: x[k] for k in ("A编号", "B编号", "词1", "词2", "短语1", "短语2", "金标")}
+                    | {"A": consensus(x, "A"), "B": consensus(x, "B")}
+                    for x in both if consensus(x, "A") != consensus(x, "B")],
+    }
     summary["B_both_decided_same_but_not_gold"] = [
         {k: x[k] for k in ("B编号", "家族", "短语1", "短语2", "金标", "Claude_B", "格子", "Claude_非盲")}
         for x in rows if x["B_双方一致"] and x["Claude_B"] != "无法确定" and x["B_同意金标的人数"] == 0]

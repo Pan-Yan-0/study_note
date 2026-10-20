@@ -57,7 +57,7 @@ def main(path, out):
     by_pair = defaultdict(list)
     for r in rows:
         by_pair[r["pair_id"]].append(r)
-    nums, num_examples = Counter(), defaultdict(list)
+    nums, num_examples, num_pairs = Counter(), defaultdict(list), defaultdict(list)
     struct = defaultdict(Counter)
     for pid, rs in by_pair.items():
         r = next((x for x in rs if x["instance_id"].endswith("__original")), rs[0])
@@ -74,6 +74,7 @@ def main(path, out):
             else:
                 kind = "数小的一侧推出数大的一侧"
             nums[kind] += 1
+            num_pairs[kind].append(pid)
             if len(num_examples[kind]) < 12:
                 num_examples[kind].append(f"{a} | {b} → {lab}")
         pa, pb = lead_prep(a), lead_prep(b)
@@ -91,6 +92,7 @@ def main(path, out):
         "pairs": len(by_pair),
         "numbers_only_difference_pairs": dict(nums),
         "numbers_examples": dict(num_examples),
+        "numbers_pair_ids": {k: sorted(v) for k, v in num_pairs.items()},
         "leading_preposition_pairs": {
             k: dict(v, NEGATIVE_OTHER_share=round(v["O"] / sum(v.values()), 3)) for k, v in struct.items()},
     }
