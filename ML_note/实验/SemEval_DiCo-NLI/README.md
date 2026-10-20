@@ -229,8 +229,11 @@ e12 是"最多训练 12 轮、在内部验证上选最好的一轮"，不是固�
 按导师的清单依次做。每项都和当前最好的设置对照，一次只改一处；训练类实验跑 3 个种子，看同一种子下的配对差值，要写进结论的比较补到 5 个种子。方法选择只看训练集上的验证（折外预测或内部验证），dev 只报告。单词替换这条线的诊断到盲审为止，不再追加。
 
 1. **大模型 instruct 和 Qwen（导师清单第 1 项）**：
-   - 先做 Qwen 零样本、少样本和 CoT（CoT 是清单第 2 项）。四个赛道都在官方 dev 上跑，用官方评分；两个方向都问，报原方向和对称化两行；解析沿用 SST-2 的规则，无效回答单独统计。
-   - 提示词里写不写训练集核对过的标注口径（计数按"至少"读、读数不比大小），作为一组对照。少样本的例子只从训练集里取。
+   - 先做 Qwen 零样本、少样本和 CoT（CoT 是清单第 2 项）。notebook 已写好：[notebooks/dico_llm_instruct.ipynb](notebooks/dico_llm_instruct.ipynb)，等 GPT 审过代码再跑，先跑 SMOKE。
+     - 模型 `Qwen/Qwen3-4B-Instruct-2507`：纯文本、只有非思考模式。Qwen3.5 的小模型带视觉编码器、用 Gated DeltaNet，在 T4 上用 transformers 读概率风险大，这一组不用。
+     - 四种提示词：`zero`；`zero_rules`（只多一段标注口径：计数按"至少"读、读数不比大小）；`few`（只多 8 个训练集例子）；`cot`（先写推理）。
+     - 不解析回答文本：在回答开头替模型写上 "Answer:"，读下一个 token 是 A–D 的概率，所以能和编码器一样做对称化；同时报告四个字母占的概率（answer mass），检查模型是否按要求作答。
+     - 四个赛道都在官方 dev 上跑，用官方评分，dev 只报告；`zero`、`zero_rules`、`few` 另在英语训练集上跑（去掉例子所在的家族），提示词之间的选择看这里。
    - 再做 LoRA SFT，沿用 IMDB 的代码。
    - 之后试 Pan-Yan-0 提出的"大模型当分类器"和"蒸馏给 mDeBERTa"。
 2. **训练技巧（清单第 2 项）**：在 mDeBERTa 上逐个加 R-Drop、SCL、MoCo。
@@ -258,6 +261,7 @@ e12 是"最多训练 12 轮、在内部验证上选最好的一轮"，不是固�
 - `code/label_conventions.py`：在英语训练集上核对计数和介词短语的标注口径。
 - `notebooks/dico_encoders.py` / `.ipynb`：第一组编码器实验，可以断点续跑。
 - `notebooks/dico_diagnostics.py` / `.ipynb`：第二组，英语折外诊断与训练配方比较，可以断点续跑。
+- `notebooks/dico_llm_instruct.py` / `.ipynb`：第三组，Qwen 指令学习（零样本、少样本、CoT），可以断点续跑；还没运行。
 - `metrics/baselines/`：基线逐种子分数。
 - `metrics/encoders/`：
   - `summary.json`：编码器的汇总；

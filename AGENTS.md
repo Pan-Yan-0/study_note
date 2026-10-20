@@ -105,6 +105,7 @@ Coursera-ML-AndrewNg-Notes-master/   课程资料
     - 单词替换这条线的诊断到此为止，不再追加。
   - 10-20 起 SemEval 的工作在单独的对话里做；原来的对话只做学习（每晚的笔记任务绑定在那里）。
   - 下一步严格按导师的清单：先大模型 instruct / Qwen（零样本、少样本、CoT，再 LoRA SFT），然后 R-Drop、SCL、MoCo，再 DeepSeek 扩充。清单之外的想法排在后面。
+  - 第三组 notebook（`notebooks/dico_llm_instruct`，Qwen3-4B-Instruct-2507 的零样本 / 加标注口径 / 少样本 / CoT）已写好，用假模型测过流程；等 GPT 审代码，再由 Pan-Yan-0 先跑 SMOKE、再正式跑。
 - **原理学习**：第一章（情感分类、反向传播）已通关，笔记在 `ML_note/原理笔记/`；第二章跟着 SemEval 实验学，现在讲句对输入和 A、B 对调。
 - **待办**：GitHub 仓库首页默认显示 `master`，`note` 的最新内容在首页看不到。改法等 Pan-Yan-0 决定：
   - 把默认分支改成 `note`；
@@ -172,6 +173,8 @@ Coursera-ML-AndrewNg-Notes-master/   课程资料
 
 ## 10. 关键技术事实（避免重查）
 
+- **Claude 的云端环境**：装不了 PyTorch，也连不上 Hugging Face，模型相关的代码在这里跑不了。notebook 只能用假模型测数据、评分和续跑这些部分，模型部分靠另一个 AI 审代码和 GPU 上的 SMOKE 验证。
+- **Qwen 选型**：Qwen3.5 的 0.8B–9B 小模型带视觉编码器、用 Gated DeltaNet，SST-2 是用 Ollama 跑的；在 T4 上用 transformers 读 token 概率时，用纯文本的 `Qwen/Qwen3-4B-Instruct-2507`（只有非思考模式），或 IMDB 用过的 `Qwen/Qwen3-4B-Base`。
 - **Kaggle 提交**：用 `sample.copy()` 作模板，并 assert id 对齐；`quoting=3` 会让 test.id 带上字面引号。
 - **gensim 4**：`glove2word2vec` 已删除，要手动给文件加首行"词数 维度"；用 `model.wv.*`；`size` 改名为 `vector_size`。
 - **导师的 IMDB 脚本包**：
