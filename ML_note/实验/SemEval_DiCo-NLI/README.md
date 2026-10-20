@@ -30,50 +30,118 @@
 
 ## 结果
 
-dev 集，官方评分脚本。随机基线是 3 个种子的平均。
+dev 集，官方评分脚本。编码器和随机基线都是 3 个种子的平均；括号里是 WF1 的样本标准差。
 
-| 系统 | 赛道 | Weighted F1 | SoftCons | HardCons |
-|---|---|---:|---:|---:|
-| majority（全部预测 FORWARD） | 1–4 | 0.129 | 0 | 0 |
-| random | 1 | 0.254 | 0.196 | 0.065 |
-| random | 2 | 0.259 | 0.194 | 0.067 |
-| random | 3 | 0.249 | 0.185 | 0.060 |
-| random | 4 | 0.251 | 0.190 | 0.063 |
+### 编码器（[notebooks/dico_encoders.ipynb](notebooks/dico_encoders.ipynb)）
 
-官方试点（LREC 2026）里 DeBERTa-v3-base 的成绩是 WF1 0.75、SoftCons 0.84、HardCons 0.79。它只做英语，只用三个正向标签，和这里的设置不同，只作参考。
+- 输入：`[CLS] text1 [SEP] text2 [SEP]`；6 轮，按训练集里分出的 10%（按 pair_id 分组）选轮。
+- "对称化"：把 p(text2, text1) 的 FORWARD / BACKWARD 对调，再和 p(text1, text2) 取平均。不需要训练。
+
+| 系统 | 赛道 | 原方向 WF1 | SoftCons | HardCons | 对称化 WF1 | SoftCons | HardCons |
+|---|---|---:|---:|---:|---:|---:|---:|
+| mDeBERTa-v3-base | 1 英语 | .792 (.018) | .847 | .793 | **.805** | .915 | **.844** |
+| mDeBERTa-v3-base | 2 西班牙语 | .746 | .816 | .746 | **.758** | .912 | **.810** |
+| mDeBERTa-v3-base | 3 巴斯克语 | .720 | .826 | .735 | **.723** | .905 | **.775** |
+| mDeBERTa-v3-base | 4 跨语言 | .743 | .834 | .749 | **.745** | .882 | **.780** |
+| mBERT | 1 英语 | .722 | .770 | .691 | .733 | .857 | .741 |
+| mBERT | 2 西班牙语 | .718 | .777 | .688 | .723 | .864 | .745 |
+| mBERT | 3 巴斯克语 | .692 | .764 | .668 | .698 | .840 | .717 |
+| mBERT | 4 跨语言 | .634 | .753 | .624 | .638 | .830 | .668 |
+
+- mDeBERTa 在四个赛道上都比 mBERT 好。差距最大的是跨语言赛道（WF1 .745 对 .638）。
+- 对称化在 8 组里都提高了 SoftCons（+5–10 个点）和 HardCons（+3–6 个点），WF1 提高 0–1.3 个点。
+- 英语的 mDeBERTa 已经超过官方试点里 DeBERTa-v3-base 的成绩（.75 / .84 / .79）。但试点只做三个正向标签，两边不能直接比较。
+- 赛道 1、3 上，mDeBERTa 的内部验证 F1 到第 6 轮还在上升。
+
+### 浅层探针（[code/probes.py](code/probes.py)）
+
+逻辑回归，字符 2–4-gram TF-IDF。下表是英语赛道，单次运行：
+
+| 探针 | 原方向 WF1 / Soft / Hard | 对称化 WF1 / Soft / Hard |
+|---|---|---|
+| 表面特征（两侧长度、词重叠、包含关系） | .559 / .791 / .570 | .546 / .791 / .570 |
+| 只看 text1 | .453 / .426 / .289 | .543 / .960 / .639 |
+| 只看 text2 | .437 / .412 / .292 | .530 / .964 / .635 |
+| 两侧词袋 + 表面特征 | .620 / .845 / .646 | .618 / .888 / .668 |
+| random 基线 | .254 / .196 / .065 | — |
+| majority 基线（全部预测 FORWARD） | .129 / 0 / 0 | — |
+
+西班牙语、巴斯克语的结果在 `metrics/probes/summary.json`，规律相同。
+
+### 错例分析（[code/error_analysis.py](code/error_analysis.py)，英语 dev，mDeBERTa）
+
+- **方向本身基本不出错**：FORWARD 和 BACKWARD 互相混淆只占 1–2%。
+- **错误集中在 NEGATIVE_OTHER 的边界**。原方向上，3 个种子多数票错了 92 / 383 对：
+  - 金标 NEG 被判成别的：44；
+  - 别的被判成 NEG：26；
+  - EQUIVALENCE 和单向蕴含互相混淆：19；
+  - FORWARD 和 BACKWARD 互相混淆：3。
+- **按编辑形状分**（dev 对数，mDeBERTa 准确率）：
+
+  | 形状 | 定义 | dev 对数 | 准确率 |
+  |---|---|---:|---:|
+  | 插入 | 一侧的词是另一侧的子集 | 93 | .91 |
+  | 单词替换 | 两侧各多出 1 个词 | 90 | .74 |
+  | 无共同词 | | 70 | .69 |
+  | 其他 | | 129 | .75 |
+
+  - 插入类用"词多的一侧推出词少的一侧"这一条规则，就能对 86%。
+  - 规则不成立的那部分，模型只有 .56 的准确率，35% 的预测跟着规则走。这部分只占 dev 行数的 3%。
+- **短语很短**：平均 3 个词，39% 不超过 2 个词。训练集 1,760 对里，含否定词的 5 对，含量词的 33 对。
+- **有 31 对在 6 次运行（2 个模型 × 3 个种子）里全部判错。** 其中一部分金标依赖语境：
+  - "over child ‖ over daughter" 金标 NEGATIVE_OTHER；
+  - 训练集里 "South Africa ‖ South Africans" 出现了两次，一次标 BACKWARD，一次标 NEGATIVE_OTHER。
 
 ## 问题
 
 1. **数据结构会泄露 NEGATIVE_OTHER。**
    - 训练集和 dev 里，NEGATIVE_OTHER 只出现在只有一条记录的短语对上。
    - 官方 trial 里测试格式的文件也一样：只有一条记录的短语对，125 / 125 都是 NEGATIVE_OTHER。
-   - 如果正式测试集还是这种结构，只数 pair_id 出现几次就能认出 NEGATIVE_OTHER，这和理解短语之间的关系无关。
-   - 本仓库的模型只用两个短语的文本，不用 pair_id 和 instance_id 后缀。要不要告诉主办方，待定。
-2. **SoftCons 会把 NEGATIVE_OTHER 算作"不一致"。** 评分脚本只把"一个方向预测为可对调的标签，另一个方向正好是它的反向"算作一致。所以在可对调的短语对上，只要有一个方向预测成 NEGATIVE_OTHER，这一对就不一致。
-3. **巴斯克语是低资源语言。** 多语言模型在它上面的表现需要单独看，不能只看平均分。
-4. **PhrasIS 原数据能否用于训练**，以官方最终规则为准。确认之前不用。
+   - 本仓库的模型只用两个短语的文本。要不要告诉主办方，待定。
+2. **对称化以后，SoftCons 不能再用来比较方法。**
+   - 评分脚本里，可对调的短语对只要有一个方向预测成 NEGATIVE_OTHER，就算不一致。
+   - 对称化后两个方向在构造上就互为对调，剩下的不一致只来自"预测成 NEGATIVE_OTHER"。所以只看一侧的探针对称化后 SoftCons 有 .96，比 mDeBERTa 还高。
+   - 比较方法时，SoftCons 用原方向的预测来报；对称化后的结果主要看 WF1 和 HardCons。
+3. **主要难点是 NEGATIVE_OTHER 的边界和单词替换。**
+   - 被替换的词是同义词、上下位词，还是只是相似或对比，决定了标签。
+   - dev 的 90 个替换词对里，只有 9 个在训练集出现过，所以这部分靠的是预训练学到的词汇知识。
+4. **一部分标签依赖原句语境。**
+   - PhrasIS 先把句对切块再对齐标注，标签是在句子语境里打的，而语境没有提供给我们。
+   - "6 次全错"的 31 对里，有一部分可能是模型做不到的。
+5. **PhrasIS 的原标签集还没核实。**
+   - 官方说 NEGATIVE_OTHER 是"可对调标签以外的全部 PhrasIS 标签"。如果这些标签都是对称关系，NEGATIVE_OTHER 的反向仍是它自己，可以用来增广训练数据；没核实之前不用。
+   - PhrasIS 原数据能否用于训练，以官方最终规则为准。
+6. **这一轮错例分析用的是 dev。** 以后改用训练集上按 pair_id 分组的交叉验证预测，dev 只用来报告。
+7. **训练集和 dev 有 7 对短语文本完全相同**（pair_id 不同），做"未见组合"检查时要排除。
 
 ## 下一步计划
 
-1. 运行 [notebooks/dico_encoders.ipynb](notebooks/dico_encoders.ipynb)：
-   - 模型：mBERT、mDeBERTa-v3-base；
-   - 赛道：四个；
-   - 种子：每组 3 个；
-   - 输入：`[CLS] text1 [SEP] text2 [SEP]`；
-   - 轮数：只在训练集里按 pair_id 分出 10% 来选，dev 只用来报告；
-   - 预测：同时记录"只看原方向"和"两个方向对称化后"两种结果。
-2. 大模型：Qwen 零样本、少样本、CoT，然后用 LoRA 做 SFT。
-3. 在最好的编码器上逐个试 R-Drop、SCL、MoCo。
-4. 用 DeepSeek 扩充数据，看数据量和成绩的关系。
-5. 反事实推断（导师讲解后）。
+每项都和当前最好的设置（mDeBERTa + 对称化）对照，一次只改一处，3 个种子。
+
+1. **轮数**：6 → 12。依据：第 6 轮的内部验证 F1 还在上升。
+2. **单词替换的诊断**：用同一组检查点，比较"输入完整短语"和"只输入被替换的两个词"。
+   - 两者差不多：说明标签几乎由词对决定，优先走词汇知识路线（更大的预训练模型、大模型、按词对关系扩充数据）。
+   - 只输入词对时明显变差：说明上下文起作用，再做针对上下文的最小对照。
+3. **把现有模型跑全**（导师的要求）：XLM-R large；Qwen 零样本、少样本、CoT；然后用 LoRA 做 SFT。
+4. **多语联合训练**：一个模型用三个单语加跨语言的全部训练数据，和逐赛道单独训练比较。
+5. **两个二元头**：分别判断"text1 能推出 text2 吗""text2 能推出 text1 吗"，和四分类头比较。
+6. **训练技巧**：R-Drop、SCL、MoCo，逐个加。
+7. **DeepSeek 扩充**：生成新的单词替换短语对和 NEGATIVE_OTHER 边界对，按 +1、+2、+4 倍画数据量曲线。先抽 50 条，人工核对 DeepSeek 打的标签和金标的口径是否一致。
+8. **反事实推断**：等导师讲解。
 
 ## 文件
 
-- `code/baselines.py`：random / majority 基线，调用官方评分脚本。
-- `notebooks/dico_encoders.py` / `.ipynb`：第一组编码器实验，可以断点续跑。
-- `metrics/baselines/summary.json`：基线的逐种子分数。
+- `code/baselines.py`：random / majority 基线。
+- `code/probes.py`：浅层探针。
+- `code/error_analysis.py`：错例、编辑形状、长度规则的统计。
+- `notebooks/dico_encoders.py` / `.ipynb`：编码器实验，可以断点续跑。
+- `metrics/baselines/`：基线逐种子分数。
+- `metrics/encoders/`：编码器的汇总（`summary.json`），以及每次运行的 dev 预测、训练日志和官方评分。
+- `metrics/probes/summary.json`：探针分数。
+- `metrics/analysis/error_analysis.json`：错例统计。
 
 ## 来源
 
 - 数据、评分脚本和试点结果来自官方仓库。
-- 统计、基线脚本和 notebook 由 Claude 编写，基线由 Claude 运行。
+- 编码器实验由 Pan-Yan-0 在 GPU 上运行。notebook、基线、探针和错例分析的脚本由 Claude 编写。基线、探针和错例分析由 Claude 运行。
+- PhrasIS：López-Gazpio et al., *PhrasIS: Phrase Inference and Similarity benchmark*, Logic Journal of the IGPL, doi:10.1093/jigpal/jzae037。

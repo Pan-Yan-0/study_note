@@ -88,7 +88,11 @@ Coursera-ML-AndrewNg-Notes-master/   课程资料
 ## 7. 当前进度
 
 - **第一轮 SST-2 指令学习、第二轮 IMDB**：都已完成，结果见[实验结果汇总](ML_note/实验结果汇总.md)和两个实验的 README。
-- **第三轮 SemEval-2027 Task 2**：10-20 开工。基线已在 dev 上跑完；第一组编码器实验（`notebooks/dico_encoders`）等 Pan-Yan-0 在 GPU 上运行。见第 8 节和 `ML_note/实验/SemEval_DiCo-NLI/README.md`。
+- **第三轮 SemEval-2027 Task 2**：10-20 开工。见第 8 节和 `ML_note/实验/SemEval_DiCo-NLI/README.md`。
+  - 已完成：基线；mBERT 和 mDeBERTa 编码器（mDeBERTa 加对称化最好，英语 WF1 .805）；浅层探针；错例分析。
+  - 错例分析的结论：方向基本不出错，错误集中在 NEGATIVE_OTHER 的边界和单词替换；短语平均 3 个词，否定和量词几乎没有。
+  - 对称化后，SoftCons 不能再用来比较方法：只看一侧的探针加对称化就有 .96。比较方法时用原方向的 SoftCons。
+  - 已回应 GPT 的意见包，逐项判断，并提了"单词替换只输入词对"的诊断。下一组实验等 Pan-Yan-0 决定。
 - **原理学习**：正在学反向传播，见 `ML_note/原理笔记/反向传播/`。
 - **待办**：GitHub 仓库首页默认显示 `master`，`note` 的最新内容在首页看不到。改法等 Pan-Yan-0 决定：
   - 把默认分支改成 `note`；
