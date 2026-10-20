@@ -190,7 +190,8 @@ def train_and_predict(model_tag, track, seed, run_dir):
         return torch.cat(out).tolist()
 
     def run(use_fp16):
-        model = AutoModelForSequenceClassification.from_pretrained(name, num_labels=4).to(device)
+        model = AutoModelForSequenceClassification.from_pretrained(name, num_labels=4)
+        model = model.float().to(device)  # 新版 transformers 可能按半精度加载；参数保持 fp32，前向再用 autocast 半精度
         no_decay = ("bias", "LayerNorm.weight", "layernorm.weight")
         params = [
             {"params": [p for n, p in model.named_parameters() if not any(k in n for k in no_decay)], "weight_decay": WEIGHT_DECAY},
