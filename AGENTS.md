@@ -88,7 +88,7 @@ Coursera-ML-AndrewNg-Notes-master/   课程资料
 ## 7. 当前进度
 
 - **第一轮 SST-2 指令学习、第二轮 IMDB**：都已完成，结果见[实验结果汇总](ML_note/实验结果汇总.md)和两个实验的 README。
-- **第三轮 SemEval-2027 Task 2**：已选定题目，还没开工。开工时间按私有 skill 里的约定，最终由 Pan-Yan-0 决定。见第 8 节。
+- **第三轮 SemEval-2027 Task 2**：10-20 开工。基线已在 dev 上跑完；第一组编码器实验（`notebooks/dico_encoders`）等 Pan-Yan-0 在 GPU 上运行。见第 8 节和 `ML_note/实验/SemEval_DiCo-NLI/README.md`。
 - **原理学习**：正在学反向传播，见 `ML_note/原理笔记/反向传播/`。
 - **待办**：GitHub 仓库首页默认显示 `master`，`note` 的最新内容在首页看不到。改法等 Pan-Yan-0 决定：
   - 把默认分支改成 `note`；
@@ -112,6 +112,9 @@ Coursera-ML-AndrewNg-Notes-master/   课程资料
 - **基线**：主办方给了 random 和 majority 基线。试点（英语，只含三个正向标签）里 DeBERTa-v3-base 是 WF1 0.75、SoftCons 0.84、HardCons 0.79。设置和正式赛不完全一样，只作参考。
 - **规则**：允许外部数据和大模型，但必须在系统论文里写清模型、提示词和外部数据。PhrasIS 原数据能不能拿来训练，以官方最终规则为准，确认之前不用。
 - **时间**：评测 2027-01-10 至 01-31，2 月交系统论文。
+- **两个要记住的坑**：
+  - 只有一条记录的 pair 都是 NEGATIVE_OTHER（训练集、dev 和 trial 的测试格式文件都是这样），模型只用文本，不用这个结构。
+  - 评分脚本里，可对调的短语对只要有一个方向预测成 NEGATIVE_OTHER，SoftCons 就算这一对不一致，所以对称化不保证 SoftCons 满分。
 - 官方说明：[SemEval-2027 Task 2 DiCo-NLI README](https://github.com/ilopezgazpio/SemEval-2027-Task-2-DiCo-NLI/blob/main/README.md)
 
 ### 8.2 导师的要求
