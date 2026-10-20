@@ -19,7 +19,7 @@ ML_note/
 | 实验 | 内容 | 主要结果 |
 |---|---|---|
 | [SST-2 指令学习](ML_note/实验/SST2/README.md) | 《1-使用大模型进行指令学习》任务：DeepSeek 与 Qwen3.5 0.8b / 2b / 4b / 9b 在三个指令模板（basic / cot / role_cot）× 思考开关下的准确率；Mistral、Llama、Gemma、Phi-4 四个系列；DeBERTa-v3-base 全量与 16 / 64 / 256 / 1024 条少样本微调对照 | 验证集 872 条：DeepSeek 95.18%，Gemma 3 12B 94.61%，Qwen 4b 93.81%，Phi-4 93.00%，Llama 3.1 8B 92.43%，Mistral 7B 90.60%；DeBERTa 全量 95.60%，1024 条 92.97%，16 条 61.62% |
-| [SemEval-2027 Task 2 DiCo-NLI](ML_note/实验/SemEval_DiCo-NLI/README.md) | 方向一致的细粒度 NLI，英语、西班牙语、巴斯克语和跨语言四个赛道；数据统计、基线、编码器实验（mBERT、mDeBERTa）、错例分析和英语折外诊断 | dev：mDeBERTa 最多 12 轮加对称化，英语 WF1 .827、SoftCons .918、HardCons .864（3个种子，配方按训练集折外预测选定）；错误集中在 NEGATIVE_OTHER 的边界 |
+| [SemEval-2027 Task 2 DiCo-NLI](ML_note/实验/SemEval_DiCo-NLI/README.md) | 方向一致的细粒度 NLI，英语、西班牙语、巴斯克语和跨语言四个赛道；数据统计、基线、编码器实验（mBERT、mDeBERTa）、错例分析、英语折外诊断和单词替换样本的盲审 | dev：mDeBERTa 最多 12 轮加对称化，英语 WF1 .827、SoftCons .918、HardCons .864（3个种子，配方按训练集折外预测选定）；错误集中在 NEGATIVE_OTHER 的边界，难例很多取决于标注口径（如计数按"至少"读） |
 | [IMDB 情感分析](ML_note/实验/IMDB/README.md) | Kaggle *Bag of Words Meets Bags of Popcorn*：GloVe + 六种网络；BERT 全量、BERT LoRA、DeBERTa-v2-xxlarge LoRA；Qwen3-4B-Base 指令微调（LoRA，只算答案 token 的损失） | 编码器最高 Kaggle AUC 0.98294（DeBERTa-v2-xxlarge LoRA）；Qwen3-4B 指令微调 Kaggle AUC 0.99493（验证 0.9941，零样本 0.9847） |
 | [实验结果汇总](ML_note/实验结果汇总.md) | 本仓库全部实验的结果速览（新的、重要的在前），LoRA 论文的结果放在后面作参照，并说明哪些数字可以比、哪些不能 | — |
 
