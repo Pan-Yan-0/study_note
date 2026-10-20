@@ -1,0 +1,32 @@
+{
+  "version": "dico_diagnostics-1",
+  "model": "microsoft/mdeberta-v3-base",
+  "track": 1,
+  "seeds": [
+    42,
+    43,
+    44
+  ],
+  "folds": 5,
+  "recipes": {
+    "e6": 6,
+    "e12": 12
+  },
+  "primary": "e6",
+  "lr": 2e-05,
+  "batch_size": 32,
+  "eval_batch": 64,
+  "max_len": 96,
+  "warmup_ratio": 0.1,
+  "weight_decay": 0.01,
+  "inner_fraction": 0.1,
+  "fold_seed": 2027,
+  "smoke": false,
+  "smoke_train_rows": null,
+  "data_sha256": {
+    "train": "5e8dd9f3a7e000933fec3c9e64d064f9a25586f141f58d6e6afb47c4fc797211",
+    "train_gold": "c8f4d8587711e0beaefc115606e5c29c3e78dc6660e074967428af0fed069ee4",
+    "dev": "80b7152f7ccf0d349d42ad2f098988106689b918b36337e5756b121d17513511",
+    "dev_gold": "8d5cd11c1c60df3c9b59254d12a60fb2cf43e91dde01b46c8a8f296b806134bc"
+  }
+}
