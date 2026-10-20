@@ -1,6 +1,8 @@
 # %% [markdown]
 # # DiCo-NLI 第一组实验：mBERT 与 mDeBERTa
 #
+# 只有两个代码单元：先运行配置单元，再运行第二个单元（定义 + 训练 + 打包），也可以直接 Run All。
+#
 # 把两个短语拼成 `[CLS] text1 [SEP] text2 [SEP]`，微调做四分类。四个赛道，每个模型、每个赛道跑 3 个种子。
 #
 # - **训练和选轮数**：只用训练集。从训练集里按 pair_id 分出 10% 作内部验证（同一个 pair 的正反两条分到同一边），用它选最好的一轮。
@@ -148,7 +150,6 @@ def weighted_f1(gold, pred):
     return f1s
 
 
-# %%
 def train_and_predict(model_tag, track, seed, run_dir):
     """训练一组；返回 dev 上两个方向的 logits。"""
     import numpy as np
@@ -242,7 +243,6 @@ def train_and_predict(model_tag, track, seed, run_dir):
     return dev_rows, ab, ba
 
 
-# %%
 def run_one(model_tag, track, seed):
     run_dir = os.path.join(OUT, model_tag, f"track{track}", f"seed{seed}")
     if os.path.exists(os.path.join(run_dir, "done.json")):
@@ -299,7 +299,6 @@ def summarize():
     return summary
 
 
-# %%
 ensure_packages()
 ensure_official_repo()
 restore_previous_results()
