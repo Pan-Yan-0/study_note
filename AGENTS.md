@@ -116,7 +116,8 @@ Coursera-ML-AndrewNg-Notes-master/   课程资料
     - 事先定好的蒸馏条件：英语 fold 0 上，同种子的 sym WF1 差（Qwen SFT − mDeBERTa）三个种子平均大于 0，或同种子两模型概率 0.5 / 0.5 平均后比 mDeBERTa 高，而且按家族配对重抽样的区间下限大于 0；都不满足就不做蒸馏。这只是探索性门槛，通过了也要和同数据、同预算的 mDeBERTa 对照。
     - 训练部分 E / F / B / O 是 574 / 631 / 631 / 354（O 只占 16%，不是四成）；dev 有 15 行（8 个 pair）的文本在训练集里出现过，选择看 fold 0。
     - 本地用假的 torch / transformers / peft 测过续跑：训练中途、评估后存检查点前、读概率时被打断，都能接着跑，选中的权重能复现记录的验证分数。
-  - 再下一步：Qwen SFT 西语 + 巴语（`TRACKS = [2, 3]`，约 5 小时，Kaggle 后台）；跨语言约 14 小时，等下周额度或别的 GPU。然后 R-Drop、SCL、MoCo。
+  - Pan-Yan-0 10-21 的决定：蒸馏要做；先试 SFT 训练更多轮（`MAX_EPOCHS = 5`，代码不改）值不值得，有结果再补种子验证；R-Drop、SCL、MoCo 三种都做，先在 mDeBERTa 上，再加到 Qwen 上。设计和判断规则见实验 README 的下一步计划（事先定好）。
+  - 排期：Kaggle 后台依次跑 SFT 5 轮（约 4 小时）、导出老师概率（约 30 分钟，要挂上 3 轮那次运行的输出取 LoRA 权重）、西语 + 巴语 SFT（约 5 小时）；跨语言约 14 小时，等下周额度或别的 GPU。mDeBERTa 上的蒸馏学生和 R-Drop / SCL / MoCo 在 Colab / Cloud Studio 白天跑。
   - 算力分配：Kaggle（每周额度，能后台跑）只留给超过一小时的 Qwen 任务；Colab、腾讯 Cloud Studio 要开着页面，白天跑 mDeBERTa 类短任务和 SMOKE；阿里云 A10 抢到才算。同一组比较不混用不同的卡（A10 / 4090 用 bf16，T4 用 fp16）。
 - **原理学习**：第一章（情感分类、反向传播）已通关，笔记在 `ML_note/原理笔记/`；第二章跟着 SemEval 实验学，现在讲句对输入和 A、B 对调。
 - **待办**：GitHub 仓库首页默认显示 `master`，`note` 的最新内容在首页看不到。改法等 Pan-Yan-0 决定：
