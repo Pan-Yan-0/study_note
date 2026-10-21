@@ -1,0 +1,592 @@
+{
+  "classification": {
+    "accuracy": 0.6045454545454545,
+    "confusion_matrix": {
+      "BACKWARD_ENTAILMENT": {
+        "BACKWARD_ENTAILMENT": 131,
+        "EQUIVALENCE": 2,
+        "FORWARD_ENTAILMENT": 7,
+        "NEGATIVE_OTHER": 50
+      },
+      "EQUIVALENCE": {
+        "BACKWARD_ENTAILMENT": 40,
+        "EQUIVALENCE": 58,
+        "FORWARD_ENTAILMENT": 40,
+        "NEGATIVE_OTHER": 36
+      },
+      "FORWARD_ENTAILMENT": {
+        "BACKWARD_ENTAILMENT": 7,
+        "EQUIVALENCE": 2,
+        "FORWARD_ENTAILMENT": 131,
+        "NEGATIVE_OTHER": 50
+      },
+      "NEGATIVE_OTHER": {
+        "BACKWARD_ENTAILMENT": 11,
+        "EQUIVALENCE": 2,
+        "FORWARD_ENTAILMENT": 14,
+        "NEGATIVE_OTHER": 79
+      }
+    },
+    "macro_f1": 0.5891908865811049,
+    "per_label": {
+      "BACKWARD_ENTAILMENT": {
+        "f1": 0.6912928759894459,
+        "false_negative": 59,
+        "false_positive": 58,
+        "label": "BACKWARD_ENTAILMENT",
+        "precision": 0.6931216931216931,
+        "predicted": 189,
+        "recall": 0.6894736842105263,
+        "support": 190,
+        "true_positive": 131
+      },
+      "EQUIVALENCE": {
+        "f1": 0.48739495798319327,
+        "false_negative": 116,
+        "false_positive": 6,
+        "label": "EQUIVALENCE",
+        "precision": 0.90625,
+        "predicted": 64,
+        "recall": 0.3333333333333333,
+        "support": 174,
+        "true_positive": 58
+      },
+      "FORWARD_ENTAILMENT": {
+        "f1": 0.6858638743455497,
+        "false_negative": 59,
+        "false_positive": 61,
+        "label": "FORWARD_ENTAILMENT",
+        "precision": 0.6822916666666666,
+        "predicted": 192,
+        "recall": 0.6894736842105263,
+        "support": 190,
+        "true_positive": 131
+      },
+      "NEGATIVE_OTHER": {
+        "f1": 0.4922118380062306,
+        "false_negative": 27,
+        "false_positive": 136,
+        "label": "NEGATIVE_OTHER",
+        "precision": 0.3674418604651163,
+        "predicted": 215,
+        "recall": 0.7452830188679245,
+        "support": 106,
+        "true_positive": 79
+      }
+    },
+    "total_instances": 660,
+    "weighted_f1": 0.6040014546687655
+  },
+  "consistency": {
+    "hard_cons": 0.5776173285198556,
+    "hard_correct_pairs": 160,
+    "pair_errors": [
+      {
+        "first_gold": "FORWARD_ENTAILMENT",
+        "first_id": "dico_phrasis_0000008__es-es__flipped",
+        "first_prediction": "NEGATIVE_OTHER",
+        "hard_correct": "false",
+        "second_gold": "BACKWARD_ENTAILMENT",
+        "second_id": "dico_phrasis_0000008__es-es__original",
+        "second_prediction": "NEGATIVE_OTHER",
+        "soft_consistent": "false"
+      },
+      {
+        "first_gold": "FORWARD_ENTAILMENT",
+        "first_id": "dico_phrasis_0000010__es-es__flipped",
+        "first_prediction": "NEGATIVE_OTHER",
+        "hard_correct": "false",
+        "second_gold": "BACKWARD_ENTAILMENT",
+        "second_id": "dico_phrasis_0000010__es-es__original",
+        "second_prediction": "NEGATIVE_OTHER",
+        "soft_consistent": "false"
+      },
+      {
+        "first_gold": "FORWARD_ENTAILMENT",
+        "first_id": "dico_phrasis_0000018__es-es__flipped",
+        "first_prediction": "NEGATIVE_OTHER",
+        "hard_correct": "false",
+        "second_gold": "BACKWARD_ENTAILMENT",
+        "second_id": "dico_phrasis_0000018__es-es__original",
+        "second_prediction": "NEGATIVE_OTHER",
+        "soft_consistent": "false"
+      },
+      {
+        "first_gold": "FORWARD_ENTAILMENT",
+        "first_id": "dico_phrasis_0000024__es-es__flipped",
+        "first_prediction": "NEGATIVE_OTHER",
+        "hard_correct": "false",
+        "second_gold": "BACKWARD_ENTAILMENT",
+        "second_id": "dico_phrasis_0000024__es-es__original",
+        "second_prediction": "NEGATIVE_OTHER",
+        "soft_consistent": "false"
+      },
+      {
+        "first_gold": "FORWARD_ENTAILMENT",
+        "first_id": "dico_phrasis_0000034__es-es__flipped",
+        "first_prediction": "NEGATIVE_OTHER",
+        "hard_correct": "false",
+        "second_gold": "BACKWARD_ENTAILMENT",
+        "second_id": "dico_phrasis_0000034__es-es__original",
+        "second_prediction": "NEGATIVE_OTHER",
+        "soft_consistent": "false"
+      },
+      {
+        "first_gold": "FORWARD_ENTAILMENT",
+        "first_id": "dico_phrasis_0000070__es-es__flipped",
+        "first_prediction": "NEGATIVE_OTHER",
+        "hard_correct": "false",
+        "second_gold": "BACKWARD_ENTAILMENT",
+        "second_id": "dico_phrasis_0000070__es-es__original",
+        "second_prediction": "NEGATIVE_OTHER",
+        "soft_consistent": "false"
+      },
+      {
+        "first_gold": "FORWARD_ENTAILMENT",
+        "first_id": "dico_phrasis_0000087__es-es__flipped",
+        "first_prediction": "NEGATIVE_OTHER",
+        "hard_correct": "false",
+        "second_gold": "BACKWARD_ENTAILMENT",
+        "second_id": "dico_phrasis_0000087__es-es__original",
+        "second_prediction": "NEGATIVE_OTHER",
+        "soft_consistent": "false"
+      },
+      {
+        "first_gold": "FORWARD_ENTAILMENT",
+        "first_id": "dico_phrasis_0000099__es-es__flipped",
+        "first_prediction": "NEGATIVE_OTHER",
+        "hard_correct": "false",
+        "second_gold": "BACKWARD_ENTAILMENT",
+        "second_id": "dico_phrasis_0000099__es-es__original",
+        "second_prediction": "NEGATIVE_OTHER",
+        "soft_consistent": "false"
+      },
+      {
+        "first_gold": "FORWARD_ENTAILMENT",
+        "first_id": "dico_phrasis_0000118__es-es__flipped",
+        "first_prediction": "NEGATIVE_OTHER",
+        "hard_correct": "false",
+        "second_gold": "BACKWARD_ENTAILMENT",
+        "second_id": "dico_phrasis_0000118__es-es__original",
+        "second_prediction": "NEGATIVE_OTHER",
+        "soft_consistent": "false"
+      },
+      {
+        "first_gold": "FORWARD_ENTAILMENT",
+        "first_id": "dico_phrasis_0000125__es-es__flipped",
+        "first_prediction": "NEGATIVE_OTHER",
+        "hard_correct": "false",
+        "second_gold": "BACKWARD_ENTAILMENT",
+        "second_id": "dico_phrasis_0000125__es-es__original",
+        "second_prediction": "NEGATIVE_OTHER",
+        "soft_consistent": "false"
+      },
+      {
+        "first_gold": "FORWARD_ENTAILMENT",
+        "first_id": "dico_phrasis_0000141__es-es__flipped",
+        "first_prediction": "NEGATIVE_OTHER",
+        "hard_correct": "false",
+        "second_gold": "BACKWARD_ENTAILMENT",
+        "second_id": "dico_phrasis_0000141__es-es__original",
+        "second_prediction": "NEGATIVE_OTHER",
+        "soft_consistent": "false"
+      },
+      {
+        "first_gold": "FORWARD_ENTAILMENT",
+        "first_id": "dico_phrasis_0000162__es-es__flipped",
+        "first_prediction": "NEGATIVE_OTHER",
+        "hard_correct": "false",
+        "second_gold": "BACKWARD_ENTAILMENT",
+        "second_id": "dico_phrasis_0000162__es-es__original",
+        "second_prediction": "NEGATIVE_OTHER",
+        "soft_consistent": "false"
+      },
+      {
+        "first_gold": "FORWARD_ENTAILMENT",
+        "first_id": "dico_phrasis_0000190__es-es__flipped",
+        "first_prediction": "EQUIVALENCE",
+        "hard_correct": "false",
+        "second_gold": "BACKWARD_ENTAILMENT",
+        "second_id": "dico_phrasis_0000190__es-es__original",
+        "second_prediction": "EQUIVALENCE",
+        "soft_consistent": "true"
+      },
+      {
+        "first_gold": "FORWARD_ENTAILMENT",
+        "first_id": "dico_phrasis_0000192__es-es__flipped",
+        "first_prediction": "NEGATIVE_OTHER",
+        "hard_correct": "false",
+        "second_gold": "BACKWARD_ENTAILMENT",
+        "second_id": "dico_phrasis_0000192__es-es__original",
+        "second_prediction": "NEGATIVE_OTHER",
+        "soft_consistent": "false"
+      },
+      {
+        "first_gold": "FORWARD_ENTAILMENT",
+        "first_id": "dico_phrasis_0000226__es-es__flipped",
+        "first_prediction": "NEGATIVE_OTHER",
+        "hard_correct": "false",
+        "second_gold": "BACKWARD_ENTAILMENT",
+        "second_id": "dico_phrasis_0000226__es-es__original",
+        "second_prediction": "NEGATIVE_OTHER",
+        "soft_consistent": "false"
+      },
+      {
+        "first_gold": "FORWARD_ENTAILMENT",
+        "first_id": "dico_phrasis_0000249__es-es__flipped",
+        "first_prediction": "NEGATIVE_OTHER",
+        "hard_correct": "false",
+        "second_gold": "BACKWARD_ENTAILMENT",
+        "second_id": "dico_phrasis_0000249__es-es__original",
+        "second_prediction": "NEGATIVE_OTHER",
+        "soft_consistent": "false"
+      },
+      {
+        "first_gold": "FORWARD_ENTAILMENT",
+        "first_id": "dico_phrasis_0000279__es-es__flipped",
+        "first_prediction": "NEGATIVE_OTHER",
+        "hard_correct": "false",
+        "second_gold": "BACKWARD_ENTAILMENT",
+        "second_id": "dico_phrasis_0000279__es-es__original",
+        "second_prediction": "NEGATIVE_OTHER",
+        "soft_consistent": "false"
+      },
+      {
+        "first_gold": "FORWARD_ENTAILMENT",
+        "first_id": "dico_phrasis_0000283__es-es__flipped",
+        "first_prediction": "NEGATIVE_OTHER",
+        "hard_correct": "false",
+        "second_gold": "BACKWARD_ENTAILMENT",
+        "second_id": "dico_phrasis_0000283__es-es__original",
+        "second_prediction": "NEGATIVE_OTHER",
+        "soft_consistent": "false"
+      },
+      {
+        "first_gold": "FORWARD_ENTAILMENT",
+        "first_id": "dico_phrasis_0000284__es-es__flipped",
+        "first_prediction": "EQUIVALENCE",
+        "hard_correct": "false",
+        "second_gold": "BACKWARD_ENTAILMENT",
+        "second_id": "dico_phrasis_0000284__es-es__original",
+        "second_prediction": "EQUIVALENCE",
+        "soft_consistent": "true"
+      },
+      {
+        "first_gold": "FORWARD_ENTAILMENT",
+        "first_id": "dico_phrasis_0000303__es-es__flipped",
+        "first_prediction": "NEGATIVE_OTHER",
+        "hard_correct": "false",
+        "second_gold": "BACKWARD_ENTAILMENT",
+        "second_id": "dico_phrasis_0000303__es-es__original",
+        "second_prediction": "NEGATIVE_OTHER",
+        "soft_consistent": "false"
+      },
+      {
+        "first_gold": "FORWARD_ENTAILMENT",
+        "first_id": "dico_phrasis_0000345__es-es__flipped",
+        "first_prediction": "NEGATIVE_OTHER",
+        "hard_correct": "false",
+        "second_gold": "BACKWARD_ENTAILMENT",
+        "second_id": "dico_phrasis_0000345__es-es__original",
+        "second_prediction": "NEGATIVE_OTHER",
+        "soft_consistent": "false"
+      },
+      {
+        "first_gold": "FORWARD_ENTAILMENT",
+        "first_id": "dico_phrasis_0000350__es-es__flipped",
+        "first_prediction": "NEGATIVE_OTHER",
+        "hard_correct": "false",
+        "second_gold": "BACKWARD_ENTAILMENT",
+        "second_id": "dico_phrasis_0000350__es-es__original",
+        "second_prediction": "NEGATIVE_OTHER",
+        "soft_consistent": "false"
+      },
+      {
+        "first_gold": "FORWARD_ENTAILMENT",
+        "first_id": "dico_phrasis_0000405__es-es__flipped",
+        "first_prediction": "NEGATIVE_OTHER",
+        "hard_correct": "false",
+        "second_gold": "BACKWARD_ENTAILMENT",
+        "second_id": "dico_phrasis_0000405__es-es__original",
+        "second_prediction": "NEGATIVE_OTHER",
+        "soft_consistent": "false"
+      },
+      {
+        "first_gold": "FORWARD_ENTAILMENT",
+        "first_id": "dico_phrasis_0000421__es-es__flipped",
+        "first_prediction": "NEGATIVE_OTHER",
+        "hard_correct": "false",
+        "second_gold": "BACKWARD_ENTAILMENT",
+        "second_id": "dico_phrasis_0000421__es-es__original",
+        "second_prediction": "NEGATIVE_OTHER",
+        "soft_consistent": "false"
+      },
+      {
+        "first_gold": "FORWARD_ENTAILMENT",
+        "first_id": "dico_phrasis_0000432__es-es__flipped",
+        "first_prediction": "NEGATIVE_OTHER",
+        "hard_correct": "false",
+        "second_gold": "BACKWARD_ENTAILMENT",
+        "second_id": "dico_phrasis_0000432__es-es__original",
+        "second_prediction": "NEGATIVE_OTHER",
+        "soft_consistent": "false"
+      },
+      {
+        "first_gold": "FORWARD_ENTAILMENT",
+        "first_id": "dico_phrasis_0000447__es-es__flipped",
+        "first_prediction": "NEGATIVE_OTHER",
+        "hard_correct": "false",
+        "second_gold": "BACKWARD_ENTAILMENT",
+        "second_id": "dico_phrasis_0000447__es-es__original",
+        "second_prediction": "NEGATIVE_OTHER",
+        "soft_consistent": "false"
+      },
+      {
+        "first_gold": "FORWARD_ENTAILMENT",
+        "first_id": "dico_phrasis_0000452__es-es__flipped",
+        "first_prediction": "NEGATIVE_OTHER",
+        "hard_correct": "false",
+        "second_gold": "BACKWARD_ENTAILMENT",
+        "second_id": "dico_phrasis_0000452__es-es__original",
+        "second_prediction": "NEGATIVE_OTHER",
+        "soft_consistent": "false"
+      },
+      {
+        "first_gold": "FORWARD_ENTAILMENT",
+        "first_id": "dico_phrasis_0000487__es-es__flipped",
+        "first_prediction": "NEGATIVE_OTHER",
+        "hard_correct": "false",
+        "second_gold": "BACKWARD_ENTAILMENT",
+        "second_id": "dico_phrasis_0000487__es-es__original",
+        "second_prediction": "NEGATIVE_OTHER",
+        "soft_consistent": "false"
+      },
+      {
+        "first_gold": "FORWARD_ENTAILMENT",
+        "first_id": "dico_phrasis_0000499__es-es__flipped",
+        "first_prediction": "NEGATIVE_OTHER",
+        "hard_correct": "false",
+        "second_gold": "BACKWARD_ENTAILMENT",
+        "second_id": "dico_phrasis_0000499__es-es__original",
+        "second_prediction": "NEGATIVE_OTHER",
+        "soft_consistent": "false"
+      },
+      {
+        "first_gold": "FORWARD_ENTAILMENT",
+        "first_id": "dico_phrasis_0000540__es-es__flipped",
+        "first_prediction": "NEGATIVE_OTHER",
+        "hard_correct": "false",
+        "second_gold": "BACKWARD_ENTAILMENT",
+        "second_id": "dico_phrasis_0000540__es-es__original",
+        "second_prediction": "NEGATIVE_OTHER",
+        "soft_consistent": "false"
+      },
+      {
+        "first_gold": "FORWARD_ENTAILMENT",
+        "first_id": "dico_phrasis_0000560__es-es__flipped",
+        "first_prediction": "BACKWARD_ENTAILMENT",
+        "hard_correct": "false",
+        "second_gold": "BACKWARD_ENTAILMENT",
+        "second_id": "dico_phrasis_0000560__es-es__original",
+        "second_prediction": "FORWARD_ENTAILMENT",
+        "soft_consistent": "true"
+      },
+      {
+        "first_gold": "FORWARD_ENTAILMENT",
+        "first_id": "dico_phrasis_0000568__es-es__flipped",
+        "first_prediction": "NEGATIVE_OTHER",
+        "hard_correct": "false",
+        "second_gold": "BACKWARD_ENTAILMENT",
+        "second_id": "dico_phrasis_0000568__es-es__original",
+        "second_prediction": "NEGATIVE_OTHER",
+        "soft_consistent": "false"
+      },
+      {
+        "first_gold": "FORWARD_ENTAILMENT",
+        "first_id": "dico_phrasis_0000602__es-es__flipped",
+        "first_prediction": "NEGATIVE_OTHER",
+        "hard_correct": "false",
+        "second_gold": "BACKWARD_ENTAILMENT",
+        "second_id": "dico_phrasis_0000602__es-es__original",
+        "second_prediction": "NEGATIVE_OTHER",
+        "soft_consistent": "false"
+      },
+      {
+        "first_gold": "FORWARD_ENTAILMENT",
+        "first_id": "dico_phrasis_0000619__es-es__flipped",
+        "first_prediction": "BACKWARD_ENTAILMENT",
+        "hard_correct": "false",
+        "second_gold": "BACKWARD_ENTAILMENT",
+        "second_id": "dico_phrasis_0000619__es-es__original",
+        "second_prediction": "FORWARD_ENTAILMENT",
+        "soft_consistent": "true"
+      },
+      {
+        "first_gold": "FORWARD_ENTAILMENT",
+        "first_id": "dico_phrasis_0000632__es-es__flipped",
+        "first_prediction": "NEGATIVE_OTHER",
+        "hard_correct": "false",
+        "second_gold": "BACKWARD_ENTAILMENT",
+        "second_id": "dico_phrasis_0000632__es-es__original",
+        "second_prediction": "NEGATIVE_OTHER",
+        "soft_consistent": "false"
+      },
+      {
+        "first_gold": "EQUIVALENCE",
+        "first_id": "dico_phrasis_0000641__es-es__flipped",
+        "first_prediction": "NEGATIVE_OTHER",
+        "hard_correct": "false",
+        "second_gold": "EQUIVALENCE",
+        "second_id": "dico_phrasis_0000641__es-es__original",
+        "second_prediction": "NEGATIVE_OTHER",
+        "soft_consistent": "false"
+      },
+      {
+        "first_gold": "EQUIVALENCE",
+        "first_id": "dico_phrasis_0000661__es-es__flipped",
+        "first_prediction": "NEGATIVE_OTHER",
+        "hard_correct": "false",
+        "second_gold": "EQUIVALENCE",
+        "second_id": "dico_phrasis_0000661__es-es__original",
+        "second_prediction": "NEGATIVE_OTHER",
+        "soft_consistent": "false"
+      },
+      {
+        "first_gold": "EQUIVALENCE",
+        "first_id": "dico_phrasis_0000711__es-es__flipped",
+        "first_prediction": "NEGATIVE_OTHER",
+        "hard_correct": "false",
+        "second_gold": "EQUIVALENCE",
+        "second_id": "dico_phrasis_0000711__es-es__original",
+        "second_prediction": "NEGATIVE_OTHER",
+        "soft_consistent": "false"
+      },
+      {
+        "first_gold": "EQUIVALENCE",
+        "first_id": "dico_phrasis_0000721__es-es__flipped",
+        "first_prediction": "FORWARD_ENTAILMENT",
+        "hard_correct": "false",
+        "second_gold": "EQUIVALENCE",
+        "second_id": "dico_phrasis_0000721__es-es__original",
+        "second_prediction": "BACKWARD_ENTAILMENT",
+        "soft_consistent": "true"
+      },
+      {
+        "first_gold": "EQUIVALENCE",
+        "first_id": "dico_phrasis_0000725__es-es__flipped",
+        "first_prediction": "BACKWARD_ENTAILMENT",
+        "hard_correct": "false",
+        "second_gold": "EQUIVALENCE",
+        "second_id": "dico_phrasis_0000725__es-es__original",
+        "second_prediction": "FORWARD_ENTAILMENT",
+        "soft_consistent": "true"
+      },
+      {
+        "first_gold": "EQUIVALENCE",
+        "first_id": "dico_phrasis_0000729__es-es__flipped",
+        "first_prediction": "BACKWARD_ENTAILMENT",
+        "hard_correct": "false",
+        "second_gold": "EQUIVALENCE",
+        "second_id": "dico_phrasis_0000729__es-es__original",
+        "second_prediction": "FORWARD_ENTAILMENT",
+        "soft_consistent": "true"
+      },
+      {
+        "first_gold": "EQUIVALENCE",
+        "first_id": "dico_phrasis_0000732__es-es__flipped",
+        "first_prediction": "BACKWARD_ENTAILMENT",
+        "hard_correct": "false",
+        "second_gold": "EQUIVALENCE",
+        "second_id": "dico_phrasis_0000732__es-es__original",
+        "second_prediction": "FORWARD_ENTAILMENT",
+        "soft_consistent": "true"
+      },
+      {
+        "first_gold": "EQUIVALENCE",
+        "first_id": "dico_phrasis_0000733__es-es__flipped",
+        "first_prediction": "BACKWARD_ENTAILMENT",
+        "hard_correct": "false",
+        "second_gold": "EQUIVALENCE",
+        "second_id": "dico_phrasis_0000733__es-es__original",
+        "second_prediction": "FORWARD_ENTAILMENT",
+        "soft_consistent": "true"
+      },
+      {
+        "first_gold": "EQUIVALENCE",
+        "first_id": "dico_phrasis_0000743__es-es__flipped",
+        "first_prediction": "BACKWARD_ENTAILMENT",
+        "hard_correct": "false",
+        "second_gold": "EQUIVALENCE",
+        "second_id": "dico_phrasis_0000743__es-es__original",
+        "second_prediction": "FORWARD_ENTAILMENT",
+        "soft_consistent": "true"
+      },
+      {
+        "first_gold": "EQUIVALENCE",
+        "first_id": "dico_phrasis_0000752__es-es__flipped",
+        "first_prediction": "FORWARD_ENTAILMENT",
+        "hard_correct": "false",
+        "second_gold": "EQUIVALENCE",
+        "second_id": "dico_phrasis_0000752__es-es__original",
+        "second_prediction": "BACKWARD_ENTAILMENT",
+        "soft_consistent": "true"
+      },
+      {
+        "first_gold": "EQUIVALENCE",
+        "first_id": "dico_phrasis_0000768__es-es__flipped",
+        "first_prediction": "BACKWARD_ENTAILMENT",
+        "hard_correct": "false",
+        "second_gold": "EQUIVALENCE",
+        "second_id": "dico_phrasis_0000768__es-es__original",
+        "second_prediction": "FORWARD_ENTAILMENT",
+        "soft_consistent": "true"
+      },
+      {
+        "first_gold": "EQUIVALENCE",
+        "first_id": "dico_phrasis_0000808__es-es__flipped",
+        "first_prediction": "BACKWARD_ENTAILMENT",
+        "hard_correct": "false",
+        "second_gold": "EQUIVALENCE",
+        "second_id": "dico_phrasis_0000808__es-es__original",
+        "second_prediction": "FORWARD_ENTAILMENT",
+        "soft_consistent": "true"
+      },
+      {
+        "first_gold": "EQUIVALENCE",
+        "first_id": "dico_phrasis_0000811__es-es__flipped",
+        "first_prediction": "FORWARD_ENTAILMENT",
+        "hard_correct": "false",
+        "second_gold": "EQUIVALENCE",
+        "second_id": "dico_phrasis_0000811__es-es__original",
+        "second_prediction": "BACKWARD_ENTAILMENT",
+        "soft_consistent": "true"
+      },
+      {
+        "first_gold": "EQUIVALENCE",
+        "first_id": "dico_phrasis_0000815__es-es__flipped",
+        "first_prediction": "FORWARD_ENTAILMENT",
+        "hard_correct": "false",
+        "second_gold": "EQUIVALENCE",
+        "second_id": "dico_phrasis_0000815__es-es__original",
+        "second_prediction": "BACKWARD_ENTAILMENT",
+        "soft_consistent": "true"
+      },
+      {
+        "first_gold": "EQUIVALENCE",
+        "first_id": "dico_phrasis_0000817__es-es__flipped",
+        "first_prediction": "BACKWARD_ENTAILMENT",
+        "hard_correct": "false",
+        "second_gold": "EQUIVALENCE",
+        "second_id": "dico_phrasis_0000817__es-es__original",
+        "second_prediction": "FORWARD_ENTAILMENT",
+        "soft_consistent": "true"
+      }
+    ],
+    "reversible_pairs": 277,
+    "soft_cons": 0.7545126353790613,
+    "soft_consistent_pairs": 209
+  },
+  "hard_cons": 0.5776173285198556,
+  "soft_cons": 0.7545126353790613,
+  "weighted_f1": 0.6040014546687655
+}

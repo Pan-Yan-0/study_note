@@ -105,7 +105,13 @@ Coursera-ML-AndrewNg-Notes-master/   课程资料
     - 单词替换这条线的诊断到此为止，不再追加。
   - 10-20 起 SemEval 的工作在单独的对话里做；原来的对话只做学习（每晚的笔记任务绑定在那里）。
   - 下一步严格按导师的清单：先大模型 instruct / Qwen（零样本、少样本、CoT，再 LoRA SFT），然后 R-Drop、SCL、MoCo，再 DeepSeek 扩充。清单之外的想法排在后面。
-  - 第三组 notebook（`notebooks/dico_llm_instruct`，Qwen3-4B-Instruct-2507 的指令提示：零样本 / 训练标签归纳规则提示 / 少样本 / CoT，不训练）：GPT 审过第一版，第二版已按意见修改（CoT 同行推理被删、缓存半行、结果包恢复、版本指纹、规则来源家族、先训练集后 dev 等），用假模型测过流程。下一步由 Pan-Yan-0 在 GPU 上跑 SMOKE，Claude 和 GPT 看过原始输出、显存和结束原因，再定批大小并正式跑。
+  - 第三组（`notebooks/dico_llm_instruct`，Qwen3-4B-Instruct-2507 的指令提示，不训练）已跑完，结果在 `metrics/llm_instruct/`，Claude 从缓存复算过：
+    - dev 对称化 WF1 最高是 cot（英 .618、西 .604、巴 .506、跨语言 .535），zero 英 .584、巴 .361、跨语言 .313，都远低于 mDeBERTa（英 .805）。
+    - 原方向常把 BACKWARD 判成 FORWARD（zero 英语 97 / 190）；巴斯克语和跨语言掉得多。
+    - 英语训练集 select 子集上，按事先定的规则选出 few，但它和 zero 分不出高低（+.014，[−.009, +.034]）；加计数规则的 zero_rules 降 .132（[−.162, −.102]），把大量预测推向 O。
+    - cot 81–96% 写满 320 token 后被强制作答；生成每批 8 条，cot 跑了约 7 小时（运行前没跑 SMOKE）。
+    - `model_revision` 没记下来（transformers 5.19 的 config 里没有 `_commit_hash`），下个 notebook 改用 `snapshot_download` 取 commit 号。
+  - 下一步：Qwen 的 LoRA 指令微调（导师清单第 1 项里的 "qwen"），沿用 IMDB 的代码，用 zero 的模板；然后 R-Drop、SCL、MoCo。
 - **原理学习**：第一章（情感分类、反向传播）已通关，笔记在 `ML_note/原理笔记/`；第二章跟着 SemEval 实验学，现在讲句对输入和 A、B 对调。
 - **待办**：GitHub 仓库首页默认显示 `master`，`note` 的最新内容在首页看不到。改法等 Pan-Yan-0 决定：
   - 把默认分支改成 `note`；

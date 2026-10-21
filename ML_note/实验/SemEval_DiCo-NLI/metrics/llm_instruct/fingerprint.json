@@ -1,0 +1,150 @@
+{
+ "version": "dico_llm_instruct-2",
+ "model": "Qwen/Qwen3-4B-Instruct-2507",
+ "transformers": "5.19.0",
+ "dtype": "float16",
+ "prompt_text": {
+  "header": "Below is an instruction that describes a task, paired with an input that provides further context. Write a response that appropriately completes the request.",
+  "think_step": "Before answering, think carefully about the question and create a step-by-step chain of thoughts to ensure a logical and accurate response.",
+  "task": "You are given two short phrases taken from image captions or news headlines. The phrases may be in English, Spanish or Basque. Decide which inference relation holds between Phrase 1 and Phrase 2.\nA. Equivalence: each phrase entails the other.\nB. Forward entailment: Phrase 1 entails Phrase 2, but Phrase 2 does not entail Phrase 1.\nC. Backward entailment: Phrase 2 entails Phrase 1, but Phrase 1 does not entail Phrase 2.\nD. Other: none of A, B or C applies.",
+  "rules": "Use the following dataset-derived heuristics when applicable:\n- For plain counts of people or things, with no other quantity word such as \"at most\" or \"exactly\", the phrase with the larger count entails the phrase with the smaller count (\"7 boats\" entails \"3 boats\").\n- Phrases that differ only in a measured value, such as a magnitude, rate, percentage or date, do not entail each other.",
+  "answer_letter": "Answer with a single letter: A, B, C or D. No further explanation is required.",
+  "answer_cot": "Write your reasoning first, then give the final answer on the last line in the form \"Answer: X\", where X is A, B, C or D.",
+  "marker": "Answer:"
+ },
+ "examples": [
+  {
+   "pair_id": "dico_phrasis_0000204",
+   "label": "BACKWARD_ENTAILMENT"
+  },
+  {
+   "pair_id": "dico_phrasis_0002261",
+   "label": "NEGATIVE_OTHER"
+  },
+  {
+   "pair_id": "dico_phrasis_0001819",
+   "label": "FORWARD_ENTAILMENT"
+  },
+  {
+   "pair_id": "dico_phrasis_0000967",
+   "label": "EQUIVALENCE"
+  },
+  {
+   "pair_id": "dico_phrasis_0002658",
+   "label": "NEGATIVE_OTHER"
+  },
+  {
+   "pair_id": "dico_phrasis_0000650",
+   "label": "EQUIVALENCE"
+  },
+  {
+   "pair_id": "dico_phrasis_0000461",
+   "label": "FORWARD_ENTAILMENT"
+  },
+  {
+   "pair_id": "dico_phrasis_0000472",
+   "label": "BACKWARD_ENTAILMENT"
+  }
+ ],
+ "few_per_label": 2,
+ "example_seed": 2027,
+ "reviewed_families_excluded": [
+  "dico_phrasis_0000079",
+  "dico_phrasis_0000202",
+  "dico_phrasis_0000267",
+  "dico_phrasis_0000420",
+  "dico_phrasis_0000473",
+  "dico_phrasis_0000646",
+  "dico_phrasis_0000670",
+  "dico_phrasis_0000673",
+  "dico_phrasis_0000682",
+  "dico_phrasis_0000709",
+  "dico_phrasis_0000853",
+  "dico_phrasis_0000854",
+  "dico_phrasis_0000919",
+  "dico_phrasis_0000969",
+  "dico_phrasis_0001024",
+  "dico_phrasis_0001054",
+  "dico_phrasis_0001158",
+  "dico_phrasis_0001161",
+  "dico_phrasis_0001187",
+  "dico_phrasis_0001238",
+  "dico_phrasis_0001401",
+  "dico_phrasis_0001438",
+  "dico_phrasis_0001566",
+  "dico_phrasis_0001720",
+  "dico_phrasis_0001774",
+  "dico_phrasis_0001917",
+  "dico_phrasis_0001942",
+  "dico_phrasis_0001997",
+  "dico_phrasis_0002082",
+  "dico_phrasis_0002225",
+  "dico_phrasis_0002275",
+  "dico_phrasis_0002410",
+  "dico_phrasis_0002420",
+  "dico_phrasis_0002509",
+  "dico_phrasis_0002511",
+  "dico_phrasis_0002557",
+  "dico_phrasis_0002578",
+  "dico_phrasis_0002820",
+  "dico_phrasis_0002833",
+  "dico_phrasis_0002861",
+  "dico_phrasis_0002998",
+  "dico_phrasis_0003042",
+  "dico_phrasis_0003079",
+  "dico_phrasis_0003092",
+  "dico_phrasis_0003316"
+ ],
+ "rule_source_pairs": [
+  "dico_phrasis_0000009",
+  "dico_phrasis_0000076",
+  "dico_phrasis_0000170",
+  "dico_phrasis_0000267",
+  "dico_phrasis_0000376",
+  "dico_phrasis_0000403",
+  "dico_phrasis_0000416",
+  "dico_phrasis_0000420",
+  "dico_phrasis_0000422",
+  "dico_phrasis_0001338",
+  "dico_phrasis_0001401",
+  "dico_phrasis_0001541",
+  "dico_phrasis_0001717",
+  "dico_phrasis_0001736",
+  "dico_phrasis_0001737",
+  "dico_phrasis_0002422",
+  "dico_phrasis_0002461",
+  "dico_phrasis_0002472",
+  "dico_phrasis_0002502",
+  "dico_phrasis_0002517",
+  "dico_phrasis_0002718",
+  "dico_phrasis_0002730",
+  "dico_phrasis_0002743",
+  "dico_phrasis_0002771",
+  "dico_phrasis_0002773",
+  "dico_phrasis_0002963"
+ ],
+ "selection_rule": "在英语训练集的 select 子集（去掉少样本例子家族和计数规则的 26 个来源家族）上，zero、zero_rules、few 中对称化后 WF1 最高的；相同时取靠前的",
+ "cot_max_new_tokens": 320,
+ "decoding": "greedy",
+ "smoke": false,
+ "smoke_rows": null,
+ "data_sha256": {
+  "final_data/dev/dico_nli_dev_track1_participant_labeled.csv": "80b7152f7ccf0d349d42ad2f098988106689b918b36337e5756b121d17513511",
+  "final_data/dev/dico_nli_dev_track1_reference.csv": "8d5cd11c1c60df3c9b59254d12a60fb2cf43e91dde01b46c8a8f296b806134bc",
+  "final_data/dev/dico_nli_dev_track2_participant_labeled.csv": "09a08a2ffdbb438ead917457f05d977233436431939d7859abd4bf6fe5ee446b",
+  "final_data/dev/dico_nli_dev_track2_reference.csv": "d962e90cbf221cbc5cd6fc197edcb423be3b5ba5f08acd80b8b0a70d27a50171",
+  "final_data/dev/dico_nli_dev_track3_participant_labeled.csv": "c42f051c8f5908cceab4c8f80b003c2314d0c13a487be8586011a7ae3b67493c",
+  "final_data/dev/dico_nli_dev_track3_reference.csv": "3ea3643a5c6e0b2ca4606e3935cd7b368b0fd8f157691c80a5c8d5a3745cfebe",
+  "final_data/dev/dico_nli_dev_track4_participant_labeled.csv": "62fd2b4180c03ab0389bd9348d5c81b04b13b936b325a4a785d0c4c8d6c03baf",
+  "final_data/dev/dico_nli_dev_track4_reference.csv": "1d2769d1e757eb2171272c8e56e4cb7593f7f05de826c4b22c2efb6d3e2fc9ae",
+  "final_data/train/dico_nli_train_track1_participant_labeled.csv": "5e8dd9f3a7e000933fec3c9e64d064f9a25586f141f58d6e6afb47c4fc797211",
+  "final_data/train/dico_nli_train_track1_reference.csv": "c8f4d8587711e0beaefc115606e5c29c3e78dc6660e074967428af0fed069ee4",
+  "final_data/train/dico_nli_train_track2_participant_labeled.csv": "68bfbcdd12bffc93fdc84a6526fbb217846d657faf9dbce766a9297cccade163",
+  "final_data/train/dico_nli_train_track2_reference.csv": "9850c08f3027961df47a2635a961902e4d5f99a6c57e8a04049e69b52b571e01",
+  "final_data/train/dico_nli_train_track3_participant_labeled.csv": "5d085cdd555800285c2c6f35865713d142034b804dbf2e8c349a37bad90d4cfa",
+  "final_data/train/dico_nli_train_track3_reference.csv": "32f03eb1ec0fa079b8fcec8e269e9aade5cd04c735d1873da88fe0f403dfeef3",
+  "final_data/train/dico_nli_train_track4_participant_labeled.csv": "f60ad9359c69b52fb3683170c198e781c83e26c06e6a8078c1e3d033b8a9c948",
+  "final_data/train/dico_nli_train_track4_reference.csv": "3626a1d3d47b983ea8a0fe4cdeecfca6c9b537c31e4b5131c354c1a592544ce9"
+ },
+ "model_revision": null
+}
