@@ -26,7 +26,7 @@
 #
 # **断点续跑**：训练每轮结束存一个检查点，被打断后从最近的一轮接着训练；读概率每算一批就写进缓存。每个 (赛道, 种子) 跑完写 `done.json`，之后会跳过。每完成一部分就更新结果包 `dico_qwen_sft_results_<本次开始时间>.zip`。结果包里只放跑完的部分，不放 LoRA 权重和检查点（太大），所以换平台时，正在训练的那个种子要重新训练。在 Colab 上结果直接写在 Google Drive 里，断开后重新运行就能接着跑。
 #
-# **时间估计（T4，未实测）**：按 IMDB 的实测速度（训练约 540 个 token / 秒）估算，英语每个种子训练 3 轮约 50 分钟，加上评分约 1 小时；3 个种子约 3 小时。西班牙语、巴斯克语差不多；跨语言的训练集是 6 倍，每个种子约 6 小时。默认只跑英语（`TRACKS = [1]`），看过结果再加。
+# **时间估计（Kaggle T4 上 SMOKE 实测）**：训练每步 5.7 秒（16 条、平均约 200 个 token），峰值显存 8.7 GiB。英语每个种子训练 3 轮（411 步）约 40 分钟，读概率约 3 分钟，加上加载模型，约 45 分钟；3 个种子加零样本约 2.5 小时。西班牙语、巴斯克语差不多；跨语言的训练集是 6 倍，每个种子约 4 小时。默认只跑英语（`TRACKS = [1]`），看过结果再加。
 #
 # **SMOKE（默认打开）**：只用约 192 条训练、32 条内层验证、fold 0 和 dev 各约 48 条（按 pair 整对取，官方评分脚本照常运行），1 个种子、1 轮，十几分钟内走通全流程（大部分时间在下载模型）；最后打印训练时的峰值显存、每步用时和全量运行的估计时间。请先跑 SMOKE，把输出发给 Claude 看过，再把 `SMOKE` 改成 `False` 正式运行。
 #
@@ -587,9 +587,23 @@ class QwenSFT:
         cast_mixed_precision_params(model, dtype=self.dtype)  # 冻结的底座半精度，LoRA 参数 fp32
         self.model = model
 
+        val_inputs = list(dict.fromkeys((r["text1"], r["text2"]) for r in val_rows))
+
+        def val_f1():
+            probs = dict(zip(val_inputs, backend.score(val_inputs)))
+            return weighted_f1([r["label"] for r in val_rows],
+                               [argmax_label(probs[(r["text1"], r["text2"])]["p"]) for r in val_rows])
+
         def load_best(history):
+            """载入最好一轮的权重，并在内层验证上重评一次：必须和训练时记下的分数一致，否则说明没载入对。"""
             ep = best_of(history)
-            set_peft_model_state_dict(model, load_file(os.path.join(adapter_dir(ep), "adapter_model.safetensors")))
+            res = set_peft_model_state_dict(model, load_file(os.path.join(adapter_dir(ep), "adapter_model.safetensors")))
+            if getattr(res, "unexpected_keys", None):
+                raise SystemExit(f"载入第 {ep} 轮的 LoRA 权重时有对不上的 key：{res.unexpected_keys[:5]}")
+            f1, recorded = val_f1(), [h for h in history if h["epoch"] == ep][0]["val_weighted_f1"]
+            if abs(f1 - recorded) > 0.01:
+                raise SystemExit(f"载入第 {ep} 轮的权重后内层验证 WF1 是 {f1:.4f}，训练时记的是 {recorded:.4f}，权重没载入对")
+            print(f"    载入第 {ep} 轮的权重，内层验证 WF1 {f1:.4f}（训练时 {recorded:.4f}）", flush=True)
             return ep
 
         if os.path.exists(trained_path):
@@ -603,7 +617,6 @@ class QwenSFT:
             enc["input_ids"].append(ids)
             enc["answer_id"].append(self.target_ids[LABELS.index(r["label"])])
             enc["length"].append(len(ids))
-        val_inputs = list(dict.fromkeys((r["text1"], r["text2"]) for r in val_rows))
 
         complete = [p for p in glob.glob(os.path.join(ckpt_dir, "checkpoint-*"))
                     if os.path.exists(os.path.join(p, "trainer_state.json")) and os.path.exists(os.path.join(p, "optimizer.pt"))]
@@ -637,9 +650,7 @@ class QwenSFT:
             def on_epoch_end(self, args, state, control, **kwargs):
                 ep = int(round(state.epoch))
                 model.save_pretrained(adapter_dir(ep))
-                probs = dict(zip(val_inputs, backend.score(val_inputs)))
-                f1 = weighted_f1([r["label"] for r in val_rows],
-                                 [argmax_label(probs[(r["text1"], r["text2"])]["p"]) for r in val_rows])
+                f1 = val_f1()
                 losses = [h["loss"] for h in state.log_history if "loss" in h and ep - 1 < h.get("epoch", 0) <= ep]
                 history[:] = sorted([h for h in history if h["epoch"] != ep] + [{
                     "epoch": ep, "train_loss": sum(losses) / len(losses) if losses else None,
