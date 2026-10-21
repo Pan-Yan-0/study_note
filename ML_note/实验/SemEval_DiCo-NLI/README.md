@@ -290,7 +290,7 @@ e12 是"最多训练 12 轮、在内部验证上选最好的一轮"，不是固�
    - 指令提示已完成（第三组）：只靠提示词的 Qwen3-4B 远不如微调的 mDeBERTa。
    - 下一步：Qwen 的 LoRA 指令微调（SFT），notebook 已写好（[notebooks/dico_qwen_sft.ipynb](notebooks/dico_qwen_sft.ipynb)），正式运行还没开始。
      - 第一版的 SMOKE 已在 Kaggle T4 上跑通：零样本读出的概率和第三组同一批输入一致（48 条的预测全部相同），训练每步 5.7 秒、峰值显存 8.7 GiB，英语每个种子约 45 分钟。但那次的 SMOKE 子集只有 F / B 两类，也没有走到中断恢复和第二次加载模型。
-     - 按 GPT 的审阅改成第二版：检查点从新到旧逐个验证，写到一半的跳过；载入选中那一轮的权重后逐个核对张量，并和训练时保存的逐条概率比较；torchao 只清理 site-packages 里的残留；记录运行代码的哈希。SMOKE 改为四类都有，并实测一次中断恢复、逐轮载入和第二个种子的重新加载。正式运行前要先跑一次新的 SMOKE。
+     - 按 GPT 的两轮审阅改成第三版：检查点从新到旧逐个验证，写到一半或缺随机数 / fp16 缩放状态的跳过；载入选中那一轮的权重后逐个核对张量，并和训练时保存的逐条概率比较；torchao 只清理 site-packages 里的残留；记录运行代码的哈希，正式运行取不到哈希就停下；修好了第二版里 SMOKE 训练完、读概率途中中断后续跑会去载入已删权重的问题。SMOKE 改为四类都有，并实测一次中断恢复、逐轮载入和第二个种子的重新加载。正式运行前要先跑一次新的 SMOKE。
      - 沿用 IMDB 的代码和超参数；模板用 `zero` 的提示词（训练集上 few 和 zero 分不出高低，微调时不需要例子，zero 更短），只在答案字母上算损失，读 A–D 的概率，最多 3 轮，按内层验证选轮。数据划分和第二组 fold 0 完全相同，所以英语 fold 0 上可以和 mDeBERTa 12 轮配方的折外预测按种子配对比较；dev 只报告。模型版本用 `snapshot_download` 固定并记下 commit 号。先跑 SMOKE，再跑英语 3 个种子，看过结果再决定其他赛道。
    - 蒸馏给 mDeBERTa 只在事先定好的条件下试做（看正式分数之前定下，写在 notebook 开头）：英语 fold 0 上，(1) 每个种子分别求 Qwen SFT 和 mDeBERTa 的 sym WF1 之差，三个种子的平均差大于 0；或 (2) 同一种子的两个模型四类概率按 0.5 / 0.5 平均后再对称化，比 mDeBERTa 单独高；而且按家族配对重抽样的近似 95% 区间下限大于 0。这只是决定要不要投入的探索性门槛：区间不含训练的随机性，两条"任一通过"也没有校正；通过了也只说明值得试，蒸馏要和同数据、同训练预算的 mDeBERTa 对照。两条都不满足就直接做第 2 项。Pan-Yan-0 提出的"大模型当分类器"等 SFT 的结果出来再定。
 2. **训练技巧（清单第 2 项）**：在 mDeBERTa 上逐个加 R-Drop、SCL、MoCo。
@@ -319,7 +319,7 @@ e12 是"最多训练 12 轮、在内部验证上选最好的一轮"，不是固�
 - `notebooks/dico_encoders.py` / `.ipynb`：第一组编码器实验，可以断点续跑。
 - `notebooks/dico_diagnostics.py` / `.ipynb`：第二组，英语折外诊断与训练配方比较，可以断点续跑。
 - `notebooks/dico_llm_instruct.py` / `.ipynb`：第三组，Qwen 指令提示（零样本、少样本、CoT，不训练），可以断点续跑。
-- `notebooks/dico_qwen_sft.py` / `.ipynb`：第四组，Qwen3-4B 的 LoRA 指令微调，可以断点续跑（第二版，正式运行还没开始）。
+- `notebooks/dico_qwen_sft.py` / `.ipynb`：第四组，Qwen3-4B 的 LoRA 指令微调，可以断点续跑（第三版，正式运行还没开始）。
 - `code/llm_instruct_analysis.py`：第三组的复算和分析：从缓存重建预测并重新评分、训练集上提示词的配对差值、cot 按结束原因分开的准确率、方向混淆。
 - `metrics/baselines/`：基线逐种子分数。
 - `metrics/encoders/`：

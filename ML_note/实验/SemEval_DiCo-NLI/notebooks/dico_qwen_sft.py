@@ -108,7 +108,7 @@ import time
 import zipfile
 from collections import Counter
 
-VERSION = "dico_qwen_sft-2"
+VERSION = "dico_qwen_sft-3"
 PINS = {"transformers": "5.19.0", "peft": "0.21.2", "accelerate": "1.15.0", "datasets": "5.1.0"}  # 和 IMDB 相同
 LABELS = ["EQUIVALENCE", "FORWARD_ENTAILMENT", "BACKWARD_ENTAILMENT", "NEGATIVE_OTHER"]
 LETTERS = ["A", "B", "C", "D"]
@@ -424,6 +424,13 @@ def check_fingerprint(fp):
     if os.path.exists(path):
         old = read_json(path)
         diff = incompatible(old, fp)
+        if diff and SMOKE:  # SMOKE 的目录是旧版本或旧设置留下的：改名保留，新开一个
+            keep = f"{OUT}_old_{time.strftime('%Y%m%d-%H%M%S')}"
+            os.rename(OUT, keep)
+            os.makedirs(OUT)
+            print(f"SMOKE 目录是旧设置留下的（{diff}），已改名保留为 {keep}，重新开始")
+            write_json(path, fp)
+            return None
         if diff:
             raise SystemExit(f"当前设置和已有结果不一致：{diff}。要接着跑，请把设置改回去；要重新开始，请删除或改名 {OUT}。")
         return old.get("model_revision")
@@ -457,8 +464,13 @@ def code_sha256():
 def check_code(code_hash):
     """同一个结果目录里只用同一份代码。SMOKE 的目录可以随时重来，代码变了就清空。"""
     path = os.path.join(OUT, "run_meta.json")
+    if code_hash is None:
+        if not SMOKE:
+            raise SystemExit("取不到这次运行的代码哈希（IPython 的 In 里找不到含 VERSION 的单元），正式运行先停下。请把输出发给 Claude。")
+        print("注意：取不到代码哈希（SMOKE 照常运行）")
+        return
     old = {r.get("code_sha256") for r in (read_json(path) if os.path.exists(path) else [])} - {None}
-    if not old or old == {code_hash} or code_hash is None:
+    if not old or old == {code_hash}:
         return
     if SMOKE:
         print("代码和上次 SMOKE 不同，清空 SMOKE 的结果目录重来")
@@ -517,12 +529,12 @@ def steps_per_epoch(n_rows):
     return math.ceil(math.ceil(n_rows / TRAIN_BATCH) / GRAD_ACC)
 
 
-REQUIRED_CKPT_FILES = ["trainer_state.json", "optimizer.pt", "scheduler.pt", "adapter_model.safetensors"]
+REQUIRED_CKPT_FILES = ["trainer_state.json", "optimizer.pt", "scheduler.pt", "adapter_model.safetensors", "rng_state.pth"]
 
 
 def find_checkpoint(ckpt_dir, spe, fp16):
     """从新到旧找一份完整的检查点。Trainer 最后写 trainer_state.json，所以它能完整解析、轮数是整数、
-    步数等于轮数 × 每轮步数，而且优化器、调度器、LoRA 权重都在，才算完整。
+    步数等于轮数 × 每轮步数，而且优化器、调度器、LoRA 权重、随机数状态（fp16 时还有 scaler）都在，才算完整。
     不完整的移到 checkpoints_invalid/ 并说明原因（留着它，Trainer 轮换检查点时会把它当成最新的）。"""
     cands = []
     for path in glob.glob(os.path.join(ckpt_dir, "checkpoint-*")):
@@ -530,9 +542,10 @@ def find_checkpoint(ckpt_dir, spe, fp16):
         if os.path.isdir(path) and tail.isdigit():
             cands.append((int(tail), path))
     skipped = []
+    required = REQUIRED_CKPT_FILES + (["scaler.pt"] if fp16 else [])
     for num, path in sorted(cands, reverse=True):
         reason, state = None, None
-        missing = [f for f in REQUIRED_CKPT_FILES if not os.path.exists(os.path.join(path, f))]
+        missing = [f for f in required if not os.path.exists(os.path.join(path, f))]
         if missing:
             reason = f"缺少 {missing}"
         else:
@@ -553,20 +566,16 @@ def find_checkpoint(ckpt_dir, spe, fp16):
             skipped.append({"checkpoint": os.path.basename(path), "reason": reason})
             print(f"    跳过检查点 {os.path.basename(path)}：{reason}；已移到 {dest}", flush=True)
             continue
-        optional = ["rng_state.pth"] + (["scaler.pt"] if fp16 else [])
-        missing_optional = [f for f in optional if not os.path.exists(os.path.join(path, f))]
-        if missing_optional:
-            print(f"    注意：检查点 {os.path.basename(path)} 里没有 {missing_optional}，恢复时随机数或 fp16 缩放状态可能和中断前不同", flush=True)
         return {"path": path, "checkpoint": os.path.basename(path), "epoch": round(state["epoch"]),
-                "files": sorted(os.listdir(path)), "missing_optional": missing_optional, "skipped": skipped}
-    return {"path": None, "checkpoint": None, "epoch": 0, "files": [], "missing_optional": [], "skipped": skipped}
+                "files": sorted(os.listdir(path)), "skipped": skipped}
+    return {"path": None, "checkpoint": None, "epoch": 0, "files": [], "skipped": skipped}
 
 
 def plant_broken_checkpoint(run_dir):
     """SMOKE 用：放一个编号更大、但 trainer_state.json 只写了一半的检查点，看续跑会不会跳过它。"""
     d = os.path.join(run_dir, "checkpoints", "checkpoint-999999")
     os.makedirs(d, exist_ok=True)
-    for name in REQUIRED_CKPT_FILES[1:]:
+    for name in REQUIRED_CKPT_FILES[1:] + ["scaler.pt"]:
         with open(os.path.join(d, name), "wb") as f:
             f.write(b"placeholder")
     with open(os.path.join(d, "trainer_state.json"), "w") as f:
@@ -771,15 +780,16 @@ class QwenSFT:
                 raise SystemExit(f"第 {ep} 轮的权重载入后，内层验证有 {1 - agree:.1%} 的预测和训练时不同，请把输出发给 Claude")
             return check
 
-        def finish(history):
-            """SMOKE 里逐轮载入核对，最后都换回选中的一轮。"""
+        def finish(history, every_epoch):
+            """载入并核对选中的一轮。every_epoch（SMOKE 里训练刚结束时）先逐轮载入核对，最后都换回选中的一轮。"""
             best = best_of(history)
-            checks = [load_epoch(h["epoch"], history) for h in history if SMOKE and h["epoch"] != best]
+            checks = [load_epoch(h["epoch"], history) for h in history if every_epoch and h["epoch"] != best]
             return best, checks + [load_epoch(best, history)]
 
         if os.path.exists(trained_path):
+            # 训练已结束、其余轮的权重已删：只载入、核对选中的一轮；训练结束时的逐轮检查结果已记在 trained.json
             history = read_json(hist_path)
-            finish(history)
+            finish(history, every_epoch=False)
             return history, read_json(trained_path)
 
         enc = {"input_ids": [], "answer_id": [], "length": []}
@@ -865,7 +875,7 @@ class QwenSFT:
         t0 = time.time()
         trainer.train(resume_from_checkpoint=resume["path"])
         steps = sorted(progress.marks)
-        best, checks = finish(history)
+        best, checks = finish(history, every_epoch=SMOKE)
         info = {"best_epoch": best, "trainable_params": sum(p.numel() for p in model.parameters() if p.requires_grad),
                 "steps": trainer.state.global_step, "steps_per_epoch": steps_per_epoch(len(fit_rows)),
                 "train_minutes_last_session": round((time.time() - t0) / 60, 1),
@@ -1058,7 +1068,7 @@ def smoke_report(backend, split, track):
         "四个分区都含四类": all({r["label"] for r in parts[k]} == set(LABELS) for k in ("fit", "val", "test", "dev")),
         "中断后从第 1 轮的检查点恢复": first["resumed_from_epoch"] == 1 and first["resume"]["checkpoint"] == f"checkpoint-{spe}",
         "写坏的检查点被跳过": [x["checkpoint"] for x in first["resume"]["skipped"]] == ["checkpoint-999999"],
-        "检查点里有 RNG 和 fp16 缩放状态": not first["resume"]["missing_optional"],
+        "恢复用的检查点里有 RNG 和 fp16 缩放状态": {"rng_state.pth", "scaler.pt"} <= set(first["resume"]["files"]),
         "每一轮的权重载入后张量逐位相同、预测一致": all(
             {c["epoch"] for c in d["adapter_checks"]} == {h["epoch"] for h in d["history"]}
             and all(c["val_argmax_agreement"] >= 0.98 for c in d["adapter_checks"]) for d in (first, second)),
