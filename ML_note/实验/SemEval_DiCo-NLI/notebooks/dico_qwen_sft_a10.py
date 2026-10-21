@@ -195,7 +195,9 @@ def ensure_torch():
     pkgs = ["torch"] + [n for n in ("torchvision", "torchaudio") if importlib.util.find_spec(n)]
     print(f"torch 是 {have}，transformers 要求 2.5 以上；显卡驱动 {driver}，现在安装", {n: TORCH_INSTALL[n] for n in pkgs},
           "（约 3 GB，几分钟）", flush=True)
-    subprocess.run([sys.executable, "-m", "pip", "install", "-q", *[f"{n}=={TORCH_INSTALL[n]}" for n in pkgs]], check=True)
+    index = ["-i", "https://mirrors.aliyun.com/pypi/simple/"] if ON_PAI else []  # 阿里云内网的 PyPI 镜像，比 pypi.org 快得多
+    # 不加 -q：下载约 3 GB，要能看到进度
+    subprocess.run([sys.executable, "-m", "pip", "install", *index, *[f"{n}=={TORCH_INSTALL[n]}" for n in pkgs]], check=True)
     importlib.invalidate_caches()
 
 
