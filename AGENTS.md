@@ -111,9 +111,10 @@ Coursera-ML-AndrewNg-Notes-master/   课程资料
     - 英语训练集 select 子集上，按事先定的规则选出 few，但它和 zero 分不出高低（+.014，[−.009, +.034]）；加计数规则的 zero_rules 降 .132（[−.162, −.102]），把大量预测推向 O。
     - cot 81–96% 写满 320 token 后被强制作答；生成每批 8 条，cot 跑了约 7 小时（运行前没跑 SMOKE）。
     - `model_revision` 没记下来（transformers 5.19 的 config 里没有 `_commit_hash`），下个 notebook 改用 `snapshot_download` 取 commit 号。
-  - 第四组（`notebooks/dico_qwen_sft`，Qwen3-4B-Instruct-2507 的 LoRA SFT，zero 模板，只算答案字母的损失）已写好，SMOKE 已在 Kaggle T4 上跑通（零样本概率和第三组一致；每步 5.7 秒、峰值 8.7 GiB，英语每个种子约 45 分钟；模型 commit `cdbee75f`），等 GPT 审代码后正式运行：
+  - 第四组（`notebooks/dico_qwen_sft`，Qwen3-4B-Instruct-2507 的 LoRA SFT，zero 模板，只算答案字母的损失）第一版的 SMOKE 已在 Kaggle T4 上跑通（零样本概率和第三组一致；每步 5.7 秒、峰值 8.7 GiB，英语每个种子约 45 分钟；模型 commit `cdbee75f`）。GPT 审过后改成第二版（`dico_qwen_sft-2`：检查点逐个验证、载入权重后逐个核对张量、torchao 只清 site-packages、记录代码哈希、SMOKE 四类都有并实测中断恢复和重新加载），要先跑新的 SMOKE 再正式运行：
     - 数据划分和第二组 fold 0 逐行相同（训练 2,190、内层验证 244、留出 608），英语 fold 0 上和 mDeBERTa 12 轮配方的折外预测按种子配对比较。
-    - 事先定好的蒸馏条件：英语 fold 0 上 Qwen SFT 的对称化 WF1 比 mDeBERTa 高，或两者概率平均后比 mDeBERTa 单独高，而且按家族重抽样的区间下限大于 0；都不满足就不做蒸馏。
+    - 事先定好的蒸馏条件：英语 fold 0 上，同种子的 sym WF1 差（Qwen SFT − mDeBERTa）三个种子平均大于 0，或同种子两模型概率 0.5 / 0.5 平均后比 mDeBERTa 高，而且按家族配对重抽样的区间下限大于 0；都不满足就不做蒸馏。这只是探索性门槛，通过了也要和同数据、同预算的 mDeBERTa 对照。
+    - 训练部分 E / F / B / O 是 574 / 631 / 631 / 354（O 只占 16%，不是四成）；dev 有 15 行（8 个 pair）的文本在训练集里出现过，选择看 fold 0。
     - 本地用假的 torch / transformers / peft 测过续跑：训练中途、评估后存检查点前、读概率时被打断，都能接着跑，选中的权重能复现记录的验证分数。
   - 再下一步：在 mDeBERTa 上逐个加 R-Drop、SCL、MoCo（英语基线是 12 轮 + 对称化）。
 - **原理学习**：第一章（情感分类、反向传播）已通关，笔记在 `ML_note/原理笔记/`；第二章跟着 SemEval 实验学，现在讲句对输入和 A、B 对调。
@@ -143,6 +144,7 @@ Coursera-ML-AndrewNg-Notes-master/   课程资料
   - 只有一条记录的 pair 都是 NEGATIVE_OTHER（训练集、dev 和 trial 的测试格式文件都是这样），模型只用文本，不用这个结构。
   - 评分脚本里，可对调的短语对只要有一个方向预测成 NEGATIVE_OTHER，SoftCons 就算这一对不一致，所以对称化不保证 SoftCons 满分。
   - PhrasIS 的作者稿写明，短语对是脱离原句语境重新标注的（GPT 查到，Claude 没取到原文）。所以金标和字面逻辑不一致时，不要归因于"丢了语境"。
+  - 官方评分脚本用 `csv.Sniffer` 猜金标文件的格式，子集里短语以撇号开头（如 `'s integration`）时会把撇号当成引号、整个文件解析错位，报 "Label must not be empty"。写金标子集时只写 `instance_id, pair_id, reverse_pair_id, label` 四列。
   - 内部验证要先把文本相同的 pair_id 合成一个家族再分组；训练集里同一有序输入出现过两个标签（South Africans → South Africa）。
   - 计数的候选规则（来自训练标签，不是官方口径）：数人或物时，数大的一侧推出数小的一侧（"6 dead" 推出 "One dead"）；数值是读数（震级、汇率、百分比、日期）时是 NEGATIVE_OTHER。`code/label_conventions.py` 用有限数字词表、"两侧只差一个数"筛出的 26 对里没有反例，但这是看过标签后归纳的；其中 2 对原文写了 At least；exactly、at most、否定数量、多个数字都没覆盖。写进提示词时称"从训练数据归纳的启发式"，报告时注明来源；评估它时要排除这 26 个来源家族。
 - 官方说明：[SemEval-2027 Task 2 DiCo-NLI README](https://github.com/ilopezgazpio/SemEval-2027-Task-2-DiCo-NLI/blob/main/README.md)
