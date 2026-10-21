@@ -67,12 +67,13 @@ import math
 import platform
 import random
 import shutil
+import statistics
 import subprocess
 import time
 import zipfile
 from collections import Counter
 
-VERSION = "dico_qwen_teacher-2"
+VERSION = "dico_qwen_teacher-3"
 PINS = {"transformers": "5.19.0", "peft": "0.21.2", "accelerate": "1.15.0", "datasets": "5.1.0"}  # 和 IMDB 相同
 LABELS = ["EQUIVALENCE", "FORWARD_ENTAILMENT", "BACKWARD_ENTAILMENT", "NEGATIVE_OTHER"]
 LETTERS = ["A", "B", "C", "D"]
@@ -629,9 +630,9 @@ def export_seed(backend, src, fp, seed, parts, adapter_sha):
     mx2 = sorted(max(soft(p, 2)) for p in probs)
     stats = {"fit_rows": len(parts["fit"]), "fit_rows_with_teacher": len(rows), "fit_inputs": len(fit_needed), "best_epoch": best,
              "teacher_accuracy_on_fit_rows": round(sum(top(p) == LABELS.index(r["label"]) for p, r in zip(probs, rows)) / max(1, len(rows)), 4),
-             "max_prob_median": round(mx[len(mx) // 2], 4) if mx else None,
+             "max_prob_median": round(statistics.median(mx), 4) if mx else None,
              "max_prob_above_0.999": round(sum(m > 0.999 for m in mx) / max(1, len(mx)), 4),
-             "max_prob_median_T2": round(mx2[len(mx2) // 2], 4) if mx2 else None,
+             "max_prob_median_T2": round(statistics.median(mx2), 4) if mx2 else None,
              "mean_entropy": round(sum(-sum(x * math.log(x) for x in p if x > 0) for p in probs) / max(1, len(probs)), 4),
              "zero_probs": sum(x == 0.0 for p in probs for x in p)}
     write_json(os.path.join(d, "done.json"), {"adapter_sha256": adapter_sha, "checks": checks, "stats": stats,
