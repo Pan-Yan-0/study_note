@@ -333,7 +333,7 @@ e12 是"最多训练 12 轮、在内部验证上选最好的一轮"，不是固�
 1. **大模型 instruct 和 Qwen（导师清单第 1 项）**：
    - 指令提示已完成（第三组）：只靠提示词的 Qwen3-4B 远不如微调的 mDeBERTa。
    - 英语的 LoRA SFT 已完成（第四组）：fold 0 上对称化 WF1 .860，比同数据训练的 mDeBERTa 高 .067。
-   - 下一步：西班牙语和巴斯克语的 SFT（`TRACKS = [2, 3]`，代码不改），约 5 小时，放在 Kaggle 后台跑；跨语言赛道约 14 小时，等下周的 Kaggle 额度或别的 GPU。
+   - 下一步：西班牙语和巴斯克语的 SFT（`TRACKS = [2, 3]`，代码不改），约 5 小时，放在 Kaggle 后台跑；跨语言赛道在 T4 上约 14 小时，改在阿里云 PAI-DSW 的 A10 上跑（[notebooks/dico_qwen_sft_a10.ipynb](notebooks/dico_qwen_sft_a10.ipynb)，估计 6–8 小时，先跑 SMOKE 实测）。训练设置和第三版相同，A10 上用 bf16；零样本和 3 个种子都在 A10 上跑，不和 T4 的结果混在同一组比较里。
    - **更多轮（Pan-Yan-0 决定先试）**：三个种子都选在第 3 轮、内层验证还在涨。另开一组 `MAX_EPOCHS = 5`，其他设置和种子都不变，代码不改（轮数在指纹里，结果自然分开）。学习率按 5 轮线性衰减，前 3 轮的学习率轨迹也变了，所以比较的是"最多 5 轮的配方"和"3 轮的配方"，不是单独的"多训两轮"。事先定的判断：英语 fold 0 上，每个种子求 sym WF1 的差（5 轮 − 3 轮），三个种子平均；按家族配对重抽样的区间下限大于 0 才改用 5 轮。fold 0 这时已经用来选过路线，所以这个结论是探索性的；有用的话再补种子、换折验证。约 4 小时，Kaggle 后台。
    - **蒸馏（Pan-Yan-0 决定做）**：先做最便宜的一种，再看要不要升级。
      - 老师：已经训好的三个 3 轮 Qwen SFT 模型（fold 0 划分），给它们自己的训练部分打四类概率（[notebooks/dico_qwen_teacher.ipynb](notebooks/dico_qwen_teacher.ipynb)）。老师见过这些行，概率会偏尖，但没有尖到等于硬标签：内层验证上最大概率超过 .999 的只有 14–33%，中位数 .993–.997，T = 2 后中位数 .89–.92。训练部分上的统计，等导出后再看。
@@ -380,6 +380,7 @@ e12 是"最多训练 12 轮、在内部验证上选最好的一轮"，不是固�
 - `notebooks/dico_diagnostics.py` / `.ipynb`：第二组，英语折外诊断与训练配方比较，可以断点续跑。
 - `notebooks/dico_llm_instruct.py` / `.ipynb`：第三组，Qwen 指令提示（零样本、少样本、CoT，不训练），可以断点续跑。
 - `notebooks/dico_qwen_sft.py` / `.ipynb`：第四组，Qwen3-4B 的 LoRA 指令微调，可以断点续跑（第三版，英语已跑完）。
+- `notebooks/dico_qwen_sft_a10.py` / `.ipynb`：第四组的 A10 版（第四版），跑跨语言赛道。训练和评测同第三版；bf16 时 SMOKE 不再要求 `scaler.pt`；选中的 LoRA 权重另打一个权重包；认出 PAI-DSW，连不上 Hugging Face、GitHub 时改用镜像或本地 zip（还没运行）。
 - `notebooks/dico_qwen_teacher.py` / `.ipynb`：蒸馏第 1 步，载入第四组英语 3 轮的三个 LoRA 模型，给 fold 0 划分的训练部分导出四类概率（还没运行）。共用的函数从 `dico_qwen_sft.py` 原样拷贝。
 - `code/qwen_sft_analysis.py`：第四组的复算和分析：从缓存重建预测并重新评分，和 mDeBERTa 在 fold 0 上按种子配对比较，两条蒸馏门槛的家族重抽样区间，每类 F1 和方向混淆。
 - `code/llm_instruct_analysis.py`：第三组的复算和分析：从缓存重建预测并重新评分、训练集上提示词的配对差值、cot 按结束原因分开的准确率、方向混淆。
