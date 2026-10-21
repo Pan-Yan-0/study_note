@@ -82,7 +82,7 @@ Coursera-ML-AndrewNg-Notes-master/   课程资料
   - Kaggle：GPU 有每周额度。
   - Colab：免费 T4，要一直开着页面，单次最多 12 小时。
   - 腾讯 Cloud Studio：T4 可用。`ollama pull` 会被拦，改用 curl 从 `registry.ollama.ai/v2/library/<名字>/manifests|blobs` 下载，核对 SHA-256，manifest 按原字节保存。
-  - 阿里云 PAI-DSW：常常抢不到卡。
+  - 阿里云 PAI-DSW：常常抢不到卡（10-21 抢到过 A10）。免费试用每月 250 计算时，月末作废；A10 每小时耗 6.991 计算时，一个月约 35 小时。额度用完后实例转成按量付费、继续扣钱，跑完要手动停止；闲置 3 小时的自动关机不一定触发。连 Hugging Face 要设 `HF_ENDPOINT=https://hf-mirror.com`。
   - 本机显卡只有 4 GB。
   - T4 估时按约 10 TFLOPS 算。
 
