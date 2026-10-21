@@ -390,6 +390,7 @@ e12 是"最多训练 12 轮、在内部验证上选最好的一轮"，不是固�
 - `notebooks/dico_diagnostics.py` / `.ipynb`：第二组，英语折外诊断与训练配方比较，可以断点续跑。
 - `notebooks/dico_llm_instruct.py` / `.ipynb`：第三组，Qwen 指令提示（零样本、少样本、CoT，不训练），可以断点续跑。
 - `notebooks/dico_qwen_sft.py` / `.ipynb`：第四组，Qwen3-4B 的 LoRA 指令微调，可以断点续跑（第三版，英语已跑完）。
+- `notebooks/dico_a10.sh`：在 PAI-DSW 上建 venv、跑 SMOKE、后台正式运行和看进度的辅助脚本（`bash dico_a10.sh setup | smoke | run | log | status`）。
 - `code/qwen_sft_e5_compare.py`：第四组"最多 5 轮"和"3 轮"配方的同种子比较。
 - `notebooks/dico_qwen_sft_a10.py` / `.ipynb`：第四组的 A10 版（第四版），跑跨语言赛道。训练和评测同第三版；bf16 时 SMOKE 不再要求 `scaler.pt`；选中的 LoRA 权重另打一个权重包；认出 PAI-DSW，连不上 Hugging Face、GitHub 时改用镜像或本地 zip（还没运行）。
 - `notebooks/dico_qwen_teacher.py` / `.ipynb`：蒸馏第 1 步，载入第四组英语 3 轮的三个 LoRA 模型，给 fold 0 划分的训练部分导出四类概率（还没运行）。共用的函数从 `dico_qwen_sft.py` 原样拷贝。
