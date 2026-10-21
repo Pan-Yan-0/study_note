@@ -369,6 +369,7 @@ e12 是"最多训练 12 轮、在内部验证上选最好的一轮"，不是固�
 - `notebooks/dico_diagnostics.py` / `.ipynb`：第二组，英语折外诊断与训练配方比较，可以断点续跑。
 - `notebooks/dico_llm_instruct.py` / `.ipynb`：第三组，Qwen 指令提示（零样本、少样本、CoT，不训练），可以断点续跑。
 - `notebooks/dico_qwen_sft.py` / `.ipynb`：第四组，Qwen3-4B 的 LoRA 指令微调，可以断点续跑（第三版，英语已跑完）。
+- `notebooks/dico_qwen_teacher.py` / `.ipynb`：蒸馏第 1 步，载入第四组英语 3 轮的三个 LoRA 模型，给 fold 0 划分的训练部分导出四类概率（还没运行）。共用的函数从 `dico_qwen_sft.py` 原样拷贝。
 - `code/qwen_sft_analysis.py`：第四组的复算和分析：从缓存重建预测并重新评分，和 mDeBERTa 在 fold 0 上按种子配对比较，两条蒸馏门槛的家族重抽样区间，每类 F1 和方向混淆。
 - `code/llm_instruct_analysis.py`：第三组的复算和分析：从缓存重建预测并重新评分、训练集上提示词的配对差值、cot 按结束原因分开的准确率、方向混淆。
 - `metrics/baselines/`：基线逐种子分数。
