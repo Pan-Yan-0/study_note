@@ -7,7 +7,10 @@
 #   bash dico_a10.sh status  看后台进程和显卡
 set -euo pipefail
 cd "${DICO_WS:-/mnt/workspace}"
-MIRROR=https://mirrors.aliyun.com/pypi/simple/
+# 阿里云内网的 PyPI 镜像（公网的 mirrors.aliyun.com 在 DSW 上只有约 200 kB/s）
+export PIP_INDEX_URL=http://mirrors.cloud.aliyuncs.com/pypi/simple/
+export PIP_TRUSTED_HOST=mirrors.cloud.aliyuncs.com
+MIRROR=$PIP_INDEX_URL
 SRC=dico_qwen_sft_a10.py
 RUN=dico_qwen_sft_a10_run.py   # 正式运行用的副本：只把 SMOKE 改成 False
 LOG=dico_qwen_sft_a10.log
