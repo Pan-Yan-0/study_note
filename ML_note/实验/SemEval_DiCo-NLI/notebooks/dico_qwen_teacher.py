@@ -7,7 +7,9 @@
 #
 # 老师训练时见过这 2,190 行，所以概率会偏尖。这是事先定好的第 1 步：最便宜，先看有没有用；没用再换成"交叉拟合"的老师。
 #
-# **要先挂上第四组那次运行的输出**：在 Kaggle 右边点 **Add Input → Notebook Output Files**，选 SFT notebook 里跑英语 3 轮的那个版本（`dico_qwen_sft-3`，`MAX_EPOCHS = 3`）。本 notebook 会在 `/kaggle/input` 下自己找 `dico_qwen_sft_results`，只认版本、轮数、模型快照都对得上的那一份，找不到会说明原因。GPU 选 T4，打开 Internet（下载底座模型）。
+# **要先挂上第四组那次运行的输出**：在 Kaggle 右边点 **Add Input → Notebook Output Files**，选 SFT notebook 里跑英语 3 轮的那个版本（`dico_qwen_sft-3`，`MAX_EPOCHS = 3`）。本 notebook 会在 `/kaggle/input` 下自己找 `dico_qwen_sft_results`，只认 fingerprint 和已核验的那份逐字节一致（划分、训练设置、LoRA、提示词、数据哈希都在里面）、运行代码相同、三个种子的权重都在的那一份；还会核对当前官方数据的哈希和 fold 0 的行。找不到会说明原因。每个种子的 LoRA 权重的 SHA256 记进结果指纹，续跑时权重变了会停下。GPU 选 T4，打开 Internet（下载底座模型）。
+#
+# **导出的是什么**：训练部分 2,190 行去重后、两个方向一共 2,502 个有序输入的四类概率；学生训练时按原始的 2,190 行映射回去（保留重复），多出来的反向输入不用。内层验证的概率另存一份，只作诊断。
 #
 # **先核对，对不上就停下**：每个种子载入权重后，
 #
@@ -40,6 +42,8 @@ SOURCE_VERSION = "dico_qwen_sft-3"   # 第四组英语 3 轮那次运行
 SOURCE_MAX_EPOCHS = 3
 SOURCE_REVISION = "cdbee75f17c01a7cc42f958dc650907174af0554"
 SOURCE_CODE_SHA256 = "2863de05aa757a80170da508d950ba8fa2dc2be579ef918642b249eb45f899ad"
+# 第四组正式结果的 fingerprint.json（已复算核验，仓库 metrics/qwen_sft/）按键排序后 JSON 的 SHA256：划分、训练设置、LoRA、提示词、数据哈希都在里面
+SOURCE_FINGERPRINT_SHA256 = "fcb2485b743956822b75c3703943ec806bc22ba955897c87082d0e6b8608566c"
 
 ON_KAGGLE = Path("/kaggle/working").is_dir() or "KAGGLE_KERNEL_RUN_TYPE" in os.environ
 WORK = os.path.abspath(os.environ.get("DICO_WORK", "/kaggle/working" if ON_KAGGLE else "."))
@@ -59,6 +63,7 @@ import hashlib
 import importlib
 import importlib.metadata
 import json
+import math
 import platform
 import random
 import shutil
@@ -67,7 +72,7 @@ import time
 import zipfile
 from collections import Counter
 
-VERSION = "dico_qwen_teacher-1"
+VERSION = "dico_qwen_teacher-2"
 PINS = {"transformers": "5.19.0", "peft": "0.21.2", "accelerate": "1.15.0", "datasets": "5.1.0"}  # 和 IMDB 相同
 LABELS = ["EQUIVALENCE", "FORWARD_ENTAILMENT", "BACKWARD_ENTAILMENT", "NEGATIVE_OTHER"]
 LETTERS = ["A", "B", "C", "D"]
@@ -438,44 +443,75 @@ def track1_parts(split):
     return parts
 
 
+def canonical_sha256(obj):
+    return hashlib.sha256(json.dumps(obj, sort_keys=True, ensure_ascii=False).encode("utf-8")).hexdigest()
+
+
+def check_candidate(d):
+    """返回 (不符合的原因列表, 每个种子的 LoRA 权重 SHA256)。"""
+    fp = read_json(os.path.join(d, "fingerprint.json"))
+    why, shas = [], {}
+    if canonical_sha256(fp) != SOURCE_FINGERPRINT_SHA256:
+        why.append(f"fingerprint 和已核验的那份不同（版本 {fp.get('version')}，轮数 {fp.get('train', {}).get('max_epochs')}，"
+                   f"快照 {str(fp.get('model_revision'))[:8]}）")
+        return why, shas
+    codes = {r.get("code_sha256") for r in read_json(os.path.join(d, "run_meta.json"))}
+    if codes != {SOURCE_CODE_SHA256}:
+        why.append(f"运行代码的哈希是 {sorted(map(str, codes))}")
+    for s in SEEDS:
+        sd = os.path.join(d, "track1", f"seed{s}")
+        if not os.path.exists(os.path.join(sd, "done.json")):
+            why.append(f"没有 seed{s} 的 done.json")
+            continue
+        ep = read_json(os.path.join(sd, "done.json"))["best_epoch"]
+        f = os.path.join(sd, "adapters", f"epoch{ep}", "adapter_model.safetensors")
+        if not os.path.exists(f):
+            why.append(f"没有 seed{s} 第 {ep} 轮的 LoRA 权重")
+            continue
+        shas[s] = sha256(f)
+    return why, shas
+
+
 def find_source():
-    """在挂上的输入里找第四组英语 3 轮那次运行的结果目录。"""
-    seen, problems = [], []
+    """在挂上的输入里找第四组英语 3 轮那次运行的结果目录：fingerprint 要和已核验的那份逐字节对上，运行代码相同，三个种子的权重都在。
+    找到不止一份时，它们的权重必须完全相同，否则停下。"""
+    seen, problems, good = [], [], []
     for root in SOURCE_ROOTS:
         for fp_path in sorted(glob.glob(os.path.join(root, "**", "dico_qwen_sft_results", "fingerprint.json"), recursive=True)):
-            d = os.path.dirname(fp_path)
+            d = os.path.realpath(os.path.dirname(fp_path))
             if d in seen:
                 continue
             seen.append(d)
-            fp = read_json(fp_path)
-            why = []
-            if fp.get("version") != SOURCE_VERSION:
-                why.append(f"版本是 {fp.get('version')}")
-            if fp.get("train", {}).get("max_epochs") != SOURCE_MAX_EPOCHS:
-                why.append(f"轮数是 {fp.get('train', {}).get('max_epochs')}")
-            if fp.get("model_revision") != SOURCE_REVISION:
-                why.append(f"模型快照是 {fp.get('model_revision')}")
-            if fp.get("smoke"):
-                why.append("是 SMOKE")
-            for s in SEEDS:
-                done = os.path.join(d, "track1", f"seed{s}", "done.json")
-                if not os.path.exists(done):
-                    why.append(f"没有 seed{s} 的 done.json")
-                    continue
-                ep = read_json(done)["best_epoch"]
-                if not os.path.exists(os.path.join(d, "track1", f"seed{s}", "adapters", f"epoch{ep}", "adapter_model.safetensors")):
-                    why.append(f"没有 seed{s} 第 {ep} 轮的 LoRA 权重")
+            why, shas = check_candidate(d)
             if why:
                 problems.append(f"{d}：{'；'.join(why)}")
-                continue
-            codes = {r.get("code_sha256") for r in read_json(os.path.join(d, "run_meta.json"))}
-            if codes != {SOURCE_CODE_SHA256}:
-                problems.append(f"{d}：运行代码的哈希是 {sorted(map(str, codes))}，和第四组记录的不同")
-                continue
-            print("找到第四组的结果：", d)
-            return d, fp
-    raise SystemExit("没找到第四组英语 3 轮那次运行的结果（含 LoRA 权重）。请在右边 Add Input → Notebook Output Files 里"
-                     "挂上那个版本。找到但不符合的：\n  " + "\n  ".join(problems or ["（一个都没找到）"]))
+            else:
+                good.append((d, shas))
+    if not good:
+        raise SystemExit("没找到第四组英语 3 轮那次运行的结果（含 LoRA 权重）。请在右边 Add Input → Notebook Output Files 里"
+                         "挂上那个版本。找到但不符合的：\n  " + "\n  ".join(problems or ["（一个都没找到）"]))
+    if len({json.dumps(s, sort_keys=True) for _, s in good}) > 1:
+        raise SystemExit("找到不止一份符合的结果，但它们的 LoRA 权重不同，不知道该用哪份：\n  " + "\n  ".join(d for d, _ in good))
+    d, shas = good[0]
+    print("找到第四组的结果：", d)
+    return d, read_json(os.path.join(d, "fingerprint.json")), shas
+
+
+def check_data_and_split(src, src_fp, parts):
+    """当前官方数据的哈希要和来源记录的相同；fold 0 的行和来源保存的金标子集逐行相同；训练、验证行数和来源记录的相同。"""
+    for rel, h in src_fp["data_sha256"].items():
+        if sha256(os.path.join(DICO_DIR, rel)) != h:
+            raise SystemExit(f"官方数据 {rel} 和第四组运行时不同")
+    for s in SEEDS:
+        sd = os.path.join(src, "track1", f"seed{s}")
+        ids = [r["instance_id"] for r in read_rows(os.path.join(sd, "reference_fold0.csv"))]
+        if sorted(ids) != sorted(r["instance_id"] for r in parts["test"]):
+            raise SystemExit(f"seed{s}：fold 0 的行和第四组的不同")
+        t = read_json(os.path.join(sd, "trained.json"))
+        if (t["fit_rows"], t["val_rows"]) != (len(parts["fit"]), len(parts["val"])):
+            raise SystemExit(f"seed{s}：训练 / 验证行数和第四组记录的不同")
+        if len(read_json(os.path.join(sd, "val_probs", f"epoch{t['best_epoch']}.json"))) != len(dict.fromkeys((r["text1"], r["text2"]) for r in parts["val"])):
+            raise SystemExit(f"seed{s}：保存的内层验证概率条数不对")
 
 
 def load_teacher(backend, fp, adapter_file):
@@ -513,16 +549,30 @@ def compare(new, old):
     return round(agree, 4), round(diff, 6)
 
 
-def export_seed(backend, src, fp, seed, parts):
+def valid_prob(p):
+    return isinstance(p, list) and len(p) == 4 and all(isinstance(x, float) and 0.0 <= x <= 1.0 for x in p) and abs(sum(p) - 1) < 1e-3
+
+
+def export_seed(backend, src, fp, seed, parts, adapter_sha):
     d = os.path.join(OUT, "track1", f"seed{seed}")
     if os.path.exists(os.path.join(d, "done.json")):
+        if read_json(os.path.join(d, "done.json")).get("adapter_sha256") != adapter_sha:
+            raise SystemExit(f"seed{seed} 已完成的导出用的是另一份 LoRA 权重。请删除 {d} 后重新运行。")
         print(f"跳过（已完成）：seed{seed}")
         return
     t0 = time.time()
     s_dir = os.path.join(src, "track1", f"seed{seed}")
     best = read_json(os.path.join(s_dir, "done.json"))["best_epoch"]
-    print(f"开始：seed{seed}（第 {best} 轮的 LoRA 权重）", flush=True)
-    n_tensors = load_teacher(backend, fp, os.path.join(s_dir, "adapters", f"epoch{best}", "adapter_model.safetensors"))
+    adapter = os.path.join(s_dir, "adapters", f"epoch{best}", "adapter_model.safetensors")
+    if sha256(adapter) != adapter_sha:
+        raise SystemExit(f"seed{seed} 的 LoRA 权重在运行中变了")
+    os.makedirs(d, exist_ok=True)
+    meta = os.path.join(d, "adapter.json")  # 这个目录里的缓存只属于这一份权重
+    if os.path.exists(meta) and read_json(meta)["adapter_sha256"] != adapter_sha:
+        raise SystemExit(f"{d} 里的缓存是另一份 LoRA 权重导出的。请删除这个目录后重新运行。")
+    write_json(meta, {"adapter_sha256": adapter_sha, "best_epoch": best})
+    print(f"开始：seed{seed}（第 {best} 轮的 LoRA 权重，SHA256 {adapter_sha[:12]}）", flush=True)
+    n_tensors = load_teacher(backend, fp, adapter)
     # 核对 1：内层验证，顺序和训练时相同
     val_inputs = list(dict.fromkeys((r["text1"], r["text2"]) for r in parts["val"]))
     val_new = [x["p"] for x in backend.score(val_inputs)]
@@ -537,35 +587,58 @@ def export_seed(backend, src, fp, seed, parts):
           f"fold 0 / dev 缓存前 {len(cached)} 个一致 {cache_agree:.1%}（最大差 {cache_diff:.2g}）", flush=True)
     if val_agree < MIN_AGREEMENT or cache_agree < MIN_AGREEMENT:
         raise SystemExit("读出的概率和训练时差得太多，先停下。请把输出发给 Claude。")
-    # 导出：训练部分每个有序输入（两个方向），另附内层验证（核对时已经读过）
+    # 导出：内层验证（只作诊断，学生训练不用）和训练部分，分别补齐缺的
     cache_path = os.path.join(d, "teacher.jsonl")
-    done_keys = set(load_jsonl(cache_path))
-    if not done_keys:
-        append_jsonl(cache_path, [{"a": a, "b": b, "p": p, "part": "val"} for (a, b), p in zip(val_inputs, val_new)])
-        done_keys = set(load_jsonl(cache_path))
-    fit_inputs = [x for x in needed_inputs(parts["fit"]) if key_of(*x) not in done_keys]
+    have = load_jsonl(cache_path)
+    val_missing = [(x, p) for x, p in zip(val_inputs, val_new) if key_of(*x) not in have]
+    append_jsonl(cache_path, [{"a": a, "b": b, "p": p, "part": "val"} for (a, b), p in val_missing])
+    have = load_jsonl(cache_path)
+    fit_needed = needed_inputs(parts["fit"])
+    todo = [x for x in fit_needed if key_of(*x) not in have]
     if SMOKE:
-        fit_inputs = fit_inputs[:SMOKE_INPUTS]
-    for part in chunks(sorted(fit_inputs, key=lambda x: -len(x[0]) - len(x[1])), 64):
+        todo = todo[:SMOKE_INPUTS]
+    for part in chunks(sorted(todo, key=lambda x: -len(x[0]) - len(x[1])), 64):
         res = backend.score(part)
         append_jsonl(cache_path, [{"a": a, "b": b, "p": r["p"], "mass": r["mass"], "part": "fit"} for (a, b), r in zip(part, res)])
-    rows_out = load_jsonl(cache_path)
-    fit_needed = needed_inputs(parts["fit"])
-    covered = sum(key_of(*x) in rows_out for x in fit_needed)
-    if not SMOKE and covered != len(fit_needed):
-        raise SystemExit(f"seed{seed} 只导出了 {covered} / {len(fit_needed)} 个训练输入")
-    fit_probs = [rows_out[key_of(*x)]["p"] for x in fit_needed if key_of(*x) in rows_out]
-    gold = {(r["text1"], r["text2"]): LABELS.index(r["label"]) for r in parts["fit"]}
+    # 完成前逐项检查：没有重复、分区标对、概率有效、两部分都齐
+    lines = [json.loads(line) for line in open(cache_path, encoding="utf-8")]
+    keys = [key_of(x["a"], x["b"]) for x in lines]
+    want = {key_of(*x): "val" for x in val_inputs}
+    want.update({key_of(*x): "fit" for x in fit_needed})  # 同一输入两边都有时算作 fit（不会发生：两部分家族不相交）
+    problems = []
+    if len(keys) != len(set(keys)):
+        problems.append("有重复的输入")
+    if any(want.get(k) != x["part"] for k, x in zip(keys, lines)):
+        problems.append("有输入的分区标错了或不属于这两部分")
+    if not all(valid_prob(x["p"]) for x in lines):
+        problems.append("有无效的概率")
+    have_keys = set(keys)
+    val_cov = sum(key_of(*x) in have_keys for x in val_inputs)
+    fit_cov = sum(key_of(*x) in have_keys for x in fit_needed)
+    if val_cov != len(val_inputs) or (not SMOKE and fit_cov != len(fit_needed)):
+        problems.append(f"没导全：内层验证 {val_cov} / {len(val_inputs)}，训练部分 {fit_cov} / {len(fit_needed)}")
+    if problems:
+        raise SystemExit(f"seed{seed} 的导出有问题：{'；'.join(problems)}")
+    by_key = dict(zip(keys, lines))
+    # 统计按原始的 2,190 行训练记录（保留重复），学生训练时也按这些行映射
+    rows = [r for r in parts["fit"] if key_of(r["text1"], r["text2"]) in by_key]
+    probs = [by_key[key_of(r["text1"], r["text2"])]["p"] for r in rows]
     top = lambda p: max(range(4), key=lambda i: p[i])
-    right = [top(rows_out[key_of(*k)]["p"]) == g for k, g in gold.items() if key_of(*k) in rows_out]
-    stats = {"fit_inputs": len(fit_needed), "exported_fit_inputs": covered, "best_epoch": best,
-             "fit_row_accuracy": round(sum(right) / max(1, len(right)), 4),
-             "mean_max_prob": round(sum(max(p) for p in fit_probs) / max(1, len(fit_probs)), 4),
-             "max_prob_below_0.9": sum(max(p) < 0.9 for p in fit_probs)}
-    write_json(os.path.join(d, "done.json"), {"checks": checks, "stats": stats, "load_memory": backend.load_memory,
-                                              "minutes": round((time.time() - t0) / 60, 1)})
-    print(f"完成：seed{seed}  导出 {covered} 个训练输入；老师在训练部分的准确率 {stats['fit_row_accuracy']:.1%}，"
-          f"最大概率平均 {stats['mean_max_prob']}，低于 0.9 的 {stats['max_prob_below_0.9']} 个；用时 {(time.time() - t0) / 60:.1f} 分钟")
+    soft = lambda p, T: (lambda w: [x / sum(w) for x in w])([x ** (1 / T) for x in p])
+    mx = sorted(max(p) for p in probs)
+    mx2 = sorted(max(soft(p, 2)) for p in probs)
+    stats = {"fit_rows": len(parts["fit"]), "fit_rows_with_teacher": len(rows), "fit_inputs": len(fit_needed), "best_epoch": best,
+             "teacher_accuracy_on_fit_rows": round(sum(top(p) == LABELS.index(r["label"]) for p, r in zip(probs, rows)) / max(1, len(rows)), 4),
+             "max_prob_median": round(mx[len(mx) // 2], 4) if mx else None,
+             "max_prob_above_0.999": round(sum(m > 0.999 for m in mx) / max(1, len(mx)), 4),
+             "max_prob_median_T2": round(mx2[len(mx2) // 2], 4) if mx2 else None,
+             "mean_entropy": round(sum(-sum(x * math.log(x) for x in p if x > 0) for p in probs) / max(1, len(probs)), 4),
+             "zero_probs": sum(x == 0.0 for p in probs for x in p)}
+    write_json(os.path.join(d, "done.json"), {"adapter_sha256": adapter_sha, "checks": checks, "stats": stats,
+                                              "load_memory": backend.load_memory, "minutes": round((time.time() - t0) / 60, 1)})
+    print(f"完成：seed{seed}  训练部分 {len(rows)} 行都有老师概率；老师在这些行上的准确率 {stats['teacher_accuracy_on_fit_rows']:.1%}，"
+          f"最大概率中位数 {stats['max_prob_median']}（T = 2 后 {stats['max_prob_median_T2']}），"
+          f"超过 0.999 的占 {stats['max_prob_above_0.999']:.1%}；用时 {(time.time() - t0) / 60:.1f} 分钟")
 
 
 def pack():
@@ -592,18 +665,18 @@ def code_sha256():
 def main():
     ensure_packages()
     ensure_official_repo()
-    src, src_fp = find_source()
+    src, src_fp, adapter_shas = find_source()
+    split = make_split()
+    parts = track1_parts(split)
+    assert (len(parts["fit"]), len(parts["val"]), len(parts["test"])) == (2190, 244, 608), "划分和第四组不同"
+    check_data_and_split(src, src_fp, parts)
     os.makedirs(OUT, exist_ok=True)
-    fp = {"version": VERSION, "source_fingerprint": src_fp, "smoke": SMOKE,
-          "data_sha256": {os.path.relpath(data_file(1, "train", k), DICO_DIR): sha256(data_file(1, "train", k))
-                          for k in ("participant_labeled", "reference")}}
+    fp = {"version": VERSION, "source_fingerprint_sha256": SOURCE_FINGERPRINT_SHA256, "source_code_sha256": SOURCE_CODE_SHA256,
+          "adapter_sha256": {str(s): h for s, h in adapter_shas.items()}, "smoke": SMOKE}
     fp_path = os.path.join(OUT, "fingerprint.json")
     if os.path.exists(fp_path) and read_json(fp_path) != fp:
         raise SystemExit(f"{OUT} 是另一份设置留下的，请删除或改名后重新运行")
     write_json(fp_path, fp)
-    split = make_split()
-    parts = track1_parts(split)
-    assert (len(parts["fit"]), len(parts["val"]), len(parts["test"])) == (2190, 244, 608), "划分和第四组不同"
     ok = False
     try:
         backend = QwenSFT(SOURCE_REVISION)
@@ -614,7 +687,7 @@ def main():
                                        "code_source": code_source, "python": platform.python_version(), **backend.info()}])
         print("代码哈希：", code_hash, f"（{code_source}）")
         for seed in SEEDS:
-            export_seed(backend, src, src_fp, seed, parts)
+            export_seed(backend, src, src_fp, seed, parts, adapter_shas[seed])
             pack()
         ok = True
     finally:
