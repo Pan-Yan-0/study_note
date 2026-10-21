@@ -120,7 +120,7 @@ Coursera-ML-AndrewNg-Notes-master/   课程资料
   - Pan-Yan-0 10-21 的决定：蒸馏要做；先试 SFT 训练更多轮（`MAX_EPOCHS = 5`，代码不改）值不值得，有结果再补种子验证；R-Drop、SCL、MoCo 三种都做，先在 mDeBERTa 上，再加到 Qwen 上。设计和判断规则见实验 README 的下一步计划（事先定好，GPT 审过一轮后修订）：mDeBERTa 上的方法先在 fold 0、3 个种子上比，冻结设置后再扩到 5 折；方向版 R-Drop 第一版只对 E / F / B；MoCo 先小试 m = 0.99 和 0.999；Qwen 上的 R-Drop 要先加 LoRA dropout，所以多一组只加 dropout 的对照。老师导出 notebook（`dico_qwen_teacher-3`，GPT 复核通过）绑定来源 fingerprint 的哈希和每份 LoRA 权重的哈希，权重在 Kaggle 那次 3 轮运行的输出里，那个版本不要删。
   - 排期：Kaggle 后台依次跑 SFT 5 轮（约 4 小时）、导出老师概率（约 30 分钟，要挂上 3 轮那次运行的输出取 LoRA 权重）、西语 + 巴语 SFT（约 5 小时）；跨语言约 14 小时，等下周额度或别的 GPU。mDeBERTa 上的蒸馏学生和 R-Drop / SCL / MoCo 在 Colab / Cloud Studio 白天跑。
   - 算力分配：Kaggle（每周额度，能后台跑）只留给超过一小时的 Qwen 任务；Colab、腾讯 Cloud Studio 要开着页面，白天跑 mDeBERTa 类短任务和 SMOKE；阿里云 A10 抢到才算。同一组比较不混用不同的卡（A10 / 4090 用 bf16，T4 用 fp16）。
-- **原理学习**：第一章（情感分类、反向传播）已通关，笔记在 `ML_note/原理笔记/`；第二章跟着 SemEval 实验学，现在讲句对输入和 A、B 对调。
+- **原理学习**：第一章（情感分类、反向传播）已通关，笔记在 `ML_note/原理笔记/`；第二章跟着 SemEval 实验学（`ML_note/原理笔记/NLI/`），已讲句对输入、SoftCons / HardCons、对称化、R-Drop 与 KL，下一课是方向版 R-Drop。
 - **待办**：GitHub 仓库首页默认显示 `master`，`note` 的最新内容在首页看不到。改法等 Pan-Yan-0 决定：
   - 把默认分支改成 `note`；
   - 在 `master` 的 README 加入口；
