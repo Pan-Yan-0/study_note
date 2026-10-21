@@ -57,18 +57,25 @@ WEIGHT_DECAY = 0.01
 EVAL_TOKENS_PER_BATCH = 8192  # 读概率时一批最多多少个 token
 SMOKE_ROWS = {"fit": 192, "val": 32, "test": 48, "dev": 48}
 
-ON_COLAB = "COLAB_RELEASE_TAG" in os.environ
-ON_KAGGLE = Path("/kaggle/working").is_dir()
+# Kaggle 的镜像里也有 google.colab 和 COLAB_RELEASE_TAG，所以先认 Kaggle；Colab 用它真机才有的 /var/colab/hostname 判断
+ON_KAGGLE = Path("/kaggle/working").is_dir() or "KAGGLE_KERNEL_RUN_TYPE" in os.environ
+ON_COLAB = not ON_KAGGLE and Path("/var/colab/hostname").exists()
+WORK = None
 if "DICO_WORK" in os.environ:
     WORK = os.path.abspath(os.environ["DICO_WORK"])
-elif ON_COLAB:  # Colab 断开后 /content 会清空，结果放在 Google Drive
-    from google.colab import drive
-    drive.mount("/content/drive")
-    WORK = "/content/drive/MyDrive/dico_qwen_sft"
 elif ON_KAGGLE:
     WORK = "/kaggle/working"
-else:
+elif ON_COLAB:  # Colab 断开后 /content 会清空，结果放在 Google Drive
+    try:
+        from google.colab import drive
+        drive.mount("/content/drive")
+        WORK = "/content/drive/MyDrive/dico_qwen_sft"
+    except Exception as e:
+        print("挂载 Google Drive 失败，结果先写在 /content（断开后会丢，请及时下载结果包）：", e)
+        WORK = "/content"
+if WORK is None:
     WORK = os.path.abspath(".")
+print("运行平台：", "Kaggle" if ON_KAGGLE else "Colab" if ON_COLAB else "其他 Linux", "；结果目录：", WORK)
 os.makedirs(WORK, exist_ok=True)
 DICO_DIR = os.environ.get("DICO_DIR", os.path.join(WORK, "SemEval-2027-Task-2-DiCo-NLI"))
 OUT = os.path.join(WORK, "dico_qwen_sft_smoke" if SMOKE else "dico_qwen_sft_results")  # SMOKE 的结果单独放

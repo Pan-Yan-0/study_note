@@ -185,6 +185,7 @@ Coursera-ML-AndrewNg-Notes-master/   课程资料
 
 - **Claude 的云端环境**：装不了 PyTorch，也连不上 Hugging Face，模型相关的代码在这里跑不了。notebook 只能用假模型测数据、评分和续跑这些部分，模型部分靠另一个 AI 审代码和 GPU 上的 SMOKE 验证。
 - **Qwen 选型**：Qwen3.5 的 0.8B–9B 小模型带视觉编码器、用 Gated DeltaNet，SST-2 是用 Ollama 跑的；在 T4 上用 transformers 读 token 概率时，用纯文本的 `Qwen/Qwen3-4B-Instruct-2507`（只有非思考模式），或 IMDB 用过的 `Qwen/Qwen3-4B-Base`。
+- **判断运行平台**：Kaggle 的镜像里也有 `google.colab` 和 `COLAB_RELEASE_TAG`，在 Kaggle 上 `drive.mount` 会报 NotImplementedError。先用 `/kaggle/working` 认 Kaggle，Colab 用 `/var/colab/hostname` 判断。
 - **Kaggle 提交**：用 `sample.copy()` 作模板，并 assert id 对齐；`quoting=3` 会让 test.id 带上字面引号。
 - **gensim 4**：`glove2word2vec` 已删除，要手动给文件加首行"词数 维度"；用 `model.wv.*`；`size` 改名为 `vector_size`。
 - **导师的 IMDB 脚本包**：
