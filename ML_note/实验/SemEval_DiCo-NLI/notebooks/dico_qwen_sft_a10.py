@@ -11,7 +11,9 @@
 # 2. **SMOKE 的检查点检查**：第三版要求检查点里有 `scaler.pt`，但 bf16 不用梯度缩放、不存这个文件，在 A10 上这一项会误报没通过。改成只在 fp16 时要求它。
 # 3. **LoRA 权重包**：每个种子跑完，把选中那一轮的 LoRA 权重单独打进 `dico_qwen_sft_weights_<本次开始时间>.zip`（每个种子约 130 MB），附每个文件的 SHA-256、选中的轮、模型快照和 fingerprint 的哈希。之后蒸馏或换平台可能要用。权重包不发给 Claude，自己留着；结果包和以前一样不放权重和检查点。
 # 4. **平台**：认出 PAI-DSW（有 `/mnt/workspace`），结果和模型缓存都放在 `/mnt/workspace/dico_qwen_sft/` 下（停机后还在，下次不用重新下载约 8 GB 的模型）。连不上 Hugging Face 时自动改用 `https://hf-mirror.com`；克隆不了 GitHub 上的官方仓库时，可以把官方仓库的 zip 放进这个目录，会自动解压。用的下载地址和平台记在 `run_meta.json` 里。官方数据的 SHA-256 在 fingerprint 里，换了下载来源也能核对是同一份数据。
-# 5. **默认赛道**：`TRACKS = [4]`。
+# 5. **模型快照固定**：`MODEL_REVISION` 写死成英语那次用的快照 `cdbee75f…`。在 PAI-DSW 上先从 ModelScope 下载（阿里云内网快），再把每个文件和 Hugging Face 这个快照的记录逐个核对（大文件比 SHA-256，小文件比 git 的 blob 哈希），全部一致才用；有一个对不上，或者 ModelScope 下载失败，就改从 hf-mirror 下载这个快照。用镜像时关掉 Xet 存储（`HF_HUB_DISABLE_XET=1`），否则会报 401。实际来源记在 `run_meta.json` 的 `model_source`。
+# 6. **torch**：transformers 5.19 要求 torch 2.5 以上，PAI-DSW 的镜像里可能只有 2.3.1。在 Kaggle / Colab 以外的平台，torch 太旧时自动装 2.6.0（CUDA 12.4 版，要求显卡驱动 525 以上），torchvision、torchaudio 一起换成配套版本。英语那次在 Kaggle 上是 torch 2.11.0，版本记在 `run_meta.json` 里。
+# 7. **默认赛道**：`TRACKS = [4]`。
 #
 # **断点续跑**：和第三版相同。训练每轮存一个检查点，被打断后从最近一份完整的检查点接着训练；读概率每 64 个输入写一次缓存；每个 (赛道, 种子) 跑完写 `done.json`，之后会跳过。运行的代码哈希记在 `run_meta.json` 里，代码变了就不在同一个结果目录里接着跑。每完成一部分就更新结果包 `dico_qwen_sft_results_<本次开始时间>.zip`。
 #
@@ -25,7 +27,7 @@
 # 2. SMOKE 可以直接在 notebook 里 Run All。
 # 3. 正式运行：先关掉跑 SMOKE 的 notebook 内核（Kernel → Shut Down，不然它还占着显存），在 `.py` 里把 `SMOKE = True` 改成 `False`，然后在终端运行
 #    `cd /mnt/workspace && nohup python -u dico_qwen_sft_a10.py > dico_qwen_sft_a10.log 2>&1 &`，
-#    用 `tail -f dico_qwen_sft_a10.log` 看进度。关掉网页不会中断；断了就再运行一次同一条命令，会接着跑。
+#    用 `tail -f dico_qwen_sft_a10.log` 看进度。关掉网页不会中断；断了就再运行一次同一条命令，会接着跑。用 VS Code 时，在它的终端（Terminal → New Terminal）里输入同一条命令；不要用右上角的"运行"按钮，那是前台运行，终端关了程序就停。
 # 4. 跑完后下载结果包（发给 Claude）和权重包（自己留着），然后**手动停止实例**：免费额度用完后实例会转成按量付费，闲置自动关机不一定触发。
 
 # %%
@@ -40,6 +42,7 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 SMOKE = True  # 先跑 SMOKE；确认没问题后改成 False
 MODEL = "Qwen/Qwen3-4B-Instruct-2507"
+MODEL_REVISION = "cdbee75f17c01a7cc42f958dc650907174af0554"  # 和英语那次（Kaggle）用的快照相同
 TRACKS = [4]  # 跨语言赛道
 SEEDS = [42, 43, 44]
 HOLDOUT_FOLD = 0
@@ -85,6 +88,7 @@ if not ON_KAGGLE and not ON_COLAB and "HF_ENDPOINT" not in os.environ:
         urllib.request.urlopen("https://huggingface.co/api/models/" + MODEL, timeout=10)
     except Exception as e:
         os.environ["HF_ENDPOINT"] = "https://hf-mirror.com"
+        os.environ["HF_HUB_DISABLE_XET"] = "1"  # 镜像不转发 Xet 存储（会报 401），改走普通下载
         print(f"连不上 huggingface.co（{type(e).__name__}），改用镜像 https://hf-mirror.com")
 print("模型下载地址：", os.environ.get("HF_ENDPOINT", "https://huggingface.co"), "；模型缓存：", os.environ.get("HF_HOME", "默认位置"))
 DICO_DIR = os.environ.get("DICO_DIR", os.path.join(WORK, "SemEval-2027-Task-2-DiCo-NLI"))
@@ -101,6 +105,7 @@ import glob
 import hashlib
 import importlib
 import importlib.metadata
+import importlib.util
 import json
 import math
 import platform
@@ -162,7 +167,40 @@ def remove_torchao():
                 shutil.rmtree(path)
 
 
+TORCH_MIN = (2, 5)  # transformers 5.19 要求的最低版本
+TORCH_INSTALL = {"torch": "2.6.0", "torchvision": "0.21.0", "torchaudio": "2.6.0"}  # PyPI 上的 CUDA 12.4 版
+
+
+def ensure_torch():
+    """PAI-DSW 的镜像里 torch 可能太旧（见过 2.3.1）。torch 还没导入时，在 Kaggle / Colab 以外的平台装 2.6.0；
+    torchvision、torchaudio 装了就一起换成配套版本，免得版本不配导入出错。"""
+    try:
+        have = importlib.metadata.version("torch")
+    except importlib.metadata.PackageNotFoundError:
+        have = None
+    if have and tuple(int(x) for x in have.split("+")[0].split(".")[:2]) >= TORCH_MIN:
+        return
+    if ON_KAGGLE or ON_COLAB:
+        raise SystemExit(f"torch 版本是 {have}，低于 {TORCH_MIN}。请换一个新的环境。")
+    if "torch" in sys.modules:
+        raise SystemExit("torch 已经导入了，没法在这个进程里升级。请重启内核（或重新运行脚本）再试。")
+    try:
+        driver = subprocess.run(["nvidia-smi", "--query-gpu=driver_version", "--format=csv,noheader"],
+                                capture_output=True, text=True).stdout.split()[0]
+    except Exception:
+        driver = "0"
+    if int(driver.split(".")[0]) < 525:
+        raise SystemExit(f"torch 是 {have}，太旧；显卡驱动 {driver} 也低于 525，装不了 CUDA 12 版的 torch。"
+                         "请在 PAI-DSW 里换一个 PyTorch 2.5 以上的官方镜像。")
+    pkgs = ["torch"] + [n for n in ("torchvision", "torchaudio") if importlib.util.find_spec(n)]
+    print(f"torch 是 {have}，transformers 要求 2.5 以上；显卡驱动 {driver}，现在安装", {n: TORCH_INSTALL[n] for n in pkgs},
+          "（约 3 GB，几分钟）", flush=True)
+    subprocess.run([sys.executable, "-m", "pip", "install", "-q", *[f"{n}=={TORCH_INSTALL[n]}" for n in pkgs]], check=True)
+    importlib.invalidate_caches()
+
+
 def ensure_packages():
+    ensure_torch()
     have = {}
     for name in PINS:
         try:
@@ -229,6 +267,60 @@ def write_rows(path, rows, fields):
 def sha256(path):
     with open(path, "rb") as f:
         return hashlib.sha256(f.read()).hexdigest()
+
+
+def file_digest(path, algo, prefix=b""):
+    h = hashlib.new(algo, prefix)
+    with open(path, "rb") as f:
+        for block in iter(lambda: f.read(1 << 24), b""):
+            h.update(block)
+    return h.hexdigest()
+
+
+MODEL_SKIP_CHECK = {".gitattributes", "README.md", "LICENSE"}  # 不影响加载的文件，两边可能不同
+
+
+def fetch_from_modelscope(revision):
+    """阿里云上从 ModelScope 下载（快），再逐个文件和 Hugging Face 这个快照的记录核对：
+    大文件比 SHA-256，小文件比 git 的 blob 哈希。有一个对不上就不用，改从 Hugging Face 镜像下载。"""
+    from huggingface_hub import HfApi
+    from modelscope import snapshot_download as ms_snapshot_download
+    info = HfApi().model_info(MODEL, revision=revision, files_metadata=True)
+    path = ms_snapshot_download(MODEL, cache_dir=os.path.join(WORK, "ms_cache"))
+    bad, checked = [], 0
+    for sib in info.siblings:
+        name = sib.rfilename
+        if name in MODEL_SKIP_CHECK:
+            continue
+        f = os.path.join(path, name)
+        if not os.path.isfile(f):
+            bad.append(f"{name}：ModelScope 上没有")
+            continue
+        lfs = sib.lfs
+        if lfs:
+            want = lfs["sha256"] if isinstance(lfs, dict) else lfs.sha256
+            ok = file_digest(f, "sha256") == want
+        else:
+            ok = file_digest(f, "sha1", b"blob %d\0" % os.path.getsize(f)) == sib.blob_id
+        checked += 1
+        if not ok:
+            bad.append(f"{name}：内容不同")
+    if bad or not checked:
+        raise RuntimeError(f"ModelScope 的文件和 Hugging Face 快照 {info.sha} 对不上：{bad[:5]}")
+    print(f"从 ModelScope 下载，{checked} 个文件都和 Hugging Face 快照 {info.sha} 逐个核对一致：", path, flush=True)
+    return path, info.sha, "modelscope（已按 Hugging Face 快照核对）"
+
+
+def fetch_model(revision):
+    """返回 (本地模型目录, Hugging Face 快照的 commit, 来源)。"""
+    from huggingface_hub import snapshot_download
+    if ON_PAI:
+        try:
+            return fetch_from_modelscope(revision)
+        except Exception as e:
+            print(f"从 ModelScope 取模型没成功（{type(e).__name__}: {str(e)[:200]}），改从 Hugging Face 下载", flush=True)
+    path = snapshot_download(MODEL, revision=revision)  # 先固定快照，再从这个本地快照加载
+    return path, os.path.basename(os.path.normpath(path)), os.environ.get("HF_ENDPOINT", "https://huggingface.co")
 
 
 def write_json(path, obj):
@@ -668,7 +760,6 @@ def best_of(history):
 class QwenSFT:
     def __init__(self, revision=None):
         import torch
-        from huggingface_hub import snapshot_download
         from transformers import AutoTokenizer
         if not torch.cuda.is_available():
             raise SystemExit("没有检测到 GPU。请确认实例带 GPU（A10），或在 Kaggle / Colab 里打开 GPU 再运行。")
@@ -680,8 +771,7 @@ class QwenSFT:
         except TypeError:
             bf16 = torch.cuda.is_bf16_supported()
         self.bf16, self.dtype = bf16, (torch.bfloat16 if bf16 else torch.float16)  # T4 不支持 bf16，用 fp16
-        self.path = snapshot_download(MODEL, revision=revision)  # 先固定快照，再从这个本地快照加载
-        self.revision = os.path.basename(os.path.normpath(self.path))
+        self.path, self.revision, self.source = fetch_model(revision)
         if revision and self.revision != revision:
             raise SystemExit(f"下载到的快照 {self.revision} 和上次的 {revision} 不同")
         self.tok = AutoTokenizer.from_pretrained(self.path)
@@ -711,7 +801,7 @@ class QwenSFT:
     def info(self):
         t = self.torch
         return {"torch": t.__version__, "cuda": t.version.cuda, "gpu": t.cuda.get_device_name(0),
-                "model_revision": self.revision, "dtype": str(self.dtype),
+                "model_revision": self.revision, "model_source": self.source, "dtype": str(self.dtype),
                 **{k: importlib.metadata.version(k) for k in PINS}}
 
     def chat(self, user_text):
@@ -1194,7 +1284,7 @@ def main():
     split = make_split()
     missing, smoke_ok = None, None
     try:
-        backend = QwenSFT(revision)
+        backend = QwenSFT(revision or MODEL_REVISION)
         record_revision(backend.revision)
         record_run(backend.info())
         for track in TRACKS:
