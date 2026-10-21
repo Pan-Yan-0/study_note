@@ -111,12 +111,13 @@ Coursera-ML-AndrewNg-Notes-master/   课程资料
     - 英语训练集 select 子集上，按事先定的规则选出 few，但它和 zero 分不出高低（+.014，[−.009, +.034]）；加计数规则的 zero_rules 降 .132（[−.162, −.102]），把大量预测推向 O。
     - cot 81–96% 写满 320 token 后被强制作答；生成每批 8 条，cot 跑了约 7 小时（运行前没跑 SMOKE）。
     - `model_revision` 没记下来（transformers 5.19 的 config 里没有 `_commit_hash`），下个 notebook 改用 `snapshot_download` 取 commit 号。
-  - 第四组（`notebooks/dico_qwen_sft`，Qwen3-4B-Instruct-2507 的 LoRA SFT，zero 模板，只算答案字母的损失）第一版的 SMOKE 已在 Kaggle T4 上跑通（零样本概率和第三组一致；每步 5.7 秒、峰值 8.7 GiB，英语每个种子约 45 分钟；模型 commit `cdbee75f`）。GPT 审过两轮，现在是第三版（`dico_qwen_sft-3`：检查点逐个验证（RNG、fp16 的 scaler 也必须在）、载入权重后逐个核对张量、torchao 只清 site-packages、记录代码哈希、SMOKE 四类都有并实测中断恢复和重新加载；正式运行取不到代码哈希就停下），第三版的 SMOKE 已在 Kaggle T4 上跑通（代码哈希和 `ee1d9ab` 一致；六项边界检查全部通过：四类覆盖、中断后从第 1 轮恢复、写坏的检查点被跳过、检查点里有 RNG 和 scaler、每轮权重逐位相同、第二个种子加载前显存已释放；每步 6.2–6.5 秒，峰值 8.75 GiB），等 GPT 看完最后一段 diff 后正式运行：
+  - 第四组（`notebooks/dico_qwen_sft`，Qwen3-4B-Instruct-2507 的 LoRA SFT，zero 模板，只算答案字母的损失）第一版的 SMOKE 已在 Kaggle T4 上跑通（零样本概率和第三组一致；每步 5.7 秒、峰值 8.7 GiB，英语每个种子约 45 分钟；模型 commit `cdbee75f`）。GPT 审过两轮，现在是第三版（`dico_qwen_sft-3`：检查点逐个验证（RNG、fp16 的 scaler 也必须在）、载入权重后逐个核对张量、torchao 只清 site-packages、记录代码哈希、SMOKE 四类都有并实测中断恢复和重新加载；正式运行取不到代码哈希就停下），第三版的 SMOKE 已在 Kaggle T4 上跑通（代码哈希和 `ee1d9ab` 一致；六项边界检查全部通过：四类覆盖、中断后从第 1 轮恢复、写坏的检查点被跳过、检查点里有 RNG 和 scaler、每轮权重逐位相同、第二个种子加载前显存已释放；每步 6.2–6.5 秒，峰值 8.75 GiB）。英语正式运行已完成（3 个种子，结果在 `metrics/qwen_sft/`，Claude 从缓存复算一致）：fold 0 对称化 WF1 .860，mDeBERTa 同数据 .793，同种子差平均 +.067 [+.033, +.104]，两条蒸馏门槛都通过；但概率平均不比 Qwen 单独好（−.013 [−.039, +.011]）；dev .835 和 mDeBERTa .827 接近（训练数据量不同）；三个种子都选在第 3 轮，内层验证还在涨。要不要做蒸馏、R-Drop 等加在哪个模型上，等 Pan-Yan-0 决定：
     - 数据划分和第二组 fold 0 逐行相同（训练 2,190、内层验证 244、留出 608），英语 fold 0 上和 mDeBERTa 12 轮配方的折外预测按种子配对比较。
     - 事先定好的蒸馏条件：英语 fold 0 上，同种子的 sym WF1 差（Qwen SFT − mDeBERTa）三个种子平均大于 0，或同种子两模型概率 0.5 / 0.5 平均后比 mDeBERTa 高，而且按家族配对重抽样的区间下限大于 0；都不满足就不做蒸馏。这只是探索性门槛，通过了也要和同数据、同预算的 mDeBERTa 对照。
     - 训练部分 E / F / B / O 是 574 / 631 / 631 / 354（O 只占 16%，不是四成）；dev 有 15 行（8 个 pair）的文本在训练集里出现过，选择看 fold 0。
     - 本地用假的 torch / transformers / peft 测过续跑：训练中途、评估后存检查点前、读概率时被打断，都能接着跑，选中的权重能复现记录的验证分数。
-  - 再下一步：在 mDeBERTa 上逐个加 R-Drop、SCL、MoCo（英语基线是 12 轮 + 对称化）。
+  - 再下一步：Qwen SFT 西语 + 巴语（`TRACKS = [2, 3]`，约 5 小时，Kaggle 后台）；跨语言约 14 小时，等下周额度或别的 GPU。然后 R-Drop、SCL、MoCo。
+  - 算力分配：Kaggle（每周额度，能后台跑）只留给超过一小时的 Qwen 任务；Colab、腾讯 Cloud Studio 要开着页面，白天跑 mDeBERTa 类短任务和 SMOKE；阿里云 A10 抢到才算。同一组比较不混用不同的卡（A10 / 4090 用 bf16，T4 用 fp16）。
 - **原理学习**：第一章（情感分类、反向传播）已通关，笔记在 `ML_note/原理笔记/`；第二章跟着 SemEval 实验学，现在讲句对输入和 A、B 对调。
 - **待办**：GitHub 仓库首页默认显示 `master`，`note` 的最新内容在首页看不到。改法等 Pan-Yan-0 决定：
   - 把默认分支改成 `note`；

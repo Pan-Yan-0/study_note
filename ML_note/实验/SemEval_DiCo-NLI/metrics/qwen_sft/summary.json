@@ -1,0 +1,110 @@
+{
+ "version": "dico_qwen_sft-3",
+ "model": "Qwen/Qwen3-4B-Instruct-2507",
+ "results": {
+  "track1": {
+   "zero_shot": {
+    "fold0": {
+     "plain": {
+      "weighted_f1": 0.48545282888541513,
+      "soft_cons": 0.2702702702702703,
+      "hard_cons": 0.23552123552123552
+     },
+     "sym": {
+      "weighted_f1": 0.589667311702145,
+      "soft_cons": 0.806949806949807,
+      "hard_cons": 0.5521235521235521
+     }
+    },
+    "dev": {
+     "plain": {
+      "weighted_f1": 0.4721214028348646,
+      "soft_cons": 0.2527075812274368,
+      "hard_cons": 0.22021660649819494
+     },
+     "sym": {
+      "weighted_f1": 0.5842557667004883,
+      "soft_cons": 0.8231046931407943,
+      "hard_cons": 0.5595667870036101
+     }
+    }
+   },
+   "sft": {
+    "fold0_plain": {
+     "weighted_f1": {
+      "mean": 0.8455,
+      "sd": 0.0075,
+      "n": 3
+     },
+     "soft_cons": {
+      "mean": 0.843,
+      "sd": 0.0097,
+      "n": 3
+     },
+     "hard_cons": {
+      "mean": 0.8134,
+      "sd": 0.0059,
+      "n": 3
+     }
+    },
+    "fold0_sym": {
+     "weighted_f1": {
+      "mean": 0.8597,
+      "sd": 0.0118,
+      "n": 3
+     },
+     "soft_cons": {
+      "mean": 0.9202,
+      "sd": 0.0089,
+      "n": 3
+     },
+     "hard_cons": {
+      "mean": 0.8777,
+      "sd": 0.0124,
+      "n": 3
+     }
+    },
+    "dev_plain": {
+     "weighted_f1": {
+      "mean": 0.8229,
+      "sd": 0.0041,
+      "n": 3
+     },
+     "soft_cons": {
+      "mean": 0.8255,
+      "sd": 0.0127,
+      "n": 3
+     },
+     "hard_cons": {
+      "mean": 0.7966,
+      "sd": 0.0137,
+      "n": 3
+     }
+    },
+    "dev_sym": {
+     "weighted_f1": {
+      "mean": 0.8347,
+      "sd": 0.0067,
+      "n": 3
+     },
+     "soft_cons": {
+      "mean": 0.9242,
+      "sd": 0.0108,
+      "n": 3
+     },
+     "hard_cons": {
+      "mean": 0.8664,
+      "sd": 0.0096,
+      "n": 3
+     }
+    }
+   },
+   "best_epochs": {
+    "42": 3,
+    "43": 3,
+    "44": 3
+   }
+  }
+ },
+ "missing": []
+}
