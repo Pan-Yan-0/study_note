@@ -10,7 +10,7 @@ ML_note/
 │   ├── SST2/             README、code/、notebooks/、metrics/
 │   └── SemEval_DiCo-NLI/ README、code/、notebooks/、metrics/
 ├── 原理笔记/
-│   └── BERT/  DeBERTa/  LLM/  LoRA/  反向传播/
+│   └── BERT/  DeBERTa/  LLM/  LoRA/  NLI/  反向传播/
 └── 吴恩达机器学习/         课程各部分的笔记
 ```
 
@@ -33,6 +33,7 @@ ML_note/
 | [BERT 原理笔记](ML_note/原理笔记/BERT/BERT原理笔记.md) | 嵌入、注意力、一层的数据流，配图和玩具数字脚本 |
 | [DeBERTa 与 IMDB 三条路学习笔记](ML_note/原理笔记/DeBERTa/DeBERTa与IMDB三条路学习笔记.md) | AUC，DeBERTa（解耦注意力、EMD、RTD、GDES），微调要点，大模型零样本与少样本 |
 | [解码器大模型与路线 C 学习笔记](ML_note/原理笔记/LLM/解码器大模型与路线C学习笔记.md) | 因果掩码与上下文、agent、提示的成本、解码器结构、cot 与概率、LoRA 分类器 / 嵌入 + 逻辑回归 / 蒸馏、指令微调（SFT）与 T4 用时估算、交叉熵与熵、KV cache 存的是激活、开思考为什么常被截断 |
+| [DiCo-NLI 句对输入与一致性学习笔记](ML_note/原理笔记/NLI/DiCo-NLI句对输入与一致性学习笔记.md) | SemEval 赛题的四个标签和两个方向，模型怎么分清两段短语（段向量、位置），SoftCons 与 HardCons，对称化 |
 | [反向传播学习笔记](ML_note/原理笔记/反向传播/反向传播学习笔记.md) | 两层小网络从后往前推：损失对分数的梯度 p − q，传到 W₂、h，穿过 ReLU 到 W₁；反向传播与梯度下降的分工 |
 | [IMDB 六模型实战与概念问答](ML_note/实验/IMDB/notes/IMDB六模型实战与概念问答.md) | GloVe 六模型的概念问答整理 |
 

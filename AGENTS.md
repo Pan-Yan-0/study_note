@@ -30,7 +30,7 @@ skills/                    教学 skill 的旧版，现行版本在私有 skill 
 ML_note/
 ├── 实验结果汇总.md         全部实验结果速览
 ├── 实验/IMDB/  实验/SST2/  每个实验一个文件夹：README、code/、notebooks/、metrics/
-├── 原理笔记/               BERT/  DeBERTa/  LLM/  LoRA/  反向传播/
+├── 原理笔记/               BERT/  DeBERTa/  LLM/  LoRA/  NLI/  反向传播/
 └── 吴恩达机器学习/          课程笔记
 Coursera-ML-AndrewNg-Notes-master/   课程资料
 ```
