@@ -111,7 +111,11 @@ Coursera-ML-AndrewNg-Notes-master/   课程资料
     - 英语训练集 select 子集上，按事先定的规则选出 few，但它和 zero 分不出高低（+.014，[−.009, +.034]）；加计数规则的 zero_rules 降 .132（[−.162, −.102]），把大量预测推向 O。
     - cot 81–96% 写满 320 token 后被强制作答；生成每批 8 条，cot 跑了约 7 小时（运行前没跑 SMOKE）。
     - `model_revision` 没记下来（transformers 5.19 的 config 里没有 `_commit_hash`），下个 notebook 改用 `snapshot_download` 取 commit 号。
-  - 下一步：Qwen 的 LoRA 指令微调（导师清单第 1 项里的 "qwen"），沿用 IMDB 的代码，用 zero 的模板；然后 R-Drop、SCL、MoCo。
+  - 第四组（`notebooks/dico_qwen_sft`，Qwen3-4B-Instruct-2507 的 LoRA SFT，zero 模板，只算答案字母的损失）已写好，还没运行，等 GPT 审代码和 GPU 上的 SMOKE：
+    - 数据划分和第二组 fold 0 逐行相同（训练 2,190、内层验证 244、留出 608），英语 fold 0 上和 mDeBERTa 12 轮配方的折外预测按种子配对比较。
+    - 事先定好的蒸馏条件：英语 fold 0 上 Qwen SFT 的对称化 WF1 比 mDeBERTa 高，或两者概率平均后比 mDeBERTa 单独高，而且按家族重抽样的区间下限大于 0；都不满足就不做蒸馏。
+    - 本地用假的 torch / transformers / peft 测过续跑：训练中途、评估后存检查点前、读概率时被打断，都能接着跑，选中的权重能复现记录的验证分数。
+  - 再下一步：在 mDeBERTa 上逐个加 R-Drop、SCL、MoCo（英语基线是 12 轮 + 对称化）。
 - **原理学习**：第一章（情感分类、反向传播）已通关，笔记在 `ML_note/原理笔记/`；第二章跟着 SemEval 实验学，现在讲句对输入和 A、B 对调。
 - **待办**：GitHub 仓库首页默认显示 `master`，`note` 的最新内容在首页看不到。改法等 Pan-Yan-0 决定：
   - 把默认分支改成 `note`；

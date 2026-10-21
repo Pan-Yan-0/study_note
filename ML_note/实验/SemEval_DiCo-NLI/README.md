@@ -276,8 +276,8 @@ e12 是"最多训练 12 轮、在内部验证上选最好的一轮"，不是固�
 
 1. **大模型 instruct 和 Qwen（导师清单第 1 项）**：
    - 指令提示已完成（第三组）：只靠提示词的 Qwen3-4B 远不如微调的 mDeBERTa。
-   - 下一步：Qwen 的 LoRA 指令微调（SFT），沿用 IMDB 的代码。模板用 `zero` 的提示词（训练集上 few 和 zero 分不出高低，微调时不需要例子，zero 更短），只在答案字母上算损失，读 A–D 的概率，四个赛道，和 mDeBERTa 同口径比较（按家族分出内部验证，dev 只报告）。先用 `snapshot_download` 记下模型的 commit 号；正式跑之前先跑 SMOKE。
-   - 之后试 Pan-Yan-0 提出的"大模型当分类器"和"蒸馏给 mDeBERTa"。
+   - 下一步：Qwen 的 LoRA 指令微调（SFT），notebook 已写好，还没运行（[notebooks/dico_qwen_sft.ipynb](notebooks/dico_qwen_sft.ipynb)）。沿用 IMDB 的代码和超参数；模板用 `zero` 的提示词（训练集上 few 和 zero 分不出高低，微调时不需要例子，zero 更短），只在答案字母上算损失，读 A–D 的概率，最多 3 轮，按内层验证选轮。数据划分和第二组 fold 0 完全相同，所以英语 fold 0 上可以和 mDeBERTa 12 轮配方的折外预测按种子配对比较；dev 只报告。模型版本用 `snapshot_download` 固定并记下 commit 号。先跑 SMOKE，再跑英语 3 个种子，看过结果再决定其他赛道。
+   - 蒸馏给 mDeBERTa 只在事先定好的条件下做：英语 fold 0 上，Qwen SFT 的对称化 WF1 比 mDeBERTa 高，或两个模型的概率平均后比 mDeBERTa 单独高，而且按家族重抽样的近似 95% 区间下限大于 0。两条都不满足就直接做第 2 项。Pan-Yan-0 提出的"大模型当分类器"等 SFT 的结果出来再定。
 2. **训练技巧（清单第 2 项）**：在 mDeBERTa 上逐个加 R-Drop、SCL、MoCo。
    - 英语的基线用最多 12 轮 + 对称化（第二组按事先定好的折外 WF1 规则选出，只针对英语）。
    - R-Drop 另试方向版：让 p(A, B) 和对调后的 p(B, A) 接近。
@@ -304,6 +304,7 @@ e12 是"最多训练 12 轮、在内部验证上选最好的一轮"，不是固�
 - `notebooks/dico_encoders.py` / `.ipynb`：第一组编码器实验，可以断点续跑。
 - `notebooks/dico_diagnostics.py` / `.ipynb`：第二组，英语折外诊断与训练配方比较，可以断点续跑。
 - `notebooks/dico_llm_instruct.py` / `.ipynb`：第三组，Qwen 指令提示（零样本、少样本、CoT，不训练），可以断点续跑。
+- `notebooks/dico_qwen_sft.py` / `.ipynb`：第四组，Qwen3-4B 的 LoRA 指令微调，可以断点续跑（还没运行）。
 - `code/llm_instruct_analysis.py`：第三组的复算和分析：从缓存重建预测并重新评分、训练集上提示词的配对差值、cot 按结束原因分开的准确率、方向混淆。
 - `metrics/baselines/`：基线逐种子分数。
 - `metrics/encoders/`：
