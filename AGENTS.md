@@ -118,6 +118,7 @@ Coursera-ML-AndrewNg-Notes-master/   课程资料
     - 训练部分 E / F / B / O 是 574 / 631 / 631 / 354（O 只占 16%，不是四成）；dev 有 15 行（8 个 pair）的文本在训练集里出现过，选择看 fold 0。
     - 本地用假的 torch / transformers / peft 测过续跑：训练中途、评估后存检查点前、读概率时被打断，都能接着跑，选中的权重能复现记录的验证分数。
   - Pan-Yan-0 10-21 的决定：蒸馏要做；先试 SFT 训练更多轮（`MAX_EPOCHS = 5`，代码不改）值不值得，有结果再补种子验证；R-Drop、SCL、MoCo 三种都做，先在 mDeBERTa 上，再加到 Qwen 上。设计和判断规则见实验 README 的下一步计划（事先定好，GPT 审过一轮后修订）：mDeBERTa 上的方法先在 fold 0、3 个种子上比，冻结设置后再扩到 5 折；方向版 R-Drop 第一版只对 E / F / B；MoCo 先小试 m = 0.99 和 0.999；Qwen 上的 R-Drop 要先加 LoRA dropout，所以多一组只加 dropout 的对照。老师导出 notebook（`dico_qwen_teacher-3`，GPT 复核通过）绑定来源 fingerprint 的哈希和每份 LoRA 权重的哈希，权重在 Kaggle 那次 3 轮运行的输出里，那个版本不要删。
+  - SFT 最多 5 轮：10-21 在腾讯 Cloud Studio T4 上跑了 seed 42（结果在 `metrics/qwen_sft_e5/`）：内层验证第 3 轮最高、之后下降，仍选第 3 轮；fold 0 sym WF1 差 −.011 [−.034, +.011]，零样本和 Kaggle 那次逐条相同。只有一个种子，不下结论，工作配方仍是 3 轮；要不要补 43、44 由 Pan-Yan-0 定。
   - 排期：Kaggle 后台依次跑 SFT 5 轮（约 4 小时）、导出老师概率（约 30 分钟，要挂上 3 轮那次运行的输出取 LoRA 权重）、西语 + 巴语 SFT（约 5 小时）。跨语言（T4 约 14 小时）10-21 改到阿里云 A10 上跑，用 `notebooks/dico_qwen_sft_a10`（第四版，bf16，另打 LoRA 权重包），先跑 SMOKE。mDeBERTa 上的蒸馏学生和 R-Drop / SCL / MoCo 在 Colab / Cloud Studio 白天跑。
   - 算力分配：Kaggle（每周额度，能后台跑）只留给超过一小时的 Qwen 任务；Colab、腾讯 Cloud Studio 要开着页面，白天跑 mDeBERTa 类短任务和 SMOKE；阿里云 A10 抢到才算。同一组比较不混用不同的卡（A10 / 4090 用 bf16，T4 用 fp16）。
 - **原理学习**：第一章（情感分类、反向传播）已通关，笔记在 `ML_note/原理笔记/`；第二章跟着 SemEval 实验学（`ML_note/原理笔记/NLI/`），已讲句对输入、SoftCons / HardCons、对称化、R-Drop 与 KL，下一课是方向版 R-Drop。

@@ -71,6 +71,16 @@
 - **dev 上两者几乎一样**（.835 对 .827），远不像 fold 0 上差 .067。两边的 dev 模型训练数据量不同（mDeBERTa 多用了 fold 0 的 547 行），所以说不清差距缩小是因为训练数据多了、因为 fold 0 和 dev 的难度不同，还是别的原因。这次没有用 2,190 行训练的 mDeBERTa 去评 dev，所以分不开。
 - 零样本的 dev 分数和第三组的 `zero` 完全相同，说明提示词和读概率的实现一致。
 
+**最多 5 轮的配方（目前只有 seed 42）**：同一个 notebook（代码哈希和上面相同），只把 `MAX_EPOCHS` 改成 5，由 Pan-Yan-0 在腾讯 Cloud Studio 的 T4 上运行（fp16，torch 2.10；上面那次是 Kaggle T4、torch 2.11）。零样本的概率和 Kaggle 那次逐条完全相同，所以两个平台之间没有可见的差别。结果在 `metrics/qwen_sft_e5/`，从缓存重建预测、官方脚本重算一致（[code/qwen_sft_e5_compare.py](code/qwen_sft_e5_compare.py)）。
+
+| seed 42 | 内层验证 WF1（每轮） | 选中 | fold 0 对称化 WF1 / SoftCons / HardCons | dev 对称化 |
+|---|---|---|---|---|
+| 最多 3 轮 | .806 → .845 → .855 | 第 3 轮 | .872 / .931 / .892 | .831 / .913 / .859 |
+| 最多 5 轮 | .818 → .810 → .856 → .837 → .835 | 第 3 轮 | .861 / .942 / .888 | .833 / .935 / .874 |
+
+- 5 轮的配方里，内层验证在第 3 轮最高，第 4、5 轮下降，选中的还是第 3 轮。3 轮那次"内层验证每轮都在涨"，在这个种子上没有延续到第 4、5 轮。
+- fold 0 对称化 WF1 的差（5 轮 − 3 轮）是 −.011，按家族配对重抽样的近似区间 [−.034, +.011]；两边的预测 94% 相同。只有一个种子，按事先的约定还不能下结论。
+
 ### 第三组：Qwen 指令提示（[notebooks/dico_llm_instruct.ipynb](notebooks/dico_llm_instruct.ipynb)）
 
 `Qwen/Qwen3-4B-Instruct-2507`，fp16，不训练，只靠提示词。T4 单卡，transformers 5.19.0；notebook 版本 `dico_llm_instruct-2`（提交 `e6e2118`），批大小用默认值（读概率每批 4,096 个 token，生成每批 8 条）。读的是 "Answer:" 后面 A–D 的概率，结果是确定的，只跑一次。19 个阶段共约 8.4 小时，其中 cot 约 7 小时。全部分数都从保存的缓存重建预测、用官方脚本重新评分，结果一致（[code/llm_instruct_analysis.py](code/llm_instruct_analysis.py)）。
@@ -334,7 +344,7 @@ e12 是"最多训练 12 轮、在内部验证上选最好的一轮"，不是固�
    - 指令提示已完成（第三组）：只靠提示词的 Qwen3-4B 远不如微调的 mDeBERTa。
    - 英语的 LoRA SFT 已完成（第四组）：fold 0 上对称化 WF1 .860，比同数据训练的 mDeBERTa 高 .067。
    - 下一步：西班牙语和巴斯克语的 SFT（`TRACKS = [2, 3]`，代码不改），约 5 小时，放在 Kaggle 后台跑；跨语言赛道在 T4 上约 14 小时，改在阿里云 PAI-DSW 的 A10 上跑（[notebooks/dico_qwen_sft_a10.ipynb](notebooks/dico_qwen_sft_a10.ipynb)，估计 6–8 小时，先跑 SMOKE 实测）。训练设置和第三版相同，A10 上用 bf16；零样本和 3 个种子都在 A10 上跑，不和 T4 的结果混在同一组比较里。
-   - **更多轮（Pan-Yan-0 决定先试）**：三个种子都选在第 3 轮、内层验证还在涨。另开一组 `MAX_EPOCHS = 5`，其他设置和种子都不变，代码不改（轮数在指纹里，结果自然分开）。学习率按 5 轮线性衰减，前 3 轮的学习率轨迹也变了，所以比较的是"最多 5 轮的配方"和"3 轮的配方"，不是单独的"多训两轮"。事先定的判断：英语 fold 0 上，每个种子求 sym WF1 的差（5 轮 − 3 轮），三个种子平均；按家族配对重抽样的区间下限大于 0 才改用 5 轮。fold 0 这时已经用来选过路线，所以这个结论是探索性的；有用的话再补种子、换折验证。约 4 小时，Kaggle 后台。
+   - **更多轮（Pan-Yan-0 决定先试）**：三个种子都选在第 3 轮、内层验证还在涨。另开一组 `MAX_EPOCHS = 5`，其他设置和种子都不变，代码不改（轮数在指纹里，结果自然分开）。学习率按 5 轮线性衰减，前 3 轮的学习率轨迹也变了，所以比较的是"最多 5 轮的配方"和"3 轮的配方"，不是单独的"多训两轮"。事先定的判断：英语 fold 0 上，每个种子求 sym WF1 的差（5 轮 − 3 轮），三个种子平均；按家族配对重抽样的区间下限大于 0 才改用 5 轮。fold 0 这时已经用来选过路线，所以这个结论是探索性的；有用的话再补种子、换折验证。每个种子约 80 分钟（T4）。目前只跑了 seed 42：选中的仍是第 3 轮，差 −.011 [−.034, +.011]（见第四组）。在补齐 43、44 之前，工作配方仍是 3 轮。
    - **蒸馏（Pan-Yan-0 决定做）**：先做最便宜的一种，再看要不要升级。
      - 老师：已经训好的三个 3 轮 Qwen SFT 模型（fold 0 划分），给它们自己的训练部分打四类概率（[notebooks/dico_qwen_teacher.ipynb](notebooks/dico_qwen_teacher.ipynb)）。老师见过这些行，概率会偏尖，但没有尖到等于硬标签：内层验证上最大概率超过 .999 的只有 14–33%，中位数 .993–.997，T = 2 后中位数 .89–.92。训练部分上的统计，等导出后再看。
      - 导出时绑定来源：fingerprint 要和已核验的那份逐字节一致，当前数据哈希、fold 0 的行也要对上，每份 LoRA 权重的哈希记进结果。权重留在 Kaggle 那次运行的输出里，那个版本不要删。
@@ -380,6 +390,7 @@ e12 是"最多训练 12 轮、在内部验证上选最好的一轮"，不是固�
 - `notebooks/dico_diagnostics.py` / `.ipynb`：第二组，英语折外诊断与训练配方比较，可以断点续跑。
 - `notebooks/dico_llm_instruct.py` / `.ipynb`：第三组，Qwen 指令提示（零样本、少样本、CoT，不训练），可以断点续跑。
 - `notebooks/dico_qwen_sft.py` / `.ipynb`：第四组，Qwen3-4B 的 LoRA 指令微调，可以断点续跑（第三版，英语已跑完）。
+- `code/qwen_sft_e5_compare.py`：第四组"最多 5 轮"和"3 轮"配方的同种子比较。
 - `notebooks/dico_qwen_sft_a10.py` / `.ipynb`：第四组的 A10 版（第四版），跑跨语言赛道。训练和评测同第三版；bf16 时 SMOKE 不再要求 `scaler.pt`；选中的 LoRA 权重另打一个权重包；认出 PAI-DSW，连不上 Hugging Face、GitHub 时改用镜像或本地 zip（还没运行）。
 - `notebooks/dico_qwen_teacher.py` / `.ipynb`：蒸馏第 1 步，载入第四组英语 3 轮的三个 LoRA 模型，给 fold 0 划分的训练部分导出四类概率（还没运行）。共用的函数从 `dico_qwen_sft.py` 原样拷贝。
 - `code/qwen_sft_analysis.py`：第四组的复算和分析：从缓存重建预测并重新评分，和 mDeBERTa 在 fold 0 上按种子配对比较，两条蒸馏门槛的家族重抽样区间，每类 F1 和方向混淆。
@@ -404,6 +415,7 @@ e12 是"最多训练 12 轮、在内部验证上选最好的一轮"，不是固�
   - `fingerprint.json`、`run_meta.json`、`examples.json`：设置、运行环境、少样本例子；
   - `<提示词>/<数据>_track<赛道>/`：每个阶段的缓存（`cache.jsonl` 是每个有序输入的四类概率，cot 另有 `gen.jsonl` 原始推理）、预测、reference 子集和官方评分。
 - `metrics/qwen_sft/`：第四组的全部输出（不含 LoRA 权重）：`summary.json`、`analysis.json`、`fingerprint.json`、`run_meta.json`；`track1/zero_shot/` 和 `track1/seed<种子>/` 下有每个有序输入的四类概率（`cache.jsonl`）、预测、金标子集、官方评分、逐轮训练记录（`history.json`、`trained.json`）和每轮内层验证的逐条概率（`val_probs/`）。
+- `metrics/qwen_sft_e5/`：第四组"最多 5 轮"配方的输出，结构同上（目前只有 seed 42）。
 - `metrics/probes/summary.json`：探针分数。
 - `metrics/analysis/`：错例统计、切片 oracle、单词替换诊断的拆分、计数和介词短语的金标统计（`label_conventions.json`）。
 
