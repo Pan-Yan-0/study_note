@@ -409,11 +409,21 @@ e12 是"最多训练 12 轮、在内部验证上选最好的一轮"，不是固�
      - SCL（Gunel et al. 2021）：(1 − λ) CE + λ · 监督对比损失，λ = 0.3，τ = 0.3。用 [CLS] 表示，加一层投影是我们的选择，不是原论文规定的。
      - MoCo：准确地说是"监督对比 + 动量编码器 + 队列"，不是原始的自监督 MoCo。动量更新也覆盖投影头；队列存键、标签和样本编号，同一样本不当自己的正例；没有正例的样本跳过对比项；队列没填满时只用已有的部分。每轮约 69 次更新，m = 0.999 时 EMA 半衰期接近 10 轮，所以先用小规模试比较 m = 0.99 和 0.999，记录队列里键的"年龄"，再冻结设置。选 m 的规则事先定好：第一阶段两个 m 各跑 3 个种子，比较选中那一轮的内层验证原方向 WF1 的三种子平均（不看 fold 0、dev 和老师），大的胜出，相同取 0.99。以 dropout 构造两个视图的自监督版（参考 SimCSE）作为备选。
      - 用 fold 0 划分、2,190 行训练的基线同时评 dev，和 Qwen 在相同训练数据量下比较（几乎不需要额外算力）。
-   - 再加到 Qwen SFT 上：
-     - R-Drop：Qwen3 没有 dropout，我们的 LoRA dropout 也是 0，两次前向完全相同，不加 dropout 的话 R-Drop 不起作用。所以分三组：原配方（已有）、只把 LoRA dropout 设成 0.1、dropout 0.1 + R-Drop。KL 用四类归一化后的分布，这是针对任务的变体。
-     - SCL：用每行最后一个真实 token（"Answer:" 的位置）的最后一层隐状态。
-     - MoCo：底座共享，在线和目标两套 LoRA 加投影头分开维护，目标那套不回传梯度。
-     - 每种方法 3 个种子，放在阿里云 A10 上，和 A10 上重跑的 3 轮基线（`metrics/qwen_sft_a10_t1/`）按种子配对；用时以实测为准（A10 上基线每个种子约 18 分钟）。5 轮配方没有被采用，这里的对照仍是 3 轮。
+   - 再加到 Qwen SFT 上（第六组，[notebooks/dico_qwen_methods.ipynb](notebooks/dico_qwen_methods.ipynb)，A10 上用 `notebooks/dico_a10_qwen_methods.sh` 跑）：英语 3 轮配方，fold 0、种子 42–44，同时评 dev。代码就是第四组 A10 版加上各方法的损失，超参数事先固定：
+
+     | 编号 | 方法 | LoRA dropout | 损失 | 和谁配对 |
+     |---|---|---|---|---|
+     | Q0 | 交叉熵 | 0 | 原配方，在同一个 notebook 里重跑 | A10 上的 R3（同配方、不同代码版本，看重复运行的波动） |
+     | Q1 | 交叉熵 | 0.1 | 只加 dropout | Q0 |
+     | Q2 | R-Drop | 0.1 | (CE₁ + CE₂) / 2 + 1 × 对称 KL | Q1 |
+     | Q3 | SCL | 0 | 0.7 × CE + 0.3 × 监督对比，τ = 0.3 | Q0 |
+     | Q4 | MoCo | 0 | 0.7 × CE + 0.3 × 监督对比（键来自目标模型和 4,096 个键的队列），m = 0.99 | Q0 |
+
+     - R-Drop：Qwen3 没有 dropout，我们的 LoRA dropout 也是 0，两次前向完全相同，所以要先加 dropout，多一组只加 dropout 的对照（Q1）。KL 用四类归一化后的分布（每个字母的两种写法先 logsumexp，再在四类上 softmax，和读概率相同），这是针对任务的变体。
+     - SCL 和 MoCo 的表示：每行最后一个真实 token（"Answer:" 的位置）的最后一层隐状态（final norm 之后），经过 Linear(2560, 768) → ReLU → Linear(768, 128)。投影头和 LoRA 一起训练、保存和续跑；建投影头时保存再恢复随机数状态，各方法 LoRA 的初始权重和基线相同。
+     - MoCo：底座共享，目标模型是 LoRA 和投影头的动量平均，算键时临时换进同一套参数、无梯度前向，不另外载入模型；只在优化器真正更新后做动量更新和入队；同一训练记录的当前键和历史键都不当它自己的正例。Qwen 上一共只有 411 次更新，m = 0.999 时半衰期约 690 次，比整个训练还长，所以事先定为 0.99，不在 Qwen 上再试 m。只在 bf16 的卡上跑。
+     - 判断方式和 mDeBERTa 上相同：fold 0 上同种子 sym WF1 的差、三个种子平均和按家族配对重抽样的区间，都报，写明是探索性比较。5 轮配方没有被采用，这里的对照仍是 3 轮。
+     - 用时（A10 估计，以实测为准）：每个种子 Q0 / Q1 约 18 分钟（第四组 A10 实测），Q2 约 33 分钟（每批前向两份），Q3 约 19 分钟，Q4 约 25 分钟（多一次无梯度前向）。合计约 5.7 小时，另加三个 SMOKE 约 15 分钟。
 3. **DeepSeek 扩充（清单第 3 项）**：生成新的短语对，重点是单词替换和 NEGATIVE_OTHER 边界，按 +1、+2、+4 倍画数据量曲线。
    - 先按标签和边界类型分层抽 50 条，人工核对 DeepSeek 打的标签（E / F / B 的方向和 O 都要覆盖）；这只是初步的质量检查。生成时只用当前训练部分的样本做提示或父样本，生成的样本继承父样本的家族，不跨折；排除和内层验证、留出集重复的样本。+1 / +2 / +4 用嵌套的样本池，记录标签比例和生成版本；数据变多也会增加训练步数，关键结论再做步数匹配的对照。
    - 计数规则只是候选规则，而且第三组里写进提示词后把大量预测推向 NEGATIVE_OTHER，所以不直接照搬进生成提示。
@@ -445,6 +455,7 @@ e12 是"最多训练 12 轮、在内部验证上选最好的一轮"，不是固�
 - `notebooks/dico_qwen_sft_a10.py` / `.ipynb`：第四组的 A10 版（第四版），跑跨语言赛道。训练和评测同第三版；bf16 时 SMOKE 不再要求 `scaler.pt`；选中的 LoRA 权重另打一个权重包；认出 PAI-DSW，连不上 Hugging Face、GitHub 时改用镜像或本地 zip（还没运行）。
 - `notebooks/dico_qwen_teacher.py` / `.ipynb`：蒸馏第 1 步，载入第四组英语 3 轮的三个 LoRA 模型，给 fold 0 划分的训练部分导出四类概率（已运行，结果在 `metrics/qwen_teacher/`）。共用的函数从 `dico_qwen_sft.py` 原样拷贝。
 - `notebooks/dico_mdeberta_methods.py` / `.ipynb`：第五组，mDeBERTa 上的蒸馏学生、R-Drop、方向版 R-Drop、SCL、MoCo 和各赛道的同数据基线（`smoke` / `stage1` / `stage2` 三个阶段）；`notebooks/dico_a10_mdeberta.sh` 是在阿里云 A10 上装环境和跑各阶段的脚本。
+- `notebooks/dico_qwen_methods.py` / `.ipynb`：第六组，Qwen LoRA SFT 上的只加 dropout、R-Drop、SCL、MoCo 和同一个 notebook 里重跑的基线（方法由 `DICO_METHOD` 选）；`notebooks/dico_a10_qwen_methods.sh` 在阿里云 A10 上装环境，等第五组跑完后依次跑 SMOKE 和五个方法。
 - `实验登记表.md`、`metrics/registry.json`、`code/registry.py`：实验登记表和生成它的脚本。
 - `code/qwen_sft_analysis.py`：第四组的复算和分析：从缓存重建预测并重新评分，和 mDeBERTa 在 fold 0 上按种子配对比较，两条蒸馏门槛的家族重抽样区间，每类 F1 和方向混淆。
 - `code/llm_instruct_analysis.py`：第三组的复算和分析：从缓存重建预测并重新评分、训练集上提示词的配对差值、cot 按结束原因分开的准确率、方向混淆。
