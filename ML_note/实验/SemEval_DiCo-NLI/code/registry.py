@@ -251,7 +251,9 @@ def main(dico):
         card = [k for k in plat if k in CARD_KEYS]
         res = compare(dico, fam_of, a, b, ev)
         kind = ("控制变量对照" if len(changed) == 1 and not card else
-                "单变量，但卡不同" if len(changed) == 1 else "多变量（系统对比，不能归因到单个变量）")
+                "单变量，但卡不同" if len(changed) == 1 else
+                "只差卡（换卡的复现检查）" if not changed and card else
+                "设置相同（重复运行）" if not changed else "多变量（系统对比，不能归因到单个变量）")
         reg["comparisons"].append({"id": cid, "new": new, "old": old, "eval": ev, "purpose": purpose, "kind": kind,
                                    "changed": {k: [va.get(k), vb.get(k)] for k in changed},
                                    "lib_diff": {k: [va.get(k), vb.get(k)] for k in libs},
