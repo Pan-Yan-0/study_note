@@ -1,16 +1,17 @@
-"""第四组西班牙语、巴斯克语（Track 2、3）的复算：从缓存重建预测、和保存的预测逐条比较、用官方脚本重新评分，
+"""第四组西班牙语、巴斯克语、跨语言（Track 2、3、4）的复算：从缓存重建预测、和保存的预测逐条比较、用官方脚本重新评分，
 并列出每个种子的分数、逐轮内层验证 WF1 和 fold 0 对称化后的每类 F1。
 
-用法：python3 qwen_sft_tracks23.py <结果目录 dico_qwen_sft_results> <官方仓库> <第二组 metrics/diagnostics>
+用法：python3 qwen_sft_tracks23.py <结果目录 dico_qwen_sft_results> <官方仓库> <第二组 metrics/diagnostics> [赛道，默认 2,3]
 """
 import json, os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from qwen_sft_analysis import rows, jsonl, predict, official, METRICS, class_f1
 res, dico, diag = sys.argv[1:4]
+TRACKS = [int(x) for x in (sys.argv[4] if len(sys.argv) > 4 else "2,3").split(",")]
 fam = json.load(open(os.path.join(diag, "families.json")))
 out = {}
 mism = 0
-for t in (2, 3):
+for t in TRACKS:
     tr = rows(os.path.join(dico, f"final_data/train/dico_nli_train_track{t}_reference.csv"))
     dev = rows(os.path.join(dico, f"final_data/dev/dico_nli_dev_track{t}_reference.csv"))
     fold0 = [r for r in tr if fam["fold_of_family"][fam["family_of_pair"][r["pair_id"]]] == 0]

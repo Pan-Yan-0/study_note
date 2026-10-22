@@ -1,0 +1,95 @@
+{
+ "scores": {
+  "fold0": {
+   "plain": {
+    "weighted_f1": 0.7564641593623327,
+    "soft_cons": 0.7799227799227799,
+    "hard_cons": 0.7155727155727156
+   },
+   "sym": {
+    "weighted_f1": 0.7667991102470121,
+    "soft_cons": 0.8841698841698842,
+    "hard_cons": 0.7882882882882883
+   }
+  },
+  "dev": {
+   "plain": {
+    "weighted_f1": 0.7448857271262764,
+    "soft_cons": 0.7978339350180506,
+    "hard_cons": 0.7310469314079422
+   },
+   "sym": {
+    "weighted_f1": 0.7634173156232821,
+    "soft_cons": 0.9085439229843562,
+    "hard_cons": 0.8044524669073405
+   }
+  }
+ },
+ "stats": {
+  "inputs": 8556,
+  "scored_this_session": 8556,
+  "score_seconds_this_session": 368.9,
+  "mean_answer_mass": 0.9999,
+  "answer_mass_p05": 0.9997,
+  "answer_mass_below_0.5": 0,
+  "top_is_letter": 1.0
+ },
+ "history": [
+  {
+   "epoch": 1,
+   "train_loss": 0.8725705649794607,
+   "val_weighted_f1": 0.7704512875284037,
+   "minutes": 33.2
+  },
+  {
+   "epoch": 2,
+   "train_loss": 0.18482734262943265,
+   "val_weighted_f1": 0.7831631734810798,
+   "minutes": 33.2
+  },
+  {
+   "epoch": 3,
+   "train_loss": 0.03461641347981285,
+   "val_weighted_f1": 0.7802203506465625,
+   "minutes": 33.2
+  }
+ ],
+ "best_epoch": 2,
+ "trainable_params": 33030144,
+ "steps": 2466,
+ "steps_per_epoch": 822,
+ "train_minutes_last_session": 100.6,
+ "seconds_per_step": 2.4,
+ "resumed_from_epoch": 0,
+ "resume": {
+  "checkpoint": null,
+  "epoch": 0,
+  "files": [],
+  "skipped": []
+ },
+ "adapter_checks": [
+  {
+   "epoch": 2,
+   "tensors": 504,
+   "val_argmax_agreement": 1.0,
+   "val_max_prob_diff": 0.0,
+   "val_weighted_f1": 0.7831631734810798,
+   "recorded_val_weighted_f1": 0.7831631734810798
+  }
+ ],
+ "load_memory": {
+  "before_load": {
+   "allocated_gib": 0.02,
+   "reserved_gib": 0.11
+  },
+  "after_load": {
+   "allocated_gib": 7.51,
+   "reserved_gib": 7.53
+  }
+ },
+ "peak_memory_gib": 8.79,
+ "fit_rows": 13140,
+ "val_rows": 1464,
+ "fit_tokens": 2651202,
+ "minutes_last_session": 106.9
+}
