@@ -128,6 +128,7 @@ Coursera-ML-AndrewNg-Notes-master/   课程资料
   - SFT 最多 5 轮（腾讯 Cloud Studio T4，3 个种子，结果在 `metrics/qwen_sft_e5/`，Claude 复算一致）：选中第 3 / 5 / 4 轮；fold 0 sym WF1 同种子差 −.011 / −.003 / +.006，平均 −.003 [−.017, +.011]，按事先的规则不通过，工作配方仍是 3 轮。零样本概率和 Kaggle 那次逐条相同（推理一致，训练等价没验证）。
   - A10 上的英语 3 轮基线（R3，`dico_qwen_sft-4`，结果在 `metrics/qwen_sft_a10_t1/`，Claude 复算一致）：fold 0 sym WF1 .857，dev .836；和 Kaggle T4 那次同种子差平均 −.003 [−.012, +.006]（执行环境迁移复现，不说明等价）。每步 2.35 秒，每个种子约 18 分钟。之后 Qwen 技巧都和它配对。阿里云连 GitHub 很慢，官方仓库用 Pan-Yan-0 上传的 zip；模型从 ModelScope 下载只要半分钟。
   - 老师导出已完成（Kaggle T4，结果在 `metrics/qwen_teacher/`，`code/qwen_teacher_check.py` 复核一致）：2,190 行上老师准确率 .969–.979，T = 2 后最大概率中位数 .90–.94。
+  - 第五组（`notebooks/dico_mdeberta_methods`，`dico_mdeberta_methods-1`，A10 上用 `dico_a10_mdeberta.sh`）已写好，等 GPT 审：一个任务 = 赛道 × 方法 × 种子 × 折，各有 `task.json` 和 `done.json`；`smoke`（损失自检、中断续跑、测速和时间估计）→ `stage1`（英语 fold 0 × 种子 42–44：C0 / B2 / C1 / C2 / C3 / C4 两个 m；西语、巴语、跨语言的 C0）→ 验收（只看实现和资源）→ `stage2`（英语 5 折 × 种子 42–46 × 五种设置，m 按内层验证三种子平均自动选）。本地用假 torch 测过全流程；A10 上估计两个阶段 5.5–8 小时、约 44–62 计算时。
   - 排期（10-22）：蒸馏学生、mDeBERTa 上的 R-Drop / SCL / MoCo、西语 / 巴语 / 跨语言同数据的 mDeBERTa 基线、之后 Qwen 上的技巧，主要放阿里云 A10（月底前约 28 个 A10 小时，月底作废）。Qwen 技巧放 A10 时，先在 A10 上重跑 3 轮基线作对照，不和 T4 的结果直接相减。
   - 算力分配：Kaggle（每周额度，能后台跑）只留给超过一小时的 Qwen 任务；Colab、腾讯 Cloud Studio 要开着页面，白天跑 mDeBERTa 类短任务和 SMOKE；阿里云 A10 抢到才算。同一组比较不混用不同的卡（A10 / 4090 用 bf16，T4 用 fp16）。
 - **原理学习**：第一章（情感分类、反向传播）已通关，笔记在 `ML_note/原理笔记/`；第二章跟着 SemEval 实验学（`ML_note/原理笔记/NLI/`），已讲句对输入、SoftCons / HardCons、对称化、R-Drop 与 KL，下一课是方向版 R-Drop。
