@@ -1,7 +1,8 @@
 """实验登记表：从保存的指纹、运行记录和逐条预测自动生成，写出 实验登记表.md 和 metrics/registry.json。
 
 每次运行一行：模型、全部训练变量、数据划分、训练数据量、平台（卡、精度、torch）、代码版本和哈希、种子、分数。
-每个比较一行：两边哪些变量不同由脚本自动算出；只差一个训练变量、平台也相同的才算"控制变量对照"。
+每个比较一行：两边哪些变量不同由脚本自动算出；只差一个训练变量、卡（和随卡定的精度）也相同的才算"控制变量对照"。
+平台名称（Kaggle / 腾讯云 / PAI-DSW）、torch 和库版本只标注，不影响判定（Pan-Yan-0 10-22 定的）。
 比较的数字是同种子 sym WF1 的差、三个种子平均，按家族配对重抽样 2,000 次（每次所有种子用同一批家族）。
 
 新增运行：在 RUNS 里加一项（指向它的结果目录）；新增比较：在 COMPARISONS 里加一项。
@@ -150,6 +151,7 @@ COMPARISONS = [
 ]
 
 IGNORE_FOR_CONTROL = {"lib.transformers", "lib.peft", "lib.accelerate", "lib.datasets"}  # 库版本单独列，不算训练变量
+CARD_KEYS = ("gpu", "dtype")  # 判定控制变量时只看卡和精度；平台名称和 torch 版本只标注
 
 
 def families_for(dico):
@@ -246,9 +248,10 @@ def main(dico):
         changed = sorted(k for k in set(va) | set(vb) if va.get(k) != vb.get(k) and k not in IGNORE_FOR_CONTROL)
         libs = sorted(k for k in IGNORE_FOR_CONTROL if va.get(k) != vb.get(k))
         plat = sorted(k for k in a["platform"] if a["platform"][k] != b["platform"][k])
+        card = [k for k in plat if k in CARD_KEYS]
         res = compare(dico, fam_of, a, b, ev)
-        kind = ("控制变量对照" if len(changed) == 1 and not plat and not libs else
-                "单变量，但平台或库版本不同" if len(changed) == 1 else "多变量（系统对比，不能归因到单个变量）")
+        kind = ("控制变量对照" if len(changed) == 1 and not card else
+                "单变量，但卡不同" if len(changed) == 1 else "多变量（系统对比，不能归因到单个变量）")
         reg["comparisons"].append({"id": cid, "new": new, "old": old, "eval": ev, "purpose": purpose, "kind": kind,
                                    "changed": {k: [va.get(k), vb.get(k)] for k in changed},
                                    "lib_diff": {k: [va.get(k), vb.get(k)] for k in libs},
@@ -268,7 +271,7 @@ def write_md(reg):
     L = ["# 实验登记表", "",
          "由 [code/registry.py](code/registry.py) 从保存的指纹、运行记录和逐条预测自动生成，不要手改；完整内容在 `metrics/registry.json`。",
          "", "分数是对称化 WF1、所有种子的均值。比较是同种子的 sym WF1 差、种子平均，按家族配对重抽样 2,000 次的近似 95% 区间（每次所有种子用同一批家族）。"
-         "\"改了什么\"由脚本对比两边的变量自动列出：只差一个训练变量、平台和库版本也相同的，才算控制变量对照。", "",
+         "\"改了什么\"由脚本对比两边的变量自动列出：只差一个训练变量、卡（和随卡定的精度）也相同的，才算控制变量对照；平台名称、torch 和库版本只标注，不影响判定。", "",
          "## 运行", "",
          "| 编号 | 内容 | 关键变量 | 平台 | 代码 | 种子 | fold 0 | 5 折折外 | dev |", "|---|---|---|---|---|---|---:|---:|---:|"]
     for r in reg["runs"]:
@@ -285,7 +288,7 @@ def write_md(reg):
         L.append(f"| {r['id']} | {r['desc']} | {'；'.join(key)} | {p['platform']}，{fmt(p['gpu'])}，{fmt(p['dtype'])}，torch {fmt(p['torch'])} | "
                  f"{r['code']['version']}（{fmt(r['code']['code_sha256'])}） | {', '.join(r['seeds'])} | "
                  f"{sc.get('fold0', '—')} | {sc.get('oof', '—')} | {sc.get('dev', '—')} |")
-    L += ["", "## 比较", "", "| 编号 | 新 对 旧 | 评测 | 改了什么（自动） | 平台 / 库版本的差别 | 类型 | 逐种子的差 | 平均差 [区间] |",
+    L += ["", "## 比较", "", "| 编号 | 新 对 旧 | 评测 | 改了什么（自动） | 卡 / 平台 / 版本的差别（只有卡影响类型） | 类型 | 逐种子的差 | 平均差 [区间] |",
           "|---|---|---|---|---|---|---|---|"]
     for c in reg["comparisons"]:
         ch = "；".join(f"{k}: {fmt(b)} → {fmt(a)}" for k, (a, b) in c["changed"].items())  # 旧 → 新
@@ -299,7 +302,8 @@ def write_md(reg):
                  f"{r['mean']:+.3f} [{r['ci95'][0]:+.3f}, {r['ci95'][1]:+.3f}] |")
     L += ["", "## 怎么用", "",
           "- 新的运行：结果目录放进 `metrics/` 以后，在 `RUNS` 里加一项；新的比较在 `COMPARISONS` 里加一项，然后重新运行脚本。",
-          "- 要写进结论的比较，类型应是\"控制变量对照\"。平台不同（卡、精度、torch）时，先看零样本的概率在两个平台上是否逐条相同；不同就在同一平台上补跑对照。",
+          "- 要写进结论的比较，类型应是\"控制变量对照\"。卡不同时，在同一种卡上补跑对照。",
+          "- 平台名称、torch 和库版本只标注。同一种卡、不同平台的两次运行，零样本概率应逐条相同（Kaggle 和腾讯云的 T4 已核对过）；不同时要查原因。",
           "- 系统对比（换模型）只回答\"哪个更好\"，不说明是哪个变量带来的。"]
     open(os.path.join(EXP, "实验登记表.md"), "w", encoding="utf-8").write("\n".join(L) + "\n")
 
