@@ -142,6 +142,8 @@ RUNS = [
     ("QWEN-E3-T2", lambda: qwen_run("QWEN-E3-T2", "qwen_sft", 2, "sft", "Kaggle", "Qwen SFT 最多 3 轮，西班牙语")),
     ("QWEN-ZS-T3", lambda: qwen_run("QWEN-ZS-T3", "qwen_sft", 3, "zero_shot", "Kaggle", "Qwen 零样本，巴斯克语")),
     ("QWEN-E3-T3", lambda: qwen_run("QWEN-E3-T3", "qwen_sft", 3, "sft", "Kaggle", "Qwen SFT 最多 3 轮，巴斯克语")),
+    ("QWEN-ZS-T1-A10", lambda: qwen_run("QWEN-ZS-T1-A10", "qwen_sft_a10_t1", 1, "zero_shot", "阿里云 PAI-DSW", "Qwen 零样本，英语（A10）")),
+    ("QWEN-E3-T1-A10", lambda: qwen_run("QWEN-E3-T1-A10", "qwen_sft_a10_t1", 1, "sft", "阿里云 PAI-DSW", "Qwen SFT 最多 3 轮，英语（A10，之后 Qwen 技巧的对照）")),
     ("QWEN-ZS-T4", lambda: qwen_run("QWEN-ZS-T4", "qwen_sft_a10", 4, "zero_shot", "阿里云 PAI-DSW", "Qwen 零样本，跨语言")),
     ("QWEN-E3-T4", lambda: qwen_run("QWEN-E3-T4", "qwen_sft_a10", 4, "sft", "阿里云 PAI-DSW", "Qwen SFT 最多 3 轮，跨语言")),
 ]
@@ -152,6 +154,7 @@ COMPARISONS = [
     ("CMP-02", "QWEN-E3-T1", "QWEN-ZS-T1", "fold0", "Qwen 微调 对 不微调"),
     ("CMP-03", "QWEN-E3-T1", "MDB-E12-OOF", "fold0", "Qwen SFT 对 mDeBERTa（同训练 / 验证 / 留出数据；系统对比，模型不同）"),
     ("CMP-04", "QWEN-E5-T1", "QWEN-E3-T1", "fold0", "Qwen SFT 轮数上限：5 轮 对 3 轮"),
+    ("CMP-05", "QWEN-E3-T1-A10", "QWEN-E3-T1", "fold0", "Qwen SFT 3 轮配方换到 A10（执行环境迁移复现）"),
 ]
 
 IGNORE_FOR_CONTROL = {"lib.transformers", "lib.peft", "lib.accelerate", "lib.datasets"}  # 库版本单独列，不算训练变量
@@ -159,6 +162,7 @@ CARD_KEYS = ("gpu", "dtype")  # 卡和精度分开记录、分开比较
 UNKNOWN = (None, "未记录", "None")
 NOTES = {  # 人工补充的核对结果，原样写进比较表
     "CMP-04": "两边零样本的 1,448 个输入概率逐条相同（推理一致）；训练过程是否等价没有验证",
+    "CMP-05": "训练变量相同，执行环境不同（A10 bf16、torch 2.6 对 T4 fp16、torch 2.11）；代码版本 sft-4 对 sft-3（v4 加了 PAI-DSW 的支持、ModelScope 下载和权重包）。零样本 1,448 个输入里 16 个最大概率的类不同；三个种子各有 4–5% 的输入最大概率的类不同",
 }
 
 

@@ -125,7 +125,8 @@ Coursera-ML-AndrewNg-Notes-master/   课程资料
   - 西语、巴语 SFT（Kaggle T4，3 轮，fingerprint 和英语相同，结果在 `metrics/qwen_sft/track2|3/`，Claude 复算一致）：dev 对称化 WF1 .833 / .745（mDeBERTa 第一组 .758 / .723，训练数据量不同），fold 0 .837 / .729；巴语 seed 44 选在第 1 轮、dev .711。两种语言还没有 mDeBERTa fold 0 折外结果，做不了同数据比较。
   - 跨语言 SFT（阿里云 A10，bf16，`dico_qwen_sft-4`，代码是 `d9490c3`；结果在 `metrics/qwen_sft_a10/`，Claude 复算一致）：dev 对称化 WF1 .762（mDeBERTa 第一组 .745），fold 0 .766；选中第 3 / 2 / 1 轮。A10 每步 2.4 秒，每个种子约 107 分钟，共约 5.5 小时。LoRA 权重包在 Pan-Yan-0 那里。
   - SFT 最多 5 轮（腾讯 Cloud Studio T4，3 个种子，结果在 `metrics/qwen_sft_e5/`，Claude 复算一致）：选中第 3 / 5 / 4 轮；fold 0 sym WF1 同种子差 −.011 / −.003 / +.006，平均 −.003 [−.017, +.011]，按事先的规则不通过，工作配方仍是 3 轮。零样本概率和 Kaggle 那次逐条相同（推理一致，训练等价没验证）。
-  - 排期（10-22）：A10 上的英语 3 轮基线（R3，`dico_qwen_sft_a10_t1.py`，结果目录 `/mnt/workspace/dico_qwen_sft_t1`）10-22 中午开跑，是之后 Qwen 技巧的同环境对照；老师导出在 Kaggle 跑（权重在那次输出里）；蒸馏学生、mDeBERTa 上的 R-Drop / SCL / MoCo、西语 / 巴语 / 跨语言同数据的 mDeBERTa 基线、之后 Qwen 上的技巧，主要放阿里云 A10（月底前约 28 个 A10 小时，月底作废）。Qwen 技巧放 A10 时，先在 A10 上重跑 3 轮基线作对照，不和 T4 的结果直接相减。
+  - A10 上的英语 3 轮基线（R3，`dico_qwen_sft-4`，结果在 `metrics/qwen_sft_a10_t1/`，Claude 复算一致）：fold 0 sym WF1 .857，dev .836；和 Kaggle T4 那次同种子差平均 −.003 [−.012, +.006]（执行环境迁移复现，不说明等价）。每步 2.35 秒，每个种子约 18 分钟。之后 Qwen 技巧都和它配对。阿里云连 GitHub 很慢，官方仓库用 Pan-Yan-0 上传的 zip；模型从 ModelScope 下载只要半分钟。
+  - 排期（10-22）：老师导出在 Kaggle 跑（权重在那次输出里）；蒸馏学生、mDeBERTa 上的 R-Drop / SCL / MoCo、西语 / 巴语 / 跨语言同数据的 mDeBERTa 基线、之后 Qwen 上的技巧，主要放阿里云 A10（月底前约 28 个 A10 小时，月底作废）。Qwen 技巧放 A10 时，先在 A10 上重跑 3 轮基线作对照，不和 T4 的结果直接相减。
   - 算力分配：Kaggle（每周额度，能后台跑）只留给超过一小时的 Qwen 任务；Colab、腾讯 Cloud Studio 要开着页面，白天跑 mDeBERTa 类短任务和 SMOKE；阿里云 A10 抢到才算。同一组比较不混用不同的卡（A10 / 4090 用 bf16，T4 用 fp16）。
 - **原理学习**：第一章（情感分类、反向传播）已通关，笔记在 `ML_note/原理笔记/`；第二章跟着 SemEval 实验学（`ML_note/原理笔记/NLI/`），已讲句对输入、SoftCons / HardCons、对称化、R-Drop 与 KL，下一课是方向版 R-Drop。
 - **待办**：GitHub 仓库首页默认显示 `master`，`note` 的最新内容在首页看不到。改法等 Pan-Yan-0 决定：
