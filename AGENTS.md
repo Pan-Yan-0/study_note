@@ -87,6 +87,7 @@ Coursera-ML-AndrewNg-Notes-master/   课程资料
   - Colab：免费 T4，要一直开着页面，单次最多 12 小时。
   - 腾讯 Cloud Studio：T4 可用。`ollama pull` 会被拦，改用 curl 从 `registry.ollama.ai/v2/library/<名字>/manifests|blobs` 下载，核对 SHA-256，manifest 按原字节保存。
   - 阿里云 PAI-DSW：常常抢不到卡（10-21 抢到过 A10）。免费试用每月 250 计算时，月末作废；A10 每小时耗 6.991 计算时，一个月约 35 小时。额度用完后实例转成按量付费、继续扣钱。**停止实例不能止住扣计算时，要释放实例才行**（Pan-Yan-0 10-22 实测）；闲置 3 小时的自动关机不一定触发。释放前先把结果包和权重包下载下来。释放后要重新装环境、下模型，但走内网很快，所以不必让实例一直开着。每次开实例按同一个流程，由一个 sh 脚本完成：装环境 → SMOKE（Pan-Yan-0 手动跑）→ 全量。全量是任务队列：彼此不依赖的实验一次全部放进去连续跑完，每个任务能续跑、已完成的跳过；需要前置结果的等下一次（Pan-Yan-0 10-22 定的）。连 Hugging Face 要设 `HF_ENDPOINT=https://hf-mirror.com`。pip 要用内网镜像 `http://mirrors.cloud.aliyuncs.com/pypi/simple/`（加 `--trusted-host`），公网的 mirrors.aliyun.com 只有约 200 kB/s。镜像自带 torch 2.3.1，太旧；在 `/mnt/workspace/venv` 建 venv 装依赖（`notebooks/dico_a10.sh setup`）。网页终端粘贴要单独开终端窗口。
+  - **本机网络（Pan-Yan-0 10-22 说的）**：和阿里云、腾讯云之间上传下载文件，要把本机网络切到国内线路，否则很慢；用 Claude、GPT、Kaggle 时又要切回去。所以每次开国内实例只安排两次传输：开始时上传一个打包好的 zip（脚本、代码、官方仓库的 zip、需要的输入如老师概率都在里面），结束时下载结果包和权重包。不要让他中途零散地传文件。
   - 本机显卡只有 4 GB。
   - T4 估时按约 10 TFLOPS 算。
 
