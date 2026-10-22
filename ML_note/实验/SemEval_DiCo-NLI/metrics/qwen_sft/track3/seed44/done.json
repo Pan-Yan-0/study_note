@@ -1,0 +1,95 @@
+{
+ "scores": {
+  "fold0": {
+   "plain": {
+    "weighted_f1": 0.7012147753329164,
+    "soft_cons": 0.694980694980695,
+    "hard_cons": 0.61003861003861
+   },
+   "sym": {
+    "weighted_f1": 0.7256650519856784,
+    "soft_cons": 0.8725868725868726,
+    "hard_cons": 0.7297297297297297
+   }
+  },
+  "dev": {
+   "plain": {
+    "weighted_f1": 0.6789297412503404,
+    "soft_cons": 0.6570397111913358,
+    "hard_cons": 0.5848375451263538
+   },
+   "sym": {
+    "weighted_f1": 0.7109957443508642,
+    "soft_cons": 0.8592057761732852,
+    "hard_cons": 0.7292418772563177
+   }
+  }
+ },
+ "stats": {
+  "inputs": 1448,
+  "scored_this_session": 1448,
+  "score_seconds_this_session": 190.1,
+  "mean_answer_mass": 0.9983,
+  "answer_mass_p05": 0.9975,
+  "answer_mass_below_0.5": 0,
+  "top_is_letter": 1.0
+ },
+ "history": [
+  {
+   "epoch": 1,
+   "train_loss": 1.490189159833468,
+   "val_weighted_f1": 0.734017671298466,
+   "minutes": 17.9
+  },
+  {
+   "epoch": 2,
+   "train_loss": 0.5855652604784284,
+   "val_weighted_f1": 0.7207470402227523,
+   "minutes": 17.9
+  },
+  {
+   "epoch": 3,
+   "train_loss": 0.2815791896411351,
+   "val_weighted_f1": 0.723532157589848,
+   "minutes": 17.8
+  }
+ ],
+ "best_epoch": 1,
+ "trainable_params": 33030144,
+ "steps": 411,
+ "steps_per_epoch": 137,
+ "train_minutes_last_session": 54.2,
+ "seconds_per_step": 7.76,
+ "resumed_from_epoch": 0,
+ "resume": {
+  "checkpoint": null,
+  "epoch": 0,
+  "files": [],
+  "skipped": []
+ },
+ "adapter_checks": [
+  {
+   "epoch": 1,
+   "tensors": 504,
+   "val_argmax_agreement": 1.0,
+   "val_max_prob_diff": 0.0,
+   "val_weighted_f1": 0.734017671298466,
+   "recorded_val_weighted_f1": 0.734017671298466
+  }
+ ],
+ "load_memory": {
+  "before_load": {
+   "allocated_gib": 0.02,
+   "reserved_gib": 0.11
+  },
+  "after_load": {
+   "allocated_gib": 7.51,
+   "reserved_gib": 7.53
+  }
+ },
+ "peak_memory_gib": 8.8,
+ "fit_rows": 2190,
+ "val_rows": 244,
+ "fit_tokens": 449390,
+ "minutes_last_session": 57.5
+}
