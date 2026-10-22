@@ -30,6 +30,8 @@
 
 ## 结果
 
+**[实验登记表](实验登记表.md)**：每次运行的全部变量、平台和分数，以及每个比较到底改了哪些变量（脚本自动列出，只差一个训练变量、平台也相同的才算控制变量对照）。下面各组的比较都以登记表为准。
+
 官方评分脚本；编码器都是 3 个种子的平均，括号里是样本标准差（除以 n − 1）。`metrics/encoders/summary.json` 里的 `*_std` 是除以 n 的总体标准差。
 
 ### 第四组：Qwen LoRA 指令微调（[notebooks/dico_qwen_sft.ipynb](notebooks/dico_qwen_sft.ipynb)）
@@ -423,6 +425,7 @@ e12 是"最多训练 12 轮、在内部验证上选最好的一轮"，不是固�
 - `code/qwen_sft_e5_compare.py`：第四组"最多 5 轮"和"3 轮"配方的同种子比较。
 - `notebooks/dico_qwen_sft_a10.py` / `.ipynb`：第四组的 A10 版（第四版），跑跨语言赛道。训练和评测同第三版；bf16 时 SMOKE 不再要求 `scaler.pt`；选中的 LoRA 权重另打一个权重包；认出 PAI-DSW，连不上 Hugging Face、GitHub 时改用镜像或本地 zip（还没运行）。
 - `notebooks/dico_qwen_teacher.py` / `.ipynb`：蒸馏第 1 步，载入第四组英语 3 轮的三个 LoRA 模型，给 fold 0 划分的训练部分导出四类概率（还没运行）。共用的函数从 `dico_qwen_sft.py` 原样拷贝。
+- `实验登记表.md`、`metrics/registry.json`、`code/registry.py`：实验登记表和生成它的脚本。
 - `code/qwen_sft_analysis.py`：第四组的复算和分析：从缓存重建预测并重新评分，和 mDeBERTa 在 fold 0 上按种子配对比较，两条蒸馏门槛的家族重抽样区间，每类 F1 和方向混淆。
 - `code/llm_instruct_analysis.py`：第三组的复算和分析：从缓存重建预测并重新评分、训练集上提示词的配对差值、cot 按结束原因分开的准确率、方向混淆。
 - `metrics/baselines/`：基线逐种子分数。

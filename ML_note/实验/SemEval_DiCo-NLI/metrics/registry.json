@@ -1,0 +1,1063 @@
+{
+ "runs": [
+  {
+   "id": "MDB-E6-OOF",
+   "desc": "mDeBERTa 最多 6 轮，英语 5 折折外（第二组）",
+   "track": 1,
+   "variables": {
+    "model": "microsoft/mdeberta-v3-base",
+    "model_revision": null,
+    "prompt": null,
+    "split": {
+     "folds": 5,
+     "fold_seed": 2027,
+     "inner_fraction": 0.1,
+     "holdout_fold": 0
+    },
+    "train_data": "track1 5 折折外：每折用其余 4 折去掉内层验证后训练（fold 0 那折是 2,190 行）",
+    "method": "全参数微调，[CLS] text1 [SEP] text2 [SEP]，交叉熵",
+    "inference": "plain 和 sym（F / B 互换后平均）",
+    "train": {
+     "max_epochs": 6,
+     "lr": 2e-05,
+     "batch": 32,
+     "max_len": 96,
+     "warmup": 0.1,
+     "weight_decay": 0.01
+    },
+    "selection": "内层验证原方向 WF1，同分取早的",
+    "lib": {
+     "transformers": "5.16.1"
+    }
+   },
+   "platform": {
+    "platform": "T4（平台名称未记录）",
+    "gpu": [
+     "Tesla T4"
+    ],
+    "dtype": [
+     "fp16 autocast"
+    ],
+    "torch": [
+     "2.11.0+cu128"
+    ]
+   },
+   "code": {
+    "version": "dico_diagnostics-1",
+    "code_sha256": [
+     "未记录"
+    ]
+   },
+   "metrics_dir": "metrics/diagnostics",
+   "seeds": [
+    "42",
+    "43",
+    "44"
+   ],
+   "scores_sym_wf1_mean": {
+    "oof": 0.7798,
+    "fold0": 0.7727
+   }
+  },
+  {
+   "id": "MDB-E12-OOF",
+   "desc": "mDeBERTa 最多 12 轮，英语 5 折折外（第二组）",
+   "track": 1,
+   "variables": {
+    "model": "microsoft/mdeberta-v3-base",
+    "model_revision": null,
+    "prompt": null,
+    "split": {
+     "folds": 5,
+     "fold_seed": 2027,
+     "inner_fraction": 0.1,
+     "holdout_fold": 0
+    },
+    "train_data": "track1 5 折折外：每折用其余 4 折去掉内层验证后训练（fold 0 那折是 2,190 行）",
+    "method": "全参数微调，[CLS] text1 [SEP] text2 [SEP]，交叉熵",
+    "inference": "plain 和 sym（F / B 互换后平均）",
+    "train": {
+     "max_epochs": 12,
+     "lr": 2e-05,
+     "batch": 32,
+     "max_len": 96,
+     "warmup": 0.1,
+     "weight_decay": 0.01
+    },
+    "selection": "内层验证原方向 WF1，同分取早的",
+    "lib": {
+     "transformers": "5.16.1"
+    }
+   },
+   "platform": {
+    "platform": "T4（平台名称未记录）",
+    "gpu": [
+     "Tesla T4"
+    ],
+    "dtype": [
+     "fp16 autocast"
+    ],
+    "torch": [
+     "2.11.0+cu128"
+    ]
+   },
+   "code": {
+    "version": "dico_diagnostics-1",
+    "code_sha256": [
+     "未记录"
+    ]
+   },
+   "metrics_dir": "metrics/diagnostics",
+   "seeds": [
+    "42",
+    "43",
+    "44"
+   ],
+   "scores_sym_wf1_mean": {
+    "oof": 0.8081,
+    "fold0": 0.7928
+   }
+  },
+  {
+   "id": "MDB-E12-DEV",
+   "desc": "mDeBERTa 最多 12 轮，全训练集的 dev 模型（第二组）",
+   "track": 1,
+   "variables": {
+    "model": "microsoft/mdeberta-v3-base",
+    "model_revision": null,
+    "prompt": null,
+    "split": {
+     "folds": 5,
+     "fold_seed": 2027,
+     "inner_fraction": 0.1,
+     "holdout_fold": 0
+    },
+    "train_data": "track1 全训练集去掉内层验证（2,737 行）",
+    "method": "全参数微调，[CLS] text1 [SEP] text2 [SEP]，交叉熵",
+    "inference": "plain 和 sym（F / B 互换后平均）",
+    "train": {
+     "max_epochs": 12,
+     "lr": 2e-05,
+     "batch": 32,
+     "max_len": 96,
+     "warmup": 0.1,
+     "weight_decay": 0.01
+    },
+    "selection": "内层验证原方向 WF1，同分取早的",
+    "lib": {
+     "transformers": "5.16.1"
+    }
+   },
+   "platform": {
+    "platform": "T4（平台名称未记录）",
+    "gpu": [
+     "Tesla T4"
+    ],
+    "dtype": [
+     "fp16 autocast"
+    ],
+    "torch": [
+     "2.11.0+cu128"
+    ]
+   },
+   "code": {
+    "version": "dico_diagnostics-1",
+    "code_sha256": [
+     "未记录"
+    ]
+   },
+   "metrics_dir": "metrics/diagnostics",
+   "seeds": [
+    "42",
+    "43",
+    "44"
+   ],
+   "scores_sym_wf1_mean": {
+    "dev": 0.8273
+   }
+  },
+  {
+   "id": "QWEN-ZS-T1",
+   "desc": "Qwen 零样本，英语",
+   "track": 1,
+   "variables": {
+    "model": "Qwen/Qwen3-4B-Instruct-2507",
+    "model_revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+    "prompt": "f12296445e22",
+    "split": {
+     "folds": 5,
+     "fold_seed": 2027,
+     "inner_fraction": 0.1,
+     "holdout_fold": 0
+    },
+    "train_data": "不训练",
+    "method": "零样本，读 A–D 的概率",
+    "inference": "plain 和 sym（F / B 互换后平均）",
+    "lib": {
+     "transformers": "5.19.0",
+     "peft": "0.21.2",
+     "accelerate": "1.15.0",
+     "datasets": "5.1.0"
+    }
+   },
+   "platform": {
+    "platform": "Kaggle",
+    "gpu": [
+     "Tesla T4"
+    ],
+    "dtype": [
+     "torch.float16"
+    ],
+    "torch": [
+     "2.11.0+cu128"
+    ]
+   },
+   "code": {
+    "version": "dico_qwen_sft-3",
+    "code_sha256": [
+     "2863de05aa75"
+    ]
+   },
+   "metrics_dir": "metrics/qwen_sft",
+   "seeds": [
+    "-"
+   ],
+   "scores_sym_wf1_mean": {
+    "fold0": 0.5897,
+    "dev": 0.5843
+   }
+  },
+  {
+   "id": "QWEN-E3-T1",
+   "desc": "Qwen SFT 最多 3 轮，英语",
+   "track": 1,
+   "variables": {
+    "model": "Qwen/Qwen3-4B-Instruct-2507",
+    "model_revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+    "prompt": "f12296445e22",
+    "split": {
+     "folds": 5,
+     "fold_seed": 2027,
+     "inner_fraction": 0.1,
+     "holdout_fold": 0
+    },
+    "train_data": "track1 fold 0 划分的训练部分",
+    "method": "LoRA SFT，只算答案字母的交叉熵",
+    "inference": "plain 和 sym（F / B 互换后平均）",
+    "lora": {
+     "r": 16,
+     "alpha": 32,
+     "dropout": 0.0,
+     "targets": [
+      "q_proj",
+      "k_proj",
+      "v_proj",
+      "o_proj",
+      "gate_proj",
+      "up_proj",
+      "down_proj"
+     ]
+    },
+    "train": {
+     "max_epochs": 3,
+     "batch": 8,
+     "grad_acc": 2,
+     "lr": 0.0001,
+     "warmup": 0.05,
+     "weight_decay": 0.01
+    },
+    "selection": "内层验证原方向 WF1，同分取早的",
+    "lib": {
+     "transformers": "5.19.0",
+     "peft": "0.21.2",
+     "accelerate": "1.15.0",
+     "datasets": "5.1.0"
+    }
+   },
+   "platform": {
+    "platform": "Kaggle",
+    "gpu": [
+     "Tesla T4"
+    ],
+    "dtype": [
+     "torch.float16"
+    ],
+    "torch": [
+     "2.11.0+cu128"
+    ]
+   },
+   "code": {
+    "version": "dico_qwen_sft-3",
+    "code_sha256": [
+     "2863de05aa75"
+    ]
+   },
+   "metrics_dir": "metrics/qwen_sft",
+   "seeds": [
+    "42",
+    "43",
+    "44"
+   ],
+   "scores_sym_wf1_mean": {
+    "fold0": 0.8597,
+    "dev": 0.8347
+   }
+  },
+  {
+   "id": "QWEN-E5-T1",
+   "desc": "Qwen SFT 最多 5 轮，英语",
+   "track": 1,
+   "variables": {
+    "model": "Qwen/Qwen3-4B-Instruct-2507",
+    "model_revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+    "prompt": "f12296445e22",
+    "split": {
+     "folds": 5,
+     "fold_seed": 2027,
+     "inner_fraction": 0.1,
+     "holdout_fold": 0
+    },
+    "train_data": "track1 fold 0 划分的训练部分",
+    "method": "LoRA SFT，只算答案字母的交叉熵",
+    "inference": "plain 和 sym（F / B 互换后平均）",
+    "lora": {
+     "r": 16,
+     "alpha": 32,
+     "dropout": 0.0,
+     "targets": [
+      "q_proj",
+      "k_proj",
+      "v_proj",
+      "o_proj",
+      "gate_proj",
+      "up_proj",
+      "down_proj"
+     ]
+    },
+    "train": {
+     "max_epochs": 5,
+     "batch": 8,
+     "grad_acc": 2,
+     "lr": 0.0001,
+     "warmup": 0.05,
+     "weight_decay": 0.01
+    },
+    "selection": "内层验证原方向 WF1，同分取早的",
+    "lib": {
+     "transformers": "5.19.0",
+     "peft": "0.21.2",
+     "accelerate": "1.15.0",
+     "datasets": "5.1.0"
+    }
+   },
+   "platform": {
+    "platform": "腾讯 Cloud Studio",
+    "gpu": [
+     "Tesla T4"
+    ],
+    "dtype": [
+     "torch.float16"
+    ],
+    "torch": [
+     "2.10.0+cu128"
+    ]
+   },
+   "code": {
+    "version": "dico_qwen_sft-3",
+    "code_sha256": [
+     "2863de05aa75"
+    ]
+   },
+   "metrics_dir": "metrics/qwen_sft_e5",
+   "seeds": [
+    "42"
+   ],
+   "scores_sym_wf1_mean": {
+    "fold0": 0.861,
+    "dev": 0.8331
+   }
+  },
+  {
+   "id": "QWEN-ZS-T2",
+   "desc": "Qwen 零样本，西班牙语",
+   "track": 2,
+   "variables": {
+    "model": "Qwen/Qwen3-4B-Instruct-2507",
+    "model_revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+    "prompt": "f12296445e22",
+    "split": {
+     "folds": 5,
+     "fold_seed": 2027,
+     "inner_fraction": 0.1,
+     "holdout_fold": 0
+    },
+    "train_data": "不训练",
+    "method": "零样本，读 A–D 的概率",
+    "inference": "plain 和 sym（F / B 互换后平均）",
+    "lib": {
+     "transformers": "5.19.0",
+     "peft": "0.21.2",
+     "accelerate": "1.15.0",
+     "datasets": "5.1.0"
+    }
+   },
+   "platform": {
+    "platform": "Kaggle",
+    "gpu": [
+     "Tesla T4"
+    ],
+    "dtype": [
+     "torch.float16"
+    ],
+    "torch": [
+     "2.11.0+cu128"
+    ]
+   },
+   "code": {
+    "version": "dico_qwen_sft-3",
+    "code_sha256": [
+     "2863de05aa75"
+    ]
+   },
+   "metrics_dir": "metrics/qwen_sft",
+   "seeds": [
+    "-"
+   ],
+   "scores_sym_wf1_mean": {
+    "fold0": 0.6003,
+    "dev": 0.5197
+   }
+  },
+  {
+   "id": "QWEN-E3-T2",
+   "desc": "Qwen SFT 最多 3 轮，西班牙语",
+   "track": 2,
+   "variables": {
+    "model": "Qwen/Qwen3-4B-Instruct-2507",
+    "model_revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+    "prompt": "f12296445e22",
+    "split": {
+     "folds": 5,
+     "fold_seed": 2027,
+     "inner_fraction": 0.1,
+     "holdout_fold": 0
+    },
+    "train_data": "track2 fold 0 划分的训练部分",
+    "method": "LoRA SFT，只算答案字母的交叉熵",
+    "inference": "plain 和 sym（F / B 互换后平均）",
+    "lora": {
+     "r": 16,
+     "alpha": 32,
+     "dropout": 0.0,
+     "targets": [
+      "q_proj",
+      "k_proj",
+      "v_proj",
+      "o_proj",
+      "gate_proj",
+      "up_proj",
+      "down_proj"
+     ]
+    },
+    "train": {
+     "max_epochs": 3,
+     "batch": 8,
+     "grad_acc": 2,
+     "lr": 0.0001,
+     "warmup": 0.05,
+     "weight_decay": 0.01
+    },
+    "selection": "内层验证原方向 WF1，同分取早的",
+    "lib": {
+     "transformers": "5.19.0",
+     "peft": "0.21.2",
+     "accelerate": "1.15.0",
+     "datasets": "5.1.0"
+    }
+   },
+   "platform": {
+    "platform": "Kaggle",
+    "gpu": [
+     "Tesla T4"
+    ],
+    "dtype": [
+     "torch.float16"
+    ],
+    "torch": [
+     "2.11.0+cu128"
+    ]
+   },
+   "code": {
+    "version": "dico_qwen_sft-3",
+    "code_sha256": [
+     "2863de05aa75"
+    ]
+   },
+   "metrics_dir": "metrics/qwen_sft",
+   "seeds": [
+    "42",
+    "43",
+    "44"
+   ],
+   "scores_sym_wf1_mean": {
+    "fold0": 0.8369,
+    "dev": 0.8326
+   }
+  },
+  {
+   "id": "QWEN-ZS-T3",
+   "desc": "Qwen 零样本，巴斯克语",
+   "track": 3,
+   "variables": {
+    "model": "Qwen/Qwen3-4B-Instruct-2507",
+    "model_revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+    "prompt": "f12296445e22",
+    "split": {
+     "folds": 5,
+     "fold_seed": 2027,
+     "inner_fraction": 0.1,
+     "holdout_fold": 0
+    },
+    "train_data": "不训练",
+    "method": "零样本，读 A–D 的概率",
+    "inference": "plain 和 sym（F / B 互换后平均）",
+    "lib": {
+     "transformers": "5.19.0",
+     "peft": "0.21.2",
+     "accelerate": "1.15.0",
+     "datasets": "5.1.0"
+    }
+   },
+   "platform": {
+    "platform": "Kaggle",
+    "gpu": [
+     "Tesla T4"
+    ],
+    "dtype": [
+     "torch.float16"
+    ],
+    "torch": [
+     "2.11.0+cu128"
+    ]
+   },
+   "code": {
+    "version": "dico_qwen_sft-3",
+    "code_sha256": [
+     "2863de05aa75"
+    ]
+   },
+   "metrics_dir": "metrics/qwen_sft",
+   "seeds": [
+    "-"
+   ],
+   "scores_sym_wf1_mean": {
+    "fold0": 0.381,
+    "dev": 0.361
+   }
+  },
+  {
+   "id": "QWEN-E3-T3",
+   "desc": "Qwen SFT 最多 3 轮，巴斯克语",
+   "track": 3,
+   "variables": {
+    "model": "Qwen/Qwen3-4B-Instruct-2507",
+    "model_revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+    "prompt": "f12296445e22",
+    "split": {
+     "folds": 5,
+     "fold_seed": 2027,
+     "inner_fraction": 0.1,
+     "holdout_fold": 0
+    },
+    "train_data": "track3 fold 0 划分的训练部分",
+    "method": "LoRA SFT，只算答案字母的交叉熵",
+    "inference": "plain 和 sym（F / B 互换后平均）",
+    "lora": {
+     "r": 16,
+     "alpha": 32,
+     "dropout": 0.0,
+     "targets": [
+      "q_proj",
+      "k_proj",
+      "v_proj",
+      "o_proj",
+      "gate_proj",
+      "up_proj",
+      "down_proj"
+     ]
+    },
+    "train": {
+     "max_epochs": 3,
+     "batch": 8,
+     "grad_acc": 2,
+     "lr": 0.0001,
+     "warmup": 0.05,
+     "weight_decay": 0.01
+    },
+    "selection": "内层验证原方向 WF1，同分取早的",
+    "lib": {
+     "transformers": "5.19.0",
+     "peft": "0.21.2",
+     "accelerate": "1.15.0",
+     "datasets": "5.1.0"
+    }
+   },
+   "platform": {
+    "platform": "Kaggle",
+    "gpu": [
+     "Tesla T4"
+    ],
+    "dtype": [
+     "torch.float16"
+    ],
+    "torch": [
+     "2.11.0+cu128"
+    ]
+   },
+   "code": {
+    "version": "dico_qwen_sft-3",
+    "code_sha256": [
+     "2863de05aa75"
+    ]
+   },
+   "metrics_dir": "metrics/qwen_sft",
+   "seeds": [
+    "42",
+    "43",
+    "44"
+   ],
+   "scores_sym_wf1_mean": {
+    "fold0": 0.7292,
+    "dev": 0.7447
+   }
+  },
+  {
+   "id": "QWEN-ZS-T4",
+   "desc": "Qwen 零样本，跨语言",
+   "track": 4,
+   "variables": {
+    "model": "Qwen/Qwen3-4B-Instruct-2507",
+    "model_revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+    "prompt": "f12296445e22",
+    "split": {
+     "folds": 5,
+     "fold_seed": 2027,
+     "inner_fraction": 0.1,
+     "holdout_fold": 0
+    },
+    "train_data": "不训练",
+    "method": "零样本，读 A–D 的概率",
+    "inference": "plain 和 sym（F / B 互换后平均）",
+    "lib": {
+     "transformers": "5.19.0",
+     "peft": "0.21.2",
+     "accelerate": "1.15.0",
+     "datasets": "5.1.0"
+    }
+   },
+   "platform": {
+    "platform": "阿里云 PAI-DSW",
+    "gpu": [
+     "NVIDIA A10"
+    ],
+    "dtype": [
+     "torch.bfloat16"
+    ],
+    "torch": [
+     "2.6.0+cu124"
+    ]
+   },
+   "code": {
+    "version": "dico_qwen_sft-4",
+    "code_sha256": [
+     "54c5a6825169"
+    ]
+   },
+   "metrics_dir": "metrics/qwen_sft_a10",
+   "seeds": [
+    "-"
+   ],
+   "scores_sym_wf1_mean": {
+    "fold0": 0.3027,
+    "dev": 0.314
+   }
+  },
+  {
+   "id": "QWEN-E3-T4",
+   "desc": "Qwen SFT 最多 3 轮，跨语言",
+   "track": 4,
+   "variables": {
+    "model": "Qwen/Qwen3-4B-Instruct-2507",
+    "model_revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+    "prompt": "f12296445e22",
+    "split": {
+     "folds": 5,
+     "fold_seed": 2027,
+     "inner_fraction": 0.1,
+     "holdout_fold": 0
+    },
+    "train_data": "track4 fold 0 划分的训练部分",
+    "method": "LoRA SFT，只算答案字母的交叉熵",
+    "inference": "plain 和 sym（F / B 互换后平均）",
+    "lora": {
+     "r": 16,
+     "alpha": 32,
+     "dropout": 0.0,
+     "targets": [
+      "q_proj",
+      "k_proj",
+      "v_proj",
+      "o_proj",
+      "gate_proj",
+      "up_proj",
+      "down_proj"
+     ]
+    },
+    "train": {
+     "max_epochs": 3,
+     "batch": 8,
+     "grad_acc": 2,
+     "lr": 0.0001,
+     "warmup": 0.05,
+     "weight_decay": 0.01
+    },
+    "selection": "内层验证原方向 WF1，同分取早的",
+    "lib": {
+     "transformers": "5.19.0",
+     "peft": "0.21.2",
+     "accelerate": "1.15.0",
+     "datasets": "5.1.0"
+    }
+   },
+   "platform": {
+    "platform": "阿里云 PAI-DSW",
+    "gpu": [
+     "NVIDIA A10"
+    ],
+    "dtype": [
+     "torch.bfloat16"
+    ],
+    "torch": [
+     "2.6.0+cu124"
+    ]
+   },
+   "code": {
+    "version": "dico_qwen_sft-4",
+    "code_sha256": [
+     "54c5a6825169"
+    ]
+   },
+   "metrics_dir": "metrics/qwen_sft_a10",
+   "seeds": [
+    "42",
+    "43",
+    "44"
+   ],
+   "scores_sym_wf1_mean": {
+    "fold0": 0.7661,
+    "dev": 0.762
+   }
+  }
+ ],
+ "comparisons": [
+  {
+   "id": "CMP-01",
+   "new": "MDB-E12-OOF",
+   "old": "MDB-E6-OOF",
+   "eval": "oof",
+   "purpose": "mDeBERTa 训练轮数上限：12 轮 对 6 轮（第二组定配方用的比较）",
+   "kind": "控制变量对照",
+   "changed": {
+    "train.max_epochs": [
+     12,
+     6
+    ]
+   },
+   "lib_diff": {},
+   "platform_diff": {},
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 3042,
+    "families": 1725,
+    "per_seed": {
+     "42": 0.0277,
+     "43": 0.0426,
+     "44": 0.0148
+    },
+    "mean": 0.0284,
+    "ci95": [
+     0.0183,
+     0.0387
+    ]
+   }
+  },
+  {
+   "id": "CMP-02",
+   "new": "QWEN-E3-T1",
+   "old": "QWEN-ZS-T1",
+   "eval": "fold0",
+   "purpose": "Qwen 微调 对 不微调",
+   "kind": "多变量（系统对比，不能归因到单个变量）",
+   "changed": {
+    "lora.alpha": [
+     32,
+     null
+    ],
+    "lora.dropout": [
+     0.0,
+     null
+    ],
+    "lora.r": [
+     16,
+     null
+    ],
+    "lora.targets": [
+     [
+      "q_proj",
+      "k_proj",
+      "v_proj",
+      "o_proj",
+      "gate_proj",
+      "up_proj",
+      "down_proj"
+     ],
+     null
+    ],
+    "method": [
+     "LoRA SFT，只算答案字母的交叉熵",
+     "零样本，读 A–D 的概率"
+    ],
+    "selection": [
+     "内层验证原方向 WF1，同分取早的",
+     null
+    ],
+    "train.batch": [
+     8,
+     null
+    ],
+    "train.grad_acc": [
+     2,
+     null
+    ],
+    "train.lr": [
+     0.0001,
+     null
+    ],
+    "train.max_epochs": [
+     3,
+     null
+    ],
+    "train.warmup": [
+     0.05,
+     null
+    ],
+    "train.weight_decay": [
+     0.01,
+     null
+    ],
+    "train_data": [
+     "track1 fold 0 划分的训练部分",
+     "不训练"
+    ]
+   },
+   "lib_diff": {},
+   "platform_diff": {},
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 608,
+    "families": 343,
+    "per_seed": {
+     "42": 0.2827,
+     "43": 0.2593,
+     "44": 0.268
+    },
+    "mean": 0.27,
+    "ci95": [
+     0.216,
+     0.3249
+    ]
+   }
+  },
+  {
+   "id": "CMP-03",
+   "new": "QWEN-E3-T1",
+   "old": "MDB-E12-OOF",
+   "eval": "fold0",
+   "purpose": "Qwen SFT 对 mDeBERTa（同训练 / 验证 / 留出数据；系统对比，模型不同）",
+   "kind": "多变量（系统对比，不能归因到单个变量）",
+   "changed": {
+    "lora.alpha": [
+     32,
+     null
+    ],
+    "lora.dropout": [
+     0.0,
+     null
+    ],
+    "lora.r": [
+     16,
+     null
+    ],
+    "lora.targets": [
+     [
+      "q_proj",
+      "k_proj",
+      "v_proj",
+      "o_proj",
+      "gate_proj",
+      "up_proj",
+      "down_proj"
+     ],
+     null
+    ],
+    "method": [
+     "LoRA SFT，只算答案字母的交叉熵",
+     "全参数微调，[CLS] text1 [SEP] text2 [SEP]，交叉熵"
+    ],
+    "model": [
+     "Qwen/Qwen3-4B-Instruct-2507",
+     "microsoft/mdeberta-v3-base"
+    ],
+    "model_revision": [
+     "cdbee75f17c01a7cc42f958dc650907174af0554",
+     null
+    ],
+    "prompt": [
+     "f12296445e22",
+     null
+    ],
+    "train.batch": [
+     8,
+     32
+    ],
+    "train.grad_acc": [
+     2,
+     null
+    ],
+    "train.lr": [
+     0.0001,
+     2e-05
+    ],
+    "train.max_epochs": [
+     3,
+     12
+    ],
+    "train.max_len": [
+     null,
+     96
+    ],
+    "train.warmup": [
+     0.05,
+     0.1
+    ],
+    "train_data": [
+     "track1 fold 0 划分的训练部分",
+     "track1 5 折折外：每折用其余 4 折去掉内层验证后训练（fold 0 那折是 2,190 行）"
+    ]
+   },
+   "lib_diff": {
+    "lib.accelerate": [
+     "1.15.0",
+     null
+    ],
+    "lib.datasets": [
+     "5.1.0",
+     null
+    ],
+    "lib.peft": [
+     "0.21.2",
+     null
+    ],
+    "lib.transformers": [
+     "5.19.0",
+     "5.16.1"
+    ]
+   },
+   "platform_diff": {
+    "dtype": [
+     [
+      "torch.float16"
+     ],
+     [
+      "fp16 autocast"
+     ]
+    ],
+    "platform": [
+     "Kaggle",
+     "T4（平台名称未记录）"
+    ]
+   },
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 608,
+    "families": 343,
+    "per_seed": {
+     "42": 0.0696,
+     "43": 0.0525,
+     "44": 0.0784
+    },
+    "mean": 0.0668,
+    "ci95": [
+     0.0331,
+     0.1041
+    ]
+   }
+  },
+  {
+   "id": "CMP-04",
+   "new": "QWEN-E5-T1",
+   "old": "QWEN-E3-T1",
+   "eval": "fold0",
+   "purpose": "Qwen SFT 轮数上限：5 轮 对 3 轮",
+   "kind": "单变量，但平台或库版本不同",
+   "changed": {
+    "train.max_epochs": [
+     5,
+     3
+    ]
+   },
+   "lib_diff": {},
+   "platform_diff": {
+    "platform": [
+     "腾讯 Cloud Studio",
+     "Kaggle"
+    ],
+    "torch": [
+     [
+      "2.10.0+cu128"
+     ],
+     [
+      "2.11.0+cu128"
+     ]
+    ]
+   },
+   "result": {
+    "seeds": [
+     "42"
+    ],
+    "rows": 608,
+    "families": 343,
+    "per_seed": {
+     "42": -0.0114
+    },
+    "mean": -0.0114,
+    "ci95": [
+     -0.0352,
+     0.0115
+    ]
+   }
+  }
+ ]
+}
