@@ -305,7 +305,7 @@
   },
   {
    "id": "QWEN-E5-T1",
-   "desc": "Qwen SFT 最多 5 轮，英语（计划 3 个种子，43、44 未完成）",
+   "desc": "Qwen SFT 最多 5 轮，英语",
    "track": 1,
    "variables": {
     "model": "Qwen/Qwen3-4B-Instruct-2507",
@@ -370,11 +370,13 @@
    },
    "metrics_dir": "metrics/qwen_sft_e5",
    "seeds": [
-    "42"
+    "42",
+    "43",
+    "44"
    ],
    "scores_sym_wf1_mean": {
-    "fold0": 0.861,
-    "dev": 0.8331
+    "fold0": 0.8569,
+    "dev": 0.8339
    }
   },
   {
@@ -770,6 +772,7 @@
    "environment": "一致；信息不全",
    "unknown": [
     "model_revision",
+    "platform.platform",
     "code_sha256"
    ],
    "note": "",
@@ -905,6 +908,7 @@
    "environment": "卡或精度不同；信息不全",
    "unknown": [
     "model_revision",
+    "platform.platform",
     "code_sha256"
    ],
    "note": "",
@@ -1059,17 +1063,21 @@
    },
    "result": {
     "seeds": [
-     "42"
+     "42",
+     "43",
+     "44"
     ],
     "rows": 608,
     "families": 343,
     "per_seed": {
-     "42": -0.0114
+     "42": -0.0114,
+     "43": -0.0025,
+     "44": 0.0057
     },
-    "mean": -0.0114,
+    "mean": -0.0027,
     "ci95": [
-     -0.0352,
-     0.0115
+     -0.0166,
+     0.0109
     ]
    }
   }

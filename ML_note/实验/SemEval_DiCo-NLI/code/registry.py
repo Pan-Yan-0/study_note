@@ -137,7 +137,7 @@ RUNS = [
     ("MDB-E12-DEV", lambda: mdeberta_run("MDB-E12-DEV", "e12", "dev", "mDeBERTa 最多 12 轮，全训练集的 dev 模型（第二组）")),
     ("QWEN-ZS-T1", lambda: qwen_run("QWEN-ZS-T1", "qwen_sft", 1, "zero_shot", "Kaggle", "Qwen 零样本，英语")),
     ("QWEN-E3-T1", lambda: qwen_run("QWEN-E3-T1", "qwen_sft", 1, "sft", "Kaggle", "Qwen SFT 最多 3 轮，英语")),
-    ("QWEN-E5-T1", lambda: qwen_run("QWEN-E5-T1", "qwen_sft_e5", 1, "sft", "腾讯 Cloud Studio", "Qwen SFT 最多 5 轮，英语（计划 3 个种子，43、44 未完成）")),
+    ("QWEN-E5-T1", lambda: qwen_run("QWEN-E5-T1", "qwen_sft_e5", 1, "sft", "腾讯 Cloud Studio", "Qwen SFT 最多 5 轮，英语")),
     ("QWEN-ZS-T2", lambda: qwen_run("QWEN-ZS-T2", "qwen_sft", 2, "zero_shot", "Kaggle", "Qwen 零样本，西班牙语")),
     ("QWEN-E3-T2", lambda: qwen_run("QWEN-E3-T2", "qwen_sft", 2, "sft", "Kaggle", "Qwen SFT 最多 3 轮，西班牙语")),
     ("QWEN-ZS-T3", lambda: qwen_run("QWEN-ZS-T3", "qwen_sft", 3, "zero_shot", "Kaggle", "Qwen 零样本，巴斯克语")),

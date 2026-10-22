@@ -77,7 +77,7 @@ Coursera-ML-AndrewNg-Notes-master/   课程资料
   - 结果包（Pan-Yan-0 定的原则）：之后需要、或者可能需要的都放进 zip，用不上的不放。比如 Qwen SFT 选中那一轮的 LoRA 权重（之后蒸馏、换平台都可能要用）单独打一个权重包，不混进发给 Claude 分析的结果包；训练中途的检查点、底座模型这类可以重新得到的不放。
 - **控制变量（Pan-Yan-0 10-22 定的）**：每次运行都要能和别的运行比，说清改了哪个变量。
   - SemEval 的每次运行都登记进 `ML_note/实验/SemEval_DiCo-NLI/实验登记表.md`，表由 `code/registry.py` 从指纹、运行记录和逐条预测自动生成，不手改；新运行在 `RUNS` 里加一项，新比较在 `COMPARISONS` 里加一项。
-  - 脚本自动列出两边不同的变量：只差一个训练变量、卡（和随卡定的精度）也相同的，才算"控制变量对照"，写进结论的比较必须是这一类。平台名称、torch 和库版本只标注，不影响判定（Pan-Yan-0 10-22 定的，等全部实验跑完再考虑要不要收紧）。卡不同时，在同一种卡上补跑对照。
+  - 脚本自动列出两边记录了的变量差别（没记录的列为未知，不当作相同），比较分两列归类：设计（重复运行 / 单一计划改动 / 系统比较）和执行环境（一致 / 同卡同精度、软件或平台不同 / 卡或精度不同 / 信息不全）。平台名称、torch 和库版本只标注、不要求补跑（Pan-Yan-0 10-22 定的），但结论里要写明环境差别；把差别归因到某个变量，要求是单一计划改动；卡或精度不同时，在同一环境里补跑对照再归因。系统比较可以写进结论，只说在给定设置下哪个更好（GPT 10-22 审阅后的写法）。
   - 新写的 notebook：指纹里写全所有训练变量（包括损失、dropout、正则项的系数、训练数据），运行记录里写平台名称（Kaggle / Colab / 腾讯云 / PAI-DSW）、卡、精度和 torch 版本。
 - **实验指纹**：provider、模型、提示词、是否开思考、服务地址、max_tokens、temperature、数据哈希。续跑时这些必须和原来一致。
 - **max_tokens 包含思考内容**：开思考时容易写满被截断，没有答案的按错误计，并单独统计截断数。
@@ -124,8 +124,8 @@ Coursera-ML-AndrewNg-Notes-master/   课程资料
   - Pan-Yan-0 10-21 的决定：蒸馏要做；先试 SFT 训练更多轮（`MAX_EPOCHS = 5`，代码不改）值不值得，有结果再补种子验证；R-Drop、SCL、MoCo 三种都做，先在 mDeBERTa 上，再加到 Qwen 上。设计和判断规则见实验 README 的下一步计划（事先定好，GPT 审过一轮后修订）：mDeBERTa 上的方法先在 fold 0、3 个种子上比，冻结设置后再扩到 5 折；方向版 R-Drop 第一版只对 E / F / B；MoCo 先小试 m = 0.99 和 0.999；Qwen 上的 R-Drop 要先加 LoRA dropout，所以多一组只加 dropout 的对照。老师导出 notebook（`dico_qwen_teacher-3`，GPT 复核通过）绑定来源 fingerprint 的哈希和每份 LoRA 权重的哈希，权重在 Kaggle 那次 3 轮运行的输出里，那个版本不要删。
   - 西语、巴语 SFT（Kaggle T4，3 轮，fingerprint 和英语相同，结果在 `metrics/qwen_sft/track2|3/`，Claude 复算一致）：dev 对称化 WF1 .833 / .745（mDeBERTa 第一组 .758 / .723，训练数据量不同），fold 0 .837 / .729；巴语 seed 44 选在第 1 轮、dev .711。两种语言还没有 mDeBERTa fold 0 折外结果，做不了同数据比较。
   - 跨语言 SFT（阿里云 A10，bf16，`dico_qwen_sft-4`，代码是 `d9490c3`；结果在 `metrics/qwen_sft_a10/`，Claude 复算一致）：dev 对称化 WF1 .762（mDeBERTa 第一组 .745），fold 0 .766；选中第 3 / 2 / 1 轮。A10 每步 2.4 秒，每个种子约 107 分钟，共约 5.5 小时。LoRA 权重包在 Pan-Yan-0 那里。
-  - SFT 最多 5 轮：10-21 在腾讯 Cloud Studio T4 上跑了 seed 42（结果在 `metrics/qwen_sft_e5/`）：内层验证第 3 轮最高、之后下降，仍选第 3 轮；fold 0 sym WF1 差 −.011 [−.035, +.011]，零样本和 Kaggle 那次逐条相同。只有一个种子，不下结论，工作配方仍是 3 轮；要不要补 43、44 由 Pan-Yan-0 定。
-  - 排期（10-22）：5 轮配方的 seed 43、44 在腾讯云 T4 上跑（3 轮的对照在 Kaggle T4，零样本概率两平台逐条相同）；老师导出在 Kaggle 跑（权重在那次输出里）；蒸馏学生、mDeBERTa 上的 R-Drop / SCL / MoCo、西语 / 巴语 / 跨语言同数据的 mDeBERTa 基线、之后 Qwen 上的技巧，主要放阿里云 A10（月底前约 28 个 A10 小时，月底作废）。Qwen 技巧放 A10 时，先在 A10 上重跑 3 轮基线作对照，不和 T4 的结果直接相减。
+  - SFT 最多 5 轮（腾讯 Cloud Studio T4，3 个种子，结果在 `metrics/qwen_sft_e5/`，Claude 复算一致）：选中第 3 / 5 / 4 轮；fold 0 sym WF1 同种子差 −.011 / −.003 / +.006，平均 −.003 [−.017, +.011]，按事先的规则不通过，工作配方仍是 3 轮。零样本概率和 Kaggle 那次逐条相同（推理一致，训练等价没验证）。
+  - 排期（10-22）：A10 上的英语 3 轮基线（R3，`dico_qwen_sft_a10_t1.py`，结果目录 `/mnt/workspace/dico_qwen_sft_t1`）10-22 中午开跑，是之后 Qwen 技巧的同环境对照；老师导出在 Kaggle 跑（权重在那次输出里）；蒸馏学生、mDeBERTa 上的 R-Drop / SCL / MoCo、西语 / 巴语 / 跨语言同数据的 mDeBERTa 基线、之后 Qwen 上的技巧，主要放阿里云 A10（月底前约 28 个 A10 小时，月底作废）。Qwen 技巧放 A10 时，先在 A10 上重跑 3 轮基线作对照，不和 T4 的结果直接相减。
   - 算力分配：Kaggle（每周额度，能后台跑）只留给超过一小时的 Qwen 任务；Colab、腾讯 Cloud Studio 要开着页面，白天跑 mDeBERTa 类短任务和 SMOKE；阿里云 A10 抢到才算。同一组比较不混用不同的卡（A10 / 4090 用 bf16，T4 用 fp16）。
 - **原理学习**：第一章（情感分类、反向传播）已通关，笔记在 `ML_note/原理笔记/`；第二章跟着 SemEval 实验学（`ML_note/原理笔记/NLI/`），已讲句对输入、SoftCons / HardCons、对称化、R-Drop 与 KL，下一课是方向版 R-Drop。
 - **待办**：GitHub 仓库首页默认显示 `master`，`note` 的最新内容在首页看不到。改法等 Pan-Yan-0 决定：
