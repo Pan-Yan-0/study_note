@@ -22,10 +22,14 @@
 # 2. 每次运行（赛道 × 方法 × 种子 × 折）是一个独立任务，有自己的 `task.json`（全部训练变量），跑完写 `done.json`；被打断的任务从头重跑（一次只要几分钟）。
 # 3. 模型快照：第一次运行时记下 Hugging Face 上 `main` 的 commit，之后固定用它。在 PAI-DSW 上先试 ModelScope，下载的文件和这个快照逐个核对，对不上或下载失败就改用 hf-mirror。
 # 4. fold 0 的模型同时评官方 dev（训练 2,190 行），可以和同样训练数据量的 Qwen 比较。
+# 5. 更新步：只在优化器真正更新了参数之后，才推进学习率日程、MoCo 的动量更新和入队；fp16 被梯度缩放跳过的更新记在 `skipped_updates` 里。第二组在 fp16 跳过更新时也推进了学习率（只影响 T4 上的运行，旧结果不因此作废）。
+# 6. 数值防护：编码器的前向在 autocast 里，归一化、相似度矩阵和各项损失都关掉 autocast 用 fp32 算。bf16 下出现非有限的损失、梯度或 logits 时，参数不会被更新，整次改用 fp32 重跑，`done.json` 的 `precision` 会写明"失败后重跑"；fp32 也失败就报错停下。NaN 不会经过 argmax 变成一个正常的标签。
+# 7. 每个任务的每次尝试（开始、完成、失败、被打断、发现上次没跑完）都记在 `attempts.jsonl`，`done.json` 里有这次的 `attempt_id`、之前尝试过几次、环境身份（平台、卡、精度、torch 等）和代码哈希。不同代码或不同精度跑出来的折，不拼成同一份折外预测。
+# 8. 蒸馏的老师：读入时逐项核对身份（导出版本、来源运行和代码、每个种子的 LoRA 权重在三个文件里一致并等于写死的值、`teacher.jsonl` 的 SHA256），拒绝重复的输入和无效的概率。
 #
 # **三个阶段**（`STAGE`，PAI-DSW 上由 sh 脚本传入）：
 #
-# - `smoke`：每种方法在小子集上跑 2 轮，模拟一次中断再续跑，用真实的 torch 核对各个损失的写法（和逐条循环的参考实现比），再用真实规模的数据测每种方法每步的秒数，打印第一、第二阶段的时间估计。约 10 分钟（另加下载模型）。
+# - `smoke`：用真实的 torch 核对各个损失（和逐条循环的参考实现比、autocast 里仍是 fp32）和非有限梯度时的更新逻辑；核对老师的身份；在单独的目录里模拟一次中断再续跑；每种方法在小子集上跑 2 轮；再用真实规模的数据和 12 轮的学习率日程测每种方法每步的秒数（MoCo 先填满队列）、载入和推理的用时，打印两个阶段的时间估计。可以重复运行。约 10–15 分钟（另加下载模型）。
 # - `stage1`：英语 fold 0、种子 42–44：C0、B2、C1、C2、C3、C4 的两个 m；再加西班牙语、巴斯克语、跨语言的 C0（fold 0，3 个种子）。
 # - `stage2`：英语 5 折、种子 42–46：C0、C1、C2、C3 和选定 m 的 C4（第一阶段已完成的会跳过）。每个种子把 5 折拼成 3,042 行，再用官方脚本算一次分数。
 #
@@ -66,7 +70,16 @@ DIR_RDROP = {"alpha": 1.0, "labels": ["EQUIVALENCE", "FORWARD_ENTAILMENT", "BACK
 PROJ = {"hidden": 768, "out": 128}  # [CLS] → Linear → ReLU → Linear → L2 归一化
 SCL = {"lambda": 0.3, "tau": 0.3}
 MOCO = {"lambda": 0.3, "tau": 0.3, "queue": 4096, "m_candidates": [0.99, 0.999], "m_tie": 0.99}
+# 老师（蒸馏第 1 步导出的概率）的身份：来源运行、来源代码、每个种子的 LoRA 权重和导出文件，全部写死，读入时逐项核对
+TEACHER_VERSION = "dico_qwen_teacher-3"
 TEACHER_SOURCE_FINGERPRINT = "fcb2485b743956822b75c3703943ec806bc22ba955897c87082d0e6b8608566c"  # 第四组英语 3 轮
+TEACHER_SOURCE_CODE = "2863de05aa757a80170da508d950ba8fa2dc2be579ef918642b249eb45f899ad"
+TEACHER_ADAPTER_SHA256 = {42: "50092805a194da00505b2d0ef90435725cbe20e2f44a9e3c9fc5463fcc1874d3",
+                          43: "439e235075455d35752908ace95571ec9035ab3d49e99a0ebc3cd01167bc1720",
+                          44: "ef9b469fa52fff393dd2c4022aa02da381d6de2006236f854b44ca928766f75f"}
+TEACHER_JSONL_SHA256 = {42: "52f6a4e7dcaade1ecd0f6fcc27b06b9343bb3664363574e7b4bb1e8c6884efe4",
+                        43: "5040d206216e6687056349572e70ccca88d27a84cdc967fe58b4de2ccd887aa2",
+                        44: "e3b10815607d3e9989f08105284e8f3256dae0cb6426684d72662926ebbafaa5"}
 
 SMOKE_ROWS = {"fit": 96, "val": 32, "test": 48, "dev": 48}
 SMOKE_EPOCHS = 2
@@ -116,7 +129,7 @@ import time
 import zipfile
 from collections import Counter
 
-VERSION = "dico_mdeberta_methods-1"
+VERSION = "dico_mdeberta_methods-2"
 LABELS = ["EQUIVALENCE", "FORWARD_ENTAILMENT", "BACKWARD_ENTAILMENT", "NEGATIVE_OTHER"]
 L2I = {l: i for i, l in enumerate(LABELS)}
 SWAP = [0, 2, 1, 3]  # 对调两句后：FORWARD ↔ BACKWARD，其余不变
@@ -326,28 +339,45 @@ def needed_inputs(rows, both=True):
 # ---------- 老师概率（B2） ----------
 
 def load_teacher(seed, fit_rows):
-    """第四组英语 3 轮 Qwen 的同种子老师在 fit 行上的四类概率；返回 (每行的概率, teacher.jsonl 的 SHA256)。"""
+    """第四组英语 3 轮 Qwen 的同种子老师在 fit 行上的四类概率（顺序 E / F / B / O，和 LABELS 相同）。
+    逐项核对身份：导出版本、来源运行和代码、LoRA 权重（fingerprint、adapter.json、done.json 三处一致，并等于写死的值）、
+    teacher.jsonl 的 SHA256；拒绝重复的输入、分区不对和无效的概率。按传入的 fit 行逐行映射（保留重复）。返回 (每行的概率, 文件 SHA256)。"""
+    d = os.path.join(TEACHER_DIR, "track1", f"seed{seed}")
+    paths = {k: os.path.join(d, k) for k in ("teacher.jsonl", "adapter.json", "done.json")}
     fp_path = os.path.join(TEACHER_DIR, "fingerprint.json")
-    path = os.path.join(TEACHER_DIR, "track1", f"seed{seed}", "teacher.jsonl")
-    if not (os.path.exists(fp_path) and os.path.exists(path) and os.path.exists(os.path.join(os.path.dirname(path), "done.json"))):
-        raise FileNotFoundError(f"找不到老师概率：{path}")
-    fp = read_json(fp_path)
-    if fp.get("source_fingerprint_sha256") != TEACHER_SOURCE_FINGERPRINT or fp.get("smoke"):
-        raise SystemExit(f"{fp_path} 不是第四组英语 3 轮那次正式运行导出的老师")
+    for path in [fp_path, *paths.values()]:
+        if not os.path.exists(path):
+            raise FileNotFoundError(f"找不到老师概率的文件：{path}")
+    fp, adapter, done = read_json(fp_path), read_json(paths["adapter.json"]), read_json(paths["done.json"])
+    want = TEACHER_ADAPTER_SHA256.get(seed)
+    checks = {"导出版本": fp.get("version") == TEACHER_VERSION, "来源运行": fp.get("source_fingerprint_sha256") == TEACHER_SOURCE_FINGERPRINT,
+              "来源代码": fp.get("source_code_sha256") == TEACHER_SOURCE_CODE, "不是 SMOKE": fp.get("smoke") is False,
+              "fingerprint 里的权重": fp.get("adapter_sha256", {}).get(str(seed)) == want,
+              "adapter.json 里的权重": adapter.get("adapter_sha256") == want, "done.json 里的权重": done.get("adapter_sha256") == want,
+              "teacher.jsonl 的 SHA256": sha256(paths["teacher.jsonl"]) == TEACHER_JSONL_SHA256.get(seed)}
+    bad = [k for k, ok in checks.items() if not ok]
+    if bad:
+        raise SystemExit(f"seed{seed} 的老师身份核对不过：{bad}。不用这份老师概率。")
     table = {}
-    with open(path, encoding="utf-8") as f:
-        for line in f:
-            d = json.loads(line)
-            if d["part"] == "fit":
-                table[(d["a"], d["b"])] = d["p"]
+    with open(paths["teacher.jsonl"], encoding="utf-8") as f:
+        for n, line in enumerate(f, 1):
+            x = json.loads(line)
+            key, p = (x["a"], x["b"]), x["p"]
+            if key in table or x["part"] not in ("fit", "val"):
+                raise SystemExit(f"teacher.jsonl 第 {n} 行：输入重复或分区不对（{x['part']}）")
+            if len(p) != 4 or not all(math.isfinite(v) and 0 <= v <= 1 for v in p) or abs(sum(p) - 1) > 1e-4:
+                raise SystemExit(f"teacher.jsonl 第 {n} 行的概率无效：{p}")
+            table[key] = (x["part"], p)
     probs = []
     for r in fit_rows:
-        p = table.get((r["text1"], r["text2"]))
-        if p is None:
-            raise SystemExit(f"老师概率里没有这一行：{r['instance_id']}")
-        assert len(p) == 4 and abs(sum(p) - 1) < 1e-4 and min(p) >= 0
+        part, p = table.get((r["text1"], r["text2"]), (None, None))
+        if part != "fit":
+            raise SystemExit(f"老师概率里没有这一行的 fit 记录：{r['instance_id']}")
         probs.append(p)
-    return probs, sha256(path)
+    acc = sum(max(range(4), key=lambda i: p[i]) == L2I[r["label"]] for p, r in zip(probs, fit_rows)) / len(fit_rows)
+    if len(fit_rows) >= 1000 and acc < 0.9:  # 老师见过这些行，准确率应在 .97 左右；太低说明四类的顺序或映射错了
+        raise SystemExit(f"seed{seed} 的老师在 fit 行上的准确率只有 {acc:.3f}，四类的顺序或行的映射可能不对")
+    return probs, TEACHER_JSONL_SHA256[seed]
 
 
 # ---------- 方法定义、任务 ----------
@@ -361,14 +391,14 @@ def method_params(method):
     if method == "rdrop":
         return {"loss": "(CE1+CE2)/2 + alpha*symKL(p1,p2)", **RDROP}
     if method == "dir_rdrop":
-        return {"loss": "CE(A,B) + alpha*symKL(p(A,B), swap(p(B,A)))，只对金标在 labels 里的行", **DIR_RDROP}
+        return {"loss": "CE(A,B) + alpha*symKL(p(A,B), swap(p(B,A)))；反向输入只加给金标在 labels 里的行，KL 在这些行上平均，反向输入不算 CE", **DIR_RDROP}
     if method == "scl":
         return {"loss": "(1-lambda)*CE + lambda*SupCon(batch)", **SCL, "proj": PROJ, "rep": "最后一层 [CLS]"}
     if method.startswith("moco_m"):
         m = float(method[len("moco_m"):])
         return {"loss": "(1-lambda)*CE + lambda*SupCon(q, 动量编码器的键 + 队列)", "lambda": MOCO["lambda"], "tau": MOCO["tau"],
                 "queue": MOCO["queue"], "m": m, "proj": PROJ, "rep": "最后一层 [CLS]",
-                "target": "动量编码器（含投影头）eval 模式，不回传梯度；同一样本不当自己的正例"}
+                "target": "动量编码器（含投影头）eval 模式，不回传梯度；只在优化器真正更新后做动量更新和入队；同一训练记录（行编号）的当前键和历史键都不当它自己的正例，文本相同的不同记录算不同样本"}
     raise ValueError(method)
 
 
@@ -612,6 +642,8 @@ def fetch_model(revision):
 # ---------- 概率、指标、评分 ----------
 
 def softmax(row):
+    if not all(math.isfinite(x) for x in row):
+        raise ValueError(f"logits 里有非有限值：{row}")
     m = max(row)
     e = [math.exp(x - m) for x in row]
     s = sum(e)
@@ -627,6 +659,8 @@ def probs(lm, a, b, mode):
 
 
 def argmax_label(p):
+    if not all(math.isfinite(x) for x in p):
+        raise ValueError(f"概率里有非有限值：{p}")  # 不让 NaN 经过 argmax 变成一个正常的标签
     return LABELS[max(range(4), key=lambda i: p[i])]
 
 
@@ -666,43 +700,78 @@ def load_logits(path):
     return {tuple(k): v for k, v in zip(d["inputs"], d["logits"])}
 
 
-# ---------- 损失（唯一和方法有关的部分） ----------
+# ---------- 损失（唯一和方法有关的部分；都在关掉 autocast 的范围里用 fp32 算） ----------
+
+def fp32_scope():
+    """关掉 autocast：在混合精度前向之后，用 fp32 算归一化、相似度矩阵和各项损失。"""
+    import torch
+    return torch.autocast(device_type="cuda", enabled=False)
+
 
 def sym_kl(lp, lq):
-    """(KL(p‖q) + KL(q‖p)) / 2，按行平均；输入是 log 概率（fp32）。"""
-    p, q = lp.exp(), lq.exp()
-    return 0.5 * ((p * (lp - lq)).sum(-1) + (q * (lq - lp)).sum(-1)).mean()
+    """(KL(p‖q) + KL(q‖p)) / 2，按行平均；输入是 log 概率。"""
+    with fp32_scope():
+        lp, lq = lp.float(), lq.float()
+        p, q = lp.exp(), lq.exp()
+        return 0.5 * ((p * (lp - lq)).sum(-1) + (q * (lq - lp)).sum(-1)).mean()
 
 
 def supcon(q, q_labels, q_ids, keys, k_labels, k_ids, tau):
-    """监督对比损失。锚点 q 的候选是 keys 里样本编号不同的键，正例是其中标签相同的；
+    """监督对比损失。锚点 q 的候选是 keys 里编号（训练记录的行号）不同的键，正例是其中标签相同的；
     L_i = -mean_{p∈P(i)} log( exp(q_i·k_p/τ) / Σ_{a∈A(i)} exp(q_i·k_a/τ) )，没有正例的锚点跳过。返回 (损失, 有效锚点数)。"""
     import torch
-    logits = q @ keys.T / tau
-    valid = k_ids[None, :] != q_ids[:, None]
-    pos = valid & (k_labels[None, :] == q_labels[:, None])
-    logits = logits.masked_fill(~valid, float("-inf"))
-    log_prob = logits - torch.logsumexp(logits, dim=1, keepdim=True)
-    npos = pos.sum(1)
-    has = npos > 0
-    if not bool(has.any()):
-        return q.sum() * 0.0, 0
-    per = -(log_prob.masked_fill(~pos, 0.0).sum(1)) / npos.clamp_min(1)
-    return per[has].mean(), int(has.sum())
+    with fp32_scope():
+        q, keys = q.float(), keys.float()
+        logits = q @ keys.T / tau
+        valid = k_ids[None, :] != q_ids[:, None]
+        pos = valid & (k_labels[None, :] == q_labels[:, None])
+        logits = logits.masked_fill(~valid, float("-inf"))
+        log_prob = logits - torch.logsumexp(logits, dim=1, keepdim=True)
+        npos = pos.sum(1)
+        has = npos > 0
+        if not bool(has.any()):
+            return q.sum() * 0.0, 0
+        per = -(log_prob.masked_fill(~pos, 0.0).sum(1)) / npos.clamp_min(1)
+        return per[has].mean(), int(has.sum())
 
 
 def kd_loss(logits, y, teacher_p, alpha, T):
     import torch
     import torch.nn.functional as F
-    ce = F.cross_entropy(logits, y)
-    t = torch.softmax(torch.log(teacher_p.clamp_min(1e-12)) / T, dim=-1)
-    s_log = torch.log_softmax(logits / T, dim=-1)
-    kl = (t * (torch.log(t.clamp_min(1e-12)) - s_log)).sum(-1).mean()
-    return (1 - alpha) * ce + alpha * T * T * kl, {"ce": float(ce), "kl": float(kl)}
+    with fp32_scope():
+        logits = logits.float()
+        ce = F.cross_entropy(logits, y)
+        t = torch.softmax(torch.log(teacher_p.float().clamp_min(1e-12)) / T, dim=-1)
+        s_log = torch.log_softmax(logits / T, dim=-1)
+        kl = (t * (torch.log(t.clamp_min(1e-12)) - s_log)).sum(-1).mean()
+        return (1 - alpha) * ce + alpha * T * T * kl, {"ce": float(ce), "kl": float(kl)}
+
+
+def apply_update(loss, opt, sched, scaler, params, use_scaler):
+    """一次优化步。返回 (状态, 梯度范数)：
+    updated：参数更新了，学习率日程前进一步；
+    skipped：fp16 的梯度缩放发现非有限梯度，跳过这次更新（正常现象），学习率日程不前进；
+    nonfinite_grad：bf16 / fp32 下出现非有限梯度，不更新参数，由调用方整次换精度重跑或报错。"""
+    import torch
+    opt.zero_grad(set_to_none=True)
+    scaler.scale(loss).backward()
+    scaler.unscale_(opt)
+    gnorm = torch.nn.utils.clip_grad_norm_(params, GRAD_CLIP)
+    finite = bool(torch.isfinite(gnorm))
+    if not finite and not use_scaler:
+        opt.zero_grad(set_to_none=True)
+        return "nonfinite_grad", float(gnorm)
+    scaler.step(opt)  # 梯度缩放发现非有限梯度时内部跳过 optimizer.step()
+    scaler.update()
+    if not finite:
+        return "skipped", float(gnorm)
+    sched.step()
+    return "updated", float(gnorm)
 
 
 def self_check_losses():
-    """SMOKE 用：在真实的 torch 上，把各个损失和逐条循环写的参考实现比一遍。"""
+    """SMOKE 用：在真实的 torch 上，把各个损失和逐条循环写的参考实现比一遍；在 autocast 里检查损失仍是 fp32；
+    检查非有限梯度时的更新逻辑和队列的环形写入。"""
     import torch
     g = torch.Generator().manual_seed(0)
     n, d = 7, 5
@@ -739,17 +808,45 @@ def self_check_losses():
         ref += 0.5 * ce + 0.5 * 4 * sum(t[c] * (math.log(t[c]) - float(s[c])) for c in range(4))
     assert abs(float(got) - ref / 4) < 1e-4, ("kd", float(got), ref / 4)
     pab = torch.randn(3, 4, generator=g)
-    swapped = torch.log_softmax(pab, -1)[:, SWAP]
-    assert torch.allclose(swapped[:, 1], torch.log_softmax(pab, -1)[:, 2])
+    assert float(sym_kl(torch.log_softmax(pab, -1), torch.log_softmax(pab[:, SWAP], -1)[:, SWAP])) < 1e-6, "F/B 对调"
     q2 = Queue(5, 3, "cpu")
     for step in range(4):
         q2.push(torch.ones(2, 3) * step, torch.tensor([step, step]), torch.tensor([10 * step, 10 * step + 1]), step)
     assert q2.filled == 5 and sorted(q2.ids[: q2.filled].tolist()) == [11, 20, 21, 30, 31], q2.ids.tolist()
-    print("损失自检通过：监督对比、对称 KL、蒸馏、F/B 对调、队列的环形写入都和逐条参考实现一致", flush=True)
+    if torch.cuda.is_available():
+        dt = amp_dtype()
+        qc, kc = q.cuda(), keys.cuda()
+        with torch.autocast(device_type="cuda", dtype=dt):
+            c1, _ = supcon(qc, ql.cuda(), qi.cuda(), kc, kl_.cuda(), ki.cuda(), 0.3)
+            c2 = sym_kl(la.cuda(), lb.cuda())
+            c3, _ = kd_loss(a.cuda(), y.cuda(), tp.cuda(), 0.5, 2.0)
+        assert c1.dtype == c2.dtype == c3.dtype == torch.float32, (c1.dtype, c2.dtype, c3.dtype)
+        assert abs(float(c1) - tot / cnt) < 1e-4, "autocast 里的 supcon 和 fp32 参考不同"
+        # fp16 梯度缩放遇到非有限梯度：参数不变、学习率日程不前进
+        w = torch.nn.Parameter(torch.ones(3, device="cuda"))
+        opt = torch.optim.SGD([w], lr=0.1)
+        sched = torch.optim.lr_scheduler.LambdaLR(opt, lambda k: 1.0 / (k + 1))
+        scaler = torch.amp.GradScaler("cuda")
+        h = w.register_hook(lambda grad: grad * float("inf"))
+        status, _ = apply_update((w * 2).sum(), opt, sched, scaler, [w], True)
+        h.remove()
+        assert status == "skipped" and torch.equal(w.detach(), torch.ones(3, device="cuda")) and sched.last_epoch == 0, status
+        status, _ = apply_update((w * 2).sum(), opt, sched, scaler, [w], True)
+        assert status == "updated" and sched.last_epoch == 1
+        # bf16 / fp32（不用梯度缩放）遇到非有限梯度：不更新，返回 nonfinite_grad
+        w2 = torch.nn.Parameter(torch.ones(3, device="cuda"))
+        opt2 = torch.optim.SGD([w2], lr=0.1)
+        sched2 = torch.optim.lr_scheduler.LambdaLR(opt2, lambda k: 1.0)
+        h = w2.register_hook(lambda grad: grad * float("nan"))
+        status, _ = apply_update((w2 * 2).sum(), opt2, sched2, torch.amp.GradScaler("cuda", enabled=False), [w2], False)
+        h.remove()
+        assert status == "nonfinite_grad" and torch.equal(w2.detach(), torch.ones(3, device="cuda")) and sched2.last_epoch == 0
+    print("损失自检通过：监督对比、对称 KL、蒸馏、F/B 对调和逐条参考实现一致；autocast 里损失仍是 fp32；"
+          "非有限梯度时不更新参数、学习率日程不前进；队列的环形写入正确", flush=True)
 
 
 class Queue:
-    """MoCo 的键队列：存键、标签、样本编号和入队时的步数，环形覆盖最旧的。"""
+    """MoCo 的键队列：存键、标签、训练记录的行号和入队时的更新步数，环形覆盖最旧的。"""
 
     def __init__(self, size, dim, device):
         import torch
@@ -812,8 +909,13 @@ def amp_dtype():
     return torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16
 
 
+def all_finite(lm):
+    return all(math.isfinite(x) for row in lm.values() for x in row)
+
+
 def train_run(t, parts, teacher=None, interrupt_after_epoch=None, max_steps=None):
-    """训练一次，按内层验证选轮，返回 val / test / dev 的 logits 和训练记录。max_steps 只给 SMOKE 测速用。"""
+    """训练一次，按内层验证选轮，返回 val / test / dev 的 logits 和训练记录。
+    max_steps 只给 SMOKE 测速用：用正式的 12 轮学习率日程跑 max_steps 步（MoCo 先把队列填满），再测载入、推理和拷贝最佳状态的用时。"""
     import copy
     import numpy as np
     import torch
@@ -823,7 +925,7 @@ def train_run(t, parts, teacher=None, interrupt_after_epoch=None, max_steps=None
 
     method, seed = t["method"], t["seed"]
     mp = method_params(method)
-    epochs = SMOKE_EPOCHS if SMOKE else MAX_EPOCHS
+    epochs = MAX_EPOCHS if (max_steps or not SMOKE) else SMOKE_EPOCHS
     device = "cuda" if torch.cuda.is_available() else "cpu"
     tok = tokenizer()
     fit, val = parts["fit"], parts["val"]
@@ -836,6 +938,7 @@ def train_run(t, parts, teacher=None, interrupt_after_epoch=None, max_steps=None
 
     @torch.no_grad()
     def logits_for(model, pairs):
+        """相同输入只算一次；按长度排序成批；fp32 推理（不开 autocast）。"""
         model.eval()
         lens = [len(x) for x in tok([a for a, _ in pairs], [b for _, b in pairs], truncation=True, max_length=MAX_LEN)["input_ids"]]
         order = sorted(range(len(pairs)), key=lambda i: (lens[i], i))
@@ -850,11 +953,13 @@ def train_run(t, parts, teacher=None, interrupt_after_epoch=None, max_steps=None
     val_inputs = needed_inputs(val, both=False)
 
     def run(dtype):
+        """返回结果；出错时返回 {"failed": 原因, ...}，参数不会被非有限的梯度更新。"""
+        t_start = time.time()
         random.seed(seed); np.random.seed(seed); torch.manual_seed(seed); torch.cuda.manual_seed_all(seed)
         model = AutoModelForSequenceClassification.from_pretrained(_MODEL_PATH["path"], num_labels=4).float().to(device)
         hidden = model.config.hidden_size
         proj = target = target_proj = queue = None
-        if method == "scl" or method.startswith("moco_m"):  # 在分类头之后建，分类头的初始化和其他方法相同
+        if method == "scl" or method.startswith("moco_m"):  # 在分类头之后建，分类头的初始化逻辑和其他方法相同
             proj = torch.nn.Sequential(torch.nn.Linear(hidden, PROJ["hidden"]), torch.nn.ReLU(),
                                        torch.nn.Linear(PROJ["hidden"], PROJ["out"])).to(device)
         if method.startswith("moco_m"):
@@ -862,10 +967,16 @@ def train_run(t, parts, teacher=None, interrupt_after_epoch=None, max_steps=None
             for p in list(target.parameters()) + list(target_proj.parameters()):
                 p.requires_grad_(False)
             queue = Queue(mp["queue"], PROJ["out"], device)
+            if max_steps:  # 测速时先把队列填满，测的是满队列时的每步用时（这些随机键不进正式训练）
+                gq = torch.Generator(device="cpu").manual_seed(0)
+                queue.push(F.normalize(torch.randn(mp["queue"], PROJ["out"], generator=gq), dim=1).to(device),
+                           torch.randint(0, 4, (mp["queue"],), generator=gq).to(device),
+                           -torch.arange(2, mp["queue"] + 2).to(device), 0)
         named = list(model.named_parameters()) + ([(f"proj.{n}", p) for n, p in proj.named_parameters()] if proj is not None else [])
         no_decay = ("bias", "LayerNorm.weight", "layernorm.weight")
         groups = [{"params": [p for n, p in named if not any(k in n for k in no_decay)], "weight_decay": WEIGHT_DECAY},
                   {"params": [p for n, p in named if any(k in n for k in no_decay)], "weight_decay": 0.0}]
+        params = [p for g_ in groups for p in g_["params"]]
         opt = torch.optim.AdamW(groups, lr=LR)
         loader = DataLoader(list(range(len(fit))), batch_size=BATCH_SIZE, shuffle=True, collate_fn=lambda b: b,
                             generator=torch.Generator().manual_seed(seed))
@@ -874,36 +985,52 @@ def train_run(t, parts, teacher=None, interrupt_after_epoch=None, max_steps=None
         use_scaler = dtype == torch.float16
         scaler = torch.amp.GradScaler("cuda", enabled=use_scaler)
         dir_set = {L2I[l] for l in DIR_RDROP["labels"]}
-        best, best_epoch, best_state, history, step = -1.0, 0, None, [], 0
+        best, best_epoch, best_state, history, updates, skipped_total = -1.0, 0, None, [], 0, 0
         if device == "cuda":
+            torch.cuda.synchronize()
             torch.cuda.reset_peak_memory_stats()
+        load_seconds = time.time() - t_start
         step_times = []
+
+        def amp():
+            return torch.autocast(device_type="cuda", dtype=dtype or torch.float32, enabled=dtype is not None)
+
         for epoch in range(epochs):
             model.train()
             if proj is not None:
                 proj.train()
-            t0, stats = time.time(), {"loss": [], "extra": []}
+            t0 = time.time()
+            stats = {"loss": [], "extra": [], "gnorm": [], "skipped": 0}
             for idx in loader:
                 rows = [fit[i] for i in idx]
                 y = torch.tensor([L2I[r["label"]] for r in rows], device=device)
                 t1, t2 = [r["text1"] for r in rows], [r["text2"] for r in rows]
                 ts = time.time()
-                with torch.autocast(device_type="cuda", dtype=dtype or torch.float32, enabled=dtype is not None):
+                k = ids = None
+                if method in ("ce", "kd"):
+                    with amp():
+                        lg = model(**enc_of(t1, t2)).logits
                     if method == "ce":
-                        loss = F.cross_entropy(model(**enc_of(t1, t2)).logits.float(), y)
-                        extra = {}
-                    elif method == "kd":
+                        with fp32_scope():
+                            loss, extra = F.cross_entropy(lg.float(), y), {}
+                    else:
                         tp = torch.tensor([teacher[i] for i in idx], device=device, dtype=torch.float32)
-                        loss, extra = kd_loss(model(**enc_of(t1, t2)).logits.float(), y, tp, mp["alpha"], mp["T"])
-                    elif method == "rdrop":
-                        lg = model(**enc_of(t1 + t1, t2 + t2)).logits.float()
+                        loss, extra = kd_loss(lg, y, tp, mp["alpha"], mp["T"])
+                elif method == "rdrop":
+                    with amp():
+                        lg = model(**enc_of(t1 + t1, t2 + t2)).logits  # 同一批拼成两份，两份的 dropout 掩码不同
+                    with fp32_scope():
+                        lg = lg.float()
                         l1, l2 = lg[: len(rows)], lg[len(rows):]
                         ce = (F.cross_entropy(l1, y) + F.cross_entropy(l2, y)) / 2
                         kl = sym_kl(torch.log_softmax(l1, -1), torch.log_softmax(l2, -1))
                         loss, extra = ce + mp["alpha"] * kl, {"ce": float(ce), "kl": float(kl)}
-                    elif method == "dir_rdrop":
-                        sel = [i for i, r in enumerate(rows) if L2I[r["label"]] in dir_set]
-                        lg = model(**enc_of(t1 + [t2[i] for i in sel], t2 + [t1[i] for i in sel])).logits.float()
+                elif method == "dir_rdrop":
+                    sel = [i for i, r in enumerate(rows) if L2I[r["label"]] in dir_set]
+                    with amp():
+                        lg = model(**enc_of(t1 + [t2[i] for i in sel], t2 + [t1[i] for i in sel])).logits
+                    with fp32_scope():
+                        lg = lg.float()
                         lab = lg[: len(rows)]
                         ce = F.cross_entropy(lab, y)
                         if sel:
@@ -911,92 +1038,141 @@ def train_run(t, parts, teacher=None, interrupt_after_epoch=None, max_steps=None
                         else:
                             kl = lab.sum() * 0.0
                         loss, extra = ce + mp["alpha"] * kl, {"ce": float(ce), "kl": float(kl), "sel_frac": len(sel) / len(rows)}
-                    else:  # scl / moco：分类和对比都用同一次前向
-                        out = model(**enc_of(t1, t2), output_hidden_states=True)
+                else:  # scl / moco：分类和对比用同一次前向；编码器和投影在 autocast 里，归一化和损失在外面用 fp32
+                    e = enc_of(t1, t2)
+                    with amp():
+                        out = model(**e, output_hidden_states=True)
+                        z = proj(out.hidden_states[-1][:, 0])
+                        if queue is not None:
+                            with torch.no_grad():
+                                kz = target_proj(target(**e, output_hidden_states=True).hidden_states[-1][:, 0])
+                    ids = torch.tensor(idx, device=device)
+                    with fp32_scope():
                         ce = F.cross_entropy(out.logits.float(), y)
-                        q = F.normalize(proj(out.hidden_states[-1][:, 0]).float(), dim=1)
-                        ids = torch.tensor(idx, device=device)
-                        if method == "scl":
+                        q = F.normalize(z.float(), dim=1)
+                        if queue is None:
                             con, n_anchor = supcon(q, y, ids, q, y, ids, mp["tau"])
                         else:
-                            with torch.no_grad():
-                                kout = target(**enc_of(t1, t2), output_hidden_states=True)
-                                k = F.normalize(target_proj(kout.hidden_states[-1][:, 0]).float(), dim=1)
+                            k = F.normalize(kz.float(), dim=1)
                             qk, ql, qi = queue.view()
                             con, n_anchor = supcon(q, y, ids, torch.cat([k, qk]), torch.cat([y, ql]), torch.cat([ids, qi]), mp["tau"])
                         loss = (1 - mp["lambda"]) * ce + mp["lambda"] * con
                         extra = {"ce": float(ce), "con": float(con), "anchors": n_anchor / len(rows)}
                 if not torch.isfinite(loss):
-                    return None  # 半精度出现非有限损失：整次改用 fp32 重跑
-                opt.zero_grad()
-                scaler.scale(loss).backward()
-                scaler.unscale_(opt)
-                torch.nn.utils.clip_grad_norm_([p for g in groups for p in g["params"]], GRAD_CLIP)
-                scaler.step(opt)
-                scaler.update()
-                sched.step()
-                step += 1
-                if queue is not None:
-                    with torch.no_grad():
-                        m = mp["m"]
-                        for pt, po in zip(list(target.parameters()) + list(target_proj.parameters()),
-                                          list(model.parameters()) + list(proj.parameters())):
-                            pt.mul_(m).add_(po.detach(), alpha=1 - m)
-                    queue.push(k, y, ids, step)
+                    return {"failed": "nonfinite_loss", "epoch": epoch + 1, "updates": updates}
+                status, gnorm = apply_update(loss, opt, sched, scaler, params, use_scaler)
+                if status == "nonfinite_grad":
+                    return {"failed": "nonfinite_grad", "epoch": epoch + 1, "updates": updates}
+                if status == "skipped":  # fp16 跳过的更新：学习率日程、动量更新、入队都不前进
+                    stats["skipped"] += 1
+                else:
+                    updates += 1
+                    stats["gnorm"].append(gnorm)
+                    if queue is not None:
+                        with torch.no_grad():
+                            m = mp["m"]
+                            for pt, po in zip(list(target.parameters()) + list(target_proj.parameters()),
+                                              list(model.parameters()) + list(proj.parameters())):
+                                pt.mul_(m).add_(po.detach(), alpha=1 - m)
+                        queue.push(k, y, ids, updates)
                 if device == "cuda":
                     torch.cuda.synchronize()
                 step_times.append(time.time() - ts)
                 stats["loss"].append(float(loss))
                 stats["extra"].append(extra)
                 if max_steps and len(step_times) >= max_steps:
-                    return {"step_times": step_times}
+                    sample = (val_inputs + needed_inputs(parts["test"]))[:512]
+                    t_inf = time.time()
+                    logits_for(model, sample)
+                    infer = (time.time() - t_inf) / max(1, len(sample))
+                    t_clone = time.time()
+                    _ = {k_: v.detach().cpu().clone() for k_, v in model.state_dict().items()}
+                    return {"step_times": step_times, "load_seconds": load_seconds, "infer_seconds_per_input": infer,
+                            "clone_seconds": time.time() - t_clone}
             lm = logits_for(model, val_inputs)
+            if not all_finite(lm):
+                return {"failed": "nonfinite_val_logits", "epoch": epoch + 1, "updates": updates}
             f1 = weighted_f1([r["label"] for r in val], [argmax_label(softmax(lm[(r["text1"], r["text2"])])) for r in val])
             rec = {"epoch": epoch + 1, "train_loss": sum(stats["loss"]) / len(stats["loss"]), "val_weighted_f1": f1,
-                   "seconds": round(time.time() - t0, 1)}
-            for key in sorted({k for e in stats["extra"] for k in e}):
-                vals = [e[key] for e in stats["extra"] if key in e]
+                   "updates": len(stats["gnorm"]), "skipped_updates": stats["skipped"],
+                   "grad_norm_mean": sum(stats["gnorm"]) / len(stats["gnorm"]) if stats["gnorm"] else None,
+                   "grad_norm_max": max(stats["gnorm"]) if stats["gnorm"] else None, "seconds": round(time.time() - t0, 1)}
+            for key in sorted({k_ for e_ in stats["extra"] for k_ in e_}):
+                vals = [e_[key] for e_ in stats["extra"] if key in e_]
                 rec[key] = sum(vals) / len(vals)
             if queue is not None:
                 rec["queue_filled"] = queue.filled
-                rec["queue_mean_key_age_steps"] = queue.mean_age(step)
+                rec["queue_mean_key_age_updates"] = queue.mean_age(updates)
+            skipped_total += stats["skipped"]
             history.append(rec)
-            print(f"    第 {epoch + 1} 轮：loss {rec['train_loss']:.4f}  内层验证 WF1 {f1:.4f}  {rec['seconds']} 秒", flush=True)
+            print(f"    第 {epoch + 1} 轮：loss {rec['train_loss']:.4f}  内层验证 WF1 {f1:.4f}  梯度范数均值 {rec['grad_norm_mean'] or float('nan'):.2f}"
+                  + (f"  跳过的更新 {stats['skipped']}" if stats["skipped"] else "") + f"  {rec['seconds']} 秒", flush=True)
             if f1 > best:
                 best, best_epoch = f1, epoch + 1
-                best_state = {k: v.detach().cpu().clone() for k, v in model.state_dict().items()}
+                best_state = {k_: v.detach().cpu().clone() for k_, v in model.state_dict().items()}
             if interrupt_after_epoch == epoch + 1:
                 raise SimulatedInterrupt()
         model.load_state_dict(best_state)
-        peak = round(torch.cuda.max_memory_allocated() / 2 ** 30, 2) if device == "cuda" else None
-        result = {"history": history, "best_epoch": best_epoch, "val_weighted_f1": best, "peak_memory_gib": peak,
-                  "seconds_per_step": round(sum(step_times) / max(1, len(step_times)), 4), "steps": len(step_times),
-                  "steps_per_epoch": len(loader)}
+        result = {"history": history, "best_epoch": best_epoch, "val_weighted_f1": best, "updates": updates,
+                  "skipped_updates": skipped_total, "seconds_per_step": round(sum(step_times) / max(1, len(step_times)), 4),
+                  "steps": len(step_times), "steps_per_epoch": len(loader)}
         result["val_logits"] = logits_for(model, val_inputs)
         result["test_logits"] = logits_for(model, needed_inputs(parts["test"]))
         if "dev" in parts:
             result["dev_logits"] = logits_for(model, needed_inputs(parts["dev"]))
+        for name in ("val_logits", "test_logits", "dev_logits"):
+            if name in result and not all_finite(result[name]):
+                return {"failed": f"nonfinite_{name}", "epoch": best_epoch, "updates": updates}
+        if device == "cuda":  # 峰值显存在最终推理之后读，覆盖整个任务
+            result["peak_memory_gib"] = round(torch.cuda.max_memory_allocated() / 2 ** 30, 2)
+            result["peak_reserved_gib"] = round(torch.cuda.max_memory_reserved() / 2 ** 30, 2)
+        else:
+            result["peak_memory_gib"] = result["peak_reserved_gib"] = None
         del model, best_state, target, opt
-        free_memory()
         return result
 
+    names = {None: "fp32", torch.bfloat16: "bf16 autocast", torch.float16: "fp16 autocast"}
     dtype = amp_dtype()
-    res = run(dtype)
-    precision = {None: "fp32", torch.bfloat16: "bf16 autocast", torch.float16: "fp16 autocast"}[dtype]
-    if max_steps:
-        return res
-    if res is None:
-        print("    出现非有限损失，整次改用 fp32 重跑", flush=True)
-        res, precision = run(None), "fp32（半精度出现非有限损失后重跑）"
-    res["precision"] = precision
-    return res
+    attempts = []
+    for dt in ([dtype, None] if dtype is not None else [None]):
+        res = run(dt)
+        free_memory()
+        if max_steps or "failed" not in res:
+            if not max_steps:
+                res["precision"] = names[dt] if not attempts else f"{names[dt]}（{attempts[0]['precision']} 失败后重跑：{attempts[0]['failed']}）"
+                res["precision_attempts"] = attempts + [{"precision": names[dt], "result": "ok"}]
+            return res
+        attempts.append({"precision": names[dt], **res})
+        print(f"    {names[dt]} 失败（{res['failed']}，第 {res['epoch']} 轮，已更新 {res['updates']} 次），"
+              + ("整次改用 fp32 重跑" if dt is not None else "fp32 也失败"), flush=True)
+    raise RuntimeError(f"{task_id(t)}：fp32 重跑也失败了：{attempts}")
 
 
 TRAIN_FN = train_run  # 测试时可以换成假的训练函数
 
 
-def run_task(t, revision, code_hash, interrupt_after_epoch=None):
-    d = task_dir(t)
+ENV = {}  # 这次运行的环境身份（卡、精度、torch 等），main 里填好，写进每个 done.json
+
+
+def log_attempt(event, t, attempt_id, **info):
+    """attempts.jsonl：每个任务每次尝试的开始、完成、失败、被打断都记一行，随结果包一起带走。"""
+    os.makedirs(OUT, exist_ok=True)
+    with open(os.path.join(OUT, "attempts.jsonl"), "a", encoding="utf-8") as f:
+        f.write(json.dumps({"event": event, "task": task_id(t), "attempt_id": attempt_id, "session": RUN_STAMP,
+                            "time": time.strftime("%Y-%m-%d %H:%M:%S"), **info}, ensure_ascii=False) + "\n")
+
+
+def previous_attempts(t):
+    path = os.path.join(OUT, "attempts.jsonl")
+    if not os.path.exists(path):
+        return 0
+    with open(path, encoding="utf-8") as f:
+        return sum(1 for line in f if line.strip() and json.loads(line)["task"] == task_id(t) and json.loads(line)["event"] == "start")
+
+
+def run_task(t, revision, code_hash, interrupt_after_epoch=None, d=None):
+    """d 只给 SMOKE 的中断自检用：放在单独的目录里，每次都重建，不碰正式任务的目录。"""
+    d = d or task_dir(t)
     parts = parts_for(t["track"], t["fold"], t["with_dev"])
     teacher, extra = None, {}
     if t["method"] == "kd":
@@ -1009,14 +1185,25 @@ def run_task(t, revision, code_hash, interrupt_after_epoch=None):
             diff = sorted(k for k in set(fp) | set(old) if fp.get(k) != old.get(k))
             raise SystemExit(f"{task_id(t)} 已完成，但设置和现在不同：{diff}。不把两种设置的结果混在一起，请检查。")
         return "skip"
+    n_before = previous_attempts(t)
+    attempt_id = f"{RUN_STAMP}-{task_id(t).replace('/', '-')}-{n_before + 1}"
     if os.path.isdir(d):
         print(f"  {task_id(t)} 上次没跑完，从头重跑", flush=True)
+        log_attempt("incomplete_found", t, attempt_id, note="目录在、没有 done.json，删掉后从头重跑")
         shutil.rmtree(d)
     write_json(os.path.join(d, "task.json"), fp)
+    log_attempt("start", t, attempt_id, code_sha256=code_hash, env=ENV)
     t0 = time.time()
     print(f"开始：{task_id(t)}（训练 {len(parts['fit'])} 行，内层验证 {len(parts['val'])} 行，"
           f"被预测的折 {len(parts['test'])} 行{'，dev ' + str(len(parts['dev'])) + ' 行' if 'dev' in parts else ''}）", flush=True)
-    res = TRAIN_FN(t, parts, teacher=teacher, interrupt_after_epoch=interrupt_after_epoch)
+    try:
+        res = TRAIN_FN(t, parts, teacher=teacher, interrupt_after_epoch=interrupt_after_epoch)
+    except SimulatedInterrupt:
+        log_attempt("interrupted", t, attempt_id, note="SMOKE 的模拟中断")
+        raise
+    except BaseException as e:
+        log_attempt("failed", t, attempt_id, error=f"{type(e).__name__}: {str(e)[:300]}")
+        raise
     save_logits(os.path.join(d, "logits_val.json"), res["val_logits"])
     save_logits(os.path.join(d, "logits_test.json"), res["test_logits"])
     scores = {}
@@ -1030,15 +1217,19 @@ def run_task(t, revision, code_hash, interrupt_after_epoch=None):
             labels = [argmax_label(probs(res[f"{name}_logits"], r["text1"], r["text2"], mode)) for r in rows]
             scores.setdefault(name, {})[mode] = official_score(rows, labels, d, f"{name}_{mode}")
     write_json(os.path.join(d, "history.json"), res["history"])
-    done = {"task": task_id(t), "best_epoch": res["best_epoch"], "val_weighted_f1": res["val_weighted_f1"], "scores": scores,
-            "precision": res["precision"], "peak_memory_gib": res["peak_memory_gib"], "seconds_per_step": res["seconds_per_step"],
-            "steps": res["steps"], "steps_per_epoch": res["steps_per_epoch"], "code_sha256": code_hash,
+    done = {"task": task_id(t), "attempt_id": attempt_id, "previous_attempts": n_before, "session": RUN_STAMP, "env": ENV,
+            "code_sha256": code_hash, "best_epoch": res["best_epoch"], "val_weighted_f1": res["val_weighted_f1"], "scores": scores,
+            "precision": res["precision"], "precision_attempts": res["precision_attempts"],
+            "updates": res["updates"], "skipped_updates": res["skipped_updates"],
+            "peak_memory_gib": res["peak_memory_gib"], "peak_reserved_gib": res["peak_reserved_gib"],
+            "seconds_per_step": res["seconds_per_step"], "steps": res["steps"], "steps_per_epoch": res["steps_per_epoch"],
             "rows": {k: len(v) for k, v in parts.items()}, "minutes": round((time.time() - t0) / 60, 2)}
     write_json(os.path.join(d, "done.json"), done)
+    log_attempt("completed", t, attempt_id, minutes=done["minutes"], precision=res["precision"])
     s = scores["test"]["sym"]
     print(f"完成：{task_id(t)}  选中第 {res['best_epoch']} 轮  被预测的折 sym {s['weighted_f1']:.3f} / {s['soft_cons']:.3f} / {s['hard_cons']:.3f}"
           + (f"  dev sym {scores['dev']['sym']['weighted_f1']:.3f}" if "dev" in scores else "")
-          + f"  用时 {done['minutes']} 分钟", flush=True)
+          + f"  {res['precision']}  用时 {done['minutes']} 分钟", flush=True)
     return "done"
 
 
@@ -1050,6 +1241,11 @@ def assemble_oof(track, method, seed):
     if not all(os.path.exists(os.path.join(x, "done.json")) for x in dirs):
         return None
     out_dir = os.path.join(OUT, f"track{track}/{method}/seed{seed}/oof")
+    dones = [read_json(os.path.join(x, "done.json")) for x in dirs]
+    mixed = {k: sorted({str(x.get(k)) for x in dones}) for k in ("code_sha256", "precision")}
+    mixed = {k: v for k, v in mixed.items() if len(v) > 1}
+    if mixed:  # 不把不同代码或不同精度跑出来的折拼成一份折外预测
+        return {"not_assembled": mixed}
     if os.path.exists(os.path.join(out_dir, "done.json")):
         return read_json(os.path.join(out_dir, "done.json"))["scores"]
     fam_of, fold_of = split_base()
@@ -1067,13 +1263,16 @@ def summarize():
     summary = {"version": VERSION, "stage": STAGE, "runs": {}, "oof": {}}
     for p in sorted(glob.glob(os.path.join(OUT, "track*/*/seed*/fold*/done.json"))):
         d = read_json(p)
-        summary["runs"][d["task"]] = {k: d[k] for k in ("best_epoch", "val_weighted_f1", "scores", "precision", "minutes", "seconds_per_step")}
+        summary["runs"][d["task"]] = {k: d.get(k) for k in ("best_epoch", "val_weighted_f1", "scores", "precision", "minutes",
+                                                            "seconds_per_step", "skipped_updates", "peak_memory_gib", "previous_attempts")}
     for track_dir in sorted(glob.glob(os.path.join(OUT, "track*"))):
         track = int(os.path.basename(track_dir)[5:])
         for method_dir in sorted(glob.glob(os.path.join(track_dir, "*"))):
             for seed_dir in sorted(glob.glob(os.path.join(method_dir, "seed*"))):
                 sc = assemble_oof(track, os.path.basename(method_dir), int(os.path.basename(seed_dir)[4:]))
-                if sc:
+                if sc and "not_assembled" in sc:
+                    summary.setdefault("oof_not_assembled", {})[f"track{track}/{os.path.basename(method_dir)}/{os.path.basename(seed_dir)}"] = sc["not_assembled"]
+                elif sc:
                     summary["oof"][f"track{track}/{os.path.basename(method_dir)}/{os.path.basename(seed_dir)}"] = sc
     write_json(os.path.join(OUT, "summary.json"), summary)
     groups = {}
@@ -1087,6 +1286,11 @@ def summarize():
         dev = [r["scores"]["dev"]["sym"]["weighted_f1"] for r in rs if "dev" in r["scores"]]
         print(f"{track} {method:12s} {len(rs)} 个种子  fold 0 {m['weighted_f1']:.3f} / {m['soft_cons']:.3f} / {m['hard_cons']:.3f}"
               + (f"  dev WF1 {sum(dev) / len(dev):.3f}" if dev else ""))
+    fallback = [k for k, r in summary["runs"].items() if r["precision"] and "重跑" in r["precision"]]
+    if fallback:
+        print("注意：这些任务回退到了 fp32，和混合精度的基线不是同一环境：", fallback)
+    if summary.get("oof_not_assembled"):
+        print("注意：这些种子的 5 折代码或精度不一致，没有拼成折外预测：", summary["oof_not_assembled"])
     if summary["oof"]:
         print("5 折拼起来的折外预测（对称化 WF1）：")
         for k, sc in summary["oof"].items():
@@ -1097,35 +1301,43 @@ def summarize():
 # ---------- SMOKE：自检、中断续跑、测速、时间估计 ----------
 
 def smoke_extras(revision, code_hash):
-    import torch
     report = {}
     self_check_losses()
     report["loss_self_check"] = "通过"
-    for s in SEEDS_STAGE1:  # 老师概率要覆盖真实的 2,190 行，不只是 SMOKE 子集
+    for s in SEEDS_STAGE1:  # 老师概率要覆盖真实的 2,190 行，不只是 SMOKE 子集；身份逐项核对
         probs_, tsha = load_teacher(s, parts_for(1, 0, False, smoke=False)["fit"])
         report[f"teacher_seed{s}"] = {"rows": len(probs_), "sha256": tsha}
-    print("老师概率覆盖了三个种子的全部 2,190 行", flush=True)
+    print("老师概率：三个种子的身份核对通过，覆盖全部 2,190 行", flush=True)
+    # 中断自检放在单独的目录里，每次 SMOKE 都重建，重复运行 SMOKE 也不受影响
     t = make_task(1, "ce", 43, 0, True)
+    d = os.path.join(OUT, "selfcheck", "interrupt")
+    shutil.rmtree(d, ignore_errors=True)
     try:
-        run_task(t, revision, code_hash, interrupt_after_epoch=1)
+        run_task(t, revision, code_hash, interrupt_after_epoch=1, d=d)
+        raise AssertionError("模拟中断没有发生")
     except SimulatedInterrupt:
         free_memory()
-    assert os.path.isdir(task_dir(t)) and not os.path.exists(os.path.join(task_dir(t), "done.json"))
-    run_task(t, revision, code_hash)
-    assert os.path.exists(os.path.join(task_dir(t), "done.json"))
-    report["interrupt_resume"] = "通过：第 1 轮后模拟中断，重跑时从头训练并完成"
+    assert os.path.isdir(d) and not os.path.exists(os.path.join(d, "done.json"))
+    run_task(t, revision, code_hash, d=d)
+    assert os.path.exists(os.path.join(d, "done.json"))
+    report["interrupt_resume"] = "通过：第 1 轮后模拟中断，重跑时从头训练并完成（单独的自检目录）"
     print("中断续跑检查通过", flush=True)
     timing = {}
     probe = [(1, m) for m in STAGE1_TRACK1] + [(2, "ce"), (3, "ce"), (4, "ce")]
     for track, method in probe:
-        full = parts_for(track, 0, False, smoke=False)  # 测速用正式规模的数据和 batch，只跑 TIMING_STEPS 步
+        full = parts_for(track, 0, True, smoke=False)  # 测速用正式规模的数据、batch 和 12 轮的学习率日程，只跑 TIMING_STEPS 步
         teacher = load_teacher(42, full["fit"])[0] if method == "kd" else None
         res = TRAIN_FN(make_task(track, method, 42, 0, False), full, teacher=teacher, max_steps=TIMING_STEPS)
-        if res is None:
-            raise SystemExit(f"测速时 track{track} {method} 出现非有限损失")
+        if "failed" in res:
+            raise SystemExit(f"测速时 track{track} {method} 失败：{res}")
         per = sum(res["step_times"][3:]) / len(res["step_times"][3:])  # 前 3 步含初始化和缓存分配，不计
-        timing[f"track{track}/{method}"] = {"seconds_per_step": round(per, 4), "steps": len(res["step_times"]) - 3}
-        print(f"  测速 track{track} {method:12s} 每步 {per:.3f} 秒（{len(res['step_times']) - 3} 步，不计前 3 步）", flush=True)
+        timing[f"track{track}/{method}"] = {
+            "seconds_per_step": round(per, 4), "steps": len(res["step_times"]) - 3, "load_seconds": round(res["load_seconds"], 1),
+            "infer_seconds_per_input": res["infer_seconds_per_input"], "clone_seconds": round(res["clone_seconds"], 2),
+            "inputs": {"val": len(needed_inputs(full["val"], both=False)), "test": len(needed_inputs(full["test"])),
+                       "dev": len(needed_inputs(full["dev"]))}}
+        print(f"  测速 track{track} {method:12s} 每步 {per:.3f} 秒（{len(res['step_times']) - 3} 步，不计前 3 步）"
+              f"；载入 {res['load_seconds']:.0f} 秒；推理每千条 {1000 * res['infer_seconds_per_input']:.1f} 秒", flush=True)
         del res
         free_memory()
     report["timing"] = timing
@@ -1136,23 +1348,27 @@ def smoke_extras(revision, code_hash):
 
 
 def estimate(timing):
-    """按测得的每步秒数估计正式运行的时间。每次运行另加约 0.3 分钟的载入模型和推理（按输入条数折算）。"""
-    est = {}
-
-    def run_min(track, method):
+    """按 SMOKE 实测估计正式运行的时间（性能采样，不是完整配方的复现；第一阶段跑完后用完整任务的实际用时更新）。
+    每次运行 = 训练步数 × 每步秒数 + 载入 + 每轮的内层验证推理和最佳状态拷贝 + 最终推理（val、被预测的折、fold 0 时加 dev）+ 评分约 10 秒。"""
+    def run_min(track, method, with_dev=True):
+        x = timing[f"track{track}/{method}"]
         n_fit = 2190 if track != 4 else 13140
         steps = math.ceil(n_fit / BATCH_SIZE) * MAX_EPOCHS
-        infer = 0.3 * (1 if track != 4 else 6)
-        return steps * timing[f"track{track}/{method}"]["seconds_per_step"] / 60 + infer
+        n = x["inputs"]
+        per_epoch = n["val"] * x["infer_seconds_per_input"] + x["clone_seconds"]
+        final = (n["val"] + n["test"] + (n["dev"] if with_dev else 0)) * x["infer_seconds_per_input"]
+        return (steps * x["seconds_per_step"] + x["load_seconds"] + MAX_EPOCHS * per_epoch + final + 10) / 60
 
+    est = {"per_run_minutes": {k: round(run_min(int(k[5]), k.split("/")[1]), 2) for k in timing}}
     s1 = sum(run_min(1, m) for m in STAGE1_TRACK1) * len(SEEDS_STAGE1) + sum(run_min(t, "ce") for t in (2, 3, 4)) * len(SEEDS_STAGE1)
     est["stage1_minutes"] = round(s1, 1)
     worst_m = max(MOCO["m_candidates"], key=lambda m: timing[f"track1/moco_m{m}"]["seconds_per_step"])
-    per_seed_fold = sum(run_min(1, m) for m in ["ce", "rdrop", "dir_rdrop", "scl", f"moco_m{worst_m}"])
-    n_new = len(SEEDS_STAGE2) * FOLDS - len(SEEDS_STAGE1)
-    est["stage2_minutes"] = round(per_seed_fold * n_new, 1)
-    est["per_run_minutes"] = {k: round(run_min(int(k[5]), k.split("/")[1]), 2) for k in timing}
-    print(f"\n按实测估计：第一阶段约 {est['stage1_minutes']:.0f} 分钟，第二阶段约 {est['stage2_minutes']:.0f} 分钟（不含装环境、下载模型）", flush=True)
+    methods = ["ce", "rdrop", "dir_rdrop", "scl", f"moco_m{worst_m}"]
+    n_new_fold0 = len(SEEDS_STAGE2) - len(SEEDS_STAGE1)
+    n_new_other = len(SEEDS_STAGE2) * (FOLDS - 1)
+    est["stage2_minutes"] = round(sum(run_min(1, m) for m in methods) * n_new_fold0 + sum(run_min(1, m, False) for m in methods) * n_new_other, 1)
+    print(f"\n按实测估计：第一阶段约 {est['stage1_minutes']:.0f} 分钟，第二阶段约 {est['stage2_minutes']:.0f} 分钟"
+          "（不含装环境、下载模型；第一阶段跑完后会用完整任务的实际用时更新）", flush=True)
     return est
 
 
@@ -1171,10 +1387,12 @@ def main():
     revision = revision_now
     _MODEL_PATH["path"] = path
     import torch
+    if not torch.cuda.is_available() and os.environ.get("DICO_ALLOW_CPU") != "1":
+        raise SystemExit("没有可用的 GPU（torch.cuda.is_available() 是 False）。正式运行不在 CPU 上跑，先停下；请检查实例的卡和驱动。")
     dtype = amp_dtype()
-    code_hash = record_run({**env_info(), "model_revision": revision, "model_source": source,
-                            "amp": {None: "fp32", torch.bfloat16: "bf16", torch.float16: "fp16"}[dtype]})
-    print("模型快照：", revision, "；来源：", source, "；混合精度：", dtype, flush=True)
+    ENV.update({**env_info(), "platform": PLATFORM, "amp": {None: "fp32", torch.bfloat16: "bf16", torch.float16: "fp16"}[dtype]})
+    code_hash = record_run({**ENV, "model_revision": revision, "model_source": source})
+    print("模型快照：", revision, "；来源：", source, "；混合精度：", ENV["amp"], "；卡：", ENV["gpu"], flush=True)
     tasks = stage_tasks(STAGE)
     if any(t["method"] == "kd" for t in tasks):  # 开跑前先确认老师概率在，免得跑到一半才停
         for s in sorted({t["seed"] for t in tasks if t["method"] == "kd"}):
@@ -1182,18 +1400,25 @@ def main():
                 load_teacher(s, parts_for(1, 0, False, smoke=False)["fit"])
             except FileNotFoundError as e:
                 raise SystemExit(f"{e}。请把上传包里的 dico_qwen_teacher_results 放到 {TEACHER_DIR}（sh 的 setup 会自动放好）。")
-    if SMOKE:
-        smoke_extras(revision, code_hash)
-    n_done = 0
-    for i, t in enumerate(tasks, 1):
-        status = run_task(t, revision, code_hash)
-        n_done += status == "done"
-        if status == "done":
-            pack(force=False)
-        print(f"[{i}/{len(tasks)}] {task_id(t)}：{'已完成，跳过' if status == 'skip' else '完成'}", flush=True)
-    summarize()
-    zip_path = pack()
-    print("\n结果包：", zip_path)
+    finished = False
+    try:
+        if SMOKE:
+            smoke_extras(revision, code_hash)
+        for i, t in enumerate(tasks, 1):
+            status = run_task(t, revision, code_hash)
+            if status == "done":
+                pack(force=False)
+            print(f"[{i}/{len(tasks)}] {task_id(t)}：{'已完成，跳过' if status == 'skip' else '完成'}", flush=True)
+        summarize()
+        finished = True
+    finally:  # 出错时也把已经完成的任务打进结果包
+        try:
+            zip_path = pack()
+            print("\n结果包：", zip_path, flush=True)
+        except Exception as e:
+            print("打结果包失败：", e, flush=True)
+        if not finished:
+            print("运行中途出错了（见上面的报错）。已完成的任务都在结果包里；请把结果包和日志发给 Claude。", flush=True)
     if SMOKE:
         print("SMOKE 跑完了：损失自检、中断续跑、各方法的小规模训练都通过。请把结果包和上面的输出发给 Claude，确认后再跑第一阶段。")
     elif STAGE == "stage1":

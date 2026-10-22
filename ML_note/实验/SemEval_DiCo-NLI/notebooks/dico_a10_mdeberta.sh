@@ -21,8 +21,13 @@ activate() {
   set +u; source venv/bin/activate; set -u
 }
 
+need_gpu() {
+  python -c "import sys, torch; sys.exit(0 if torch.cuda.is_available() else 1)" || { echo "没有可用的 GPU（torch 看不到卡），先停下。请检查实例。"; exit 1; }
+}
+
 start_bg() {  # $1 = stage1 / stage2
   activate
+  need_gpu
   if pgrep -f "dico_mdeberta_methods.py" >/dev/null; then echo "已经有一个在跑：bash dico_a10_mdeberta.sh log 看进度"; exit 0; fi
   LOG="$W/$1.log"
   echo "$1" > "$W/current_stage"
@@ -51,6 +56,7 @@ case "${1:-}" in
     ;;
   smoke)
     activate
+    need_gpu
     DICO_STAGE=smoke DICO_LOG="$W/smoke.log" python -u "$SRC" 2>&1 | tee -a "$W/smoke.log"
     ;;
   stage1|stage2) start_bg "$1" ;;
