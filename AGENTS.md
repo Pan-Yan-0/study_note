@@ -104,7 +104,7 @@ Coursera-ML-AndrewNg-Notes-master/   课程资料
     - 两人意见一致、却和金标不同的有 11 个家族：近义或相似的说法、同一个人的不同称呼标成 E；有些上下位关系标成 O。不改金标。
     - 计数：英语训练集里筛出的 26 对没有反例的候选规则（见 8.1），是看过标签后归纳的。
     - 单词替换这条线的诊断到此为止，不再追加。
-  - 10-20 起 SemEval 的工作在单独的对话里做；原来的对话只做学习（每晚的笔记任务绑定在那里）。
+  - 10-20 起 SemEval 的工作在单独的对话里做；原来的对话只做学习（每晚的笔记任务绑定在那里）。10-22 Pan-Yan-0 再次确认：SemEval 的代码、实验结果和 README 只在 SemEval 那个对话里处理；学习对话收到 SemEval 的结果包时，不处理、不提交，提醒他发到 SemEval 对话。两边开工前都先 `git fetch`，看一眼对方新推送的提交。
   - 下一步严格按导师的清单：先大模型 instruct / Qwen（零样本、少样本、CoT，再 LoRA SFT），然后 R-Drop、SCL、MoCo，再 DeepSeek 扩充。清单之外的想法排在后面。
   - 第三组（`notebooks/dico_llm_instruct`，Qwen3-4B-Instruct-2507 的指令提示，不训练）已跑完，结果在 `metrics/llm_instruct/`，Claude 从缓存复算过：
     - dev 对称化 WF1 最高是 cot（英 .618、西 .604、巴 .506、跨语言 .535），zero 英 .584、巴 .361、跨语言 .313，都远低于 mDeBERTa（英 .805）。
