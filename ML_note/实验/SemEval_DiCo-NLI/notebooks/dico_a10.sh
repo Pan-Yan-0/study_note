@@ -57,7 +57,7 @@ case "${1:-}" in
       grep -q '^SMOKE = False' "$RUN" || { echo "没能把 SMOKE 改成 False"; rm -f "$RUN"; exit 1; }
     fi
     nohup python -u "$RUN" >> "$LOG" 2>&1 &
-    echo "已在后台开始（进程 $!）。看进度：bash dico_a10.sh log。跑完记得手动停止实例。"
+    echo "已在后台开始（进程 $!）。看进度：bash dico_a10.sh log。跑完先下载结果包，再释放实例（只停止不能止住扣计算时）。"
     ;;
   log)
     tail -n 50 -f "$LOG"

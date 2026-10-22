@@ -86,7 +86,7 @@ Coursera-ML-AndrewNg-Notes-master/   课程资料
   - Kaggle：GPU 有每周额度。
   - Colab：免费 T4，要一直开着页面，单次最多 12 小时。
   - 腾讯 Cloud Studio：T4 可用。`ollama pull` 会被拦，改用 curl 从 `registry.ollama.ai/v2/library/<名字>/manifests|blobs` 下载，核对 SHA-256，manifest 按原字节保存。
-  - 阿里云 PAI-DSW：常常抢不到卡（10-21 抢到过 A10）。免费试用每月 250 计算时，月末作废；A10 每小时耗 6.991 计算时，一个月约 35 小时。额度用完后实例转成按量付费、继续扣钱，跑完要手动停止；闲置 3 小时的自动关机不一定触发。连 Hugging Face 要设 `HF_ENDPOINT=https://hf-mirror.com`。pip 要用内网镜像 `http://mirrors.cloud.aliyuncs.com/pypi/simple/`（加 `--trusted-host`），公网的 mirrors.aliyun.com 只有约 200 kB/s。镜像自带 torch 2.3.1，太旧；在 `/mnt/workspace/venv` 建 venv 装依赖（`notebooks/dico_a10.sh setup`）。网页终端粘贴要单独开终端窗口。
+  - 阿里云 PAI-DSW：常常抢不到卡（10-21 抢到过 A10）。免费试用每月 250 计算时，月末作废；A10 每小时耗 6.991 计算时，一个月约 35 小时。额度用完后实例转成按量付费、继续扣钱。**停止实例不能止住扣计算时，要释放实例才行**（Pan-Yan-0 10-22 实测）；闲置 3 小时的自动关机不一定触发。释放前先把结果包和权重包下载下来；释放后 `/mnt/workspace` 里的 venv 和模型缓存可能也没了，下次要重新装环境、下模型，所以 A10 上的任务尽量合并成少数几次连续运行。连 Hugging Face 要设 `HF_ENDPOINT=https://hf-mirror.com`。pip 要用内网镜像 `http://mirrors.cloud.aliyuncs.com/pypi/simple/`（加 `--trusted-host`），公网的 mirrors.aliyun.com 只有约 200 kB/s。镜像自带 torch 2.3.1，太旧；在 `/mnt/workspace/venv` 建 venv 装依赖（`notebooks/dico_a10.sh setup`）。网页终端粘贴要单独开终端窗口。
   - 本机显卡只有 4 GB。
   - T4 估时按约 10 TFLOPS 算。
 
