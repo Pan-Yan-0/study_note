@@ -6,8 +6,8 @@
    "track": 1,
    "variables": {
     "model": "microsoft/mdeberta-v3-base",
-    "model_revision": null,
-    "prompt": null,
+    "model_revision": "未记录",
+    "prompt": "不适用",
     "split": {
      "folds": 5,
      "fold_seed": 2027,
@@ -65,8 +65,8 @@
    "track": 1,
    "variables": {
     "model": "microsoft/mdeberta-v3-base",
-    "model_revision": null,
-    "prompt": null,
+    "model_revision": "未记录",
+    "prompt": "不适用",
     "split": {
      "folds": 5,
      "fold_seed": 2027,
@@ -124,8 +124,8 @@
    "track": 1,
    "variables": {
     "model": "microsoft/mdeberta-v3-base",
-    "model_revision": null,
-    "prompt": null,
+    "model_revision": "未记录",
+    "prompt": "不适用",
     "split": {
      "folds": 5,
      "fold_seed": 2027,
@@ -305,7 +305,7 @@
   },
   {
    "id": "QWEN-E5-T1",
-   "desc": "Qwen SFT 最多 5 轮，英语",
+   "desc": "Qwen SFT 最多 5 轮，英语（计划 3 个种子，43、44 未完成）",
    "track": 1,
    "variables": {
     "model": "Qwen/Qwen3-4B-Instruct-2507",
@@ -766,7 +766,13 @@
    "old": "MDB-E6-OOF",
    "eval": "oof",
    "purpose": "mDeBERTa 训练轮数上限：12 轮 对 6 轮（第二组定配方用的比较）",
-   "kind": "控制变量对照",
+   "design": "单一计划改动",
+   "environment": "一致；信息不全",
+   "unknown": [
+    "model_revision",
+    "code_sha256"
+   ],
+   "note": "",
    "changed": {
     "train.max_epochs": [
      12,
@@ -801,19 +807,22 @@
    "old": "QWEN-ZS-T1",
    "eval": "fold0",
    "purpose": "Qwen 微调 对 不微调",
-   "kind": "多变量（系统对比，不能归因到单个变量）",
+   "design": "系统比较（多处不同，不能归因到单个变量）",
+   "environment": "一致",
+   "unknown": [],
+   "note": "",
    "changed": {
     "lora.alpha": [
      32,
-     null
+     "（无此项）"
     ],
     "lora.dropout": [
      0.0,
-     null
+     "（无此项）"
     ],
     "lora.r": [
      16,
-     null
+     "（无此项）"
     ],
     "lora.targets": [
      [
@@ -825,7 +834,7 @@
       "up_proj",
       "down_proj"
      ],
-     null
+     "（无此项）"
     ],
     "method": [
      "LoRA SFT，只算答案字母的交叉熵",
@@ -833,31 +842,31 @@
     ],
     "selection": [
      "内层验证原方向 WF1，同分取早的",
-     null
+     "（无此项）"
     ],
     "train.batch": [
      8,
-     null
+     "（无此项）"
     ],
     "train.grad_acc": [
      2,
-     null
+     "（无此项）"
     ],
     "train.lr": [
      0.0001,
-     null
+     "（无此项）"
     ],
     "train.max_epochs": [
      3,
-     null
+     "（无此项）"
     ],
     "train.warmup": [
      0.05,
-     null
+     "（无此项）"
     ],
     "train.weight_decay": [
      0.01,
-     null
+     "（无此项）"
     ],
     "train_data": [
      "track1 fold 0 划分的训练部分",
@@ -892,19 +901,25 @@
    "old": "MDB-E12-OOF",
    "eval": "fold0",
    "purpose": "Qwen SFT 对 mDeBERTa（同训练 / 验证 / 留出数据；系统对比，模型不同）",
-   "kind": "多变量（系统对比，不能归因到单个变量）",
+   "design": "系统比较（多处不同，不能归因到单个变量）",
+   "environment": "卡或精度不同；信息不全",
+   "unknown": [
+    "model_revision",
+    "code_sha256"
+   ],
+   "note": "",
    "changed": {
     "lora.alpha": [
      32,
-     null
+     "（无此项）"
     ],
     "lora.dropout": [
      0.0,
-     null
+     "（无此项）"
     ],
     "lora.r": [
      16,
-     null
+     "（无此项）"
     ],
     "lora.targets": [
      [
@@ -916,7 +931,7 @@
       "up_proj",
       "down_proj"
      ],
-     null
+     "（无此项）"
     ],
     "method": [
      "LoRA SFT，只算答案字母的交叉熵",
@@ -926,13 +941,9 @@
      "Qwen/Qwen3-4B-Instruct-2507",
      "microsoft/mdeberta-v3-base"
     ],
-    "model_revision": [
-     "cdbee75f17c01a7cc42f958dc650907174af0554",
-     null
-    ],
     "prompt": [
      "f12296445e22",
-     null
+     "不适用"
     ],
     "train.batch": [
      8,
@@ -940,7 +951,7 @@
     ],
     "train.grad_acc": [
      2,
-     null
+     "（无此项）"
     ],
     "train.lr": [
      0.0001,
@@ -951,7 +962,7 @@
      12
     ],
     "train.max_len": [
-     null,
+     "（无此项）",
      96
     ],
     "train.warmup": [
@@ -966,15 +977,15 @@
    "lib_diff": {
     "lib.accelerate": [
      "1.15.0",
-     null
+     "（无此项）"
     ],
     "lib.datasets": [
      "5.1.0",
-     null
+     "（无此项）"
     ],
     "lib.peft": [
      "0.21.2",
-     null
+     "（无此项）"
     ],
     "lib.transformers": [
      "5.19.0",
@@ -1021,7 +1032,10 @@
    "old": "QWEN-E3-T1",
    "eval": "fold0",
    "purpose": "Qwen SFT 轮数上限：5 轮 对 3 轮",
-   "kind": "控制变量对照",
+   "design": "单一计划改动",
+   "environment": "同卡同精度，软件或平台不同",
+   "unknown": [],
+   "note": "两边零样本的 1,448 个输入概率逐条相同（推理一致）；训练过程是否等价没有验证",
    "changed": {
     "train.max_epochs": [
      5,

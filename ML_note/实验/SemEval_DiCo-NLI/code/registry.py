@@ -1,8 +1,12 @@
 """实验登记表：从保存的指纹、运行记录和逐条预测自动生成，写出 实验登记表.md 和 metrics/registry.json。
 
-每次运行一行：模型、全部训练变量、数据划分、训练数据量、平台（卡、精度、torch）、代码版本和哈希、种子、分数。
-每个比较一行：两边哪些变量不同由脚本自动算出；只差一个训练变量、卡（和随卡定的精度）也相同的才算"控制变量对照"。
-平台名称（Kaggle / 腾讯云 / PAI-DSW）、torch 和库版本只标注，不影响判定（Pan-Yan-0 10-22 定的）。
+每个配置一行（种子合在一行，列出已完成的种子）：模型、全部训练变量、数据划分、训练数据量、执行环境（平台、卡、精度、torch）、代码版本和哈希、分数。
+每个比较一行，分两列归类（GPT 10-22 审阅后的写法）：
+- 设计：两边训练变量差几处。0 处是重复运行，1 处是单一计划改动，多处是系统比较。
+- 执行环境：一致 / 同卡同精度、软件或平台不同 / 卡或精度不同；有字段没记录时另标"信息不全"。
+  平台名称、torch 和库版本的差别只标注，不要求补跑（Pan-Yan-0 10-22 定的）；但它们也没有被证明不影响训练，
+  所以结论要写成"单一计划改动，在某环境差异下"，不能只看归类就当成严格的控制变量。
+没记录的值（None、"未记录"）不当作相同，单独列为"未知"。
 比较的数字是同种子 sym WF1 的差、三个种子平均，按家族配对重抽样 2,000 次（每次所有种子用同一批家族）。
 
 新增运行：在 RUNS 里加一项（指向它的结果目录）；新增比较：在 COMPARISONS 里加一项。
@@ -99,7 +103,7 @@ def mdeberta_run(rid, recipe, part, desc):
         env = rj(os.path.join(M, "diagnostics", "dev", recipe, "seed42", "train_log.json"))["env"]
         train_data = "track1 全训练集去掉内层验证（2,737 行）"
     variables = {
-        "model": fp["model"], "model_revision": None, "prompt": None,
+        "model": fp["model"], "model_revision": "未记录", "prompt": "不适用",
         "split": {"folds": fp["folds"], "fold_seed": fp["fold_seed"], "inner_fraction": fp["inner_fraction"], "holdout_fold": 0},
         "train_data": train_data, "method": "全参数微调，[CLS] text1 [SEP] text2 [SEP]，交叉熵",
         "inference": "plain 和 sym（F / B 互换后平均）",
@@ -133,7 +137,7 @@ RUNS = [
     ("MDB-E12-DEV", lambda: mdeberta_run("MDB-E12-DEV", "e12", "dev", "mDeBERTa 最多 12 轮，全训练集的 dev 模型（第二组）")),
     ("QWEN-ZS-T1", lambda: qwen_run("QWEN-ZS-T1", "qwen_sft", 1, "zero_shot", "Kaggle", "Qwen 零样本，英语")),
     ("QWEN-E3-T1", lambda: qwen_run("QWEN-E3-T1", "qwen_sft", 1, "sft", "Kaggle", "Qwen SFT 最多 3 轮，英语")),
-    ("QWEN-E5-T1", lambda: qwen_run("QWEN-E5-T1", "qwen_sft_e5", 1, "sft", "腾讯 Cloud Studio", "Qwen SFT 最多 5 轮，英语")),
+    ("QWEN-E5-T1", lambda: qwen_run("QWEN-E5-T1", "qwen_sft_e5", 1, "sft", "腾讯 Cloud Studio", "Qwen SFT 最多 5 轮，英语（计划 3 个种子，43、44 未完成）")),
     ("QWEN-ZS-T2", lambda: qwen_run("QWEN-ZS-T2", "qwen_sft", 2, "zero_shot", "Kaggle", "Qwen 零样本，西班牙语")),
     ("QWEN-E3-T2", lambda: qwen_run("QWEN-E3-T2", "qwen_sft", 2, "sft", "Kaggle", "Qwen SFT 最多 3 轮，西班牙语")),
     ("QWEN-ZS-T3", lambda: qwen_run("QWEN-ZS-T3", "qwen_sft", 3, "zero_shot", "Kaggle", "Qwen 零样本，巴斯克语")),
@@ -151,7 +155,11 @@ COMPARISONS = [
 ]
 
 IGNORE_FOR_CONTROL = {"lib.transformers", "lib.peft", "lib.accelerate", "lib.datasets"}  # 库版本单独列，不算训练变量
-CARD_KEYS = ("gpu", "dtype")  # 判定控制变量时只看卡和精度；平台名称和 torch 版本只标注
+CARD_KEYS = ("gpu", "dtype")  # 卡和精度分开记录、分开比较
+UNKNOWN = (None, "未记录", "None")
+NOTES = {  # 人工补充的核对结果，原样写进比较表
+    "CMP-04": "两边零样本的 1,448 个输入概率逐条相同（推理一致）；训练过程是否等价没有验证",
+}
 
 
 def families_for(dico):
@@ -245,16 +253,27 @@ def main(dico):
     for cid, new, old, ev, purpose in COMPARISONS:
         a, b = runs[new], runs[old]
         va, vb = flat(a["variables"]), flat(b["variables"])
-        changed = sorted(k for k in set(va) | set(vb) if va.get(k) != vb.get(k) and k not in IGNORE_FOR_CONTROL)
-        libs = sorted(k for k in IGNORE_FOR_CONTROL if va.get(k) != vb.get(k))
+        keys = set(va) | set(vb)
+        unknown = sorted(k for k in keys if (k in va and va[k] in UNKNOWN) or (k in vb and vb[k] in UNKNOWN))
+        va = {k: va.get(k, "（无此项）") for k in keys}  # 一边没有这一项（例如零样本没有 LoRA）：算作不同，不算未知
+        vb = {k: vb.get(k, "（无此项）") for k in keys}
+        changed = sorted(k for k in keys if va.get(k) != vb.get(k) and k not in IGNORE_FOR_CONTROL and k not in unknown)
+        libs = sorted(k for k in IGNORE_FOR_CONTROL if va.get(k) != vb.get(k) and k not in unknown)
         plat = sorted(k for k in a["platform"] if a["platform"][k] != b["platform"][k])
         card = [k for k in plat if k in CARD_KEYS]
+        as_list = lambda v: v if isinstance(v, list) else [v]
+        env_unknown = sorted(k for k in a["platform"] if any(x in UNKNOWN or "未记录" in str(x) for x in
+                                                              as_list(a["platform"][k]) + as_list(b["platform"][k])))
+        code_unknown = any("未记录" in str(x) for x in a["code"]["code_sha256"] + b["code"]["code_sha256"])
         res = compare(dico, fam_of, a, b, ev)
-        kind = ("控制变量对照" if len(changed) == 1 and not card else
-                "单变量，但卡不同" if len(changed) == 1 else
-                "只差卡（换卡的复现检查）" if not changed and card else
-                "设置相同（重复运行）" if not changed else "多变量（系统对比，不能归因到单个变量）")
-        reg["comparisons"].append({"id": cid, "new": new, "old": old, "eval": ev, "purpose": purpose, "kind": kind,
+        design = ("重复运行（训练变量相同）" if not changed else "单一计划改动" if len(changed) == 1 else
+                  "系统比较（多处不同，不能归因到单个变量）")
+        env = ("卡或精度不同" if card else "同卡同精度，软件或平台不同" if plat or libs else "一致")
+        missing = unknown + [f"platform.{k}" for k in env_unknown] + (["code_sha256"] if code_unknown else [])
+        if missing:
+            env += "；信息不全"
+        reg["comparisons"].append({"id": cid, "new": new, "old": old, "eval": ev, "purpose": purpose,
+                                   "design": design, "environment": env, "unknown": missing, "note": NOTES.get(cid, ""),
                                    "changed": {k: [va.get(k), vb.get(k)] for k in changed},
                                    "lib_diff": {k: [va.get(k), vb.get(k)] for k in libs},
                                    "platform_diff": {k: [a["platform"][k], b["platform"][k]] for k in plat}, "result": res})
@@ -273,9 +292,10 @@ def write_md(reg):
     L = ["# 实验登记表", "",
          "由 [code/registry.py](code/registry.py) 从保存的指纹、运行记录和逐条预测自动生成，不要手改；完整内容在 `metrics/registry.json`。",
          "", "分数是对称化 WF1、所有种子的均值。比较是同种子的 sym WF1 差、种子平均，按家族配对重抽样 2,000 次的近似 95% 区间（每次所有种子用同一批家族）。"
-         "\"改了什么\"由脚本对比两边的变量自动列出：只差一个训练变量、卡（和随卡定的精度）也相同的，才算控制变量对照；平台名称、torch 和库版本只标注，不影响判定。", "",
+         "\"改了什么\"由脚本对比两边记录下来的变量自动列出，只能发现记录了的差别；没记录的值列为\"未知\"，不当作相同。", "",
+         "每个比较分两列归类：**设计**看训练变量差几处（重复运行 / 单一计划改动 / 系统比较）；**执行环境**看平台、卡、精度和软件版本（一致 / 同卡同精度、软件或平台不同 / 卡或精度不同，没记录的另标信息不全）。环境差别只标注、不要求补跑，但结论里要写明。", "",
          "## 运行", "",
-         "| 编号 | 内容 | 关键变量 | 平台 | 代码 | 种子 | fold 0 | 5 折折外 | dev |", "|---|---|---|---|---|---|---:|---:|---:|"]
+         "| 编号 | 内容 | 关键变量 | 执行环境 | 代码 | 已完成的种子 | fold 0 | 5 折折外 | dev |", "|---|---|---|---|---|---|---:|---:|---:|"]
     for r in reg["runs"]:
         v = r["variables"]
         key = []
@@ -290,8 +310,8 @@ def write_md(reg):
         L.append(f"| {r['id']} | {r['desc']} | {'；'.join(key)} | {p['platform']}，{fmt(p['gpu'])}，{fmt(p['dtype'])}，torch {fmt(p['torch'])} | "
                  f"{r['code']['version']}（{fmt(r['code']['code_sha256'])}） | {', '.join(r['seeds'])} | "
                  f"{sc.get('fold0', '—')} | {sc.get('oof', '—')} | {sc.get('dev', '—')} |")
-    L += ["", "## 比较", "", "| 编号 | 新 对 旧 | 评测 | 改了什么（自动） | 卡 / 平台 / 版本的差别（只有卡影响类型） | 类型 | 逐种子的差 | 平均差 [区间] |",
-          "|---|---|---|---|---|---|---|---|"]
+    L += ["", "## 比较", "", "| 编号 | 新 对 旧 | 评测 | 改了什么（自动） | 设计 | 环境的差别 | 执行环境 | 未知 | 逐种子的差 | 平均差 [区间] | 备注 |",
+          "|---|---|---|---|---|---|---|---|---|---|---|"]
     for c in reg["comparisons"]:
         ch = "；".join(f"{k}: {fmt(b)} → {fmt(a)}" for k, (a, b) in c["changed"].items())  # 旧 → 新
         if len(c["changed"]) > 4:
@@ -299,14 +319,16 @@ def write_md(reg):
         pl = "；".join([f"{k}: {fmt(b)} → {fmt(a)}" for k, (a, b) in c["platform_diff"].items()] +
                       [f"{k}: {b} → {a}" for k, (a, b) in c["lib_diff"].items()]) or "无"
         r = c["result"]
-        L.append(f"| {c['id']} | {c['new']} 对 {c['old']}：{c['purpose']} | {c['eval']}（{r['rows']} 行，{r['families']} 个家族） | {ch} | {pl} | {c['kind']} | "
+        L.append(f"| {c['id']} | {c['new']} 对 {c['old']}：{c['purpose']} | {c['eval']}（{r['rows']} 行，{r['families']} 个家族） | {ch or '无'} | "
+                 f"{c['design']} | {pl} | {c['environment']} | {', '.join(c['unknown']) or '无'} | "
                  f"{' / '.join(f'{v:+.3f}' for v in r['per_seed'].values())}（种子 {', '.join(r['seeds'])}） | "
-                 f"{r['mean']:+.3f} [{r['ci95'][0]:+.3f}, {r['ci95'][1]:+.3f}] |")
+                 f"{r['mean']:+.3f} [{r['ci95'][0]:+.3f}, {r['ci95'][1]:+.3f}] | {c['note'] or '—'} |")
     L += ["", "## 怎么用", "",
           "- 新的运行：结果目录放进 `metrics/` 以后，在 `RUNS` 里加一项；新的比较在 `COMPARISONS` 里加一项，然后重新运行脚本。",
-          "- 要写进结论的比较，类型应是\"控制变量对照\"。卡不同时，在同一种卡上补跑对照。",
-          "- 平台名称、torch 和库版本只标注。同一种卡、不同平台的两次运行，零样本概率应逐条相同（Kaggle 和腾讯云的 T4 已核对过）；不同时要查原因。",
-          "- 系统对比（换模型）只回答\"哪个更好\"，不说明是哪个变量带来的。"]
+          "- 要把差别归因到某个变量，设计必须是\"单一计划改动\"，并在结论里写明执行环境的差别（例如\"同 T4，torch 不同\"）。卡或精度不同时，在同一环境里补跑对照再归因。",
+          "- 系统比较（例如换模型）可以写进结论，但只说\"在给定设置下 A 比 B 好\"，不说是哪个变量带来的。",
+          "- 零样本概率逐条相同只说明推理一致，不说明训练等价；这类核对写在备注里。",
+          "- 区间是对已训练模型、按家族重抽样得到的近似区间，不含训练的随机性；种子少时不下结论。"]
     open(os.path.join(EXP, "实验登记表.md"), "w", encoding="utf-8").write("\n".join(L) + "\n")
 
 

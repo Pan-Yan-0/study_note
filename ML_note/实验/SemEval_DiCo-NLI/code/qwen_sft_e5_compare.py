@@ -48,11 +48,11 @@ for mode in ("plain", "sym"):
             by.setdefault(fam["family_of_pair"][r["pair_id"]], []).append(i)
         fams = sorted(by); rng = random.Random(20261021); diffs = []
         for _ in range(2000):
-            idx = [i for f in (rng.choice(fams) for _ in fams) for i in by[f]]
+            idx = [i for f in rng.choices(fams, k=len(fams)) for i in by[f]]  # 和 registry.py、qwen_sft_analysis.py 同一写法
             g = [gold[i] for i in idx]
             diffs.append(weighted_f1(g, [l5[i] for i in idx]) - weighted_f1(g, [l3[i] for i in idx]))
         diffs.sort()
-        out["sym"]["wf1_diff_ci"] = (round(diffs[49], 4), round(diffs[1949], 4))
+        out["sym"]["wf1_diff_ci"] = (round(diffs[int(.025 * 2000)], 4), round(diffs[int(.975 * 2000) - 1], 4))
 for name in ("dev",):
     for mode in ("sym",):
         a, b = official(dico, dev_ref, predict(P5, dev_ref, mode)), official(dico, dev_ref, predict(P3, dev_ref, mode))
