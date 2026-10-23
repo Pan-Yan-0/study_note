@@ -1,0 +1,115 @@
+{
+ "scores": {
+  "fold0": {
+   "plain": {
+    "weighted_f1": 0.8018568618229465,
+    "soft_cons": 0.749034749034749,
+    "hard_cons": 0.7297297297297297
+   },
+   "sym": {
+    "weighted_f1": 0.8373327860459387,
+    "soft_cons": 0.8996138996138996,
+    "hard_cons": 0.8455598455598455
+   }
+  },
+  "dev": {
+   "plain": {
+    "weighted_f1": 0.8077356986125941,
+    "soft_cons": 0.7870036101083032,
+    "hard_cons": 0.7617328519855595
+   },
+   "sym": {
+    "weighted_f1": 0.8424010860057247,
+    "soft_cons": 0.9133574007220217,
+    "hard_cons": 0.8664259927797834
+   }
+  }
+ },
+ "stats": {
+  "inputs": 1448,
+  "scored_this_session": 1448,
+  "score_seconds_this_session": 61.3,
+  "mean_answer_mass": 0.9997,
+  "answer_mass_p05": 0.9992,
+  "answer_mass_below_0.5": 0,
+  "top_is_letter": 1.0
+ },
+ "history": [
+  {
+   "epoch": 1,
+   "train_loss": 1.26030257665194,
+   "val_weighted_f1": 0.8145002055496151,
+   "minutes": 11.1,
+   "ce": 1.225020180272795,
+   "kl": 0.0012087885955923638
+  },
+  {
+   "epoch": 2,
+   "train_loss": 0.3942800572940281,
+   "val_weighted_f1": 0.8582048358601421,
+   "minutes": 11.1,
+   "ce": 0.3804433245405582,
+   "kl": 0.0005759416774535766
+  },
+  {
+   "epoch": 3,
+   "train_loss": 0.19841620922088624,
+   "val_weighted_f1": 0.8493981606919976,
+   "minutes": 11.1,
+   "ce": 0.19411655008260936,
+   "kl": 0.00047772787068916064
+  }
+ ],
+ "best_epoch": 2,
+ "forward_check": {
+  "autocast_ce_path": [
+   true,
+   "torch.bfloat16"
+  ],
+  "autocast_hidden_path": [
+   true,
+   "torch.bfloat16"
+  ],
+  "max_letter_logprob_diff": 0.0,
+  "argmax_agreement": 1.0,
+  "rows": 8
+ },
+ "trainable_params": 33030144,
+ "steps": 411,
+ "steps_per_epoch": 137,
+ "train_minutes_last_session": 33.6,
+ "seconds_per_step": 4.85,
+ "resumed_from_epoch": 0,
+ "resume": {
+  "checkpoint": null,
+  "epoch": 0,
+  "files": [],
+  "skipped": []
+ },
+ "adapter_checks": [
+  {
+   "epoch": 2,
+   "tensors": 504,
+   "has_proj": false,
+   "val_argmax_agreement": 1.0,
+   "val_max_prob_diff": 0.0,
+   "val_weighted_f1": 0.8582048358601421,
+   "recorded_val_weighted_f1": 0.8582048358601421
+  }
+ ],
+ "load_memory": {
+  "before_load": {
+   "allocated_gib": 0.02,
+   "reserved_gib": 0.08
+  },
+  "after_load": {
+   "allocated_gib": 7.51,
+   "reserved_gib": 7.53
+  }
+ },
+ "peak_memory_gib": 9.61,
+ "fit_rows": 2190,
+ "val_rows": 244,
+ "fit_tokens": 433153,
+ "minutes_last_session": 34.7
+}

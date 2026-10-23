@@ -30,6 +30,11 @@
 
 ## 结果
 
+### 第六组 Qwen：已核验 CE 与 R-Drop
+
+同代码 A10 基线 CE 的 fold 0 / dev 对称化 WF1 为 .8525 / .8268，R-Drop 为 .8479 / .8404（三个种子）。留出折与 dev 趋势不同，暂不判定胜出。CE+dropout 因下载超时未训练；SCL、MoCo 正式结果待归档。见[本轮结果、问题与下一步](metrics/qwen_methods_v2/README.md)。
+
+
 **[实验登记表](实验登记表.md)**：每个配置的全部变量、执行环境和分数，以及每个比较到底改了哪些变量。比较分两列归类：设计（重复运行 / 单一计划改动 / 系统比较）和执行环境（一致 / 同卡同精度、软件或平台不同 / 卡或精度不同 / 信息不全）。环境差别只标注、不要求补跑，但结论里要写明。
 
 官方评分脚本；编码器都是 3 个种子的平均，括号里是样本标准差（除以 n − 1）。`metrics/encoders/summary.json` 里的 `*_std` 是除以 n 的总体标准差。
@@ -102,7 +107,7 @@
 - dev 上比 mDeBERTa 只高 .017（.762 对 .745），比单语赛道（英语、西班牙语）的差距小得多，和巴斯克语接近。和前面一样，两边训练数据量、配方和卡都不同，只是粗略比较。
 - 对称化后每类 F1（三个种子平均）：E .769、F .820、B .834、O .529。NEGATIVE_OTHER 仍然最难。
 
-**英语 3 轮配方换到 A10**（之后 Qwen 上的技巧都和它比）：A10 版 notebook（`dico_qwen_sft-4`），训练变量和 Kaggle T4 那次完全相同（fingerprint 只差版本号），由 Pan-Yan-0 在阿里云 PAI-DSW 的 A10 上运行，bf16，torch 2.6。每步 2.35 秒，每个种子约 18 分钟。结果在 `metrics/qwen_sft_a10_t1/`，从缓存重建预测、官方脚本重算一致。
+**英语 3 轮配方换到 A10**（历史迁移复现；第六组使用本轮 Q0 CE 作对照）：A10 版 notebook（`dico_qwen_sft-4`），训练变量和 Kaggle T4 那次完全相同（fingerprint 只差版本号），由 Pan-Yan-0 在阿里云 PAI-DSW 的 A10 上运行，bf16，torch 2.6。每步 2.35 秒，每个种子约 18 分钟。结果在 `metrics/qwen_sft_a10_t1/`，从缓存重建预测、官方脚本重算一致。
 
 | WF1 / SoftCons / HardCons，3 个种子的均值 | fold 0 原方向 | fold 0 对称化 | dev 对称化 |
 |---|---|---|---|
@@ -111,7 +116,7 @@
 | SFT 3 轮，Kaggle T4 fp16（上面那次） | .845 / .843 / .813 | .860 / .920 / .878 | .835 / .924 / .866 |
 
 - fold 0 对称化 WF1 的同种子差（A10 − T4）是 −.016 / +.007 / +.001，平均 −.003，近似区间 [−.012, +.006]。三个种子在两边都选第 3 轮。
-- 这是"执行环境迁移复现"：训练变量相同，卡、精度、torch 版本和代码版本都不同，区间包含 0 也不能说明两边等价。零样本时 1,448 个输入里有 16 个最大概率的类不同；训练后每个种子有 4–5% 的输入不同。所以之后 Qwen 上的技巧只和 A10 上的这组基线按种子配对，不和 T4 的结果相减。
+- 这是"执行环境迁移复现"：训练变量相同，卡、精度、torch 版本和代码版本都不同，区间包含 0 也不能说明两边等价。零样本时 1,448 个输入里有 16 个最大概率的类不同；训练后每个种子有 4–5% 的输入不同。第六组已在同一份方法代码下重跑 Q0 CE，技巧优先与 Q0 配对；这组旧 A10 SFT 保留为历史迁移复现。
 
 **最多 5 轮的配方**：同一个 notebook（代码哈希和上面相同），只把 `MAX_EPOCHS` 改成 5，由 Pan-Yan-0 在腾讯 Cloud Studio 的 T4 上运行（fp16，torch 2.10；3 轮那次是 Kaggle T4、torch 2.11）。两边零样本的 1,448 个输入概率逐条相同，说明推理一致；训练过程是否等价没有验证。结果在 `metrics/qwen_sft_e5/`，三个种子都从缓存重建预测、官方脚本重算一致（[code/qwen_sft_e5_compare.py](code/qwen_sft_e5_compare.py)）。
 
@@ -438,6 +443,9 @@ e12 是"最多训练 12 轮、在内部验证上选最好的一轮"，不是固�
 
 ## 文件
 
+- `metrics/qwen_methods_v2/`：本轮 CE、R-Drop 正式结果、三个真实 SMOKE、CE+dropout 未完成记录和独立核验。
+- `code/qwen_methods_v2/`：本轮实际使用的 v2 训练源码与启动脚本；下列同名 notebook 仍是历史 v1。
+
 - `code/baselines.py`：random / majority 基线。
 - `code/probes.py`：浅层探针。
 - `code/error_analysis.py`：错例、编辑形状、长度规则的统计。
@@ -484,7 +492,7 @@ e12 是"最多训练 12 轮、在内部验证上选最好的一轮"，不是固�
 - `metrics/qwen_sft_a10/`：跨语言赛道（A10）的输出，结构同英语；选中那一轮的 LoRA 权重在另一个权重包里，由 Pan-Yan-0 保存。
 - `metrics/qwen_sft_e5/`：第四组"最多 5 轮"配方的输出，结构同上。
 - `metrics/qwen_teacher/`：蒸馏老师（第四组英语 3 轮）在 fold 0 训练部分上的四类概率，每个种子一个 `teacher.jsonl`（2,502 个有序输入，其中 354 个是多导出的反向输入，学生不用）。
-- `metrics/qwen_sft_a10_t1/`：第四组英语 3 轮配方在 A10 上的输出，结构同上；之后 Qwen 技巧的对照。
+- `metrics/qwen_sft_a10_t1/`：第四组英语 3 轮配方在 A10 上的输出，结构同上；历史 A10 SFT 基线，第六组对照见 `metrics/qwen_methods_v2/ce_results/`。
 - `metrics/probes/summary.json`：探针分数。
 - `metrics/analysis/`：错例统计、切片 oracle、单词替换诊断的拆分、计数和介词短语的金标统计（`label_conventions.json`）。
 

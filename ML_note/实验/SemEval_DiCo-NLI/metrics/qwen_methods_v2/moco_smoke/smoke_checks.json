@@ -1,0 +1,240 @@
+{
+ "checks": {
+  "四个分区都含四类": true,
+  "中断后从第 1 轮的检查点恢复": true,
+  "写坏的检查点被跳过": true,
+  "恢复用的检查点里有 RNG（fp16 时还有缩放状态）": true,
+  "权重包里每个种子的权重和哈希对得上": true,
+  "每一轮的权重载入后张量逐位相同、预测一致": true,
+  "第二个种子加载前显存已释放": true,
+  "损失自检（开头已跑）": true,
+  "对比损失是有限值，且大多数锚点有正例": true,
+  "每一轮的权重文件里都有投影头": true,
+  "恢复用的检查点里有 moco_state.pt": true,
+  "队列在入队、键的年龄合理": true
+ },
+ "labels": {
+  "fit": {
+   "FORWARD_ENTAILMENT": 54,
+   "BACKWARD_ENTAILMENT": 54,
+   "EQUIVALENCE": 52,
+   "NEGATIVE_OTHER": 32
+  },
+  "val": {
+   "FORWARD_ENTAILMENT": 12,
+   "BACKWARD_ENTAILMENT": 12,
+   "EQUIVALENCE": 4,
+   "NEGATIVE_OTHER": 5
+  },
+  "test": {
+   "FORWARD_ENTAILMENT": 13,
+   "BACKWARD_ENTAILMENT": 13,
+   "EQUIVALENCE": 14,
+   "NEGATIVE_OTHER": 9
+  },
+  "dev": {
+   "FORWARD_ENTAILMENT": 12,
+   "BACKWARD_ENTAILMENT": 12,
+   "EQUIVALENCE": 12,
+   "NEGATIVE_OTHER": 12
+  }
+ },
+ "checkpoint_files": [
+  "README.md",
+  "adapter_config.json",
+  "adapter_model.safetensors",
+  "chat_template.jinja",
+  "moco_state.pt",
+  "optimizer.pt",
+  "rng_state.pth",
+  "scheduler.pt",
+  "tokenizer.json",
+  "tokenizer_config.json",
+  "trainer_state.json",
+  "training_args.bin"
+ ],
+ "skipped_checkpoints": [
+  {
+   "checkpoint": "checkpoint-999999",
+   "reason": "缺少 ['moco_state.pt']"
+  }
+ ],
+ "adapter_checks": {
+  "seed42": [
+   {
+    "epoch": 1,
+    "tensors": 508,
+    "has_proj": true,
+    "val_argmax_agreement": 1.0,
+    "val_max_prob_diff": 0.0,
+    "val_weighted_f1": 0.5874125874125874,
+    "recorded_val_weighted_f1": 0.5874125874125874
+   },
+   {
+    "epoch": 2,
+    "tensors": 508,
+    "has_proj": true,
+    "val_argmax_agreement": 1.0,
+    "val_max_prob_diff": 0.0,
+    "val_weighted_f1": 0.6672176308539944,
+    "recorded_val_weighted_f1": 0.6672176308539944
+   }
+  ],
+  "seed43": [
+   {
+    "epoch": 1,
+    "tensors": 508,
+    "has_proj": true,
+    "val_argmax_agreement": 1.0,
+    "val_max_prob_diff": 0.0,
+    "val_weighted_f1": 0.7260012714558168,
+    "recorded_val_weighted_f1": 0.7260012714558168
+   },
+   {
+    "epoch": 2,
+    "tensors": 508,
+    "has_proj": true,
+    "val_argmax_agreement": 1.0,
+    "val_max_prob_diff": 0.0,
+    "val_weighted_f1": 0.7797202797202798,
+    "recorded_val_weighted_f1": 0.7797202797202798
+   }
+  ]
+ },
+ "load_memory": {
+  "seed42": {
+   "before_load": {
+    "allocated_gib": 0.02,
+    "reserved_gib": 0.08
+   },
+   "after_load": {
+    "allocated_gib": 7.51,
+    "reserved_gib": 7.53
+   }
+  },
+  "seed43": {
+   "before_load": {
+    "allocated_gib": 0.02,
+    "reserved_gib": 0.08
+   },
+   "after_load": {
+    "allocated_gib": 7.51,
+    "reserved_gib": 7.53
+   }
+  }
+ },
+ "peak_memory_gib": 8.86,
+ "seconds_per_step": 3.24,
+ "full_fit_rows": 2190,
+ "full_fit_tokens": 433153,
+ "estimated_train_minutes_per_seed": 22,
+ "estimated_scoring_minutes_per_seed": 2,
+ "smoke_scores": {
+  "seed42": {
+   "fold0": {
+    "plain": {
+     "weighted_f1": 0.6651712409101572,
+     "soft_cons": 0.8,
+     "hard_cons": 0.7
+    },
+    "sym": {
+     "weighted_f1": 0.7434186372961884,
+     "soft_cons": 0.95,
+     "hard_cons": 0.85
+    }
+   },
+   "dev": {
+    "plain": {
+     "weighted_f1": 0.589707026186155,
+     "soft_cons": 0.5,
+     "hard_cons": 0.4444444444444444
+    },
+    "sym": {
+     "weighted_f1": 0.6839920948616601,
+     "soft_cons": 0.8888888888888888,
+     "hard_cons": 0.7222222222222222
+    }
+   }
+  },
+  "seed43": {
+   "fold0": {
+    "plain": {
+     "weighted_f1": 0.7040252045518669,
+     "soft_cons": 0.75,
+     "hard_cons": 0.7
+    },
+    "sym": {
+     "weighted_f1": 0.7134958012509033,
+     "soft_cons": 0.95,
+     "hard_cons": 0.85
+    }
+   },
+   "dev": {
+    "plain": {
+     "weighted_f1": 0.5699209218919952,
+     "soft_cons": 0.5,
+     "hard_cons": 0.4444444444444444
+    },
+    "sym": {
+     "weighted_f1": 0.6774291938997822,
+     "soft_cons": 1.0,
+     "hard_cons": 0.7777777777777778
+    }
+   }
+  }
+ },
+ "history": {
+  "seed42": [
+   {
+    "epoch": 1,
+    "train_loss": 3.538552474975586,
+    "val_weighted_f1": 0.5874125874125874,
+    "minutes": 0.7,
+    "anchors": 0.9895833333333334,
+    "ce": 2.918491425613562,
+    "con": 4.225944643219312,
+    "updates": 12,
+    "queue_filled": 192,
+    "queue_mean_key_age_updates": 5.5
+   },
+   {
+    "epoch": 2,
+    "train_loss": 2.1942861080169678,
+    "val_weighted_f1": 0.6672176308539944,
+    "minutes": 0.7,
+    "anchors": 1.0,
+    "ce": 0.7736590293546518,
+    "con": 5.52770322561264,
+    "updates": 24,
+    "queue_filled": 384,
+    "queue_mean_key_age_updates": 11.5
+   }
+  ],
+  "seed43": [
+   {
+    "epoch": 1,
+    "train_loss": 3.2143726348876953,
+    "val_weighted_f1": 0.7260012714558168,
+    "minutes": 0.7,
+    "anchors": 0.984375,
+    "ce": 2.5728928868969283,
+    "con": 4.2271038591861725,
+    "updates": 12,
+    "queue_filled": 192,
+    "queue_mean_key_age_updates": 5.5
+   },
+   {
+    "epoch": 2,
+    "train_loss": 2.2550010681152344,
+    "val_weighted_f1": 0.7797202797202798,
+    "minutes": 0.7,
+    "anchors": 1.0,
+    "ce": 0.79165193811059,
+    "con": 5.5384315848350525,
+    "updates": 24,
+    "queue_filled": 384,
+    "queue_mean_key_age_updates": 11.5
+   }
+  ]
+ }
+}

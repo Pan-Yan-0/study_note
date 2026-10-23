@@ -16,6 +16,8 @@ ML_note/
 
 ## 实验
 
+- [SemEval 第六组：CE 与 R-Drop 结果及核验](ML_note/实验/SemEval_DiCo-NLI/metrics/qwen_methods_v2/README.md)
+
 | 实验 | 内容 | 主要结果 |
 |---|---|---|
 | [SST-2 指令学习](ML_note/实验/SST2/README.md) | 《1-使用大模型进行指令学习》任务：DeepSeek 与 Qwen3.5 0.8b / 2b / 4b / 9b 在三个指令模板（basic / cot / role_cot）× 思考开关下的准确率；Mistral、Llama、Gemma、Phi-4 四个系列；DeBERTa-v3-base 全量与 16 / 64 / 256 / 1024 条少样本微调对照 | 验证集 872 条：DeepSeek 95.18%，Gemma 3 12B 94.61%，Qwen 4b 93.81%，Phi-4 93.00%，Llama 3.1 8B 92.43%，Mistral 7B 90.60%；DeBERTa 全量 95.60%，1024 条 92.97%，16 条 61.62% |
