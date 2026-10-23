@@ -17,6 +17,7 @@ ML_note/
 ## 实验
 
 - [SemEval 实验完成清单与剩余算力安排](ML_note/实验/SemEval_DiCo-NLI/实验状态与算力计划.md)
+- [SFT与蒸馏五折验证计划（94 calculation预算）](ML_note/实验/SemEval_DiCo-NLI/SFT与蒸馏验证计划.md)
 
 - [SemEval 第六组：五种 Qwen 设置完整结果及核验](ML_note/实验/SemEval_DiCo-NLI/metrics/qwen_methods_v2/README.md)
 
