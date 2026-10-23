@@ -140,13 +140,54 @@ def qwen_methods_run(rid, method, desc):
     platforms = sorted({m["platform"] for m in metas})
     assert len(platforms) == 1
     r = qwen_run(rid, mdir, 1, "sft", platforms[0], desc)
-    r["variables"].update({"method": method, "method_params": fp["method_params"],
+    # Method names and the repeated dropout field are metadata aliases, not extra interventions.
+    assert fp["method_params"]["lora_dropout"] == fp["lora"]["dropout"]
+    params = {k:v for k,v in fp["method_params"].items() if k != "lora_dropout"}
+    r["variables"].update({"method": "LoRA SFT", "method_params": params,
                            "data_sha256": fp["data_sha256"]})
     assert r["seeds"] == ["42", "43", "44"]
     return r
 
 
+def mdeberta_methods_run(rid, track, method, desc):
+    """第五组已完成的第一阶段，fold 0 三种子；不把孤立 fold 1 当 OOF。"""
+    mdir = "mdeberta_methods_stage1"
+    root = os.path.join(M, mdir)
+    directories = [os.path.join(root, f"track{track}", method, f"seed{s}", "fold0") for s in [42,43,44]]
+    tasks = [rj(os.path.join(d, "task.json")) for d in directories]
+    done = [rj(os.path.join(d, "done.json")) for d in directories]
+    t = tasks[0]
+    for task in tasks:
+        assert all(task[k] == t[k] for k in ["model", "model_revision", "train", "split", "method", "method_params", "data_sha256"])
+        assert not task["smoke"] and task["fold"] == 0 and task["track"] == track
+    env = done[0]["env"]
+    assert all(x["env"] == env for x in done)
+    evals = {part: {str(seed): {mode: preds(os.path.join(d, f"pred_{saved}_{mode}.csv")) for mode in ["plain", "sym"]}
+                    for seed,d in zip([42,43,44],directories)} for part,saved in [("fold0","test"),("dev","dev")]}
+    variables = {"model":t["model"], "model_revision":t["model_revision"], "prompt":"不适用",
+                 "train":t["train"], "split":dict(t["split"],holdout_fold=0), "method":method,
+                 "method_params":t["method_params"], "data_sha256":t["data_sha256"],
+                 "train_data":f"track{track} fold 0 划分的训练部分", "selection":t["train"]["selection"],
+                 "inference":"plain 和 sym（F / B 互换后平均）", "lib":{"transformers":env["transformers"]}}
+    return {"id":rid, "desc":desc, "track":track, "variables":variables,
+            "platform":{"platform":env["platform"],"gpu":[env["gpu"]],"dtype":[env["amp"]],"torch":[env["torch"]]},
+            "code":{"version":rj(os.path.join(root,"run_meta.json"))[0]["version"],"code_sha256":sorted({x["code_sha256"][:12] for x in done})},
+            "metrics_dir":f"metrics/{mdir}/track{track}/{method}","seeds":["42","43","44"],"evals":evals}
+
+
 RUNS = [
+    ("MDB-G5-T1-CE", lambda: mdeberta_methods_run("MDB-G5-T1-CE", 1, "ce", "第五组 track1 ce，fold 0 三种子")),
+    ("MDB-G5-T1-KD", lambda: mdeberta_methods_run("MDB-G5-T1-KD", 1, "kd", "第五组 track1 kd，fold 0 三种子")),
+    ("MDB-G5-T1-RDROP", lambda: mdeberta_methods_run("MDB-G5-T1-RDROP", 1, "rdrop", "第五组 track1 rdrop，fold 0 三种子")),
+    ("MDB-G5-T1-DIR_RDROP", lambda: mdeberta_methods_run("MDB-G5-T1-DIR_RDROP", 1, "dir_rdrop", "第五组 track1 dir_rdrop，fold 0 三种子")),
+    ("MDB-G5-T1-SCL", lambda: mdeberta_methods_run("MDB-G5-T1-SCL", 1, "scl", "第五组 track1 scl，fold 0 三种子")),
+    ("MDB-G5-T1-MOCO_M0.99", lambda: mdeberta_methods_run("MDB-G5-T1-MOCO_M0.99", 1, "moco_m0.99", "第五组 track1 moco_m0.99，fold 0 三种子")),
+    ("MDB-G5-T1-MOCO_M0.999", lambda: mdeberta_methods_run("MDB-G5-T1-MOCO_M0.999", 1, "moco_m0.999", "第五组 track1 moco_m0.999，fold 0 三种子")),
+    ("MDB-G5-T2-CE", lambda: mdeberta_methods_run("MDB-G5-T2-CE", 2, "ce", "第五组 track2 ce，fold 0 三种子")),
+    ("MDB-G5-T3-CE", lambda: mdeberta_methods_run("MDB-G5-T3-CE", 3, "ce", "第五组 track3 ce，fold 0 三种子")),
+    ("MDB-G5-T4-CE", lambda: mdeberta_methods_run("MDB-G5-T4-CE", 4, "ce", "第五组 track4 ce，fold 0 三种子")),
+    ("QWEN-Q1-DROP", lambda: qwen_methods_run("QWEN-Q1-DROP", "ce_drop", "第六组 Q1，仅增加 LoRA dropout 0.1")),
+    ("QWEN-Q4-MOCO", lambda: qwen_methods_run("QWEN-Q4-MOCO", "moco", "第六组 Q4，动量监督对比学习 MoCo")),
     ("QWEN-Q3-SCL", lambda: qwen_methods_run("QWEN-Q3-SCL", "scl", "第六组 Q3，监督对比学习 SCL")),
     ("QWEN-Q0-CE", lambda: qwen_methods_run("QWEN-Q0-CE", "ce", "第六组 Q0，同代码 CE 基线")),
     ("QWEN-Q2-RDROP", lambda: qwen_methods_run("QWEN-Q2-RDROP", "rdrop", "第六组 Q2，dropout 0.1 + R-Drop")),
@@ -168,6 +209,12 @@ RUNS = [
 
 # (编号, 新, 旧, 评测集, 目的)
 COMPARISONS = [
+    ("CMP-12", "QWEN-Q1-DROP", "QWEN-Q0-CE", "fold0", "只加 dropout 对 CE"),
+    ("CMP-13", "QWEN-Q1-DROP", "QWEN-Q0-CE", "dev", "只加 dropout 对 CE；dev 仅报告"),
+    ("CMP-14", "QWEN-Q2-RDROP", "QWEN-Q1-DROP", "fold0", "R-Drop 对同 dropout 的 CE；增加双前向平均与 KL"),
+    ("CMP-15", "QWEN-Q2-RDROP", "QWEN-Q1-DROP", "dev", "R-Drop 对同 dropout 的 CE；dev 仅报告"),
+    ("CMP-10", "QWEN-Q4-MOCO", "QWEN-Q0-CE", "fold0", "第六组 MoCo 对 CE；评估整体 MoCo 配方"),
+    ("CMP-11", "QWEN-Q4-MOCO", "QWEN-Q0-CE", "dev", "第六组 MoCo 对 CE；dev 仅报告，不选方法"),
     ("CMP-08", "QWEN-Q3-SCL", "QWEN-Q0-CE", "fold0", "第六组 SCL 对 CE；评估整体 SCL 配方"),
     ("CMP-09", "QWEN-Q3-SCL", "QWEN-Q0-CE", "dev", "第六组 SCL 对 CE；dev 仅报告，不选方法"),
     ("CMP-06", "QWEN-Q2-RDROP", "QWEN-Q0-CE", "fold0", "第六组 R-Drop 对 CE；dropout 和损失同时改变"),
@@ -183,10 +230,16 @@ IGNORE_FOR_CONTROL = {"lib.transformers", "lib.peft", "lib.accelerate", "lib.dat
 CARD_KEYS = ("gpu", "dtype")  # 卡和精度分开记录、分开比较
 UNKNOWN = (None, "未记录", "None")
 NOTES = {
+    "CMP-12": "本轮三种子均提升；仍只有一个留出折，不能用来保证跨折泛化",
+    "CMP-13": "dev 仅报告，不据此重选模型",
+    "CMP-14": "控制 dropout 后评估 R-Drop 整体训练规则；若要单独归因于 KL，还需双前向平均但 alpha=0 的消融",
+    "CMP-15": "留出折和 dev 趋势不同；不按 dev 挑选方法",
+    "CMP-10": "仅一个留出折和三个种子；同时引入投影头、目标模型、队列及混合损失，不归因于单个组件",
+    "CMP-11": "区间仅针对已训练模型的样本重抽样，不包含训练随机性；不按 dev 选方法",
     "CMP-08": "SCL 同时引入投影头和混合损失，不单独归因于某个组件；种子44下降，需报告波动",
     "CMP-09": "仅三个种子；区间不包含训练随机性，不依据 dev 重选模型",
-    "CMP-06": "CE+dropout 因模型下载超时尚未完成；不能把差值单独归因于 KL 约束",
-    "CMP-07": "CE+dropout 对照待补；区间仅反映已训练模型的样本重抽样，不包含训练随机性",  # 人工补充的核对结果，原样写进比较表
+    "CMP-06": "CE+dropout 已补齐，见 CMP-12 至 CMP-15；本比较不能单独归因于 KL",
+    "CMP-07": "CE+dropout 已补齐；区间仅反映已训练模型的样本重抽样，不包含训练随机性",  # 人工补充的核对结果，原样写进比较表
     "CMP-04": "两边零样本的 1,448 个输入概率逐条相同（推理一致）；训练过程是否等价没有验证",
     "CMP-05": "训练变量相同，执行环境不同（A10 bf16、torch 2.6 对 T4 fp16、torch 2.11）；代码版本 sft-4 对 sft-3（v4 加了 PAI-DSW 的支持、ModelScope 下载和权重包）。零样本 1,448 个输入里 16 个最大概率的类不同；三个种子各有 4–5% 的输入最大概率的类不同",
 }

@@ -1,0 +1,69 @@
+{
+ "task": "track1/dir_rdrop/seed42/fold0",
+ "attempt_id": "20261022-2159-track1-dir_rdrop-seed42-fold0-1",
+ "previous_attempts": 0,
+ "session": "20261022-2159",
+ "env": {
+  "torch": "2.6.0+cu124",
+  "cuda": "12.4",
+  "python": "3.11.11",
+  "gpu": "NVIDIA A10",
+  "transformers": "5.19.0",
+  "sentencepiece": "0.2.2",
+  "huggingface_hub": "2.2.0",
+  "modelscope": "1.40.2",
+  "numpy": "2.4.6",
+  "platform": "阿里云 PAI-DSW",
+  "amp": "bf16"
+ },
+ "code_sha256": "83bfe561f0f5ab5f9ff52b37dd9619faf34d3ebcb7a34032a14fa55f9b597f63",
+ "best_epoch": 8,
+ "val_weighted_f1": 0.7765266646544466,
+ "scores": {
+  "test": {
+   "plain": {
+    "weighted_f1": 0.7490130991177628,
+    "soft_cons": 0.8687258687258688,
+    "hard_cons": 0.7683397683397684
+   },
+   "sym": {
+    "weighted_f1": 0.7531572871846718,
+    "soft_cons": 0.9034749034749034,
+    "hard_cons": 0.7915057915057915
+   }
+  },
+  "dev": {
+   "plain": {
+    "weighted_f1": 0.7833196221413381,
+    "soft_cons": 0.8772563176895307,
+    "hard_cons": 0.8086642599277978
+   },
+   "sym": {
+    "weighted_f1": 0.7920327811284569,
+    "soft_cons": 0.924187725631769,
+    "hard_cons": 0.851985559566787
+   }
+  }
+ },
+ "precision": "bf16 autocast",
+ "precision_attempts": [
+  {
+   "precision": "bf16 autocast",
+   "result": "ok"
+  }
+ ],
+ "updates": 828,
+ "skipped_updates": 0,
+ "peak_memory_gib": 7.05,
+ "peak_reserved_gib": 7.69,
+ "seconds_per_step": 0.1269,
+ "steps": 828,
+ "steps_per_epoch": 69,
+ "rows": {
+  "fit": 2190,
+  "val": 244,
+  "test": 608,
+  "dev": 660
+ },
+ "minutes": 1.9
+}

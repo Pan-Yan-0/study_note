@@ -1,8 +1,766 @@
 {
  "runs": [
   {
-   "id": "QWEN-Q3-SCL",
-   "desc": "第六组 Q3，监督对比学习 SCL",
+   "id": "MDB-G5-T1-CE",
+   "desc": "第五组 track1 ce，fold 0 三种子",
+   "track": 1,
+   "variables": {
+    "model": "microsoft/mdeberta-v3-base",
+    "model_revision": "a0484667b22365f84929a935b5e50a51f71f159d",
+    "prompt": "不适用",
+    "train": {
+     "max_epochs": 12,
+     "lr": 2e-05,
+     "batch": 32,
+     "eval_batch": 64,
+     "max_len": 96,
+     "warmup_ratio": 0.1,
+     "weight_decay": 0.01,
+     "grad_clip": 1.0,
+     "selection": "内层验证原方向 WF1，同分取早的"
+    },
+    "split": {
+     "folds": 5,
+     "fold_seed": 2027,
+     "inner_fraction": 0.1,
+     "inner_seed": "FOLD_SEED*100+fold+1",
+     "holdout_fold": 0
+    },
+    "method": "ce",
+    "method_params": {
+     "loss": "ce"
+    },
+    "data_sha256": {
+     "final_data/train/dico_nli_train_track1_participant_labeled.csv": "5e8dd9f3a7e000933fec3c9e64d064f9a25586f141f58d6e6afb47c4fc797211",
+     "final_data/train/dico_nli_train_track1_reference.csv": "c8f4d8587711e0beaefc115606e5c29c3e78dc6660e074967428af0fed069ee4",
+     "final_data/dev/dico_nli_dev_track1_participant_labeled.csv": "80b7152f7ccf0d349d42ad2f098988106689b918b36337e5756b121d17513511",
+     "final_data/dev/dico_nli_dev_track1_reference.csv": "8d5cd11c1c60df3c9b59254d12a60fb2cf43e91dde01b46c8a8f296b806134bc"
+    },
+    "train_data": "track1 fold 0 划分的训练部分",
+    "selection": "内层验证原方向 WF1，同分取早的",
+    "inference": "plain 和 sym（F / B 互换后平均）",
+    "lib": {
+     "transformers": "5.19.0"
+    }
+   },
+   "platform": {
+    "platform": "阿里云 PAI-DSW",
+    "gpu": [
+     "NVIDIA A10"
+    ],
+    "dtype": [
+     "bf16"
+    ],
+    "torch": [
+     "2.6.0+cu124"
+    ]
+   },
+   "code": {
+    "version": "dico_mdeberta_methods-3",
+    "code_sha256": [
+     "83bfe561f0f5"
+    ]
+   },
+   "metrics_dir": "metrics/mdeberta_methods_stage1/track1/ce",
+   "seeds": [
+    "42",
+    "43",
+    "44"
+   ],
+   "scores_sym_wf1_mean": {
+    "fold0": 0.7855,
+    "dev": 0.8059
+   }
+  },
+  {
+   "id": "MDB-G5-T1-KD",
+   "desc": "第五组 track1 kd，fold 0 三种子",
+   "track": 1,
+   "variables": {
+    "model": "microsoft/mdeberta-v3-base",
+    "model_revision": "a0484667b22365f84929a935b5e50a51f71f159d",
+    "prompt": "不适用",
+    "train": {
+     "max_epochs": 12,
+     "lr": 2e-05,
+     "batch": 32,
+     "eval_batch": 64,
+     "max_len": 96,
+     "warmup_ratio": 0.1,
+     "weight_decay": 0.01,
+     "grad_clip": 1.0,
+     "selection": "内层验证原方向 WF1，同分取早的"
+    },
+    "split": {
+     "folds": 5,
+     "fold_seed": 2027,
+     "inner_fraction": 0.1,
+     "inner_seed": "FOLD_SEED*100+fold+1",
+     "holdout_fold": 0
+    },
+    "method": "kd",
+    "method_params": {
+     "loss": "0.5*CE + 0.5*T^2*KL(teacher_T || student_T)",
+     "alpha": 0.5,
+     "T": 2.0,
+     "teacher": "第四组英语 3 轮 Qwen SFT，同种子，fit 行上的四类概率",
+     "teacher_source_fingerprint": "fcb2485b743956822b75c3703943ec806bc22ba955897c87082d0e6b8608566c"
+    },
+    "data_sha256": {
+     "final_data/train/dico_nli_train_track1_participant_labeled.csv": "5e8dd9f3a7e000933fec3c9e64d064f9a25586f141f58d6e6afb47c4fc797211",
+     "final_data/train/dico_nli_train_track1_reference.csv": "c8f4d8587711e0beaefc115606e5c29c3e78dc6660e074967428af0fed069ee4",
+     "final_data/dev/dico_nli_dev_track1_participant_labeled.csv": "80b7152f7ccf0d349d42ad2f098988106689b918b36337e5756b121d17513511",
+     "final_data/dev/dico_nli_dev_track1_reference.csv": "8d5cd11c1c60df3c9b59254d12a60fb2cf43e91dde01b46c8a8f296b806134bc"
+    },
+    "train_data": "track1 fold 0 划分的训练部分",
+    "selection": "内层验证原方向 WF1，同分取早的",
+    "inference": "plain 和 sym（F / B 互换后平均）",
+    "lib": {
+     "transformers": "5.19.0"
+    }
+   },
+   "platform": {
+    "platform": "阿里云 PAI-DSW",
+    "gpu": [
+     "NVIDIA A10"
+    ],
+    "dtype": [
+     "bf16"
+    ],
+    "torch": [
+     "2.6.0+cu124"
+    ]
+   },
+   "code": {
+    "version": "dico_mdeberta_methods-3",
+    "code_sha256": [
+     "83bfe561f0f5"
+    ]
+   },
+   "metrics_dir": "metrics/mdeberta_methods_stage1/track1/kd",
+   "seeds": [
+    "42",
+    "43",
+    "44"
+   ],
+   "scores_sym_wf1_mean": {
+    "fold0": 0.7887,
+    "dev": 0.8205
+   }
+  },
+  {
+   "id": "MDB-G5-T1-RDROP",
+   "desc": "第五组 track1 rdrop，fold 0 三种子",
+   "track": 1,
+   "variables": {
+    "model": "microsoft/mdeberta-v3-base",
+    "model_revision": "a0484667b22365f84929a935b5e50a51f71f159d",
+    "prompt": "不适用",
+    "train": {
+     "max_epochs": 12,
+     "lr": 2e-05,
+     "batch": 32,
+     "eval_batch": 64,
+     "max_len": 96,
+     "warmup_ratio": 0.1,
+     "weight_decay": 0.01,
+     "grad_clip": 1.0,
+     "selection": "内层验证原方向 WF1，同分取早的"
+    },
+    "split": {
+     "folds": 5,
+     "fold_seed": 2027,
+     "inner_fraction": 0.1,
+     "inner_seed": "FOLD_SEED*100+fold+1",
+     "holdout_fold": 0
+    },
+    "method": "rdrop",
+    "method_params": {
+     "loss": "(CE1+CE2)/2 + alpha*symKL(p1,p2)",
+     "alpha": 1.0
+    },
+    "data_sha256": {
+     "final_data/train/dico_nli_train_track1_participant_labeled.csv": "5e8dd9f3a7e000933fec3c9e64d064f9a25586f141f58d6e6afb47c4fc797211",
+     "final_data/train/dico_nli_train_track1_reference.csv": "c8f4d8587711e0beaefc115606e5c29c3e78dc6660e074967428af0fed069ee4",
+     "final_data/dev/dico_nli_dev_track1_participant_labeled.csv": "80b7152f7ccf0d349d42ad2f098988106689b918b36337e5756b121d17513511",
+     "final_data/dev/dico_nli_dev_track1_reference.csv": "8d5cd11c1c60df3c9b59254d12a60fb2cf43e91dde01b46c8a8f296b806134bc"
+    },
+    "train_data": "track1 fold 0 划分的训练部分",
+    "selection": "内层验证原方向 WF1，同分取早的",
+    "inference": "plain 和 sym（F / B 互换后平均）",
+    "lib": {
+     "transformers": "5.19.0"
+    }
+   },
+   "platform": {
+    "platform": "阿里云 PAI-DSW",
+    "gpu": [
+     "NVIDIA A10"
+    ],
+    "dtype": [
+     "bf16"
+    ],
+    "torch": [
+     "2.6.0+cu124"
+    ]
+   },
+   "code": {
+    "version": "dico_mdeberta_methods-3",
+    "code_sha256": [
+     "83bfe561f0f5"
+    ]
+   },
+   "metrics_dir": "metrics/mdeberta_methods_stage1/track1/rdrop",
+   "seeds": [
+    "42",
+    "43",
+    "44"
+   ],
+   "scores_sym_wf1_mean": {
+    "fold0": 0.7979,
+    "dev": 0.8064
+   }
+  },
+  {
+   "id": "MDB-G5-T1-DIR_RDROP",
+   "desc": "第五组 track1 dir_rdrop，fold 0 三种子",
+   "track": 1,
+   "variables": {
+    "model": "microsoft/mdeberta-v3-base",
+    "model_revision": "a0484667b22365f84929a935b5e50a51f71f159d",
+    "prompt": "不适用",
+    "train": {
+     "max_epochs": 12,
+     "lr": 2e-05,
+     "batch": 32,
+     "eval_batch": 64,
+     "max_len": 96,
+     "warmup_ratio": 0.1,
+     "weight_decay": 0.01,
+     "grad_clip": 1.0,
+     "selection": "内层验证原方向 WF1，同分取早的"
+    },
+    "split": {
+     "folds": 5,
+     "fold_seed": 2027,
+     "inner_fraction": 0.1,
+     "inner_seed": "FOLD_SEED*100+fold+1",
+     "holdout_fold": 0
+    },
+    "method": "dir_rdrop",
+    "method_params": {
+     "loss": "CE(A,B) + alpha*symKL(p(A,B), swap(p(B,A)))；反向输入只加给金标在 labels 里的行，KL 在这些行上平均，反向输入不算 CE",
+     "alpha": 1.0,
+     "labels": [
+      "EQUIVALENCE",
+      "FORWARD_ENTAILMENT",
+      "BACKWARD_ENTAILMENT"
+     ]
+    },
+    "data_sha256": {
+     "final_data/train/dico_nli_train_track1_participant_labeled.csv": "5e8dd9f3a7e000933fec3c9e64d064f9a25586f141f58d6e6afb47c4fc797211",
+     "final_data/train/dico_nli_train_track1_reference.csv": "c8f4d8587711e0beaefc115606e5c29c3e78dc6660e074967428af0fed069ee4",
+     "final_data/dev/dico_nli_dev_track1_participant_labeled.csv": "80b7152f7ccf0d349d42ad2f098988106689b918b36337e5756b121d17513511",
+     "final_data/dev/dico_nli_dev_track1_reference.csv": "8d5cd11c1c60df3c9b59254d12a60fb2cf43e91dde01b46c8a8f296b806134bc"
+    },
+    "train_data": "track1 fold 0 划分的训练部分",
+    "selection": "内层验证原方向 WF1，同分取早的",
+    "inference": "plain 和 sym（F / B 互换后平均）",
+    "lib": {
+     "transformers": "5.19.0"
+    }
+   },
+   "platform": {
+    "platform": "阿里云 PAI-DSW",
+    "gpu": [
+     "NVIDIA A10"
+    ],
+    "dtype": [
+     "bf16"
+    ],
+    "torch": [
+     "2.6.0+cu124"
+    ]
+   },
+   "code": {
+    "version": "dico_mdeberta_methods-3",
+    "code_sha256": [
+     "83bfe561f0f5"
+    ]
+   },
+   "metrics_dir": "metrics/mdeberta_methods_stage1/track1/dir_rdrop",
+   "seeds": [
+    "42",
+    "43",
+    "44"
+   ],
+   "scores_sym_wf1_mean": {
+    "fold0": 0.7514,
+    "dev": 0.7772
+   }
+  },
+  {
+   "id": "MDB-G5-T1-SCL",
+   "desc": "第五组 track1 scl，fold 0 三种子",
+   "track": 1,
+   "variables": {
+    "model": "microsoft/mdeberta-v3-base",
+    "model_revision": "a0484667b22365f84929a935b5e50a51f71f159d",
+    "prompt": "不适用",
+    "train": {
+     "max_epochs": 12,
+     "lr": 2e-05,
+     "batch": 32,
+     "eval_batch": 64,
+     "max_len": 96,
+     "warmup_ratio": 0.1,
+     "weight_decay": 0.01,
+     "grad_clip": 1.0,
+     "selection": "内层验证原方向 WF1，同分取早的"
+    },
+    "split": {
+     "folds": 5,
+     "fold_seed": 2027,
+     "inner_fraction": 0.1,
+     "inner_seed": "FOLD_SEED*100+fold+1",
+     "holdout_fold": 0
+    },
+    "method": "scl",
+    "method_params": {
+     "loss": "(1-lambda)*CE + lambda*SupCon(batch)",
+     "lambda": 0.3,
+     "tau": 0.3,
+     "proj": {
+      "hidden": 768,
+      "out": 128
+     },
+     "rep": "最后一层 [CLS]"
+    },
+    "data_sha256": {
+     "final_data/train/dico_nli_train_track1_participant_labeled.csv": "5e8dd9f3a7e000933fec3c9e64d064f9a25586f141f58d6e6afb47c4fc797211",
+     "final_data/train/dico_nli_train_track1_reference.csv": "c8f4d8587711e0beaefc115606e5c29c3e78dc6660e074967428af0fed069ee4",
+     "final_data/dev/dico_nli_dev_track1_participant_labeled.csv": "80b7152f7ccf0d349d42ad2f098988106689b918b36337e5756b121d17513511",
+     "final_data/dev/dico_nli_dev_track1_reference.csv": "8d5cd11c1c60df3c9b59254d12a60fb2cf43e91dde01b46c8a8f296b806134bc"
+    },
+    "train_data": "track1 fold 0 划分的训练部分",
+    "selection": "内层验证原方向 WF1，同分取早的",
+    "inference": "plain 和 sym（F / B 互换后平均）",
+    "lib": {
+     "transformers": "5.19.0"
+    }
+   },
+   "platform": {
+    "platform": "阿里云 PAI-DSW",
+    "gpu": [
+     "NVIDIA A10"
+    ],
+    "dtype": [
+     "bf16"
+    ],
+    "torch": [
+     "2.6.0+cu124"
+    ]
+   },
+   "code": {
+    "version": "dico_mdeberta_methods-3",
+    "code_sha256": [
+     "83bfe561f0f5"
+    ]
+   },
+   "metrics_dir": "metrics/mdeberta_methods_stage1/track1/scl",
+   "seeds": [
+    "42",
+    "43",
+    "44"
+   ],
+   "scores_sym_wf1_mean": {
+    "fold0": 0.798,
+    "dev": 0.8035
+   }
+  },
+  {
+   "id": "MDB-G5-T1-MOCO_M0.99",
+   "desc": "第五组 track1 moco_m0.99，fold 0 三种子",
+   "track": 1,
+   "variables": {
+    "model": "microsoft/mdeberta-v3-base",
+    "model_revision": "a0484667b22365f84929a935b5e50a51f71f159d",
+    "prompt": "不适用",
+    "train": {
+     "max_epochs": 12,
+     "lr": 2e-05,
+     "batch": 32,
+     "eval_batch": 64,
+     "max_len": 96,
+     "warmup_ratio": 0.1,
+     "weight_decay": 0.01,
+     "grad_clip": 1.0,
+     "selection": "内层验证原方向 WF1，同分取早的"
+    },
+    "split": {
+     "folds": 5,
+     "fold_seed": 2027,
+     "inner_fraction": 0.1,
+     "inner_seed": "FOLD_SEED*100+fold+1",
+     "holdout_fold": 0
+    },
+    "method": "moco_m0.99",
+    "method_params": {
+     "loss": "(1-lambda)*CE + lambda*SupCon(q, 动量编码器的键 + 队列)",
+     "lambda": 0.3,
+     "tau": 0.3,
+     "queue": 4096,
+     "m": 0.99,
+     "proj": {
+      "hidden": 768,
+      "out": 128
+     },
+     "rep": "最后一层 [CLS]",
+     "target": "动量编码器（含投影头）eval 模式，不回传梯度；只在优化器真正更新后做动量更新和入队；同一训练记录（行编号）的当前键和历史键都不当它自己的正例，文本相同的不同记录算不同样本"
+    },
+    "data_sha256": {
+     "final_data/train/dico_nli_train_track1_participant_labeled.csv": "5e8dd9f3a7e000933fec3c9e64d064f9a25586f141f58d6e6afb47c4fc797211",
+     "final_data/train/dico_nli_train_track1_reference.csv": "c8f4d8587711e0beaefc115606e5c29c3e78dc6660e074967428af0fed069ee4",
+     "final_data/dev/dico_nli_dev_track1_participant_labeled.csv": "80b7152f7ccf0d349d42ad2f098988106689b918b36337e5756b121d17513511",
+     "final_data/dev/dico_nli_dev_track1_reference.csv": "8d5cd11c1c60df3c9b59254d12a60fb2cf43e91dde01b46c8a8f296b806134bc"
+    },
+    "train_data": "track1 fold 0 划分的训练部分",
+    "selection": "内层验证原方向 WF1，同分取早的",
+    "inference": "plain 和 sym（F / B 互换后平均）",
+    "lib": {
+     "transformers": "5.19.0"
+    }
+   },
+   "platform": {
+    "platform": "阿里云 PAI-DSW",
+    "gpu": [
+     "NVIDIA A10"
+    ],
+    "dtype": [
+     "bf16"
+    ],
+    "torch": [
+     "2.6.0+cu124"
+    ]
+   },
+   "code": {
+    "version": "dico_mdeberta_methods-3",
+    "code_sha256": [
+     "83bfe561f0f5"
+    ]
+   },
+   "metrics_dir": "metrics/mdeberta_methods_stage1/track1/moco_m0.99",
+   "seeds": [
+    "42",
+    "43",
+    "44"
+   ],
+   "scores_sym_wf1_mean": {
+    "fold0": 0.7934,
+    "dev": 0.8001
+   }
+  },
+  {
+   "id": "MDB-G5-T1-MOCO_M0.999",
+   "desc": "第五组 track1 moco_m0.999，fold 0 三种子",
+   "track": 1,
+   "variables": {
+    "model": "microsoft/mdeberta-v3-base",
+    "model_revision": "a0484667b22365f84929a935b5e50a51f71f159d",
+    "prompt": "不适用",
+    "train": {
+     "max_epochs": 12,
+     "lr": 2e-05,
+     "batch": 32,
+     "eval_batch": 64,
+     "max_len": 96,
+     "warmup_ratio": 0.1,
+     "weight_decay": 0.01,
+     "grad_clip": 1.0,
+     "selection": "内层验证原方向 WF1，同分取早的"
+    },
+    "split": {
+     "folds": 5,
+     "fold_seed": 2027,
+     "inner_fraction": 0.1,
+     "inner_seed": "FOLD_SEED*100+fold+1",
+     "holdout_fold": 0
+    },
+    "method": "moco_m0.999",
+    "method_params": {
+     "loss": "(1-lambda)*CE + lambda*SupCon(q, 动量编码器的键 + 队列)",
+     "lambda": 0.3,
+     "tau": 0.3,
+     "queue": 4096,
+     "m": 0.999,
+     "proj": {
+      "hidden": 768,
+      "out": 128
+     },
+     "rep": "最后一层 [CLS]",
+     "target": "动量编码器（含投影头）eval 模式，不回传梯度；只在优化器真正更新后做动量更新和入队；同一训练记录（行编号）的当前键和历史键都不当它自己的正例，文本相同的不同记录算不同样本"
+    },
+    "data_sha256": {
+     "final_data/train/dico_nli_train_track1_participant_labeled.csv": "5e8dd9f3a7e000933fec3c9e64d064f9a25586f141f58d6e6afb47c4fc797211",
+     "final_data/train/dico_nli_train_track1_reference.csv": "c8f4d8587711e0beaefc115606e5c29c3e78dc6660e074967428af0fed069ee4",
+     "final_data/dev/dico_nli_dev_track1_participant_labeled.csv": "80b7152f7ccf0d349d42ad2f098988106689b918b36337e5756b121d17513511",
+     "final_data/dev/dico_nli_dev_track1_reference.csv": "8d5cd11c1c60df3c9b59254d12a60fb2cf43e91dde01b46c8a8f296b806134bc"
+    },
+    "train_data": "track1 fold 0 划分的训练部分",
+    "selection": "内层验证原方向 WF1，同分取早的",
+    "inference": "plain 和 sym（F / B 互换后平均）",
+    "lib": {
+     "transformers": "5.19.0"
+    }
+   },
+   "platform": {
+    "platform": "阿里云 PAI-DSW",
+    "gpu": [
+     "NVIDIA A10"
+    ],
+    "dtype": [
+     "bf16"
+    ],
+    "torch": [
+     "2.6.0+cu124"
+    ]
+   },
+   "code": {
+    "version": "dico_mdeberta_methods-3",
+    "code_sha256": [
+     "83bfe561f0f5"
+    ]
+   },
+   "metrics_dir": "metrics/mdeberta_methods_stage1/track1/moco_m0.999",
+   "seeds": [
+    "42",
+    "43",
+    "44"
+   ],
+   "scores_sym_wf1_mean": {
+    "fold0": 0.784,
+    "dev": 0.8005
+   }
+  },
+  {
+   "id": "MDB-G5-T2-CE",
+   "desc": "第五组 track2 ce，fold 0 三种子",
+   "track": 2,
+   "variables": {
+    "model": "microsoft/mdeberta-v3-base",
+    "model_revision": "a0484667b22365f84929a935b5e50a51f71f159d",
+    "prompt": "不适用",
+    "train": {
+     "max_epochs": 12,
+     "lr": 2e-05,
+     "batch": 32,
+     "eval_batch": 64,
+     "max_len": 96,
+     "warmup_ratio": 0.1,
+     "weight_decay": 0.01,
+     "grad_clip": 1.0,
+     "selection": "内层验证原方向 WF1，同分取早的"
+    },
+    "split": {
+     "folds": 5,
+     "fold_seed": 2027,
+     "inner_fraction": 0.1,
+     "inner_seed": "FOLD_SEED*100+fold+1",
+     "holdout_fold": 0
+    },
+    "method": "ce",
+    "method_params": {
+     "loss": "ce"
+    },
+    "data_sha256": {
+     "final_data/train/dico_nli_train_track2_participant_labeled.csv": "68bfbcdd12bffc93fdc84a6526fbb217846d657faf9dbce766a9297cccade163",
+     "final_data/train/dico_nli_train_track2_reference.csv": "9850c08f3027961df47a2635a961902e4d5f99a6c57e8a04049e69b52b571e01",
+     "final_data/dev/dico_nli_dev_track2_participant_labeled.csv": "09a08a2ffdbb438ead917457f05d977233436431939d7859abd4bf6fe5ee446b",
+     "final_data/dev/dico_nli_dev_track2_reference.csv": "d962e90cbf221cbc5cd6fc197edcb423be3b5ba5f08acd80b8b0a70d27a50171"
+    },
+    "train_data": "track2 fold 0 划分的训练部分",
+    "selection": "内层验证原方向 WF1，同分取早的",
+    "inference": "plain 和 sym（F / B 互换后平均）",
+    "lib": {
+     "transformers": "5.19.0"
+    }
+   },
+   "platform": {
+    "platform": "阿里云 PAI-DSW",
+    "gpu": [
+     "NVIDIA A10"
+    ],
+    "dtype": [
+     "bf16"
+    ],
+    "torch": [
+     "2.6.0+cu124"
+    ]
+   },
+   "code": {
+    "version": "dico_mdeberta_methods-3",
+    "code_sha256": [
+     "83bfe561f0f5"
+    ]
+   },
+   "metrics_dir": "metrics/mdeberta_methods_stage1/track2/ce",
+   "seeds": [
+    "42",
+    "43",
+    "44"
+   ],
+   "scores_sym_wf1_mean": {
+    "fold0": 0.7732,
+    "dev": 0.7579
+   }
+  },
+  {
+   "id": "MDB-G5-T3-CE",
+   "desc": "第五组 track3 ce，fold 0 三种子",
+   "track": 3,
+   "variables": {
+    "model": "microsoft/mdeberta-v3-base",
+    "model_revision": "a0484667b22365f84929a935b5e50a51f71f159d",
+    "prompt": "不适用",
+    "train": {
+     "max_epochs": 12,
+     "lr": 2e-05,
+     "batch": 32,
+     "eval_batch": 64,
+     "max_len": 96,
+     "warmup_ratio": 0.1,
+     "weight_decay": 0.01,
+     "grad_clip": 1.0,
+     "selection": "内层验证原方向 WF1，同分取早的"
+    },
+    "split": {
+     "folds": 5,
+     "fold_seed": 2027,
+     "inner_fraction": 0.1,
+     "inner_seed": "FOLD_SEED*100+fold+1",
+     "holdout_fold": 0
+    },
+    "method": "ce",
+    "method_params": {
+     "loss": "ce"
+    },
+    "data_sha256": {
+     "final_data/train/dico_nli_train_track3_participant_labeled.csv": "5d085cdd555800285c2c6f35865713d142034b804dbf2e8c349a37bad90d4cfa",
+     "final_data/train/dico_nli_train_track3_reference.csv": "32f03eb1ec0fa079b8fcec8e269e9aade5cd04c735d1873da88fe0f403dfeef3",
+     "final_data/dev/dico_nli_dev_track3_participant_labeled.csv": "c42f051c8f5908cceab4c8f80b003c2314d0c13a487be8586011a7ae3b67493c",
+     "final_data/dev/dico_nli_dev_track3_reference.csv": "3ea3643a5c6e0b2ca4606e3935cd7b368b0fd8f157691c80a5c8d5a3745cfebe"
+    },
+    "train_data": "track3 fold 0 划分的训练部分",
+    "selection": "内层验证原方向 WF1，同分取早的",
+    "inference": "plain 和 sym（F / B 互换后平均）",
+    "lib": {
+     "transformers": "5.19.0"
+    }
+   },
+   "platform": {
+    "platform": "阿里云 PAI-DSW",
+    "gpu": [
+     "NVIDIA A10"
+    ],
+    "dtype": [
+     "bf16"
+    ],
+    "torch": [
+     "2.6.0+cu124"
+    ]
+   },
+   "code": {
+    "version": "dico_mdeberta_methods-3",
+    "code_sha256": [
+     "83bfe561f0f5"
+    ]
+   },
+   "metrics_dir": "metrics/mdeberta_methods_stage1/track3/ce",
+   "seeds": [
+    "42",
+    "43",
+    "44"
+   ],
+   "scores_sym_wf1_mean": {
+    "fold0": 0.7277,
+    "dev": 0.7325
+   }
+  },
+  {
+   "id": "MDB-G5-T4-CE",
+   "desc": "第五组 track4 ce，fold 0 三种子",
+   "track": 4,
+   "variables": {
+    "model": "microsoft/mdeberta-v3-base",
+    "model_revision": "a0484667b22365f84929a935b5e50a51f71f159d",
+    "prompt": "不适用",
+    "train": {
+     "max_epochs": 12,
+     "lr": 2e-05,
+     "batch": 32,
+     "eval_batch": 64,
+     "max_len": 96,
+     "warmup_ratio": 0.1,
+     "weight_decay": 0.01,
+     "grad_clip": 1.0,
+     "selection": "内层验证原方向 WF1，同分取早的"
+    },
+    "split": {
+     "folds": 5,
+     "fold_seed": 2027,
+     "inner_fraction": 0.1,
+     "inner_seed": "FOLD_SEED*100+fold+1",
+     "holdout_fold": 0
+    },
+    "method": "ce",
+    "method_params": {
+     "loss": "ce"
+    },
+    "data_sha256": {
+     "final_data/train/dico_nli_train_track4_participant_labeled.csv": "f60ad9359c69b52fb3683170c198e781c83e26c06e6a8078c1e3d033b8a9c948",
+     "final_data/train/dico_nli_train_track4_reference.csv": "3626a1d3d47b983ea8a0fe4cdeecfca6c9b537c31e4b5131c354c1a592544ce9",
+     "final_data/dev/dico_nli_dev_track4_participant_labeled.csv": "62fd2b4180c03ab0389bd9348d5c81b04b13b936b325a4a785d0c4c8d6c03baf",
+     "final_data/dev/dico_nli_dev_track4_reference.csv": "1d2769d1e757eb2171272c8e56e4cb7593f7f05de826c4b22c2efb6d3e2fc9ae"
+    },
+    "train_data": "track4 fold 0 划分的训练部分",
+    "selection": "内层验证原方向 WF1，同分取早的",
+    "inference": "plain 和 sym（F / B 互换后平均）",
+    "lib": {
+     "transformers": "5.19.0"
+    }
+   },
+   "platform": {
+    "platform": "阿里云 PAI-DSW",
+    "gpu": [
+     "NVIDIA A10"
+    ],
+    "dtype": [
+     "bf16"
+    ],
+    "torch": [
+     "2.6.0+cu124"
+    ]
+   },
+   "code": {
+    "version": "dico_mdeberta_methods-3",
+    "code_sha256": [
+     "83bfe561f0f5"
+    ]
+   },
+   "metrics_dir": "metrics/mdeberta_methods_stage1/track4/ce",
+   "seeds": [
+    "42",
+    "43",
+    "44"
+   ],
+   "scores_sym_wf1_mean": {
+    "fold0": 0.7422,
+    "dev": 0.7182
+   }
+  },
+  {
+   "id": "QWEN-Q1-DROP",
+   "desc": "第六组 Q1，仅增加 LoRA dropout 0.1",
    "track": 1,
    "variables": {
     "model": "Qwen/Qwen3-4B-Instruct-2507",
@@ -15,7 +773,104 @@
      "holdout_fold": 0
     },
     "train_data": "track1 fold 0 划分的训练部分",
-    "method": "scl",
+    "method": "LoRA SFT",
+    "inference": "plain 和 sym（F / B 互换后平均）",
+    "lora": {
+     "r": 16,
+     "alpha": 32,
+     "dropout": 0.1,
+     "targets": [
+      "q_proj",
+      "k_proj",
+      "v_proj",
+      "o_proj",
+      "gate_proj",
+      "up_proj",
+      "down_proj"
+     ]
+    },
+    "train": {
+     "max_epochs": 3,
+     "batch": 8,
+     "grad_acc": 2,
+     "lr": 0.0001,
+     "warmup": 0.05,
+     "weight_decay": 0.01
+    },
+    "selection": "内层验证原方向 WF1，同分取早的",
+    "lib": {
+     "transformers": "5.19.0",
+     "peft": "0.21.2",
+     "accelerate": "1.15.0",
+     "datasets": "5.1.0"
+    },
+    "method_params": {
+     "loss": "CE"
+    },
+    "data_sha256": {
+     "final_data/dev/dico_nli_dev_track1_participant_labeled.csv": "80b7152f7ccf0d349d42ad2f098988106689b918b36337e5756b121d17513511",
+     "final_data/dev/dico_nli_dev_track1_reference.csv": "8d5cd11c1c60df3c9b59254d12a60fb2cf43e91dde01b46c8a8f296b806134bc",
+     "final_data/dev/dico_nli_dev_track2_participant_labeled.csv": "09a08a2ffdbb438ead917457f05d977233436431939d7859abd4bf6fe5ee446b",
+     "final_data/dev/dico_nli_dev_track2_reference.csv": "d962e90cbf221cbc5cd6fc197edcb423be3b5ba5f08acd80b8b0a70d27a50171",
+     "final_data/dev/dico_nli_dev_track3_participant_labeled.csv": "c42f051c8f5908cceab4c8f80b003c2314d0c13a487be8586011a7ae3b67493c",
+     "final_data/dev/dico_nli_dev_track3_reference.csv": "3ea3643a5c6e0b2ca4606e3935cd7b368b0fd8f157691c80a5c8d5a3745cfebe",
+     "final_data/dev/dico_nli_dev_track4_participant_labeled.csv": "62fd2b4180c03ab0389bd9348d5c81b04b13b936b325a4a785d0c4c8d6c03baf",
+     "final_data/dev/dico_nli_dev_track4_reference.csv": "1d2769d1e757eb2171272c8e56e4cb7593f7f05de826c4b22c2efb6d3e2fc9ae",
+     "final_data/train/dico_nli_train_track1_participant_labeled.csv": "5e8dd9f3a7e000933fec3c9e64d064f9a25586f141f58d6e6afb47c4fc797211",
+     "final_data/train/dico_nli_train_track1_reference.csv": "c8f4d8587711e0beaefc115606e5c29c3e78dc6660e074967428af0fed069ee4",
+     "final_data/train/dico_nli_train_track2_participant_labeled.csv": "68bfbcdd12bffc93fdc84a6526fbb217846d657faf9dbce766a9297cccade163",
+     "final_data/train/dico_nli_train_track2_reference.csv": "9850c08f3027961df47a2635a961902e4d5f99a6c57e8a04049e69b52b571e01",
+     "final_data/train/dico_nli_train_track3_participant_labeled.csv": "5d085cdd555800285c2c6f35865713d142034b804dbf2e8c349a37bad90d4cfa",
+     "final_data/train/dico_nli_train_track3_reference.csv": "32f03eb1ec0fa079b8fcec8e269e9aade5cd04c735d1873da88fe0f403dfeef3",
+     "final_data/train/dico_nli_train_track4_participant_labeled.csv": "f60ad9359c69b52fb3683170c198e781c83e26c06e6a8078c1e3d033b8a9c948",
+     "final_data/train/dico_nli_train_track4_reference.csv": "3626a1d3d47b983ea8a0fe4cdeecfca6c9b537c31e4b5131c354c1a592544ce9"
+    }
+   },
+   "platform": {
+    "platform": "阿里云 PAI-DSW",
+    "gpu": [
+     "NVIDIA A10"
+    ],
+    "dtype": [
+     "torch.bfloat16"
+    ],
+    "torch": [
+     "2.6.0+cu124"
+    ]
+   },
+   "code": {
+    "version": "dico_qwen_methods-2-gpt",
+    "code_sha256": [
+     "502e638814ba"
+    ]
+   },
+   "metrics_dir": "metrics/qwen_methods_v2/ce_drop_results",
+   "seeds": [
+    "42",
+    "43",
+    "44"
+   ],
+   "scores_sym_wf1_mean": {
+    "fold0": 0.8613,
+    "dev": 0.829
+   }
+  },
+  {
+   "id": "QWEN-Q4-MOCO",
+   "desc": "第六组 Q4，动量监督对比学习 MoCo",
+   "track": 1,
+   "variables": {
+    "model": "Qwen/Qwen3-4B-Instruct-2507",
+    "model_revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+    "prompt": "f12296445e22",
+    "split": {
+     "folds": 5,
+     "fold_seed": 2027,
+     "inner_fraction": 0.1,
+     "holdout_fold": 0
+    },
+    "train_data": "track1 fold 0 划分的训练部分",
+    "method": "LoRA SFT",
     "inference": "plain 和 sym（F / B 互换后平均）",
     "lora": {
      "r": 16,
@@ -47,7 +902,113 @@
      "datasets": "5.1.0"
     },
     "method_params": {
-     "lora_dropout": 0.0,
+     "loss": "(1-lambda)*CE + lambda*SupCon(q, 目标模型的键 + 队列)",
+     "lambda": 0.3,
+     "tau": 0.3,
+     "proj": [
+      768,
+      128
+     ],
+     "rep": "最后一个真实 token 的最后一层隐状态（final norm 之后）",
+     "m": 0.99,
+     "queue": 4096,
+     "target": "LoRA 和投影头的动量平均，无梯度；只在优化器更新后做动量更新和入队；同一训练记录的当前键和历史键都不当自己的正例"
+    },
+    "data_sha256": {
+     "final_data/dev/dico_nli_dev_track1_participant_labeled.csv": "80b7152f7ccf0d349d42ad2f098988106689b918b36337e5756b121d17513511",
+     "final_data/dev/dico_nli_dev_track1_reference.csv": "8d5cd11c1c60df3c9b59254d12a60fb2cf43e91dde01b46c8a8f296b806134bc",
+     "final_data/dev/dico_nli_dev_track2_participant_labeled.csv": "09a08a2ffdbb438ead917457f05d977233436431939d7859abd4bf6fe5ee446b",
+     "final_data/dev/dico_nli_dev_track2_reference.csv": "d962e90cbf221cbc5cd6fc197edcb423be3b5ba5f08acd80b8b0a70d27a50171",
+     "final_data/dev/dico_nli_dev_track3_participant_labeled.csv": "c42f051c8f5908cceab4c8f80b003c2314d0c13a487be8586011a7ae3b67493c",
+     "final_data/dev/dico_nli_dev_track3_reference.csv": "3ea3643a5c6e0b2ca4606e3935cd7b368b0fd8f157691c80a5c8d5a3745cfebe",
+     "final_data/dev/dico_nli_dev_track4_participant_labeled.csv": "62fd2b4180c03ab0389bd9348d5c81b04b13b936b325a4a785d0c4c8d6c03baf",
+     "final_data/dev/dico_nli_dev_track4_reference.csv": "1d2769d1e757eb2171272c8e56e4cb7593f7f05de826c4b22c2efb6d3e2fc9ae",
+     "final_data/train/dico_nli_train_track1_participant_labeled.csv": "5e8dd9f3a7e000933fec3c9e64d064f9a25586f141f58d6e6afb47c4fc797211",
+     "final_data/train/dico_nli_train_track1_reference.csv": "c8f4d8587711e0beaefc115606e5c29c3e78dc6660e074967428af0fed069ee4",
+     "final_data/train/dico_nli_train_track2_participant_labeled.csv": "68bfbcdd12bffc93fdc84a6526fbb217846d657faf9dbce766a9297cccade163",
+     "final_data/train/dico_nli_train_track2_reference.csv": "9850c08f3027961df47a2635a961902e4d5f99a6c57e8a04049e69b52b571e01",
+     "final_data/train/dico_nli_train_track3_participant_labeled.csv": "5d085cdd555800285c2c6f35865713d142034b804dbf2e8c349a37bad90d4cfa",
+     "final_data/train/dico_nli_train_track3_reference.csv": "32f03eb1ec0fa079b8fcec8e269e9aade5cd04c735d1873da88fe0f403dfeef3",
+     "final_data/train/dico_nli_train_track4_participant_labeled.csv": "f60ad9359c69b52fb3683170c198e781c83e26c06e6a8078c1e3d033b8a9c948",
+     "final_data/train/dico_nli_train_track4_reference.csv": "3626a1d3d47b983ea8a0fe4cdeecfca6c9b537c31e4b5131c354c1a592544ce9"
+    }
+   },
+   "platform": {
+    "platform": "阿里云 PAI-DSW",
+    "gpu": [
+     "NVIDIA A10"
+    ],
+    "dtype": [
+     "torch.bfloat16"
+    ],
+    "torch": [
+     "2.6.0+cu124"
+    ]
+   },
+   "code": {
+    "version": "dico_qwen_methods-2-gpt",
+    "code_sha256": [
+     "502e638814ba"
+    ]
+   },
+   "metrics_dir": "metrics/qwen_methods_v2/moco_results",
+   "seeds": [
+    "42",
+    "43",
+    "44"
+   ],
+   "scores_sym_wf1_mean": {
+    "fold0": 0.8557,
+    "dev": 0.8353
+   }
+  },
+  {
+   "id": "QWEN-Q3-SCL",
+   "desc": "第六组 Q3，监督对比学习 SCL",
+   "track": 1,
+   "variables": {
+    "model": "Qwen/Qwen3-4B-Instruct-2507",
+    "model_revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+    "prompt": "f12296445e22",
+    "split": {
+     "folds": 5,
+     "fold_seed": 2027,
+     "inner_fraction": 0.1,
+     "holdout_fold": 0
+    },
+    "train_data": "track1 fold 0 划分的训练部分",
+    "method": "LoRA SFT",
+    "inference": "plain 和 sym（F / B 互换后平均）",
+    "lora": {
+     "r": 16,
+     "alpha": 32,
+     "dropout": 0.0,
+     "targets": [
+      "q_proj",
+      "k_proj",
+      "v_proj",
+      "o_proj",
+      "gate_proj",
+      "up_proj",
+      "down_proj"
+     ]
+    },
+    "train": {
+     "max_epochs": 3,
+     "batch": 8,
+     "grad_acc": 2,
+     "lr": 0.0001,
+     "warmup": 0.05,
+     "weight_decay": 0.01
+    },
+    "selection": "内层验证原方向 WF1，同分取早的",
+    "lib": {
+     "transformers": "5.19.0",
+     "peft": "0.21.2",
+     "accelerate": "1.15.0",
+     "datasets": "5.1.0"
+    },
+    "method_params": {
      "loss": "(1-lambda)*CE + lambda*SupCon(batch)",
      "lambda": 0.3,
      "tau": 0.3,
@@ -120,7 +1081,7 @@
      "holdout_fold": 0
     },
     "train_data": "track1 fold 0 划分的训练部分",
-    "method": "ce",
+    "method": "LoRA SFT",
     "inference": "plain 和 sym（F / B 互换后平均）",
     "lora": {
      "r": 16,
@@ -152,7 +1113,6 @@
      "datasets": "5.1.0"
     },
     "method_params": {
-     "lora_dropout": 0.0,
      "loss": "CE"
     },
     "data_sha256": {
@@ -218,7 +1178,7 @@
      "holdout_fold": 0
     },
     "train_data": "track1 fold 0 划分的训练部分",
-    "method": "rdrop",
+    "method": "LoRA SFT",
     "inference": "plain 和 sym（F / B 互换后平均）",
     "lora": {
      "r": 16,
@@ -250,7 +1210,6 @@
      "datasets": "5.1.0"
     },
     "method_params": {
-     "lora_dropout": 0.1,
      "loss": "(CE1+CE2)/2 + alpha*symKL(四类分布)",
      "alpha": 1.0
     },
@@ -1192,6 +2151,304 @@
  ],
  "comparisons": [
   {
+   "id": "CMP-12",
+   "new": "QWEN-Q1-DROP",
+   "old": "QWEN-Q0-CE",
+   "eval": "fold0",
+   "purpose": "只加 dropout 对 CE",
+   "design": "单一计划改动",
+   "environment": "一致",
+   "unknown": [],
+   "note": "本轮三种子均提升；仍只有一个留出折，不能用来保证跨折泛化",
+   "changed": {
+    "lora.dropout": [
+     0.1,
+     0.0
+    ]
+   },
+   "lib_diff": {},
+   "platform_diff": {},
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 608,
+    "families": 343,
+    "per_seed": {
+     "42": 0.0172,
+     "43": 0.0069,
+     "44": 0.0022
+    },
+    "mean": 0.0088,
+    "ci95": [
+     0.0005,
+     0.018
+    ]
+   }
+  },
+  {
+   "id": "CMP-13",
+   "new": "QWEN-Q1-DROP",
+   "old": "QWEN-Q0-CE",
+   "eval": "dev",
+   "purpose": "只加 dropout 对 CE；dev 仅报告",
+   "design": "单一计划改动",
+   "environment": "一致",
+   "unknown": [],
+   "note": "dev 仅报告，不据此重选模型",
+   "changed": {
+    "lora.dropout": [
+     0.1,
+     0.0
+    ]
+   },
+   "lib_diff": {},
+   "platform_diff": {},
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 660,
+    "families": 381,
+    "per_seed": {
+     "42": -0.0042,
+     "43": 0.0016,
+     "44": 0.009
+    },
+    "mean": 0.0022,
+    "ci95": [
+     -0.0067,
+     0.0108
+    ]
+   }
+  },
+  {
+   "id": "CMP-14",
+   "new": "QWEN-Q2-RDROP",
+   "old": "QWEN-Q1-DROP",
+   "eval": "fold0",
+   "purpose": "R-Drop 对同 dropout 的 CE；增加双前向平均与 KL",
+   "design": "系统比较（多处不同，不能归因到单个变量）",
+   "environment": "一致",
+   "unknown": [],
+   "note": "控制 dropout 后评估 R-Drop 整体训练规则；若要单独归因于 KL，还需双前向平均但 alpha=0 的消融",
+   "changed": {
+    "method_params.alpha": [
+     1.0,
+     "（无此项）"
+    ],
+    "method_params.loss": [
+     "(CE1+CE2)/2 + alpha*symKL(四类分布)",
+     "CE"
+    ]
+   },
+   "lib_diff": {},
+   "platform_diff": {},
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 608,
+    "families": 343,
+    "per_seed": {
+     "42": -0.0271,
+     "43": -0.0191,
+     "44": 0.0062
+    },
+    "mean": -0.0133,
+    "ci95": [
+     -0.0247,
+     -0.0024
+    ]
+   }
+  },
+  {
+   "id": "CMP-15",
+   "new": "QWEN-Q2-RDROP",
+   "old": "QWEN-Q1-DROP",
+   "eval": "dev",
+   "purpose": "R-Drop 对同 dropout 的 CE；dev 仅报告",
+   "design": "系统比较（多处不同，不能归因到单个变量）",
+   "environment": "一致",
+   "unknown": [],
+   "note": "留出折和 dev 趋势不同；不按 dev 挑选方法",
+   "changed": {
+    "method_params.alpha": [
+     1.0,
+     "（无此项）"
+    ],
+    "method_params.loss": [
+     "(CE1+CE2)/2 + alpha*symKL(四类分布)",
+     "CE"
+    ]
+   },
+   "lib_diff": {},
+   "platform_diff": {},
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 660,
+    "families": 381,
+    "per_seed": {
+     "42": 0.0205,
+     "43": 0.017,
+     "44": -0.0032
+    },
+    "mean": 0.0114,
+    "ci95": [
+     0.0004,
+     0.0241
+    ]
+   }
+  },
+  {
+   "id": "CMP-10",
+   "new": "QWEN-Q4-MOCO",
+   "old": "QWEN-Q0-CE",
+   "eval": "fold0",
+   "purpose": "第六组 MoCo 对 CE；评估整体 MoCo 配方",
+   "design": "系统比较（多处不同，不能归因到单个变量）",
+   "environment": "一致",
+   "unknown": [],
+   "note": "仅一个留出折和三个种子；同时引入投影头、目标模型、队列及混合损失，不归因于单个组件",
+   "changed": {
+    "method_params.lambda": [
+     0.3,
+     "（无此项）"
+    ],
+    "method_params.loss": [
+     "(1-lambda)*CE + lambda*SupCon(q, 目标模型的键 + 队列)",
+     "CE"
+    ],
+    "method_params.m": [
+     0.99,
+     "（无此项）"
+    ],
+    "method_params.proj": [
+     [
+      768,
+      128
+     ],
+     "（无此项）"
+    ],
+    "method_params.queue": [
+     4096,
+     "（无此项）"
+    ],
+    "method_params.rep": [
+     "最后一个真实 token 的最后一层隐状态（final norm 之后）",
+     "（无此项）"
+    ],
+    "method_params.target": [
+     "LoRA 和投影头的动量平均，无梯度；只在优化器更新后做动量更新和入队；同一训练记录的当前键和历史键都不当自己的正例",
+     "（无此项）"
+    ],
+    "method_params.tau": [
+     0.3,
+     "（无此项）"
+    ]
+   },
+   "lib_diff": {},
+   "platform_diff": {},
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 608,
+    "families": 343,
+    "per_seed": {
+     "42": 0.0042,
+     "43": 0.0057,
+     "44": -0.0002
+    },
+    "mean": 0.0032,
+    "ci95": [
+     -0.006,
+     0.0129
+    ]
+   }
+  },
+  {
+   "id": "CMP-11",
+   "new": "QWEN-Q4-MOCO",
+   "old": "QWEN-Q0-CE",
+   "eval": "dev",
+   "purpose": "第六组 MoCo 对 CE；dev 仅报告，不选方法",
+   "design": "系统比较（多处不同，不能归因到单个变量）",
+   "environment": "一致",
+   "unknown": [],
+   "note": "区间仅针对已训练模型的样本重抽样，不包含训练随机性；不按 dev 选方法",
+   "changed": {
+    "method_params.lambda": [
+     0.3,
+     "（无此项）"
+    ],
+    "method_params.loss": [
+     "(1-lambda)*CE + lambda*SupCon(q, 目标模型的键 + 队列)",
+     "CE"
+    ],
+    "method_params.m": [
+     0.99,
+     "（无此项）"
+    ],
+    "method_params.proj": [
+     [
+      768,
+      128
+     ],
+     "（无此项）"
+    ],
+    "method_params.queue": [
+     4096,
+     "（无此项）"
+    ],
+    "method_params.rep": [
+     "最后一个真实 token 的最后一层隐状态（final norm 之后）",
+     "（无此项）"
+    ],
+    "method_params.target": [
+     "LoRA 和投影头的动量平均，无梯度；只在优化器更新后做动量更新和入队；同一训练记录的当前键和历史键都不当自己的正例",
+     "（无此项）"
+    ],
+    "method_params.tau": [
+     0.3,
+     "（无此项）"
+    ]
+   },
+   "lib_diff": {},
+   "platform_diff": {},
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 660,
+    "families": 381,
+    "per_seed": {
+     "42": 0.0092,
+     "43": 0.0041,
+     "44": 0.0121
+    },
+    "mean": 0.0085,
+    "ci95": [
+     -0.0023,
+     0.0198
+    ]
+   }
+  },
+  {
    "id": "CMP-08",
    "new": "QWEN-Q3-SCL",
    "old": "QWEN-Q0-CE",
@@ -1202,10 +2459,6 @@
    "unknown": [],
    "note": "SCL 同时引入投影头和混合损失，不单独归因于某个组件；种子44下降，需报告波动",
    "changed": {
-    "method": [
-     "scl",
-     "ce"
-    ],
     "method_params.lambda": [
      0.3,
      "（无此项）"
@@ -1263,10 +2516,6 @@
    "unknown": [],
    "note": "仅三个种子；区间不包含训练随机性，不依据 dev 重选模型",
    "changed": {
-    "method": [
-     "scl",
-     "ce"
-    ],
     "method_params.lambda": [
      0.3,
      "（无此项）"
@@ -1322,23 +2571,15 @@
    "design": "系统比较（多处不同，不能归因到单个变量）",
    "environment": "一致",
    "unknown": [],
-   "note": "CE+dropout 因模型下载超时尚未完成；不能把差值单独归因于 KL 约束",
+   "note": "CE+dropout 已补齐，见 CMP-12 至 CMP-15；本比较不能单独归因于 KL",
    "changed": {
     "lora.dropout": [
      0.1,
      0.0
     ],
-    "method": [
-     "rdrop",
-     "ce"
-    ],
     "method_params.alpha": [
      1.0,
      "（无此项）"
-    ],
-    "method_params.lora_dropout": [
-     0.1,
-     0.0
     ],
     "method_params.loss": [
      "(CE1+CE2)/2 + alpha*symKL(四类分布)",
@@ -1376,23 +2617,15 @@
    "design": "系统比较（多处不同，不能归因到单个变量）",
    "environment": "一致",
    "unknown": [],
-   "note": "CE+dropout 对照待补；区间仅反映已训练模型的样本重抽样，不包含训练随机性",
+   "note": "CE+dropout 已补齐；区间仅反映已训练模型的样本重抽样，不包含训练随机性",
    "changed": {
     "lora.dropout": [
      0.1,
      0.0
     ],
-    "method": [
-     "rdrop",
-     "ce"
-    ],
     "method_params.alpha": [
      1.0,
      "（无此项）"
-    ],
-    "method_params.lora_dropout": [
-     0.1,
-     0.0
     ],
     "method_params.loss": [
      "(CE1+CE2)/2 + alpha*symKL(四类分布)",

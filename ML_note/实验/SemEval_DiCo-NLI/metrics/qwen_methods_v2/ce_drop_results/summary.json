@@ -5,13 +5,82 @@
  "results": {
   "track1": {
    "method": "ce_drop",
-   "sft": {},
-   "best_epochs": {}
+   "sft": {
+    "fold0_plain": {
+     "weighted_f1": {
+      "mean": 0.835,
+      "sd": 0.0031,
+      "n": 3
+     },
+     "soft_cons": {
+      "mean": 0.8301,
+      "sd": 0.0039,
+      "n": 3
+     },
+     "hard_cons": {
+      "mean": 0.8005,
+      "sd": 0.0059,
+      "n": 3
+     }
+    },
+    "fold0_sym": {
+     "weighted_f1": {
+      "mean": 0.8613,
+      "sd": 0.0083,
+      "n": 3
+     },
+     "soft_cons": {
+      "mean": 0.9176,
+      "sd": 0.0111,
+      "n": 3
+     },
+     "hard_cons": {
+      "mean": 0.8764,
+      "sd": 0.0102,
+      "n": 3
+     }
+    },
+    "dev_plain": {
+     "weighted_f1": {
+      "mean": 0.8191,
+      "sd": 0.0048,
+      "n": 3
+     },
+     "soft_cons": {
+      "mean": 0.8207,
+      "sd": 0.0042,
+      "n": 3
+     },
+     "hard_cons": {
+      "mean": 0.7906,
+      "sd": 0.0072,
+      "n": 3
+     }
+    },
+    "dev_sym": {
+     "weighted_f1": {
+      "mean": 0.829,
+      "sd": 0.0032,
+      "n": 3
+     },
+     "soft_cons": {
+      "mean": 0.9218,
+      "sd": 0.0021,
+      "n": 3
+     },
+     "hard_cons": {
+      "mean": 0.8568,
+      "sd": 0.0021,
+      "n": 3
+     }
+    }
+   },
+   "best_epochs": {
+    "42": 3,
+    "43": 3,
+    "44": 3
+   }
   }
  },
- "missing": [
-  "track1 seed42",
-  "track1 seed43",
-  "track1 seed44"
- ]
+ "missing": []
 }

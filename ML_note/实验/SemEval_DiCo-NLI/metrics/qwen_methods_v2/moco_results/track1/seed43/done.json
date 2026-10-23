@@ -1,0 +1,127 @@
+{
+ "scores": {
+  "fold0": {
+   "plain": {
+    "weighted_f1": 0.8340977489579589,
+    "soft_cons": 0.8455598455598455,
+    "hard_cons": 0.8146718146718147
+   },
+   "sym": {
+    "weighted_f1": 0.8552101227342319,
+    "soft_cons": 0.918918918918919,
+    "hard_cons": 0.8764478764478765
+   }
+  },
+  "dev": {
+   "plain": {
+    "weighted_f1": 0.8240201449852913,
+    "soft_cons": 0.8303249097472925,
+    "hard_cons": 0.8050541516245487
+   },
+   "sym": {
+    "weighted_f1": 0.8278665205021793,
+    "soft_cons": 0.924187725631769,
+    "hard_cons": 0.8628158844765343
+   }
+  }
+ },
+ "stats": {
+  "inputs": 1448,
+  "scored_this_session": 1448,
+  "score_seconds_this_session": 61.2,
+  "mean_answer_mass": 0.9998,
+  "answer_mass_p05": 0.9993,
+  "answer_mass_below_0.5": 0,
+  "top_is_letter": 1.0
+ },
+ "history": [
+  {
+   "epoch": 1,
+   "train_loss": 2.8345919535710262,
+   "val_weighted_f1": 0.8245752608047688,
+   "minutes": 7.1,
+   "anchors": 0.9995437956204379,
+   "ce": 1.2247667082442637,
+   "con": 6.558316072843371,
+   "updates": 137,
+   "queue_filled": 2190,
+   "queue_mean_key_age_updates": 68.06209564208984
+  },
+  {
+   "epoch": 2,
+   "train_loss": 2.5694693292890274,
+   "val_weighted_f1": 0.8452454888324983,
+   "minutes": 7.1,
+   "anchors": 1.0,
+   "ce": 0.380821418003553,
+   "con": 7.663231595589297,
+   "updates": 274,
+   "queue_filled": 4096,
+   "queue_mean_key_age_updates": 127.68310546875
+  },
+  {
+   "epoch": 3,
+   "train_loss": 2.4131697109767374,
+   "val_weighted_f1": 0.8577133081079124,
+   "minutes": 7.1,
+   "anchors": 1.0,
+   "ce": 0.19820574543525527,
+   "con": 7.562057575170141,
+   "updates": 411,
+   "queue_filled": 4096,
+   "queue_mean_key_age_updates": 127.68310546875
+  }
+ ],
+ "best_epoch": 3,
+ "forward_check": {
+  "autocast_ce_path": [
+   true,
+   "torch.bfloat16"
+  ],
+  "autocast_hidden_path": [
+   true,
+   "torch.bfloat16"
+  ],
+  "max_letter_logprob_diff": 0.0,
+  "argmax_agreement": 1.0,
+  "rows": 8
+ },
+ "trainable_params": 35095424,
+ "steps": 411,
+ "steps_per_epoch": 137,
+ "train_minutes_last_session": 21.4,
+ "seconds_per_step": 3.08,
+ "resumed_from_epoch": 0,
+ "resume": {
+  "checkpoint": null,
+  "epoch": 0,
+  "files": [],
+  "skipped": []
+ },
+ "adapter_checks": [
+  {
+   "epoch": 3,
+   "tensors": 508,
+   "has_proj": true,
+   "val_argmax_agreement": 1.0,
+   "val_max_prob_diff": 0.0,
+   "val_weighted_f1": 0.8577133081079124,
+   "recorded_val_weighted_f1": 0.8577133081079124
+  }
+ ],
+ "load_memory": {
+  "before_load": {
+   "allocated_gib": 0.02,
+   "reserved_gib": 0.05
+  },
+  "after_load": {
+   "allocated_gib": 7.51,
+   "reserved_gib": 7.53
+  }
+ },
+ "peak_memory_gib": 8.95,
+ "fit_rows": 2190,
+ "val_rows": 244,
+ "fit_tokens": 433153,
+ "minutes_last_session": 22.5
+}

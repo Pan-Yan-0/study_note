@@ -39,14 +39,14 @@ def finite(x):
     return True
 def valid_probs(p): return len(p) == 4 and all(math.isfinite(v) and 0 <= v <= 1 for v in p) and abs(sum(p)-1) < 1e-5
 
-for directory in sorted(p for p in BASE.iterdir() if p.is_dir() and (p/'fingerprint.json').exists()):
+for directory in sorted(p for p in BASE.iterdir() if p.is_dir() and p.name.endswith(('_results', '_smoke')) and (p/'fingerprint.json').exists()):
     fp, summary = read(directory/'fingerprint.json'), read(directory/'summary.json')
     method, smoke = fp['method'], fp['smoke']
     tag = directory.name
     ck(tag+' data identity', all(hashlib.sha256((OFF/p).read_bytes()).hexdigest() == h for p,h in fp['data_sha256'].items()))
     ck(tag+' method configuration', fp['method_params'] == ns['METHODS'][method])
     donefiles = sorted(directory.rglob('done.json'))
-    if method == 'ce_drop':
+    if method == 'ce_drop' and not donefiles:
         ck(tag+' no completed seed or run metadata', not donefiles and not (directory/'run_meta.json').exists() and len(summary['missing']) == 3)
         continue
     meta = read(directory/'run_meta.json')
@@ -100,7 +100,16 @@ for directory in sorted(p for p in BASE.iterdir() if p.is_dir() and (p/'fingerpr
         if smoke:
             ck(name+' expected interrupted/resumed seed',done['resumed_from_epoch']==(1 if d.name=='seed42' else 0))
         if method=='moco':
-            ck(name+' queue and update counts',[(h['updates'],h['queue_filled'],h['queue_mean_key_age_updates']) for h in history]==[(12,192,5.5),(24,384,11.5)])
+            stamps, step = [], 0
+            # Independently simulate enqueue counts and FIFO age at each optimizer update.
+            capacity = fp['method_params']['queue']
+            for h in history:
+                for start in range(0, len(parts['fit']), fp['train']['batch'] * fp['train']['grad_acc']):
+                    step += 1
+                    count = min(fp['train']['batch'] * fp['train']['grad_acc'], len(parts['fit']) - start)
+                    stamps = (stamps + [step] * count)[-capacity:]
+                age = sum(step - t for t in stamps) / len(stamps)
+                ck(name+f" epoch{h['epoch']} queue and update counts", h['updates']==step and h['queue_filled']==len(stamps) and abs(h['queue_mean_key_age_updates']-age)<1e-4)
         result['runs'][name]={'scores':done['scores'],'best_epoch':done['best_epoch'],'peak_memory_gib':done['peak_memory_gib'],'seconds_per_step':done['seconds_per_step'],'minutes_last_session':done['minutes_last_session']}
         scored.append(done)
     for part in ['fold0','dev']:
