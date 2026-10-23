@@ -93,7 +93,7 @@ Coursera-ML-AndrewNg-Notes-master/   课程资料
 
 ## 7. 当前进度
 
-本轮接手补充（优先于下方历史排期）：第六组已使用 `dico_qwen_methods-2-gpt`，实际运行源码位于 `ML_note/实验/SemEval_DiCo-NLI/code/qwen_methods_v2/`。CE 与 R-Drop 三种子正式结果及真实 SMOKE 已归档到 `metrics/qwen_methods_v2/`；CE+dropout 下载超时未训练，SCL/MoCo 正式输出尚未归档。第六组对照使用同代码 Q0 CE，而不是旧 R3。GPT/Codex 独立复算已通过，结论见该目录 README。原 notebooks 中 v1 仅供历史参照。
+本轮接手补充（优先于下方历史排期）：第六组已使用 `dico_qwen_methods-2-gpt`，实际运行源码位于 `ML_note/实验/SemEval_DiCo-NLI/code/qwen_methods_v2/`。CE、R-Drop 与 SCL 三种子正式结果及真实 SMOKE 已归档到 `metrics/qwen_methods_v2/`；CE+dropout 下载超时未训练，MoCo 正式输出尚未归档。第六组对照使用同代码 Q0 CE，而不是旧 R3。GPT/Codex 独立复算已通过，结论见该目录 README。原 notebooks 中 v1 仅供历史参照。
 
 - **第一轮 SST-2 指令学习、第二轮 IMDB**：都已完成，结果见[实验结果汇总](ML_note/实验结果汇总.md)和两个实验的 README。
 - **第三轮 SemEval-2027 Task 2**：10-20 开工。见第 8 节和 `ML_note/实验/SemEval_DiCo-NLI/README.md`。

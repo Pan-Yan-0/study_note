@@ -147,6 +147,7 @@ def qwen_methods_run(rid, method, desc):
 
 
 RUNS = [
+    ("QWEN-Q3-SCL", lambda: qwen_methods_run("QWEN-Q3-SCL", "scl", "第六组 Q3，监督对比学习 SCL")),
     ("QWEN-Q0-CE", lambda: qwen_methods_run("QWEN-Q0-CE", "ce", "第六组 Q0，同代码 CE 基线")),
     ("QWEN-Q2-RDROP", lambda: qwen_methods_run("QWEN-Q2-RDROP", "rdrop", "第六组 Q2，dropout 0.1 + R-Drop")),
     ("MDB-E6-OOF", lambda: mdeberta_run("MDB-E6-OOF", "e6", "oof", "mDeBERTa 最多 6 轮，英语 5 折折外（第二组）")),
@@ -167,6 +168,8 @@ RUNS = [
 
 # (编号, 新, 旧, 评测集, 目的)
 COMPARISONS = [
+    ("CMP-08", "QWEN-Q3-SCL", "QWEN-Q0-CE", "fold0", "第六组 SCL 对 CE；评估整体 SCL 配方"),
+    ("CMP-09", "QWEN-Q3-SCL", "QWEN-Q0-CE", "dev", "第六组 SCL 对 CE；dev 仅报告，不选方法"),
     ("CMP-06", "QWEN-Q2-RDROP", "QWEN-Q0-CE", "fold0", "第六组 R-Drop 对 CE；dropout 和损失同时改变"),
     ("CMP-07", "QWEN-Q2-RDROP", "QWEN-Q0-CE", "dev", "第六组 R-Drop 对 CE；dev 仅报告，不选方法"),
     ("CMP-01", "MDB-E12-OOF", "MDB-E6-OOF", "oof", "mDeBERTa 训练轮数上限：12 轮 对 6 轮（第二组定配方用的比较）"),
@@ -180,6 +183,8 @@ IGNORE_FOR_CONTROL = {"lib.transformers", "lib.peft", "lib.accelerate", "lib.dat
 CARD_KEYS = ("gpu", "dtype")  # 卡和精度分开记录、分开比较
 UNKNOWN = (None, "未记录", "None")
 NOTES = {
+    "CMP-08": "SCL 同时引入投影头和混合损失，不单独归因于某个组件；种子44下降，需报告波动",
+    "CMP-09": "仅三个种子；区间不包含训练随机性，不依据 dev 重选模型",
     "CMP-06": "CE+dropout 因模型下载超时尚未完成；不能把差值单独归因于 KL 约束",
     "CMP-07": "CE+dropout 对照待补；区间仅反映已训练模型的样本重抽样，不包含训练随机性",  # 人工补充的核对结果，原样写进比较表
     "CMP-04": "两边零样本的 1,448 个输入概率逐条相同（推理一致）；训练过程是否等价没有验证",

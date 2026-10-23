@@ -16,7 +16,7 @@ ML_note/
 
 ## 实验
 
-- [SemEval 第六组：CE 与 R-Drop 结果及核验](ML_note/实验/SemEval_DiCo-NLI/metrics/qwen_methods_v2/README.md)
+- [SemEval 第六组：CE、R-Drop 与 SCL 结果及核验](ML_note/实验/SemEval_DiCo-NLI/metrics/qwen_methods_v2/README.md)
 
 | 实验 | 内容 | 主要结果 |
 |---|---|---|
