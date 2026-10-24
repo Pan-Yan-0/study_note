@@ -1,7 +1,5 @@
 # Pan-Yan-0 的学习笔记（note 分支）
 
-最新结果：[SemEval英语五折联合验证](ML_note/实验/SemEval_DiCo-NLI/英语五折联合验证结果.md)：Qwen SFT sym WF1 84.37%；mDeBERTa R-Drop 80.69%；匹配种子蒸馏与CE基本持平。
-
 
 机器学习与 NLP 的实验记录、论文笔记和课程笔记。实验和笔记都在 [ML_note/](ML_note/) 下。
 
@@ -19,19 +17,18 @@ ML_note/
 
 ## 实验
 
-- [SemEval 实验完成清单与剩余算力安排](ML_note/实验/SemEval_DiCo-NLI/实验状态与算力计划.md)
-- [SFT与蒸馏五折验证计划（94 calculation预算）](ML_note/实验/SemEval_DiCo-NLI/SFT与蒸馏验证计划.md)
-
-- [SemEval 第六组：五种 Qwen 设置完整结果及核验](ML_note/实验/SemEval_DiCo-NLI/metrics/qwen_methods_v2/README.md)
-
-| 实验 | 内容 | 主要结果 |
+| 项目 | 当前进度 | 主要结果与范围 |
 |---|---|---|
-| [SST-2 指令学习](ML_note/实验/SST2/README.md) | 《1-使用大模型进行指令学习》任务：DeepSeek 与 Qwen3.5 0.8b / 2b / 4b / 9b 在三个指令模板（basic / cot / role_cot）× 思考开关下的准确率；Mistral、Llama、Gemma、Phi-4 四个系列；DeBERTa-v3-base 全量与 16 / 64 / 256 / 1024 条少样本微调对照 | 验证集 872 条：DeepSeek 95.18%，Gemma 3 12B 94.61%，Qwen 4b 93.81%，Phi-4 93.00%，Llama 3.1 8B 92.43%，Mistral 7B 90.60%；DeBERTa 全量 95.60%，1024 条 92.97%，16 条 61.62% |
-| [SemEval-2027 Task 2 DiCo-NLI](ML_note/实验/SemEval_DiCo-NLI/README.md) | 方向一致的细粒度 NLI，英语、西班牙语、巴斯克语和跨语言四个赛道；数据统计、基线、编码器实验（mBERT、mDeBERTa）、Qwen3-4B 指令提示（零样本、少样本、CoT）和 LoRA 指令微调、错例分析、英语折外诊断和单词替换样本的盲审 | dev：mDeBERTa 最多 12 轮加对称化，英语 WF1 .827、SoftCons .918、HardCons .864（3个种子，配方按训练集折外预测选定）；Qwen3-4B LoRA 指令微调在英语按家族留出的 fold 0 上 WF1 .860，比同数据训练的 mDeBERTa 高 .067（dev 上两者接近，.835 对 .827）；只靠提示词的 Qwen3-4B 最好是 cot 的英语 WF1 .618；错误集中在 NEGATIVE_OTHER 的边界；盲审发现一部分难例是审阅判断和官方标签的分歧 |
-| [IMDB 情感分析](ML_note/实验/IMDB/README.md) | Kaggle *Bag of Words Meets Bags of Popcorn*：GloVe + 六种网络；BERT 全量、BERT LoRA、DeBERTa-v2-xxlarge LoRA；Qwen3-4B-Base 指令微调（LoRA，只算答案 token 的损失） | 编码器最高 Kaggle AUC 0.98294（DeBERTa-v2-xxlarge LoRA）；Qwen3-4B 指令微调 Kaggle AUC 0.99493（验证 0.9941，零样本 0.9847） |
-| [实验结果汇总](ML_note/实验结果汇总.md) | 本仓库全部实验的结果速览（新的、重要的在前），LoRA 论文的结果放在后面作参照，并说明哪些数字可以比、哪些不能 | — |
+| [SemEval-2027 DiCo-NLI](ML_note/实验/SemEval_DiCo-NLI/README.md) | 初步实验阶段完成；进入语义错误诊断和数据扩充设计 | 英语五折OOF sym WF1：Qwen SFT 84.37%；mDeBERTa R-Drop 80.69%、CE 80.03%（五种子）；KD 80.22%、匹配CE 80.23%（三种子）。四赛道已有基线/SFT；Qwen技巧仅英语单折，新方法多语言验证待后续安排 |
+| [SST-2](ML_note/实验/SST2/README.md) | 指令学习与微调对照完成 | 验证872条：DeepSeek 95.18%、Gemma 3 12B 94.61%、Qwen 4B 93.81%；DeBERTa全量95.60% |
+| [IMDB](ML_note/实验/IMDB/README.md) | 编码器与大模型微调完成 | Kaggle AUC：DeBERTa-v2-xxlarge LoRA 0.98294；Qwen3-4B指令微调0.99493 |
 
-每个实验目录下有 `code/`（脚本）、`notebooks/`（Kaggle Notebook）和 `metrics/`（逐条结果、汇总、运行日志）。
+- [全部实验结果汇总](ML_note/实验结果汇总.md)：跨项目结果表、评测口径与历史记录。
+- [SemEval完成清单与后续安排](ML_note/实验/SemEval_DiCo-NLI/实验状态与算力计划.md)：当前待办和算力状态。
+- [SemEval英语五折分析](ML_note/实验/SemEval_DiCo-NLI/英语五折联合验证结果.md)：配对比较、蒸馏得失和研究瓶颈。
+- [SemEval文件导航](ML_note/实验/SemEval_DiCo-NLI/文件导航与维护规则.md)：摘要、登记、原始输出和历史记录的分工。
+
+每个项目的README负责结果、问题、下一步；原始输出保存在metrics，自动登记表从结果生成，不手改。
 
 ## 论文与原理笔记
 

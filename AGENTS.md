@@ -93,7 +93,7 @@ Coursera-ML-AndrewNg-Notes-master/   课程资料
 
 ## 7. 当前进度
 
-本轮接手补充（优先于下方历史排期）：英语联合队列已完成并验收125个mDeBERTa任务、15个Qwen SFT、15份匹配折教师和15个KD；31套OOF，官方62组分数独立复算通过。结果见ML_note/实验/SemEval_DiCo-NLI/英语五折联合验证结果.md和metrics/joint_validation。Qwen sym WF1 84.37%，mDeBERTa R-Drop 80.69%，CE五种子80.03%；KD80.22%与匹配三种子CE80.23%基本持平。三个教师导出失败通过恢复原64条校验批次修复，权重无需重训，来源记录在code/joint_recovery和结果recovery目录。第六组Qwen技巧仍是fold0三种子；其他语言未做本轮全面验证；扩充候选尚未进入训练。原94 calculation是开跑前余额，当前余额未知。不自动追加训练或API请求。
+本轮接手补充（优先于下方历史记录）：当前规划的SemEval初步实验阶段全部完成，英语联合队列已验收125项mDeBERTa、15项SFT、15份教师、15项KD和31套OOF。最新结果与全部阶段总览见ML_note/实验/SemEval_DiCo-NLI/README.md；唯一当前待办入口为实验状态与算力计划.md，文件职责见文件导航与维护规则.md。根README和ML_note/实验结果汇总.md的实际表格已同步更新。后续以语义错误诊断、论文研究、扩充候选盲审为主；未授权自动追加GPU或API。94 calculation是已完成运行前预算，当前余额未知。下方旧进度仅为历史背景，不照其待运行描述启动实验。
 
 - **第一轮 SST-2 指令学习、第二轮 IMDB**：都已完成，结果见[实验结果汇总](ML_note/实验结果汇总.md)和两个实验的 README。
 - **第三轮 SemEval-2027 Task 2**：10-20 开工。见第 8 节和 `ML_note/实验/SemEval_DiCo-NLI/README.md`。
