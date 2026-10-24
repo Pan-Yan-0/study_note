@@ -93,7 +93,7 @@ Coursera-ML-AndrewNg-Notes-master/   课程资料
 
 ## 7. 当前进度
 
-本轮接手补充（优先于下方历史排期）：第六组 `dico_qwen_methods-2-gpt` 五种设置各三个种子全部完成，CE+dropout 已补跑成功。输出、实际源码和核验见 `metrics/qwen_methods_v2/` 与 `code/qwen_methods_v2/`。第五组第一阶段 30 项及第二阶段一项已归档到 `metrics/mdeberta_methods_stage1/`，蒸馏已完成 fold 0 三种子；用户目前只找到这两个阶段包；第二阶段125项中有16项输出可复用，109项缺少已保存输出，清单见metrics/mdeberta_methods_stage1/stage2_missing_tasks.json。用户最新余额为94 calculation，替代112.876；实例此前已删除。下一批优先完成英语SFT和KD五折三种子，补第五组109项，主队列规划78、保留16；详见SFT与蒸馏验证计划.md。联合队列已实现并通过17项本地测试，代码见code/joint_validation；A10 SMOKE尚待运行。已核验fold0三个Qwen权重并复用，只新增12个SFT任务。使用a10_joint_validation.zip，不可将既有第五组恢复包当成全流程包。后续按 `实验状态与算力计划.md` 先核对现有结果再安排训练，不擅自重跑或调用 API。
+本轮接手补充（优先于下方历史排期）：英语联合队列已完成并验收125个mDeBERTa任务、15个Qwen SFT、15份匹配折教师和15个KD；31套OOF，官方62组分数独立复算通过。结果见ML_note/实验/SemEval_DiCo-NLI/英语五折联合验证结果.md和metrics/joint_validation。Qwen sym WF1 84.37%，mDeBERTa R-Drop 80.69%，CE五种子80.03%；KD80.22%与匹配三种子CE80.23%基本持平。三个教师导出失败通过恢复原64条校验批次修复，权重无需重训，来源记录在code/joint_recovery和结果recovery目录。第六组Qwen技巧仍是fold0三种子；其他语言未做本轮全面验证；扩充候选尚未进入训练。原94 calculation是开跑前余额，当前余额未知。不自动追加训练或API请求。
 
 - **第一轮 SST-2 指令学习、第二轮 IMDB**：都已完成，结果见[实验结果汇总](ML_note/实验结果汇总.md)和两个实验的 README。
 - **第三轮 SemEval-2027 Task 2**：10-20 开工。见第 8 节和 `ML_note/实验/SemEval_DiCo-NLI/README.md`。

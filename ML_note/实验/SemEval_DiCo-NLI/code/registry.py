@@ -175,7 +175,44 @@ def mdeberta_methods_run(rid, track, method, desc):
             "metrics_dir":f"metrics/{mdir}/track{track}/{method}","seeds":["42","43","44"],"evals":evals}
 
 
+def joint_run(rid, method):
+    root = os.path.join(M, "joint_validation")
+    seeds = [42,43,44] if method in ("qwen","kd") else list(range(42,47))
+    if method == "qwen":
+        r = qwen_run(rid, "joint_validation/formal/qwen/fold0/dico_qwen_ce_results", 1, "sft", "阿里云 PAI-DSW", "Qwen CE SFT 英语五折三种子")
+        r["variables"]["split"] = dict(r["variables"]["split"], holdout_fold="0–4")
+        r["variables"]["data_sha256"] = rj(os.path.join(root,"formal/qwen/fold0/dico_qwen_ce_results/fingerprint.json"))["data_sha256"]
+        name = "qwen"
+    else:
+        base = "formal/kd/dico_mdeberta_results" if method == "kd" else "mdeberta/dico_mdeberta_results"
+        d = os.path.join(root,base,"track1",method,"seed42","fold0")
+        t,done = rj(os.path.join(d,"task.json")),rj(os.path.join(d,"done.json"))
+        e=done["env"]
+        r={"id":rid,"desc":f"英语五折 {method}，{len(seeds)}种子","track":1,
+           "variables":{"model":t["model"],"model_revision":t["model_revision"],"train":t["train"],
+                        "split":dict(t["split"],holdout_fold="0–4"),"method":"编码器分类训练",
+                        "method_params":t["method_params"],"data_sha256":t["data_sha256"],
+                        "selection":t["train"]["selection"],"inference":"plain 和 sym（F / B 互换后平均）",
+                        "lib":{"transformers":e["transformers"]}},
+           "platform":{"platform":e["platform"],"gpu":[e["gpu"]],"dtype":["torch.bfloat16"],"torch":[e["torch"]]},
+           "code":{"version":"joint_validation","code_sha256":[done["code_sha256"][:12]]}}
+        name="kd" if method=="kd" else "mdeberta/"+method
+    r["variables"]["train_data"]="track1 按家族五折，每折只训练fit，内层验证选轮"
+    r["metrics_dir"]="metrics/joint_validation"
+    r["seeds"]=[str(x) for x in seeds]
+    r["evals"]={"oof":{str(seed):{mode:preds(os.path.join(root,"oof",name,f"seed{seed}",f"pred_{mode}.csv"))
+                                  for mode in ("plain","sym")} for seed in seeds}}
+    return r
+
+
 RUNS = [
+    ("JOINT-CE", lambda: joint_run("JOINT-CE", "ce")),
+    ("JOINT-RDROP", lambda: joint_run("JOINT-RDROP", "rdrop")),
+    ("JOINT-DIR_RDROP", lambda: joint_run("JOINT-DIR_RDROP", "dir_rdrop")),
+    ("JOINT-SCL", lambda: joint_run("JOINT-SCL", "scl")),
+    ("JOINT-MOCO_M0.999", lambda: joint_run("JOINT-MOCO_M0.999", "moco_m0.999")),
+    ("JOINT-QWEN", lambda: joint_run("JOINT-QWEN", "qwen")),
+    ("JOINT-KD", lambda: joint_run("JOINT-KD", "kd")),
     ("MDB-G5-T1-CE", lambda: mdeberta_methods_run("MDB-G5-T1-CE", 1, "ce", "第五组 track1 ce，fold 0 三种子")),
     ("MDB-G5-T1-KD", lambda: mdeberta_methods_run("MDB-G5-T1-KD", 1, "kd", "第五组 track1 kd，fold 0 三种子")),
     ("MDB-G5-T1-RDROP", lambda: mdeberta_methods_run("MDB-G5-T1-RDROP", 1, "rdrop", "第五组 track1 rdrop，fold 0 三种子")),
@@ -209,6 +246,12 @@ RUNS = [
 
 # (编号, 新, 旧, 评测集, 目的)
 COMPARISONS = [
+    ("JOINT-CMP-RDROP", "JOINT-RDROP", "JOINT-CE", "oof", "英语五折配对比较：rdrop 对 CE"),
+    ("JOINT-CMP-DIR_RDROP", "JOINT-DIR_RDROP", "JOINT-CE", "oof", "英语五折配对比较：dir_rdrop 对 CE"),
+    ("JOINT-CMP-SCL", "JOINT-SCL", "JOINT-CE", "oof", "英语五折配对比较：scl 对 CE"),
+    ("JOINT-CMP-MOCO_M0.999", "JOINT-MOCO_M0.999", "JOINT-CE", "oof", "英语五折配对比较：moco_m0.999 对 CE"),
+    ("JOINT-CMP-QWEN", "JOINT-QWEN", "JOINT-CE", "oof", "英语五折配对比较：qwen 对 CE"),
+    ("JOINT-CMP-KD", "JOINT-KD", "JOINT-CE", "oof", "英语五折配对比较：kd 对 CE"),
     ("CMP-12", "QWEN-Q1-DROP", "QWEN-Q0-CE", "fold0", "只加 dropout 对 CE"),
     ("CMP-13", "QWEN-Q1-DROP", "QWEN-Q0-CE", "dev", "只加 dropout 对 CE；dev 仅报告"),
     ("CMP-14", "QWEN-Q2-RDROP", "QWEN-Q1-DROP", "fold0", "R-Drop 对同 dropout 的 CE；增加双前向平均与 KL"),
@@ -230,6 +273,12 @@ IGNORE_FOR_CONTROL = {"lib.transformers", "lib.peft", "lib.accelerate", "lib.dat
 CARD_KEYS = ("gpu", "dtype")  # 卡和精度分开记录、分开比较
 UNKNOWN = (None, "未记录", "None")
 NOTES = {
+    "JOINT-CMP-RDROP": "使用共同种子；fold0已用于探索，五折并非独立隐藏测试。区间不包含重新训练随机性。",
+    "JOINT-CMP-DIR_RDROP": "使用共同种子；fold0已用于探索，五折并非独立隐藏测试。区间不包含重新训练随机性。",
+    "JOINT-CMP-SCL": "使用共同种子；fold0已用于探索，五折并非独立隐藏测试。区间不包含重新训练随机性。",
+    "JOINT-CMP-MOCO_M0.999": "使用共同种子；fold0已用于探索，五折并非独立隐藏测试。区间不包含重新训练随机性。",
+    "JOINT-CMP-QWEN": "使用共同种子；fold0已用于探索，五折并非独立隐藏测试。区间不包含重新训练随机性。",
+    "JOINT-CMP-KD": "使用共同种子；fold0已用于探索，五折并非独立隐藏测试。区间不包含重新训练随机性。",
     "CMP-12": "本轮三种子均提升；仍只有一个留出折，不能用来保证跨折泛化",
     "CMP-13": "dev 仅报告，不据此重选模型",
     "CMP-14": "控制 dropout 后评估 R-Drop 整体训练规则；若要单独归因于 KL，还需双前向平均但 alpha=0 的消融",
@@ -312,7 +361,28 @@ def compare(dico, fam_of, a, b, eval_set):
     per_seed = {s: round(weighted_f1([gold[i] for i in ids], [a["evals"][eval_set][x]["sym"][i] for i in ids]) -
                          weighted_f1([gold[i] for i in ids], [b["evals"][eval_set][y]["sym"][i] for i in ids]), 4) for s, x, y in pairs}
     rng = random.Random(BOOT_SEED)
-    boot = sorted(diff([i for f in rng.choices(fams, k=len(fams)) for i in by_fam[f]]) for _ in range(B))
+    # Precompute per-family confusion counts; same Python RNG draws and percentile rule.
+    # F1 depends only on these counts, so repeated text-level scans are unnecessary.
+    import numpy as np
+    label_id = {label:i for i,label in enumerate(LABELS)}
+    counts = np.zeros((len(fams),len(pairs),2,4,4),dtype=np.int64)
+    for fi,f in enumerate(fams):
+        for si,(_,x,y) in enumerate(pairs):
+            for i in by_fam[f]:
+                gi=label_id[gold[i]]
+                counts[fi,si,0,gi,label_id[a["evals"][eval_set][x]["sym"][i]]]+=1
+                counts[fi,si,1,gi,label_id[b["evals"][eval_set][y]["sym"][i]]]+=1
+    family_index={f:i for i,f in enumerate(fams)}
+    boot=[]
+    for _ in range(B):
+        weights=np.bincount([family_index[f] for f in rng.choices(fams,k=len(fams))],minlength=len(fams))
+        cm=np.tensordot(weights,counts,axes=(0,0))
+        support=cm.sum(axis=-1); predicted=cm.sum(axis=-2)
+        den=support+predicted; tp=np.diagonal(cm,axis1=-2,axis2=-1)
+        f1=np.divide(2*tp,den,out=np.zeros_like(den,dtype=float),where=den!=0)
+        wf1=(f1*support).sum(axis=-1)/support.sum(axis=-1)
+        boot.append(float((wf1[:,0]-wf1[:,1]).mean()))
+    boot.sort()
     return {"seeds": [s for s, _, _ in pairs], "rows": len(ids), "families": len(fams), "per_seed": per_seed,
             "mean": round(diff(ids), 4), "ci95": [round(boot[int(.025 * B)], 4), round(boot[int(.975 * B) - 1], 4)]}
 

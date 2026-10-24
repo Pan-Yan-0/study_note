@@ -1,0 +1,56 @@
+{
+ "task": "track1/ce/seed44/fold3",
+ "attempt_id": "20261024-1109-track1-ce-seed44-fold3-1",
+ "previous_attempts": 0,
+ "session": "20261024-1109",
+ "env": {
+  "torch": "2.6.0+cu124",
+  "cuda": "12.4",
+  "python": "3.11.11",
+  "gpu": "NVIDIA A10",
+  "transformers": "5.19.0",
+  "sentencepiece": "0.2.2",
+  "huggingface_hub": "2.2.0",
+  "modelscope": "1.40.2",
+  "numpy": "2.4.6",
+  "platform": "阿里云 PAI-DSW",
+  "amp": "bf16"
+ },
+ "code_sha256": "83bfe561f0f5ab5f9ff52b37dd9619faf34d3ebcb7a34032a14fa55f9b597f63",
+ "best_epoch": 7,
+ "val_weighted_f1": 0.7829092204636837,
+ "scores": {
+  "test": {
+   "plain": {
+    "weighted_f1": 0.7688460453135109,
+    "soft_cons": 0.875,
+    "hard_cons": 0.79296875
+   },
+   "sym": {
+    "weighted_f1": 0.7770410847083968,
+    "soft_cons": 0.921875,
+    "hard_cons": 0.82421875
+   }
+  }
+ },
+ "precision": "bf16 autocast",
+ "precision_attempts": [
+  {
+   "precision": "bf16 autocast",
+   "result": "ok"
+  }
+ ],
+ "updates": 828,
+ "skipped_updates": 0,
+ "peak_memory_gib": 5.68,
+ "peak_reserved_gib": 6.83,
+ "seconds_per_step": 0.1149,
+ "steps": 828,
+ "steps_per_epoch": 69,
+ "rows": {
+  "fit": 2200,
+  "val": 233,
+  "test": 609
+ },
+ "minutes": 1.72
+}

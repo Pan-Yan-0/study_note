@@ -1,0 +1,53 @@
+{
+ "best_epoch": 2,
+ "forward_check": {
+  "autocast_ce_path": [
+   true,
+   "torch.bfloat16"
+  ],
+  "autocast_hidden_path": [
+   true,
+   "torch.bfloat16"
+  ],
+  "max_letter_logprob_diff": 0.0,
+  "argmax_agreement": 1.0,
+  "rows": 8
+ },
+ "trainable_params": 33030144,
+ "steps": 411,
+ "steps_per_epoch": 137,
+ "train_minutes_last_session": 16.8,
+ "seconds_per_step": 2.4,
+ "resumed_from_epoch": 0,
+ "resume": {
+  "checkpoint": null,
+  "epoch": 0,
+  "files": [],
+  "skipped": []
+ },
+ "adapter_checks": [
+  {
+   "epoch": 2,
+   "tensors": 504,
+   "has_proj": false,
+   "val_argmax_agreement": 1.0,
+   "val_max_prob_diff": 0.0,
+   "val_weighted_f1": 0.8243804152020214,
+   "recorded_val_weighted_f1": 0.8243804152020214
+  }
+ ],
+ "load_memory": {
+  "before_load": {
+   "allocated_gib": 0.0,
+   "reserved_gib": 0.0
+  },
+  "after_load": {
+   "allocated_gib": 7.49,
+   "reserved_gib": 7.5
+  }
+ },
+ "peak_memory_gib": 8.79,
+ "fit_rows": 2186,
+ "val_rows": 248,
+ "fit_tokens": 432296
+}

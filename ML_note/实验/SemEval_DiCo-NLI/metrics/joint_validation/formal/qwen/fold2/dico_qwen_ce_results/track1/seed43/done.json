@@ -1,0 +1,108 @@
+{
+  "scores": {
+    "holdout": {
+      "plain": {
+        "weighted_f1": 0.8316142008462877,
+        "soft_cons": 0.8488372093023255,
+        "hard_cons": 0.8178294573643411
+      },
+      "sym": {
+        "weighted_f1": 0.848841985588658,
+        "soft_cons": 0.937984496124031,
+        "hard_cons": 0.8875968992248062
+      }
+    },
+    "dev": {
+      "plain": {
+        "weighted_f1": 0.8100190561288209,
+        "soft_cons": 0.8303249097472925,
+        "hard_cons": 0.7942238267148014
+      },
+      "sym": {
+        "weighted_f1": 0.8216039965816853,
+        "soft_cons": 0.9061371841155235,
+        "hard_cons": 0.8483754512635379
+      }
+    }
+  },
+  "stats": {
+    "inputs": 1446,
+    "scored_this_session": 1446,
+    "score_seconds_this_session": 62.42213439941406
+  },
+  "history": [
+    {
+      "epoch": 1,
+      "train_loss": 1.1884177391345685,
+      "val_weighted_f1": 0.7947453346808331,
+      "minutes": 5.5
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.3819966810090201,
+      "val_weighted_f1": 0.8154422610683437,
+      "minutes": 5.5
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.17740453949996407,
+      "val_weighted_f1": 0.8372421724650589,
+      "minutes": 5.5
+    }
+  ],
+  "best_epoch": 3,
+  "forward_check": {
+    "autocast_ce_path": [
+      true,
+      "torch.bfloat16"
+    ],
+    "autocast_hidden_path": [
+      true,
+      "torch.bfloat16"
+    ],
+    "max_letter_logprob_diff": 0.0,
+    "argmax_agreement": 1.0,
+    "rows": 8
+  },
+  "trainable_params": 33030144,
+  "steps": 411,
+  "steps_per_epoch": 137,
+  "train_minutes_last_session": 16.9,
+  "seconds_per_step": 2.4,
+  "resumed_from_epoch": 0,
+  "resume": {
+    "checkpoint": null,
+    "epoch": 0,
+    "files": [],
+    "skipped": []
+  },
+  "adapter_checks": [
+    {
+      "epoch": 3,
+      "tensors": 504,
+      "has_proj": false,
+      "val_argmax_agreement": 1.0,
+      "val_max_prob_diff": 0.0,
+      "val_weighted_f1": 0.8372421724650589,
+      "recorded_val_weighted_f1": 0.8372421724650589
+    }
+  ],
+  "load_memory": {
+    "before_load": {
+      "allocated_gib": 0.0,
+      "reserved_gib": 0.0
+    },
+    "after_load": {
+      "allocated_gib": 7.49,
+      "reserved_gib": 7.5
+    }
+  },
+  "peak_memory_gib": 8.79,
+  "fit_rows": 2186,
+  "val_rows": 248,
+  "fit_tokens": 432296,
+  "fold": 2,
+  "seed": 43,
+  "pipeline_id": "85740d5c93daf3af5e29e06857d70074e961c6435f7991e5ec6262fc02f639d6",
+  "minutes_last_session": 17.955866924921672
+}

@@ -1,5 +1,8 @@
 # Pan-Yan-0 的学习笔记（note 分支）
 
+最新结果：[SemEval英语五折联合验证](ML_note/实验/SemEval_DiCo-NLI/英语五折联合验证结果.md)：Qwen SFT sym WF1 84.37%；mDeBERTa R-Drop 80.69%；匹配种子蒸馏与CE基本持平。
+
+
 机器学习与 NLP 的实验记录、论文笔记和课程笔记。实验和笔记都在 [ML_note/](ML_note/) 下。
 
 ```text
