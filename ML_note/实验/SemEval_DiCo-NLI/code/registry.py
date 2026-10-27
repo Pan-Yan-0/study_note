@@ -267,6 +267,7 @@ COMPARISONS = [
     ("CMP-03", "QWEN-E3-T1", "MDB-E12-OOF", "fold0", "Qwen SFT 对 mDeBERTa（同训练 / 验证 / 留出数据；系统对比，模型不同）"),
     ("CMP-04", "QWEN-E5-T1", "QWEN-E3-T1", "fold0", "Qwen SFT 轮数上限：5 轮 对 3 轮"),
     ("CMP-05", "QWEN-E3-T1-A10", "QWEN-E3-T1", "fold0", "Qwen SFT 3 轮配方换到 A10（执行环境迁移复现）"),
+    ("CMP-16", "QWEN-Q0-CE", "QWEN-E3-T1-A10", "fold0", "Qwen SFT 3 轮配方在 A10 上重跑（第六组 Q0 对第四组 R3，代码版本不同）"),
 ]
 
 IGNORE_FOR_CONTROL = {"lib.transformers", "lib.peft", "lib.accelerate", "lib.datasets"}  # 库版本单独列，不算训练变量
@@ -279,6 +280,7 @@ NOTES = {
     "JOINT-CMP-MOCO_M0.999": "使用共同种子；fold0已用于探索，五折并非独立隐藏测试。区间不包含重新训练随机性。",
     "JOINT-CMP-QWEN": "使用共同种子；fold0已用于探索，五折并非独立隐藏测试。区间不包含重新训练随机性。",
     "JOINT-CMP-KD": "使用共同种子；fold0已用于探索，五折并非独立隐藏测试。区间不包含重新训练随机性。",
+    "CMP-16": "自动列出的差别是记录方式不同：方法的描述文字、多记的 loss 字段，以及这一侧登记时没读到数据哈希（第六组 ce_results/fingerprint.json 里的数据哈希和 R3 逐项相同）；训练变量相同、同卡同精度，代码版本不同（第六组加了各方法的分支，交叉熵路径没改）。三个种子都比 R3 低，说明重复运行本身就有约 0.4 个百分点的差，和第六组 SCL、MoCo 相对 Q0 的差同量级；单折三种子下这些方法分不出是方法效应还是重复运行的波动",
     "CMP-12": "本轮三种子均提升；仍只有一个留出折，不能用来保证跨折泛化",
     "CMP-13": "dev 仅报告，不据此重选模型",
     "CMP-14": "控制 dropout 后评估 R-Drop 整体训练规则；若要单独归因于 KL，还需双前向平均但 alpha=0 的消融",

@@ -4058,6 +4058,112 @@
      0.0063
     ]
    }
+  },
+  {
+   "id": "CMP-16",
+   "new": "QWEN-Q0-CE",
+   "old": "QWEN-E3-T1-A10",
+   "eval": "fold0",
+   "purpose": "Qwen SFT 3 轮配方在 A10 上重跑（第六组 Q0 对第四组 R3，代码版本不同）",
+   "design": "系统比较（多处不同，不能归因到单个变量）",
+   "environment": "一致",
+   "unknown": [],
+   "note": "自动列出的差别是记录方式不同：方法的描述文字、多记的 loss 字段，以及这一侧登记时没读到数据哈希（第六组 ce_results/fingerprint.json 里的数据哈希和 R3 逐项相同）；训练变量相同、同卡同精度，代码版本不同（第六组加了各方法的分支，交叉熵路径没改）。三个种子都比 R3 低，说明重复运行本身就有约 0.4 个百分点的差，和第六组 SCL、MoCo 相对 Q0 的差同量级；单折三种子下这些方法分不出是方法效应还是重复运行的波动",
+   "changed": {
+    "data_sha256.final_data/dev/dico_nli_dev_track1_participant_labeled.csv": [
+     "80b7152f7ccf0d349d42ad2f098988106689b918b36337e5756b121d17513511",
+     "（无此项）"
+    ],
+    "data_sha256.final_data/dev/dico_nli_dev_track1_reference.csv": [
+     "8d5cd11c1c60df3c9b59254d12a60fb2cf43e91dde01b46c8a8f296b806134bc",
+     "（无此项）"
+    ],
+    "data_sha256.final_data/dev/dico_nli_dev_track2_participant_labeled.csv": [
+     "09a08a2ffdbb438ead917457f05d977233436431939d7859abd4bf6fe5ee446b",
+     "（无此项）"
+    ],
+    "data_sha256.final_data/dev/dico_nli_dev_track2_reference.csv": [
+     "d962e90cbf221cbc5cd6fc197edcb423be3b5ba5f08acd80b8b0a70d27a50171",
+     "（无此项）"
+    ],
+    "data_sha256.final_data/dev/dico_nli_dev_track3_participant_labeled.csv": [
+     "c42f051c8f5908cceab4c8f80b003c2314d0c13a487be8586011a7ae3b67493c",
+     "（无此项）"
+    ],
+    "data_sha256.final_data/dev/dico_nli_dev_track3_reference.csv": [
+     "3ea3643a5c6e0b2ca4606e3935cd7b368b0fd8f157691c80a5c8d5a3745cfebe",
+     "（无此项）"
+    ],
+    "data_sha256.final_data/dev/dico_nli_dev_track4_participant_labeled.csv": [
+     "62fd2b4180c03ab0389bd9348d5c81b04b13b936b325a4a785d0c4c8d6c03baf",
+     "（无此项）"
+    ],
+    "data_sha256.final_data/dev/dico_nli_dev_track4_reference.csv": [
+     "1d2769d1e757eb2171272c8e56e4cb7593f7f05de826c4b22c2efb6d3e2fc9ae",
+     "（无此项）"
+    ],
+    "data_sha256.final_data/train/dico_nli_train_track1_participant_labeled.csv": [
+     "5e8dd9f3a7e000933fec3c9e64d064f9a25586f141f58d6e6afb47c4fc797211",
+     "（无此项）"
+    ],
+    "data_sha256.final_data/train/dico_nli_train_track1_reference.csv": [
+     "c8f4d8587711e0beaefc115606e5c29c3e78dc6660e074967428af0fed069ee4",
+     "（无此项）"
+    ],
+    "data_sha256.final_data/train/dico_nli_train_track2_participant_labeled.csv": [
+     "68bfbcdd12bffc93fdc84a6526fbb217846d657faf9dbce766a9297cccade163",
+     "（无此项）"
+    ],
+    "data_sha256.final_data/train/dico_nli_train_track2_reference.csv": [
+     "9850c08f3027961df47a2635a961902e4d5f99a6c57e8a04049e69b52b571e01",
+     "（无此项）"
+    ],
+    "data_sha256.final_data/train/dico_nli_train_track3_participant_labeled.csv": [
+     "5d085cdd555800285c2c6f35865713d142034b804dbf2e8c349a37bad90d4cfa",
+     "（无此项）"
+    ],
+    "data_sha256.final_data/train/dico_nli_train_track3_reference.csv": [
+     "32f03eb1ec0fa079b8fcec8e269e9aade5cd04c735d1873da88fe0f403dfeef3",
+     "（无此项）"
+    ],
+    "data_sha256.final_data/train/dico_nli_train_track4_participant_labeled.csv": [
+     "f60ad9359c69b52fb3683170c198e781c83e26c06e6a8078c1e3d033b8a9c948",
+     "（无此项）"
+    ],
+    "data_sha256.final_data/train/dico_nli_train_track4_reference.csv": [
+     "3626a1d3d47b983ea8a0fe4cdeecfca6c9b537c31e4b5131c354c1a592544ce9",
+     "（无此项）"
+    ],
+    "method": [
+     "LoRA SFT",
+     "LoRA SFT，只算答案字母的交叉熵"
+    ],
+    "method_params.loss": [
+     "CE",
+     "（无此项）"
+    ]
+   },
+   "lib_diff": {},
+   "platform_diff": {},
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 608,
+    "families": 343,
+    "per_seed": {
+     "42": -0.003,
+     "43": -0.0063,
+     "44": -0.0039
+    },
+    "mean": -0.0044,
+    "ci95": [
+     -0.0147,
+     0.0053
+    ]
+   }
   }
  ]
 }
