@@ -1,0 +1,67 @@
+{
+ "task": "track3/ce/seed43/fold3",
+ "attempt_id": "20261026-1551-track3-ce-seed43-fold3-1",
+ "previous_attempts": 0,
+ "session": "20261026-1551",
+ "env": {
+  "torch": "2.11.0+cu128",
+  "cuda": "12.8",
+  "python": "3.13.15",
+  "gpu": "Tesla T4",
+  "transformers": "5.19.0",
+  "sentencepiece": "0.2.2",
+  "huggingface_hub": "2.2.0",
+  "modelscope": null,
+  "numpy": "2.1.3",
+  "platform": "Kaggle",
+  "amp": "fp16",
+  "runtime": {
+   "gpu": "Tesla T4",
+   "torch": "2.11.0+cu128",
+   "cuda": "12.8",
+   "python": "3.13.15",
+   "transformers": "5.19.0",
+   "numpy": "2.1.3",
+   "sentencepiece": "0.2.2",
+   "huggingface_hub": "2.2.0"
+  },
+  "physical_gpu": 1
+ },
+ "code_sha256": "8554642853d6fd955ba271b3523883eb58b428268e7fcd4aec084e461ac4ba29",
+ "best_epoch": 10,
+ "val_weighted_f1": 0.7547550563021168,
+ "scores": {
+  "test": {
+   "plain": {
+    "weighted_f1": 0.705696159389636,
+    "soft_cons": 0.8125,
+    "hard_cons": 0.69140625
+   },
+   "sym": {
+    "weighted_f1": 0.7167489262823564,
+    "soft_cons": 0.8828125,
+    "hard_cons": 0.74609375
+   }
+  }
+ },
+ "precision": "fp16 autocast",
+ "precision_attempts": [
+  {
+   "precision": "fp16 autocast",
+   "result": "ok"
+  }
+ ],
+ "updates": 825,
+ "skipped_updates": 3,
+ "peak_memory_gib": 5.91,
+ "peak_reserved_gib": 6.95,
+ "seconds_per_step": 0.2432,
+ "steps": 828,
+ "steps_per_epoch": 69,
+ "rows": {
+  "fit": 2200,
+  "val": 233,
+  "test": 609
+ },
+ "minutes": 3.79
+}

@@ -1,0 +1,40 @@
+{
+ "version_family": "dico_mdeberta_methods",
+ "model": "microsoft/mdeberta-v3-base",
+ "train": {
+  "max_epochs": 12,
+  "lr": 2e-05,
+  "batch": 32,
+  "eval_batch": 64,
+  "max_len": 96,
+  "warmup_ratio": 0.1,
+  "weight_decay": 0.01,
+  "grad_clip": 1.0,
+  "selection": "内层验证原方向 WF1，同分取早的"
+ },
+ "split": {
+  "folds": 5,
+  "fold_seed": 2027,
+  "inner_fraction": 0.1,
+  "inner_seed": "FOLD_SEED*100+fold+1"
+ },
+ "smoke": false,
+ "multilang_driver": "8554642853d6fd955ba271b3523883eb58b428268e7fcd4aec084e461ac4ba29",
+ "model_revision": "a0484667b22365f84929a935b5e50a51f71f159d",
+ "track": 2,
+ "fold": 4,
+ "seed": 42,
+ "method": "ce",
+ "method_params": {
+  "loss": "ce"
+ },
+ "with_dev": false,
+ "data_sha256": {
+  "final_data/train/dico_nli_train_track2_participant_labeled.csv": "68bfbcdd12bffc93fdc84a6526fbb217846d657faf9dbce766a9297cccade163",
+  "final_data/train/dico_nli_train_track2_reference.csv": "9850c08f3027961df47a2635a961902e4d5f99a6c57e8a04049e69b52b571e01",
+  "final_data/dev/dico_nli_dev_track2_participant_labeled.csv": "09a08a2ffdbb438ead917457f05d977233436431939d7859abd4bf6fe5ee446b",
+  "final_data/dev/dico_nli_dev_track2_reference.csv": "d962e90cbf221cbc5cd6fc197edcb423be3b5ba5f08acd80b8b0a70d27a50171"
+ },
+ "epochs": 12,
+ "smoke_rows": null
+}

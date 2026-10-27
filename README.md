@@ -19,7 +19,7 @@ ML_note/
 
 | 项目 | 当前进度 | 主要结果与范围 |
 |---|---|---|
-| [SemEval-2027 DiCo-NLI](ML_note/实验/SemEval_DiCo-NLI/README.md) | 初步实验阶段完成；进入语义错误诊断和数据扩充设计 | 英语五折OOF sym WF1：Qwen SFT 84.37%；mDeBERTa R-Drop 80.69%、CE 80.03%（五种子）；KD 80.22%、匹配CE 80.23%（三种子）。四赛道已有基线/SFT；Qwen技巧仅英语单折，新方法多语言验证待后续安排 |
+| [SemEval-2027 DiCo-NLI](ML_note/实验/SemEval_DiCo-NLI/README.md) | 初步实验阶段完成；进入语义错误诊断和数据扩充设计 | 英语五折OOF sym WF1：Qwen SFT 84.37%；mDeBERTa R-Drop 80.69%、CE 80.03%（五种子）；KD 80.22%、匹配CE 80.23%（三种子）。西语/巴语/跨语言mDeBERTa CE五折三种子OOF：77.97% / 73.45% / 74.95%。Qwen技巧仅英语单折，新方法多语言验证待后续安排 |
 | [SST-2](ML_note/实验/SST2/README.md) | 指令学习与微调对照完成 | 验证872条：DeepSeek 95.18%、Gemma 3 12B 94.61%、Qwen 4B 93.81%；DeBERTa全量95.60% |
 | [IMDB](ML_note/实验/IMDB/README.md) | 编码器与大模型微调完成 | Kaggle AUC：DeBERTa-v2-xxlarge LoRA 0.98294；Qwen3-4B指令微调0.99493 |
 

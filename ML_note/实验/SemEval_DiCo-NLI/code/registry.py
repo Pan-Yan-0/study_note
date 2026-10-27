@@ -205,7 +205,47 @@ def joint_run(rid, method):
     return r
 
 
+def multilang_run(rid, track, fold0_only=False):
+    """Kaggle T4 上 mDeBERTa CE（第五组 C0 配方）的西语 / 巴语 / 跨语言五折三种子；dev 只有 fold 0 的模型评过。"""
+    root = os.path.join(M, "mdeberta_multilang_oof")
+    seeds = [42, 43, 44]
+    task_dir = lambda s, k: os.path.join(root, "formal", f"t{track}_s{s}_f{k}", f"track{track}", "ce", f"seed{s}", f"fold{k}")
+    tasks = [rj(os.path.join(task_dir(s, k), "task.json")) for s in seeds for k in range(5)]
+    done = [rj(os.path.join(task_dir(s, k), "done.json")) for s in seeds for k in range(5)]
+    t = tasks[0]
+    for task in tasks:
+        assert all(task[k] == t[k] for k in ["model", "model_revision", "train", "split", "method", "method_params", "data_sha256"])
+        assert not task["smoke"] and task["track"] == track
+    env = done[0]["env"]
+    assert all(x["env"]["gpu"] == env["gpu"] and x["env"]["amp"] == env["amp"] and x["env"]["torch"] == env["torch"] for x in done)
+    names = {2: "西班牙语", 3: "巴斯克语", 4: "跨语言"}
+    variables = {"model": t["model"], "model_revision": t["model_revision"], "prompt": "不适用",
+                 "train": t["train"], "split": dict(t["split"], holdout_fold="0–4"), "method": "ce",
+                 "method_params": t["method_params"], "data_sha256": t["data_sha256"],
+                 "train_data": f"track{track} 按家族五折，每折只训练fit，内层验证选轮", "selection": t["train"]["selection"],
+                 "inference": "plain 和 sym（F / B 互换后平均）", "lib": {"transformers": env["transformers"]}}
+    evals = {"oof": {str(s): {mode: preds(os.path.join(root, "aggregate", f"track{track}", f"seed{s}", f"pred_oof_{mode}.csv"))
+                              for mode in ("plain", "sym")} for s in seeds},
+             "fold0": {str(s): {mode: preds(os.path.join(task_dir(s, 0), f"pred_test_{mode}.csv")) for mode in ("plain", "sym")} for s in seeds},
+             "dev": {str(s): {mode: preds(os.path.join(task_dir(s, 0), f"pred_dev_{mode}.csv")) for mode in ("plain", "sym")} for s in seeds}}
+    r = {"id": rid, "desc": f"mDeBERTa CE {names[track]}五折三种子（Kaggle）", "track": track, "variables": variables,
+            "platform": {"platform": env["platform"], "gpu": [env["gpu"]], "dtype": [env["amp"]], "torch": [env["torch"]]},
+            "code": {"version": "dico_mdeberta_methods-3 + multilang 驱动", "code_sha256": sorted({x["code_sha256"][:12] for x in done})},
+            "metrics_dir": "metrics/mdeberta_multilang_oof", "seeds": [str(s) for s in seeds], "evals": evals}
+    if fold0_only:  # 只看 fold 0 那三个模型：记录方式和第五组第一阶段相同，便于逐项比较
+        r["variables"].update(split=dict(t["split"], holdout_fold=0), train_data=f"track{track} fold 0 划分的训练部分")
+        r["evals"] = {k: v for k, v in evals.items() if k != "oof"}
+        r["id"], r["desc"] = rid, f"mDeBERTa CE {names[track]} fold 0 三种子（Kaggle，五折运行中的 fold 0）"
+    return r
+
+
 RUNS = [
+    ("ML-T2-CE", lambda: multilang_run("ML-T2-CE", 2)),
+    ("ML-T3-CE", lambda: multilang_run("ML-T3-CE", 3)),
+    ("ML-T4-CE", lambda: multilang_run("ML-T4-CE", 4)),
+    ("ML-T2-CE-F0", lambda: multilang_run("ML-T2-CE-F0", 2, True)),
+    ("ML-T3-CE-F0", lambda: multilang_run("ML-T3-CE-F0", 3, True)),
+    ("ML-T4-CE-F0", lambda: multilang_run("ML-T4-CE-F0", 4, True)),
     ("JOINT-CE", lambda: joint_run("JOINT-CE", "ce")),
     ("JOINT-RDROP", lambda: joint_run("JOINT-RDROP", "rdrop")),
     ("JOINT-DIR_RDROP", lambda: joint_run("JOINT-DIR_RDROP", "dir_rdrop")),
@@ -267,6 +307,13 @@ COMPARISONS = [
     ("CMP-03", "QWEN-E3-T1", "MDB-E12-OOF", "fold0", "Qwen SFT 对 mDeBERTa（同训练 / 验证 / 留出数据；系统对比，模型不同）"),
     ("CMP-04", "QWEN-E5-T1", "QWEN-E3-T1", "fold0", "Qwen SFT 轮数上限：5 轮 对 3 轮"),
     ("CMP-05", "QWEN-E3-T1-A10", "QWEN-E3-T1", "fold0", "Qwen SFT 3 轮配方换到 A10（执行环境迁移复现）"),
+    ("ML-CMP-T2", "ML-T2-CE-F0", "MDB-G5-T2-CE", "fold0", "西语 mDeBERTa CE：Kaggle T4 fp16 对 A10 bf16（同配方、同划分、同种子）"),
+    ("ML-CMP-T3", "ML-T3-CE-F0", "MDB-G5-T3-CE", "fold0", "巴语 mDeBERTa CE：Kaggle T4 fp16 对 A10 bf16（同配方、同划分、同种子）"),
+    ("ML-CMP-T4", "ML-T4-CE-F0", "MDB-G5-T4-CE", "fold0", "跨语言 mDeBERTa CE：Kaggle T4 fp16 对 A10 bf16（同配方、同划分、同种子）"),
+    ("ML-CMP-T1", "MDB-E12-OOF", "MDB-G5-T1-CE", "fold0", "英语 mDeBERTa 12 轮：第二组 T4 fp16 对第五组 A10 bf16（同划分、同种子，代码版本不同）"),
+    ("ML-CMP-QT2", "QWEN-E3-T2", "ML-T2-CE-F0", "fold0", "西语 Qwen SFT 对 mDeBERTa CE（同数据、同为 Kaggle T4 fp16；模型不同）"),
+    ("ML-CMP-QT3", "QWEN-E3-T3", "ML-T3-CE-F0", "fold0", "巴语 Qwen SFT 对 mDeBERTa CE（同数据、同为 Kaggle T4 fp16；模型不同）"),
+    ("ML-CMP-QT4", "QWEN-E3-T4", "ML-T4-CE-F0", "fold0", "跨语言 Qwen SFT（A10）对 mDeBERTa CE（Kaggle T4）（同数据；模型和执行环境都不同）"),
     ("CMP-16", "QWEN-Q0-CE", "QWEN-E3-T1-A10", "fold0", "Qwen SFT 3 轮配方在 A10 上重跑（第六组 Q0 对第四组 R3，代码版本不同）"),
 ]
 
@@ -280,6 +327,13 @@ NOTES = {
     "JOINT-CMP-MOCO_M0.999": "使用共同种子；fold0已用于探索，五折并非独立隐藏测试。区间不包含重新训练随机性。",
     "JOINT-CMP-QWEN": "使用共同种子；fold0已用于探索，五折并非独立隐藏测试。区间不包含重新训练随机性。",
     "JOINT-CMP-KD": "使用共同种子；fold0已用于探索，五折并非独立隐藏测试。区间不包含重新训练随机性。",
+    "ML-CMP-T2": "执行环境迁移复现：同一 fold 0 只有 608 行，单个种子的差可到 3 个百分点，逐条预测 87–89% 相同",
+    "ML-CMP-T3": "执行环境迁移复现：单个种子的差在 −3.3 到 +3.7 个百分点之间，逐条预测 78–86% 相同；单折单种子的数字波动很大",
+    "ML-CMP-T4": "执行环境迁移复现；逐条预测 86–90% 相同",
+    "ML-CMP-T1": "和 ML-CMP-T2/T3/T4 一起看：四个赛道的 fold 0 上，T4 fp16 都比 A10 bf16 平均高约 1 个百分点。卡、精度、torch 和代码版本同时不同，不能归因到 bf16；要归因需在同一张卡上只改精度补跑",
+    "ML-CMP-QT2": "同为 Kaggle T4 的 fp16（两边精度字段的写法不同，所以被归为卡或精度不同）；模型、训练方案都不同",
+    "ML-CMP-QT3": "同为 Kaggle T4 的 fp16（两边精度字段的写法不同）；巴斯克语上 Qwen SFT 没有比 mDeBERTa 好，三个种子方向不一",
+    "ML-CMP-QT4": "Qwen 在 A10 bf16、mDeBERTa 在 T4 fp16；模型和执行环境都不同",
     "CMP-16": "自动列出的差别是记录方式不同：方法的描述文字、多记的 loss 字段，以及这一侧登记时没读到数据哈希（第六组 ce_results/fingerprint.json 里的数据哈希和 R3 逐项相同）；训练变量相同、同卡同精度，代码版本不同（第六组加了各方法的分支，交叉熵路径没改）。三个种子都比 R3 低，说明重复运行本身就有约 0.4 个百分点的差，和第六组 SCL、MoCo 相对 Q0 的差同量级；单折三种子下这些方法分不出是方法效应还是重复运行的波动",
     "CMP-12": "本轮三种子均提升；仍只有一个留出折，不能用来保证跨折泛化",
     "CMP-13": "dev 仅报告，不据此重选模型",

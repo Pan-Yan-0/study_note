@@ -1,6 +1,441 @@
 {
  "runs": [
   {
+   "id": "ML-T2-CE",
+   "desc": "mDeBERTa CE 西班牙语五折三种子（Kaggle）",
+   "track": 2,
+   "variables": {
+    "model": "microsoft/mdeberta-v3-base",
+    "model_revision": "a0484667b22365f84929a935b5e50a51f71f159d",
+    "prompt": "不适用",
+    "train": {
+     "max_epochs": 12,
+     "lr": 2e-05,
+     "batch": 32,
+     "eval_batch": 64,
+     "max_len": 96,
+     "warmup_ratio": 0.1,
+     "weight_decay": 0.01,
+     "grad_clip": 1.0,
+     "selection": "内层验证原方向 WF1，同分取早的"
+    },
+    "split": {
+     "folds": 5,
+     "fold_seed": 2027,
+     "inner_fraction": 0.1,
+     "inner_seed": "FOLD_SEED*100+fold+1",
+     "holdout_fold": "0–4"
+    },
+    "method": "ce",
+    "method_params": {
+     "loss": "ce"
+    },
+    "data_sha256": {
+     "final_data/train/dico_nli_train_track2_participant_labeled.csv": "68bfbcdd12bffc93fdc84a6526fbb217846d657faf9dbce766a9297cccade163",
+     "final_data/train/dico_nli_train_track2_reference.csv": "9850c08f3027961df47a2635a961902e4d5f99a6c57e8a04049e69b52b571e01",
+     "final_data/dev/dico_nli_dev_track2_participant_labeled.csv": "09a08a2ffdbb438ead917457f05d977233436431939d7859abd4bf6fe5ee446b",
+     "final_data/dev/dico_nli_dev_track2_reference.csv": "d962e90cbf221cbc5cd6fc197edcb423be3b5ba5f08acd80b8b0a70d27a50171"
+    },
+    "train_data": "track2 按家族五折，每折只训练fit，内层验证选轮",
+    "selection": "内层验证原方向 WF1，同分取早的",
+    "inference": "plain 和 sym（F / B 互换后平均）",
+    "lib": {
+     "transformers": "5.19.0"
+    }
+   },
+   "platform": {
+    "platform": "Kaggle",
+    "gpu": [
+     "Tesla T4"
+    ],
+    "dtype": [
+     "fp16"
+    ],
+    "torch": [
+     "2.11.0+cu128"
+    ]
+   },
+   "code": {
+    "version": "dico_mdeberta_methods-3 + multilang 驱动",
+    "code_sha256": [
+     "8554642853d6"
+    ]
+   },
+   "metrics_dir": "metrics/mdeberta_multilang_oof",
+   "seeds": [
+    "42",
+    "43",
+    "44"
+   ],
+   "scores_sym_wf1_mean": {
+    "oof": 0.7797,
+    "fold0": 0.7845,
+    "dev": 0.7669
+   }
+  },
+  {
+   "id": "ML-T3-CE",
+   "desc": "mDeBERTa CE 巴斯克语五折三种子（Kaggle）",
+   "track": 3,
+   "variables": {
+    "model": "microsoft/mdeberta-v3-base",
+    "model_revision": "a0484667b22365f84929a935b5e50a51f71f159d",
+    "prompt": "不适用",
+    "train": {
+     "max_epochs": 12,
+     "lr": 2e-05,
+     "batch": 32,
+     "eval_batch": 64,
+     "max_len": 96,
+     "warmup_ratio": 0.1,
+     "weight_decay": 0.01,
+     "grad_clip": 1.0,
+     "selection": "内层验证原方向 WF1，同分取早的"
+    },
+    "split": {
+     "folds": 5,
+     "fold_seed": 2027,
+     "inner_fraction": 0.1,
+     "inner_seed": "FOLD_SEED*100+fold+1",
+     "holdout_fold": "0–4"
+    },
+    "method": "ce",
+    "method_params": {
+     "loss": "ce"
+    },
+    "data_sha256": {
+     "final_data/train/dico_nli_train_track3_participant_labeled.csv": "5d085cdd555800285c2c6f35865713d142034b804dbf2e8c349a37bad90d4cfa",
+     "final_data/train/dico_nli_train_track3_reference.csv": "32f03eb1ec0fa079b8fcec8e269e9aade5cd04c735d1873da88fe0f403dfeef3",
+     "final_data/dev/dico_nli_dev_track3_participant_labeled.csv": "c42f051c8f5908cceab4c8f80b003c2314d0c13a487be8586011a7ae3b67493c",
+     "final_data/dev/dico_nli_dev_track3_reference.csv": "3ea3643a5c6e0b2ca4606e3935cd7b368b0fd8f157691c80a5c8d5a3745cfebe"
+    },
+    "train_data": "track3 按家族五折，每折只训练fit，内层验证选轮",
+    "selection": "内层验证原方向 WF1，同分取早的",
+    "inference": "plain 和 sym（F / B 互换后平均）",
+    "lib": {
+     "transformers": "5.19.0"
+    }
+   },
+   "platform": {
+    "platform": "Kaggle",
+    "gpu": [
+     "Tesla T4"
+    ],
+    "dtype": [
+     "fp16"
+    ],
+    "torch": [
+     "2.11.0+cu128"
+    ]
+   },
+   "code": {
+    "version": "dico_mdeberta_methods-3 + multilang 驱动",
+    "code_sha256": [
+     "8554642853d6"
+    ]
+   },
+   "metrics_dir": "metrics/mdeberta_multilang_oof",
+   "seeds": [
+    "42",
+    "43",
+    "44"
+   ],
+   "scores_sym_wf1_mean": {
+    "oof": 0.7345,
+    "fold0": 0.7387,
+    "dev": 0.7396
+   }
+  },
+  {
+   "id": "ML-T4-CE",
+   "desc": "mDeBERTa CE 跨语言五折三种子（Kaggle）",
+   "track": 4,
+   "variables": {
+    "model": "microsoft/mdeberta-v3-base",
+    "model_revision": "a0484667b22365f84929a935b5e50a51f71f159d",
+    "prompt": "不适用",
+    "train": {
+     "max_epochs": 12,
+     "lr": 2e-05,
+     "batch": 32,
+     "eval_batch": 64,
+     "max_len": 96,
+     "warmup_ratio": 0.1,
+     "weight_decay": 0.01,
+     "grad_clip": 1.0,
+     "selection": "内层验证原方向 WF1，同分取早的"
+    },
+    "split": {
+     "folds": 5,
+     "fold_seed": 2027,
+     "inner_fraction": 0.1,
+     "inner_seed": "FOLD_SEED*100+fold+1",
+     "holdout_fold": "0–4"
+    },
+    "method": "ce",
+    "method_params": {
+     "loss": "ce"
+    },
+    "data_sha256": {
+     "final_data/train/dico_nli_train_track4_participant_labeled.csv": "f60ad9359c69b52fb3683170c198e781c83e26c06e6a8078c1e3d033b8a9c948",
+     "final_data/train/dico_nli_train_track4_reference.csv": "3626a1d3d47b983ea8a0fe4cdeecfca6c9b537c31e4b5131c354c1a592544ce9",
+     "final_data/dev/dico_nli_dev_track4_participant_labeled.csv": "62fd2b4180c03ab0389bd9348d5c81b04b13b936b325a4a785d0c4c8d6c03baf",
+     "final_data/dev/dico_nli_dev_track4_reference.csv": "1d2769d1e757eb2171272c8e56e4cb7593f7f05de826c4b22c2efb6d3e2fc9ae"
+    },
+    "train_data": "track4 按家族五折，每折只训练fit，内层验证选轮",
+    "selection": "内层验证原方向 WF1，同分取早的",
+    "inference": "plain 和 sym（F / B 互换后平均）",
+    "lib": {
+     "transformers": "5.19.0"
+    }
+   },
+   "platform": {
+    "platform": "Kaggle",
+    "gpu": [
+     "Tesla T4"
+    ],
+    "dtype": [
+     "fp16"
+    ],
+    "torch": [
+     "2.11.0+cu128"
+    ]
+   },
+   "code": {
+    "version": "dico_mdeberta_methods-3 + multilang 驱动",
+    "code_sha256": [
+     "8554642853d6"
+    ]
+   },
+   "metrics_dir": "metrics/mdeberta_multilang_oof",
+   "seeds": [
+    "42",
+    "43",
+    "44"
+   ],
+   "scores_sym_wf1_mean": {
+    "oof": 0.7495,
+    "fold0": 0.7529,
+    "dev": 0.7246
+   }
+  },
+  {
+   "id": "ML-T2-CE-F0",
+   "desc": "mDeBERTa CE 西班牙语 fold 0 三种子（Kaggle，五折运行中的 fold 0）",
+   "track": 2,
+   "variables": {
+    "model": "microsoft/mdeberta-v3-base",
+    "model_revision": "a0484667b22365f84929a935b5e50a51f71f159d",
+    "prompt": "不适用",
+    "train": {
+     "max_epochs": 12,
+     "lr": 2e-05,
+     "batch": 32,
+     "eval_batch": 64,
+     "max_len": 96,
+     "warmup_ratio": 0.1,
+     "weight_decay": 0.01,
+     "grad_clip": 1.0,
+     "selection": "内层验证原方向 WF1，同分取早的"
+    },
+    "split": {
+     "folds": 5,
+     "fold_seed": 2027,
+     "inner_fraction": 0.1,
+     "inner_seed": "FOLD_SEED*100+fold+1",
+     "holdout_fold": 0
+    },
+    "method": "ce",
+    "method_params": {
+     "loss": "ce"
+    },
+    "data_sha256": {
+     "final_data/train/dico_nli_train_track2_participant_labeled.csv": "68bfbcdd12bffc93fdc84a6526fbb217846d657faf9dbce766a9297cccade163",
+     "final_data/train/dico_nli_train_track2_reference.csv": "9850c08f3027961df47a2635a961902e4d5f99a6c57e8a04049e69b52b571e01",
+     "final_data/dev/dico_nli_dev_track2_participant_labeled.csv": "09a08a2ffdbb438ead917457f05d977233436431939d7859abd4bf6fe5ee446b",
+     "final_data/dev/dico_nli_dev_track2_reference.csv": "d962e90cbf221cbc5cd6fc197edcb423be3b5ba5f08acd80b8b0a70d27a50171"
+    },
+    "train_data": "track2 fold 0 划分的训练部分",
+    "selection": "内层验证原方向 WF1，同分取早的",
+    "inference": "plain 和 sym（F / B 互换后平均）",
+    "lib": {
+     "transformers": "5.19.0"
+    }
+   },
+   "platform": {
+    "platform": "Kaggle",
+    "gpu": [
+     "Tesla T4"
+    ],
+    "dtype": [
+     "fp16"
+    ],
+    "torch": [
+     "2.11.0+cu128"
+    ]
+   },
+   "code": {
+    "version": "dico_mdeberta_methods-3 + multilang 驱动",
+    "code_sha256": [
+     "8554642853d6"
+    ]
+   },
+   "metrics_dir": "metrics/mdeberta_multilang_oof",
+   "seeds": [
+    "42",
+    "43",
+    "44"
+   ],
+   "scores_sym_wf1_mean": {
+    "fold0": 0.7845,
+    "dev": 0.7669
+   }
+  },
+  {
+   "id": "ML-T3-CE-F0",
+   "desc": "mDeBERTa CE 巴斯克语 fold 0 三种子（Kaggle，五折运行中的 fold 0）",
+   "track": 3,
+   "variables": {
+    "model": "microsoft/mdeberta-v3-base",
+    "model_revision": "a0484667b22365f84929a935b5e50a51f71f159d",
+    "prompt": "不适用",
+    "train": {
+     "max_epochs": 12,
+     "lr": 2e-05,
+     "batch": 32,
+     "eval_batch": 64,
+     "max_len": 96,
+     "warmup_ratio": 0.1,
+     "weight_decay": 0.01,
+     "grad_clip": 1.0,
+     "selection": "内层验证原方向 WF1，同分取早的"
+    },
+    "split": {
+     "folds": 5,
+     "fold_seed": 2027,
+     "inner_fraction": 0.1,
+     "inner_seed": "FOLD_SEED*100+fold+1",
+     "holdout_fold": 0
+    },
+    "method": "ce",
+    "method_params": {
+     "loss": "ce"
+    },
+    "data_sha256": {
+     "final_data/train/dico_nli_train_track3_participant_labeled.csv": "5d085cdd555800285c2c6f35865713d142034b804dbf2e8c349a37bad90d4cfa",
+     "final_data/train/dico_nli_train_track3_reference.csv": "32f03eb1ec0fa079b8fcec8e269e9aade5cd04c735d1873da88fe0f403dfeef3",
+     "final_data/dev/dico_nli_dev_track3_participant_labeled.csv": "c42f051c8f5908cceab4c8f80b003c2314d0c13a487be8586011a7ae3b67493c",
+     "final_data/dev/dico_nli_dev_track3_reference.csv": "3ea3643a5c6e0b2ca4606e3935cd7b368b0fd8f157691c80a5c8d5a3745cfebe"
+    },
+    "train_data": "track3 fold 0 划分的训练部分",
+    "selection": "内层验证原方向 WF1，同分取早的",
+    "inference": "plain 和 sym（F / B 互换后平均）",
+    "lib": {
+     "transformers": "5.19.0"
+    }
+   },
+   "platform": {
+    "platform": "Kaggle",
+    "gpu": [
+     "Tesla T4"
+    ],
+    "dtype": [
+     "fp16"
+    ],
+    "torch": [
+     "2.11.0+cu128"
+    ]
+   },
+   "code": {
+    "version": "dico_mdeberta_methods-3 + multilang 驱动",
+    "code_sha256": [
+     "8554642853d6"
+    ]
+   },
+   "metrics_dir": "metrics/mdeberta_multilang_oof",
+   "seeds": [
+    "42",
+    "43",
+    "44"
+   ],
+   "scores_sym_wf1_mean": {
+    "fold0": 0.7387,
+    "dev": 0.7396
+   }
+  },
+  {
+   "id": "ML-T4-CE-F0",
+   "desc": "mDeBERTa CE 跨语言 fold 0 三种子（Kaggle，五折运行中的 fold 0）",
+   "track": 4,
+   "variables": {
+    "model": "microsoft/mdeberta-v3-base",
+    "model_revision": "a0484667b22365f84929a935b5e50a51f71f159d",
+    "prompt": "不适用",
+    "train": {
+     "max_epochs": 12,
+     "lr": 2e-05,
+     "batch": 32,
+     "eval_batch": 64,
+     "max_len": 96,
+     "warmup_ratio": 0.1,
+     "weight_decay": 0.01,
+     "grad_clip": 1.0,
+     "selection": "内层验证原方向 WF1，同分取早的"
+    },
+    "split": {
+     "folds": 5,
+     "fold_seed": 2027,
+     "inner_fraction": 0.1,
+     "inner_seed": "FOLD_SEED*100+fold+1",
+     "holdout_fold": 0
+    },
+    "method": "ce",
+    "method_params": {
+     "loss": "ce"
+    },
+    "data_sha256": {
+     "final_data/train/dico_nli_train_track4_participant_labeled.csv": "f60ad9359c69b52fb3683170c198e781c83e26c06e6a8078c1e3d033b8a9c948",
+     "final_data/train/dico_nli_train_track4_reference.csv": "3626a1d3d47b983ea8a0fe4cdeecfca6c9b537c31e4b5131c354c1a592544ce9",
+     "final_data/dev/dico_nli_dev_track4_participant_labeled.csv": "62fd2b4180c03ab0389bd9348d5c81b04b13b936b325a4a785d0c4c8d6c03baf",
+     "final_data/dev/dico_nli_dev_track4_reference.csv": "1d2769d1e757eb2171272c8e56e4cb7593f7f05de826c4b22c2efb6d3e2fc9ae"
+    },
+    "train_data": "track4 fold 0 划分的训练部分",
+    "selection": "内层验证原方向 WF1，同分取早的",
+    "inference": "plain 和 sym（F / B 互换后平均）",
+    "lib": {
+     "transformers": "5.19.0"
+    }
+   },
+   "platform": {
+    "platform": "Kaggle",
+    "gpu": [
+     "Tesla T4"
+    ],
+    "dtype": [
+     "fp16"
+    ],
+    "torch": [
+     "2.11.0+cu128"
+    ]
+   },
+   "code": {
+    "version": "dico_mdeberta_methods-3 + multilang 驱动",
+    "code_sha256": [
+     "8554642853d6"
+    ]
+   },
+   "metrics_dir": "metrics/mdeberta_multilang_oof",
+   "seeds": [
+    "42",
+    "43",
+    "44"
+   ],
+   "scores_sym_wf1_mean": {
+    "fold0": 0.7529,
+    "dev": 0.7246
+   }
+  },
+  {
    "id": "JOINT-CE",
    "desc": "英语五折 ce，5种子",
    "track": 1,
@@ -4056,6 +4491,816 @@
     "ci95": [
      -0.012,
      0.0063
+    ]
+   }
+  },
+  {
+   "id": "ML-CMP-T2",
+   "new": "ML-T2-CE-F0",
+   "old": "MDB-G5-T2-CE",
+   "eval": "fold0",
+   "purpose": "西语 mDeBERTa CE：Kaggle T4 fp16 对 A10 bf16（同配方、同划分、同种子）",
+   "design": "重复运行（训练变量相同）",
+   "environment": "卡或精度不同",
+   "unknown": [],
+   "note": "执行环境迁移复现：同一 fold 0 只有 608 行，单个种子的差可到 3 个百分点，逐条预测 87–89% 相同",
+   "changed": {},
+   "lib_diff": {},
+   "platform_diff": {
+    "dtype": [
+     [
+      "fp16"
+     ],
+     [
+      "bf16"
+     ]
+    ],
+    "gpu": [
+     [
+      "Tesla T4"
+     ],
+     [
+      "NVIDIA A10"
+     ]
+    ],
+    "platform": [
+     "Kaggle",
+     "阿里云 PAI-DSW"
+    ],
+    "torch": [
+     [
+      "2.11.0+cu128"
+     ],
+     [
+      "2.6.0+cu124"
+     ]
+    ]
+   },
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 608,
+    "families": 343,
+    "per_seed": {
+     "42": 0.0305,
+     "43": 0.0158,
+     "44": -0.0124
+    },
+    "mean": 0.0113,
+    "ci95": [
+     -0.0079,
+     0.0308
+    ]
+   }
+  },
+  {
+   "id": "ML-CMP-T3",
+   "new": "ML-T3-CE-F0",
+   "old": "MDB-G5-T3-CE",
+   "eval": "fold0",
+   "purpose": "巴语 mDeBERTa CE：Kaggle T4 fp16 对 A10 bf16（同配方、同划分、同种子）",
+   "design": "重复运行（训练变量相同）",
+   "environment": "卡或精度不同",
+   "unknown": [],
+   "note": "执行环境迁移复现：单个种子的差在 −3.3 到 +3.7 个百分点之间，逐条预测 78–86% 相同；单折单种子的数字波动很大",
+   "changed": {},
+   "lib_diff": {},
+   "platform_diff": {
+    "dtype": [
+     [
+      "fp16"
+     ],
+     [
+      "bf16"
+     ]
+    ],
+    "gpu": [
+     [
+      "Tesla T4"
+     ],
+     [
+      "NVIDIA A10"
+     ]
+    ],
+    "platform": [
+     "Kaggle",
+     "阿里云 PAI-DSW"
+    ],
+    "torch": [
+     [
+      "2.11.0+cu128"
+     ],
+     [
+      "2.6.0+cu124"
+     ]
+    ]
+   },
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 608,
+    "families": 343,
+    "per_seed": {
+     "42": 0.0374,
+     "43": -0.0326,
+     "44": 0.0282
+    },
+    "mean": 0.011,
+    "ci95": [
+     -0.0127,
+     0.0356
+    ]
+   }
+  },
+  {
+   "id": "ML-CMP-T4",
+   "new": "ML-T4-CE-F0",
+   "old": "MDB-G5-T4-CE",
+   "eval": "fold0",
+   "purpose": "跨语言 mDeBERTa CE：Kaggle T4 fp16 对 A10 bf16（同配方、同划分、同种子）",
+   "design": "重复运行（训练变量相同）",
+   "environment": "卡或精度不同",
+   "unknown": [],
+   "note": "执行环境迁移复现；逐条预测 86–90% 相同",
+   "changed": {},
+   "lib_diff": {},
+   "platform_diff": {
+    "dtype": [
+     [
+      "fp16"
+     ],
+     [
+      "bf16"
+     ]
+    ],
+    "gpu": [
+     [
+      "Tesla T4"
+     ],
+     [
+      "NVIDIA A10"
+     ]
+    ],
+    "platform": [
+     "Kaggle",
+     "阿里云 PAI-DSW"
+    ],
+    "torch": [
+     [
+      "2.11.0+cu128"
+     ],
+     [
+      "2.6.0+cu124"
+     ]
+    ]
+   },
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 3648,
+    "families": 343,
+    "per_seed": {
+     "42": 0.0104,
+     "43": 0.018,
+     "44": 0.0038
+    },
+    "mean": 0.0107,
+    "ci95": [
+     0.0018,
+     0.019
+    ]
+   }
+  },
+  {
+   "id": "ML-CMP-T1",
+   "new": "MDB-E12-OOF",
+   "old": "MDB-G5-T1-CE",
+   "eval": "fold0",
+   "purpose": "英语 mDeBERTa 12 轮：第二组 T4 fp16 对第五组 A10 bf16（同划分、同种子，代码版本不同）",
+   "design": "系统比较（多处不同，不能归因到单个变量）",
+   "environment": "卡或精度不同；信息不全",
+   "unknown": [
+    "model_revision",
+    "platform.platform",
+    "code_sha256"
+   ],
+   "note": "和 ML-CMP-T2/T3/T4 一起看：四个赛道的 fold 0 上，T4 fp16 都比 A10 bf16 平均高约 1 个百分点。卡、精度、torch 和代码版本同时不同，不能归因到 bf16；要归因需在同一张卡上只改精度补跑",
+   "changed": {
+    "data_sha256.final_data/dev/dico_nli_dev_track1_participant_labeled.csv": [
+     "（无此项）",
+     "80b7152f7ccf0d349d42ad2f098988106689b918b36337e5756b121d17513511"
+    ],
+    "data_sha256.final_data/dev/dico_nli_dev_track1_reference.csv": [
+     "（无此项）",
+     "8d5cd11c1c60df3c9b59254d12a60fb2cf43e91dde01b46c8a8f296b806134bc"
+    ],
+    "data_sha256.final_data/train/dico_nli_train_track1_participant_labeled.csv": [
+     "（无此项）",
+     "5e8dd9f3a7e000933fec3c9e64d064f9a25586f141f58d6e6afb47c4fc797211"
+    ],
+    "data_sha256.final_data/train/dico_nli_train_track1_reference.csv": [
+     "（无此项）",
+     "c8f4d8587711e0beaefc115606e5c29c3e78dc6660e074967428af0fed069ee4"
+    ],
+    "method": [
+     "全参数微调，[CLS] text1 [SEP] text2 [SEP]，交叉熵",
+     "ce"
+    ],
+    "method_params.loss": [
+     "（无此项）",
+     "ce"
+    ],
+    "split.inner_seed": [
+     "（无此项）",
+     "FOLD_SEED*100+fold+1"
+    ],
+    "train.eval_batch": [
+     "（无此项）",
+     64
+    ],
+    "train.grad_clip": [
+     "（无此项）",
+     1.0
+    ],
+    "train.selection": [
+     "（无此项）",
+     "内层验证原方向 WF1，同分取早的"
+    ],
+    "train.warmup": [
+     0.1,
+     "（无此项）"
+    ],
+    "train.warmup_ratio": [
+     "（无此项）",
+     0.1
+    ],
+    "train_data": [
+     "track1 5 折折外：每折用其余 4 折去掉内层验证后训练（fold 0 那折是 2,190 行）",
+     "track1 fold 0 划分的训练部分"
+    ]
+   },
+   "lib_diff": {
+    "lib.transformers": [
+     "5.16.1",
+     "5.19.0"
+    ]
+   },
+   "platform_diff": {
+    "dtype": [
+     [
+      "fp16 autocast"
+     ],
+     [
+      "bf16"
+     ]
+    ],
+    "gpu": [
+     [
+      "Tesla T4"
+     ],
+     [
+      "NVIDIA A10"
+     ]
+    ],
+    "platform": [
+     "T4（平台名称未记录）",
+     "阿里云 PAI-DSW"
+    ],
+    "torch": [
+     [
+      "2.11.0+cu128"
+     ],
+     [
+      "2.6.0+cu124"
+     ]
+    ]
+   },
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 608,
+    "families": 343,
+    "per_seed": {
+     "42": 0.0231,
+     "43": 0.0153,
+     "44": -0.0164
+    },
+    "mean": 0.0073,
+    "ci95": [
+     -0.0074,
+     0.023
+    ]
+   }
+  },
+  {
+   "id": "ML-CMP-QT2",
+   "new": "QWEN-E3-T2",
+   "old": "ML-T2-CE-F0",
+   "eval": "fold0",
+   "purpose": "西语 Qwen SFT 对 mDeBERTa CE（同数据、同为 Kaggle T4 fp16；模型不同）",
+   "design": "系统比较（多处不同，不能归因到单个变量）",
+   "environment": "卡或精度不同",
+   "unknown": [],
+   "note": "同为 Kaggle T4 的 fp16（两边精度字段的写法不同，所以被归为卡或精度不同）；模型、训练方案都不同",
+   "changed": {
+    "data_sha256.final_data/dev/dico_nli_dev_track2_participant_labeled.csv": [
+     "（无此项）",
+     "09a08a2ffdbb438ead917457f05d977233436431939d7859abd4bf6fe5ee446b"
+    ],
+    "data_sha256.final_data/dev/dico_nli_dev_track2_reference.csv": [
+     "（无此项）",
+     "d962e90cbf221cbc5cd6fc197edcb423be3b5ba5f08acd80b8b0a70d27a50171"
+    ],
+    "data_sha256.final_data/train/dico_nli_train_track2_participant_labeled.csv": [
+     "（无此项）",
+     "68bfbcdd12bffc93fdc84a6526fbb217846d657faf9dbce766a9297cccade163"
+    ],
+    "data_sha256.final_data/train/dico_nli_train_track2_reference.csv": [
+     "（无此项）",
+     "9850c08f3027961df47a2635a961902e4d5f99a6c57e8a04049e69b52b571e01"
+    ],
+    "lora.alpha": [
+     32,
+     "（无此项）"
+    ],
+    "lora.dropout": [
+     0.0,
+     "（无此项）"
+    ],
+    "lora.r": [
+     16,
+     "（无此项）"
+    ],
+    "lora.targets": [
+     [
+      "q_proj",
+      "k_proj",
+      "v_proj",
+      "o_proj",
+      "gate_proj",
+      "up_proj",
+      "down_proj"
+     ],
+     "（无此项）"
+    ],
+    "method": [
+     "LoRA SFT，只算答案字母的交叉熵",
+     "ce"
+    ],
+    "method_params.loss": [
+     "（无此项）",
+     "ce"
+    ],
+    "model": [
+     "Qwen/Qwen3-4B-Instruct-2507",
+     "microsoft/mdeberta-v3-base"
+    ],
+    "model_revision": [
+     "cdbee75f17c01a7cc42f958dc650907174af0554",
+     "a0484667b22365f84929a935b5e50a51f71f159d"
+    ],
+    "prompt": [
+     "f12296445e22",
+     "不适用"
+    ],
+    "split.inner_seed": [
+     "（无此项）",
+     "FOLD_SEED*100+fold+1"
+    ],
+    "train.batch": [
+     8,
+     32
+    ],
+    "train.eval_batch": [
+     "（无此项）",
+     64
+    ],
+    "train.grad_acc": [
+     2,
+     "（无此项）"
+    ],
+    "train.grad_clip": [
+     "（无此项）",
+     1.0
+    ],
+    "train.lr": [
+     0.0001,
+     2e-05
+    ],
+    "train.max_epochs": [
+     3,
+     12
+    ],
+    "train.max_len": [
+     "（无此项）",
+     96
+    ],
+    "train.selection": [
+     "（无此项）",
+     "内层验证原方向 WF1，同分取早的"
+    ],
+    "train.warmup": [
+     0.05,
+     "（无此项）"
+    ],
+    "train.warmup_ratio": [
+     "（无此项）",
+     0.1
+    ]
+   },
+   "lib_diff": {
+    "lib.accelerate": [
+     "1.15.0",
+     "（无此项）"
+    ],
+    "lib.datasets": [
+     "5.1.0",
+     "（无此项）"
+    ],
+    "lib.peft": [
+     "0.21.2",
+     "（无此项）"
+    ]
+   },
+   "platform_diff": {
+    "dtype": [
+     [
+      "torch.float16"
+     ],
+     [
+      "fp16"
+     ]
+    ]
+   },
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 608,
+    "families": 343,
+    "per_seed": {
+     "42": 0.0387,
+     "43": 0.0528,
+     "44": 0.0654
+    },
+    "mean": 0.0523,
+    "ci95": [
+     0.0192,
+     0.0852
+    ]
+   }
+  },
+  {
+   "id": "ML-CMP-QT3",
+   "new": "QWEN-E3-T3",
+   "old": "ML-T3-CE-F0",
+   "eval": "fold0",
+   "purpose": "巴语 Qwen SFT 对 mDeBERTa CE（同数据、同为 Kaggle T4 fp16；模型不同）",
+   "design": "系统比较（多处不同，不能归因到单个变量）",
+   "environment": "卡或精度不同",
+   "unknown": [],
+   "note": "同为 Kaggle T4 的 fp16（两边精度字段的写法不同）；巴斯克语上 Qwen SFT 没有比 mDeBERTa 好，三个种子方向不一",
+   "changed": {
+    "data_sha256.final_data/dev/dico_nli_dev_track3_participant_labeled.csv": [
+     "（无此项）",
+     "c42f051c8f5908cceab4c8f80b003c2314d0c13a487be8586011a7ae3b67493c"
+    ],
+    "data_sha256.final_data/dev/dico_nli_dev_track3_reference.csv": [
+     "（无此项）",
+     "3ea3643a5c6e0b2ca4606e3935cd7b368b0fd8f157691c80a5c8d5a3745cfebe"
+    ],
+    "data_sha256.final_data/train/dico_nli_train_track3_participant_labeled.csv": [
+     "（无此项）",
+     "5d085cdd555800285c2c6f35865713d142034b804dbf2e8c349a37bad90d4cfa"
+    ],
+    "data_sha256.final_data/train/dico_nli_train_track3_reference.csv": [
+     "（无此项）",
+     "32f03eb1ec0fa079b8fcec8e269e9aade5cd04c735d1873da88fe0f403dfeef3"
+    ],
+    "lora.alpha": [
+     32,
+     "（无此项）"
+    ],
+    "lora.dropout": [
+     0.0,
+     "（无此项）"
+    ],
+    "lora.r": [
+     16,
+     "（无此项）"
+    ],
+    "lora.targets": [
+     [
+      "q_proj",
+      "k_proj",
+      "v_proj",
+      "o_proj",
+      "gate_proj",
+      "up_proj",
+      "down_proj"
+     ],
+     "（无此项）"
+    ],
+    "method": [
+     "LoRA SFT，只算答案字母的交叉熵",
+     "ce"
+    ],
+    "method_params.loss": [
+     "（无此项）",
+     "ce"
+    ],
+    "model": [
+     "Qwen/Qwen3-4B-Instruct-2507",
+     "microsoft/mdeberta-v3-base"
+    ],
+    "model_revision": [
+     "cdbee75f17c01a7cc42f958dc650907174af0554",
+     "a0484667b22365f84929a935b5e50a51f71f159d"
+    ],
+    "prompt": [
+     "f12296445e22",
+     "不适用"
+    ],
+    "split.inner_seed": [
+     "（无此项）",
+     "FOLD_SEED*100+fold+1"
+    ],
+    "train.batch": [
+     8,
+     32
+    ],
+    "train.eval_batch": [
+     "（无此项）",
+     64
+    ],
+    "train.grad_acc": [
+     2,
+     "（无此项）"
+    ],
+    "train.grad_clip": [
+     "（无此项）",
+     1.0
+    ],
+    "train.lr": [
+     0.0001,
+     2e-05
+    ],
+    "train.max_epochs": [
+     3,
+     12
+    ],
+    "train.max_len": [
+     "（无此项）",
+     96
+    ],
+    "train.selection": [
+     "（无此项）",
+     "内层验证原方向 WF1，同分取早的"
+    ],
+    "train.warmup": [
+     0.05,
+     "（无此项）"
+    ],
+    "train.warmup_ratio": [
+     "（无此项）",
+     0.1
+    ]
+   },
+   "lib_diff": {
+    "lib.accelerate": [
+     "1.15.0",
+     "（无此项）"
+    ],
+    "lib.datasets": [
+     "5.1.0",
+     "（无此项）"
+    ],
+    "lib.peft": [
+     "0.21.2",
+     "（无此项）"
+    ]
+   },
+   "platform_diff": {
+    "dtype": [
+     [
+      "torch.float16"
+     ],
+     [
+      "fp16"
+     ]
+    ]
+   },
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 608,
+    "families": 343,
+    "per_seed": {
+     "42": 0.0147,
+     "43": -0.0027,
+     "44": -0.0405
+    },
+    "mean": -0.0095,
+    "ci95": [
+     -0.0464,
+     0.0286
+    ]
+   }
+  },
+  {
+   "id": "ML-CMP-QT4",
+   "new": "QWEN-E3-T4",
+   "old": "ML-T4-CE-F0",
+   "eval": "fold0",
+   "purpose": "跨语言 Qwen SFT（A10）对 mDeBERTa CE（Kaggle T4）（同数据；模型和执行环境都不同）",
+   "design": "系统比较（多处不同，不能归因到单个变量）",
+   "environment": "卡或精度不同",
+   "unknown": [],
+   "note": "Qwen 在 A10 bf16、mDeBERTa 在 T4 fp16；模型和执行环境都不同",
+   "changed": {
+    "data_sha256.final_data/dev/dico_nli_dev_track4_participant_labeled.csv": [
+     "（无此项）",
+     "62fd2b4180c03ab0389bd9348d5c81b04b13b936b325a4a785d0c4c8d6c03baf"
+    ],
+    "data_sha256.final_data/dev/dico_nli_dev_track4_reference.csv": [
+     "（无此项）",
+     "1d2769d1e757eb2171272c8e56e4cb7593f7f05de826c4b22c2efb6d3e2fc9ae"
+    ],
+    "data_sha256.final_data/train/dico_nli_train_track4_participant_labeled.csv": [
+     "（无此项）",
+     "f60ad9359c69b52fb3683170c198e781c83e26c06e6a8078c1e3d033b8a9c948"
+    ],
+    "data_sha256.final_data/train/dico_nli_train_track4_reference.csv": [
+     "（无此项）",
+     "3626a1d3d47b983ea8a0fe4cdeecfca6c9b537c31e4b5131c354c1a592544ce9"
+    ],
+    "lora.alpha": [
+     32,
+     "（无此项）"
+    ],
+    "lora.dropout": [
+     0.0,
+     "（无此项）"
+    ],
+    "lora.r": [
+     16,
+     "（无此项）"
+    ],
+    "lora.targets": [
+     [
+      "q_proj",
+      "k_proj",
+      "v_proj",
+      "o_proj",
+      "gate_proj",
+      "up_proj",
+      "down_proj"
+     ],
+     "（无此项）"
+    ],
+    "method": [
+     "LoRA SFT，只算答案字母的交叉熵",
+     "ce"
+    ],
+    "method_params.loss": [
+     "（无此项）",
+     "ce"
+    ],
+    "model": [
+     "Qwen/Qwen3-4B-Instruct-2507",
+     "microsoft/mdeberta-v3-base"
+    ],
+    "model_revision": [
+     "cdbee75f17c01a7cc42f958dc650907174af0554",
+     "a0484667b22365f84929a935b5e50a51f71f159d"
+    ],
+    "prompt": [
+     "f12296445e22",
+     "不适用"
+    ],
+    "split.inner_seed": [
+     "（无此项）",
+     "FOLD_SEED*100+fold+1"
+    ],
+    "train.batch": [
+     8,
+     32
+    ],
+    "train.eval_batch": [
+     "（无此项）",
+     64
+    ],
+    "train.grad_acc": [
+     2,
+     "（无此项）"
+    ],
+    "train.grad_clip": [
+     "（无此项）",
+     1.0
+    ],
+    "train.lr": [
+     0.0001,
+     2e-05
+    ],
+    "train.max_epochs": [
+     3,
+     12
+    ],
+    "train.max_len": [
+     "（无此项）",
+     96
+    ],
+    "train.selection": [
+     "（无此项）",
+     "内层验证原方向 WF1，同分取早的"
+    ],
+    "train.warmup": [
+     0.05,
+     "（无此项）"
+    ],
+    "train.warmup_ratio": [
+     "（无此项）",
+     0.1
+    ]
+   },
+   "lib_diff": {
+    "lib.accelerate": [
+     "1.15.0",
+     "（无此项）"
+    ],
+    "lib.datasets": [
+     "5.1.0",
+     "（无此项）"
+    ],
+    "lib.peft": [
+     "0.21.2",
+     "（无此项）"
+    ]
+   },
+   "platform_diff": {
+    "dtype": [
+     [
+      "torch.bfloat16"
+     ],
+     [
+      "fp16"
+     ]
+    ],
+    "gpu": [
+     [
+      "NVIDIA A10"
+     ],
+     [
+      "Tesla T4"
+     ]
+    ],
+    "platform": [
+     "阿里云 PAI-DSW",
+     "Kaggle"
+    ],
+    "torch": [
+     [
+      "2.6.0+cu124"
+     ],
+     [
+      "2.11.0+cu128"
+     ]
+    ]
+   },
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 3648,
+    "families": 343,
+    "per_seed": {
+     "42": 0.0041,
+     "43": 0.0197,
+     "44": 0.0159
+    },
+    "mean": 0.0132,
+    "ci95": [
+     -0.0087,
+     0.0374
     ]
    }
   },

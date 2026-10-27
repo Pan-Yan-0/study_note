@@ -1,0 +1,45 @@
+运行平台： Kaggle ；阶段： stage2 ；结果目录： /kaggle/working/dico_multilang/work/dico_mdeberta_results
+物理GPU 0 ；可见卡数 1 ；卡型 Tesla T4
+固定训练精度： torch.float16
+开始：track2/ce/seed42/fold2（训练 2186 行，内层验证 248 行，被预测的折 608 行）
+[transformers] The tokenizer you are loading from '/kaggle/working/dico_multilang/hf_cache/hub/models--microsoft--mdeberta-v3-base/snapshots/a0484667b22365f84929a935b5e50a51f71f159d' with an incorrect regex pattern: https://huggingface.co/mistralai/Mistral-Small-3.1-24B-Instruct-2503/discussions/84#69121093e8b480e709447d5e. This will lead to incorrect tokenization. You should set the `fix_mistral_regex=True` flag when loading this tokenizer to fix this issue.
+Loading weights:   0%|          | 0/198 [00:00<?, ?it/s]Loading weights: 100%|██████████| 198/198 [00:00<00:00, 18056.10it/s]
+[transformers] [1mDebertaV2ForSequenceClassification LOAD REPORT[0m from: /kaggle/working/dico_multilang/hf_cache/hub/models--microsoft--mdeberta-v3-base/snapshots/a0484667b22365f84929a935b5e50a51f71f159d
+Key                                        | Status     | 
+-------------------------------------------+------------+-
+lm_predictions.lm_head.LayerNorm.bias      | UNEXPECTED | 
+mask_predictions.classifier.weight         | UNEXPECTED | 
+lm_predictions.lm_head.bias                | UNEXPECTED | 
+mask_predictions.dense.bias                | UNEXPECTED | 
+lm_predictions.lm_head.LayerNorm.weight    | UNEXPECTED | 
+lm_predictions.lm_head.dense.bias          | UNEXPECTED | 
+mask_predictions.dense.weight              | UNEXPECTED | 
+deberta.embeddings.word_embeddings._weight | UNEXPECTED | 
+lm_predictions.lm_head.dense.weight        | UNEXPECTED | 
+mask_predictions.LayerNorm.weight          | UNEXPECTED | 
+mask_predictions.classifier.bias           | UNEXPECTED | 
+mask_predictions.LayerNorm.bias            | UNEXPECTED | 
+pooler.dense.weight                        | MISSING    | 
+pooler.dense.bias                          | MISSING    | 
+classifier.bias                            | MISSING    | 
+classifier.weight                          | MISSING    | 
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+- MISSING:	those params were newly initialized because missing from the checkpoint. Consider training on your downstream task.
+/kaggle/working/kaggle_multilang_baseline/upstream_mdeberta.py:1100: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at /pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:836.)
+  stats["loss"].append(float(loss))
+    第 1 轮：loss 1.3595  内层验证 WF1 0.4329  梯度范数均值 2.17  18.6 秒
+    第 2 轮：loss 1.1807  内层验证 WF1 0.6462  梯度范数均值 6.26  跳过的更新 2  17.0 秒
+    第 3 轮：loss 0.7676  内层验证 WF1 0.7221  梯度范数均值 9.67  17.2 秒
+    第 4 轮：loss 0.5029  内层验证 WF1 0.7284  梯度范数均值 11.41  17.2 秒
+    第 5 轮：loss 0.3390  内层验证 WF1 0.7487  梯度范数均值 10.07  17.3 秒
+    第 6 轮：loss 0.1960  内层验证 WF1 0.7471  梯度范数均值 8.99  17.3 秒
+    第 7 轮：loss 0.1275  内层验证 WF1 0.7616  梯度范数均值 10.07  跳过的更新 1  17.2 秒
+    第 8 轮：loss 0.0742  内层验证 WF1 0.7538  梯度范数均值 7.42  17.2 秒
+    第 9 轮：loss 0.0484  内层验证 WF1 0.7687  梯度范数均值 6.93  17.2 秒
+    第 10 轮：loss 0.0304  内层验证 WF1 0.7805  梯度范数均值 5.11  17.3 秒
+    第 11 轮：loss 0.0191  内层验证 WF1 0.7683  梯度范数均值 3.35  17.2 秒
+    第 12 轮：loss 0.0169  内层验证 WF1 0.7743  梯度范数均值 3.05  17.2 秒
+完成：track2/ce/seed42/fold2  选中第 10 轮  被预测的折 sym 0.815 / 0.942 / 0.860  fp16 autocast  用时 3.82 分钟
