@@ -137,7 +137,7 @@ Coursera-ML-AndrewNg-Notes-master/   课程资料
   - 下一阶段（10-27 和 GPT 两轮讨论后冻结）：实验 A Qwen3-8B 英语五折三种子（A10，和 JOINT-QWEN 配对，系统比较）；实验 B 生成数据扩充，DeepSeek（API）和 GPT6Luna（子 agent）两个来源，按可用折签名分批防泄漏，试点 → +1 比较 → 选中来源 +2 / +4，每个规模配步数对照。设计、停止条件、清单接口和分工见 `ML_note/实验/SemEval_DiCo-NLI/更大模型与数据扩充计划.md`。Claude 写生成侧，GPT 写两个训练队列。
   - 排期（10-22）：蒸馏学生、mDeBERTa 上的 R-Drop / SCL / MoCo、西语 / 巴语 / 跨语言同数据的 mDeBERTa 基线、之后 Qwen 上的技巧，主要放阿里云 A10（月底前约 28 个 A10 小时，月底作废）。Qwen 技巧放 A10 时，先在 A10 上重跑 3 轮基线作对照，不和 T4 的结果直接相减。
   - 算力分配：Kaggle（每周额度，能后台跑）只留给超过一小时的 Qwen 任务；Colab、腾讯 Cloud Studio 要开着页面，白天跑 mDeBERTa 类短任务和 SMOKE；阿里云 A10 抢到才算。同一组比较不混用不同的卡（A10 / 4090 用 bf16，T4 用 fp16）。
-- **原理学习**：第一章（情感分类、反向传播）已通关，笔记在 `ML_note/原理笔记/`；第二章跟着 SemEval 实验学（`ML_note/原理笔记/NLI/`），已讲句对输入、SoftCons / HardCons、对称化、R-Drop 与 KL，下一课是方向版 R-Drop。
+- **原理学习**：第一章（情感分类、反向传播）已通关，笔记在 `ML_note/原理笔记/`；第二章跟着 SemEval 实验学（`ML_note/原理笔记/NLI/`），已讲句对输入、SoftCons / HardCons、对称化、R-Drop 与 KL、方向版 R-Drop，下一课是方向版 R-Drop 的实验结果和 SCL。
 - **待办**：GitHub 仓库首页默认显示 `master`，`note` 的最新内容在首页看不到。改法等 Pan-Yan-0 决定：
   - 把默认分支改成 `note`；
   - 在 `master` 的 README 加入口；
