@@ -2,13 +2,13 @@
 
 Pan-Yan-0 精读和 SemEval-2027 Task 2（DiCo-NLI）有关的论文，在这里记录每一篇的进度和收获。
 
-分工：Claude 根据仓库里最新的实验结果，一次推荐一篇，并说明为什么现在读它；Pan-Yan-0 自己精读，每读完一遍就和 Claude 讨论；一篇读完、记录好，再读下一篇。上一级的 [`阅读表/`](../阅读表/) 是 Claude 的预读，Pan-Yan-0 读完对应的那一遍以后再拿来对照，不提前看。
+分工：Claude 根据仓库里最新的实验结果，一次推荐一篇，并说明为什么现在读它；Pan-Yan-0 自己精读，Claude 主讲伴读，GPT 复核关键解释并把已读懂的内容写成文章；一篇读完、记录好，再读下一篇。分工细节见[交接](交接.md)。上一级的 [`阅读表/`](../阅读表/) 是 Claude 的预读，Pan-Yan-0 读完对应的那一遍以后再拿来对照，不提前看。
 
 ## 进度
 
 | # | 论文 | 为什么现在读 | 第一遍 | 第二遍 | 第三遍 | 讨论与记录 | 产出的实验想法 |
 |---|---|---|---|---|---|---|---|
-| 1 | Apaolaza et al. 2026，Assessing Logical Coherence of LLMs via Fine-Grained NLI（LREC 2026） | 我们约三分之二的错误在 NEGATIVE_OTHER 的边界上；这是主办方的试点论文，写明了 O 由哪些原标签合并而来、标签怎么定义 | 进行中 | | | | |
+| 1 | Apaolaza et al. 2026，Assessing Logical Coherence of LLMs via Fine-Grained NLI（LREC 2026） | 我们约三分之二的错误在 NEGATIVE_OTHER 的边界上；这是主办方的试点论文，写明了 O 由哪些原标签合并而来、标签怎么定义 | 未开始（已选文） | | | | |
 
 后面的候选会根据最新结果调整，不保证顺序：MacCartney & Manning 2009（自然逻辑，标签的理论来源）、R-Drop（Liang et al. 2021，我们唯一稳定有提升的技巧）、Dataset Cartography（Swayamdipta et al. 2020，难样本和数据扩充的筛选）、Kaushik et al. 2020（反事实扩充数据，导师之后要讲反事实）、知识蒸馏（Hinton et al. 2015 及之后的工作）、SCL（Gunel et al. 2021）。
 
