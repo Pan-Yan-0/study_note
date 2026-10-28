@@ -1,0 +1,496 @@
+{
+ "rows": 3042,
+ "gold": {
+  "FORWARD_ENTAILMENT": 881,
+  "BACKWARD_ENTAILMENT": 881,
+  "EQUIVALENCE": 802,
+  "NEGATIVE_OTHER": 478
+ },
+ "CE": {
+  "errors": 566,
+  "by_kind": {
+   "错判O(金标E/F/B→判成O)": [
+    190,
+    0.336
+   ],
+   "漏判O(金标O→判成E/F/B)": [
+    181,
+    0.32
+   ],
+   "粒度(E↔单向)": [
+    169,
+    0.299
+   ],
+   "方向(F↔B)": [
+    26,
+    0.046
+   ]
+  }
+ },
+ "R-Drop": {
+  "errors": 569,
+  "by_kind": {
+   "错判O(金标E/F/B→判成O)": [
+    210,
+    0.369
+   ],
+   "漏判O(金标O→判成E/F/B)": [
+    171,
+    0.301
+   ],
+   "粒度(E↔单向)": [
+    167,
+    0.293
+   ],
+   "方向(F↔B)": [
+    21,
+    0.037
+   ]
+  }
+ },
+ "Qwen": {
+  "errors": 453,
+  "by_kind": {
+   "漏判O(金标O→判成E/F/B)": [
+    168,
+    0.371
+   ],
+   "错判O(金标E/F/B→判成O)": [
+    154,
+    0.34
+   ],
+   "粒度(E↔单向)": [
+    121,
+    0.267
+   ],
+   "方向(F↔B)": [
+    10,
+    0.022
+   ]
+  }
+ },
+ "KD": {
+  "errors": 579,
+  "by_kind": {
+   "错判O(金标E/F/B→判成O)": [
+    192,
+    0.332
+   ],
+   "漏判O(金标O→判成E/F/B)": [
+    184,
+    0.318
+   ],
+   "粒度(E↔单向)": [
+    183,
+    0.316
+   ],
+   "方向(F↔B)": [
+    20,
+    0.035
+   ]
+  }
+ },
+ "CE_by_shape": {
+  "无共同词": {
+   "rows": 616,
+   "acc": 0.755,
+   "errors": {
+    "错判O(金标E/F/B→判成O)": 44,
+    "粒度(E↔单向)": 50,
+    "方向(F↔B)": 6,
+    "漏判O(金标O→判成E/F/B)": 51
+   }
+  },
+  "插入": {
+   "rows": 903,
+   "acc": 0.949,
+   "errors": {
+    "粒度(E↔单向)": 24,
+    "方向(F↔B)": 10,
+    "漏判O(金标O→判成E/F/B)": 12
+   }
+  },
+  "其他": {
+   "rows": 1059,
+   "acc": 0.744,
+   "errors": {
+    "错判O(金标E/F/B→判成O)": 104,
+    "粒度(E↔单向)": 71,
+    "方向(F↔B)": 8,
+    "漏判O(金标O→判成E/F/B)": 88
+   }
+  },
+  "单词替换(实词)": {
+   "rows": 343,
+   "acc": 0.764,
+   "errors": {
+    "粒度(E↔单向)": 19,
+    "错判O(金标E/F/B→判成O)": 36,
+    "方向(F↔B)": 2,
+    "漏判O(金标O→判成E/F/B)": 24
+   }
+  },
+  "单词替换(含虚词)": {
+   "rows": 117,
+   "acc": 0.855,
+   "errors": {
+    "粒度(E↔单向)": 5,
+    "错判O(金标E/F/B→判成O)": 6,
+    "漏判O(金标O→判成E/F/B)": 6
+   }
+  },
+  "词相同": {
+   "rows": 4,
+   "acc": 1.0,
+   "errors": {}
+  }
+ },
+ "Qwen_by_shape": {
+  "无共同词": {
+   "rows": 616,
+   "acc": 0.834,
+   "errors": {
+    "错判O(金标E/F/B→判成O)": 36,
+    "粒度(E↔单向)": 22,
+    "方向(F↔B)": 2,
+    "漏判O(金标O→判成E/F/B)": 42
+   }
+  },
+  "插入": {
+   "rows": 903,
+   "acc": 0.963,
+   "errors": {
+    "粒度(E↔单向)": 18,
+    "方向(F↔B)": 4,
+    "漏判O(金标O→判成E/F/B)": 11
+   }
+  },
+  "其他": {
+   "rows": 1059,
+   "acc": 0.79,
+   "errors": {
+    "错判O(金标E/F/B→判成O)": 82,
+    "粒度(E↔单向)": 49,
+    "方向(F↔B)": 4,
+    "漏判O(金标O→判成E/F/B)": 87
+   }
+  },
+  "单词替换(实词)": {
+   "rows": 343,
+   "acc": 0.799,
+   "errors": {
+    "错判O(金标E/F/B→判成O)": 30,
+    "粒度(E↔单向)": 18,
+    "漏判O(金标O→判成E/F/B)": 21
+   }
+  },
+  "单词替换(含虚词)": {
+   "rows": 117,
+   "acc": 0.786,
+   "errors": {
+    "粒度(E↔单向)": 12,
+    "错判O(金标E/F/B→判成O)": 6,
+    "漏判O(金标O→判成E/F/B)": 7
+   }
+  },
+  "词相同": {
+   "rows": 4,
+   "acc": 0.5,
+   "errors": {
+    "粒度(E↔单向)": 2
+   }
+  }
+ },
+ "common_errors": {
+  "rows": 281,
+  "by_kind_CE": {
+   "错判O(金标E/F/B→判成O)": 95,
+   "粒度(E↔单向)": 69,
+   "方向(F↔B)": 7,
+   "漏判O(金标O→判成E/F/B)": 110
+  },
+  "by_gold": {
+   "FORWARD_ENTAILMENT": 54,
+   "BACKWARD_ENTAILMENT": 50,
+   "EQUIVALENCE": 67,
+   "NEGATIVE_OTHER": 110
+  },
+  "by_shape": {
+   "其他": 134,
+   "单词替换(实词)": 43,
+   "单词替换(含虚词)": 12,
+   "无共同词": 72,
+   "插入": 20
+  },
+  "same_wrong_label_all3": 227
+ },
+ "O_by_overlap_CE": {
+  "重合≥0.5": {
+   "rows": 91,
+   "recall": 0.615
+  },
+  "重合<0.5": {
+   "rows": 191,
+   "recall": 0.613
+  },
+  "无实词重合": {
+   "rows": 196,
+   "recall": 0.633
+  }
+ },
+ "O_by_overlap_Qwen": {
+  "重合≥0.5": {
+   "rows": 91,
+   "recall": 0.626
+  },
+  "重合<0.5": {
+   "rows": 191,
+   "recall": 0.644
+  },
+  "无实词重合": {
+   "rows": 196,
+   "recall": 0.663
+  }
+ },
+ "EFB_predicted_O_by_overlap_CE": {
+  "无实词重合": {
+   "rows": 694,
+   "rate": 0.112
+  },
+  "重合<0.5": {
+   "rows": 754,
+   "rate": 0.13
+  },
+  "重合≥0.5": {
+   "rows": 1116,
+   "rate": 0.013
+  }
+ },
+ "EFB_predicted_O_by_overlap_Qwen": {
+  "无实词重合": {
+   "rows": 694,
+   "rate": 0.095
+  },
+  "重合<0.5": {
+   "rows": 754,
+   "rate": 0.098
+  },
+  "重合≥0.5": {
+   "rows": 1116,
+   "rate": 0.013
+  }
+ },
+ "KD_vs_CE3_majority": {
+  "fixed": {
+   "错判O(金标E/F/B→判成O)": 26,
+   "粒度(E↔单向)": 38,
+   "方向(F↔B)": 4,
+   "漏判O(金标O→判成E/F/B)": 23
+  },
+  "introduced": {
+   "粒度(E↔单向)": 37,
+   "错判O(金标E/F/B→判成O)": 32,
+   "漏判O(金标O→判成E/F/B)": 19
+  }
+ },
+ "ordered_inputs_with_conflicting_labels": 1,
+ "common_examples": {
+  "错判O(金标E/F/B→判成O)": [
+   [
+    "'s last child",
+    "'s youngest child Lady Soames",
+    "BAC",
+    "NEG",
+    "NEG"
+   ],
+   [
+    "on a mountain",
+    "on a hill",
+    "BAC",
+    "NEG",
+    "NEG"
+   ],
+   [
+    "in the white snow",
+    "in a snowy field",
+    "BAC",
+    "NEG",
+    "NEG"
+   ],
+   [
+    "a man",
+    "A boy",
+    "BAC",
+    "NEG",
+    "NEG"
+   ],
+   [
+    "sails to",
+    "is kayaking",
+    "BAC",
+    "NEG",
+    "NEG"
+   ],
+   [
+    "The large brown and white dog",
+    "St. Bernard dog",
+    "BAC",
+    "NEG",
+    "NEG"
+   ],
+   [
+    "in Indonesia boat sinking",
+    "in Indonesia boat capsize",
+    "BAC",
+    "NEG",
+    "EQU"
+   ],
+   [
+    "Pakistan jailbreak",
+    "Taliban prison break",
+    "BAC",
+    "NEG",
+    "NEG"
+   ]
+  ],
+  "粒度(E↔单向)": [
+   [
+    "in Canadian train wreck",
+    "in Canada train blaze",
+    "BAC",
+    "EQU",
+    "NEG"
+   ],
+   [
+    "Two women",
+    "Two ladies",
+    "BAC",
+    "EQU",
+    "EQU"
+   ],
+   [
+    "Five killed",
+    "among 5 dead",
+    "BAC",
+    "EQU",
+    "EQU"
+   ],
+   [
+    "for son",
+    "in favor of son",
+    "BAC",
+    "EQU",
+    "EQU"
+   ],
+   [
+    "Tunisian opposition politician",
+    "Tunisia opposition leader",
+    "BAC",
+    "EQU",
+    "EQU"
+   ],
+   [
+    "from a passenger vehicle",
+    "from a car",
+    "BAC",
+    "EQU",
+    "EQU"
+   ],
+   [
+    "in Moscow metro fire",
+    "after fire breaks out in Moscow Metro",
+    "EQU",
+    "BAC",
+    "BAC"
+   ],
+   [
+    "about 6-year-old Indian girl",
+    "After Indian Girl 6",
+    "EQU",
+    "BAC",
+    "NEG"
+   ]
+  ],
+  "方向(F↔B)": [
+   [
+    "Afghan police 5 Taliban fighters",
+    "5 Taliban and 5 Afghan police",
+    "FOR",
+    "BAC",
+    "EQU"
+   ],
+   [
+    "at Great Barrier Reef",
+    "near Australia 's Great Barrier Reef",
+    "FOR",
+    "BAC",
+    "BAC"
+   ],
+   [
+    "Palestinian prisoners",
+    "26 more Palestinian prisoners",
+    "FOR",
+    "BAC",
+    "BAC"
+   ]
+  ],
+  "漏判O(金标O→判成E/F/B)": [
+   [
+    "abortion bill",
+    "against abortion bill",
+    "NEG",
+    "BAC",
+    "BAC"
+   ],
+   [
+    "Cyclone",
+    "Cyclone Phailin evacuation",
+    "NEG",
+    "BAC",
+    "BAC"
+   ],
+   [
+    "Israeli calls",
+    "Israel",
+    "NEG",
+    "FOR",
+    "FOR"
+   ],
+   [
+    "in missing Malaysian plane search",
+    "from missing Malaysia plane",
+    "NEG",
+    "FOR",
+    "FOR"
+   ],
+   [
+    "Russian Prime Minister",
+    "Russia",
+    "NEG",
+    "FOR",
+    "FOR"
+   ],
+   [
+    "through splashing water",
+    "splashes",
+    "NEG",
+    "FOR",
+    "FOR"
+   ],
+   [
+    "rowing",
+    "in rowboat",
+    "NEG",
+    "BAC",
+    "BAC"
+   ],
+   [
+    "with Mandela family",
+    "to Mandela",
+    "NEG",
+    "FOR",
+    "FOR"
+   ]
+  ]
+ }
+}

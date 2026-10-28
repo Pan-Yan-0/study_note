@@ -1,0 +1,289 @@
+{
+ "natural_logic_sub1": {
+  "pairs": 196,
+  "relation_x_gold": {
+   "无直接关系": {
+    "BACKWARD_ENTAILMENT": 15,
+    "EQUIVALENCE": 19,
+    "FORWARD_ENTAILMENT": 12,
+    "NEGATIVE_OTHER": 59
+   },
+   "左是右的上位": {
+    "BACKWARD_ENTAILMENT": 7,
+    "EQUIVALENCE": 5,
+    "FORWARD_ENTAILMENT": 1,
+    "NEGATIVE_OTHER": 6
+   },
+   "WordNet没有": {
+    "BACKWARD_ENTAILMENT": 3,
+    "EQUIVALENCE": 6,
+    "FORWARD_ENTAILMENT": 1,
+    "NEGATIVE_OTHER": 8
+   },
+   "同位(共享直接上位)": {
+    "BACKWARD_ENTAILMENT": 3,
+    "EQUIVALENCE": 1,
+    "FORWARD_ENTAILMENT": 3,
+    "NEGATIVE_OTHER": 15
+   },
+   "同义": {
+    "BACKWARD_ENTAILMENT": 3,
+    "EQUIVALENCE": 15,
+    "FORWARD_ENTAILMENT": 2,
+    "NEGATIVE_OTHER": 1
+   },
+   "左是右的下位": {
+    "EQUIVALENCE": 6,
+    "FORWARD_ENTAILMENT": 3,
+    "NEGATIVE_OTHER": 1
+   },
+   "反义": {
+    "NEGATIVE_OTHER": 1
+   }
+  },
+  "with_definite_relation": 73,
+  "gold_matches_natural_logic_mapping": 41,
+  "acc_ce_qwen_by_relation": {
+   "无直接关系": [
+    0.745,
+    0.762
+   ],
+   "左是右的上位": [
+    0.579,
+    0.509
+   ],
+   "WordNet没有": [
+    0.733,
+    0.741
+   ],
+   "同位(共享直接上位)": [
+    0.782,
+    0.864
+   ],
+   "同义": [
+    0.829,
+    0.952
+   ],
+   "左是右的下位": [
+    0.64,
+    0.867
+   ],
+   "反义": [
+    1.0,
+    1.0
+   ]
+  },
+  "examples": {
+   "无直接关系": [
+    "'s win ‖ Landslide Win → BAC",
+    "Five people ‖ five men → BAC",
+    "South Africa ‖ South Africans → BAC",
+    "for Oil Refinery ‖ for Iraq refinery → BAC",
+    "of four ‖ of people → BAC",
+    "Two people ‖ Two girls → BAC"
+   ],
+   "左是右的上位": [
+    "A woman ‖ A mother → BAC",
+    "a man ‖ A boy → BAC",
+    "A dog ‖ A collie → BAC",
+    "The child ‖ The toddler → BAC",
+    "through the water ‖ through the ocean → BAC",
+    "on the water ‖ on the ocean → BAC"
+   ],
+   "WordNet没有": [
+    "Two women ‖ Two ladies → BAC",
+    "Israel planes ‖ Israel airstrikes → BAC",
+    "Spanish train crash driver ‖ Spanish train driver Garzon → BAC",
+    "into the water ‖ entering the water → EQU",
+    "inside Syria ‖ into Syria → EQU",
+    "shattered Pak region ‖ shattered Pakistan region → EQU"
+   ],
+   "同位(共享直接上位)": [
+    "on a mountain ‖ on a hill → BAC",
+    "Three greyhounds ‖ Five greyhounds → BAC",
+    "Four dead ‖ Five dead → BAC",
+    "Blizzard hammers ‖ Blizzard wallops → EQU",
+    "petrol pumps ‖ petrol station → FOR",
+    "Three dogs ‖ Two dogs → FOR"
+   ],
+   "同义": [
+    "Suicide bomber ‖ Suicide Bombers → BAC",
+    "despite concession ‖ despite concessions → BAC",
+    "Israeli soldier ‖ Israeli soldiers → BAC",
+    "South Korean President ‖ S. Korean president → EQU",
+    "Boston bomb suspect ‖ Boston bombing suspect → EQU",
+    "A crowd ‖ A bunch → EQU"
+   ],
+   "左是右的下位": [
+    "may help ‖ may boost → EQU",
+    "initial OK ‖ initial approval → EQU",
+    "a collection ‖ A group → EQU",
+    "on a metal band ‖ on a metal bar → EQU",
+    "A guy ‖ A man → EQU",
+    "A large jet ‖ A large airplane → EQU"
+   ],
+   "反义": [
+    "in southern Iraq ‖ in northern Iraq → NEG"
+   ]
+  }
+ },
+ "cross_seed_map": {
+  "runs": 10,
+  "buckets": {
+   "1-4/10 多数错": 266,
+   "5-9/10 多数对": 482,
+   "10/10 全对": 2020,
+   "0/10 全错": 274
+  },
+  "by_gold": {
+   "1-4/10 多数错": {
+    "FORWARD_ENTAILMENT": 60,
+    "BACKWARD_ENTAILMENT": 60,
+    "EQUIVALENCE": 64,
+    "NEGATIVE_OTHER": 82
+   },
+   "5-9/10 多数对": {
+    "FORWARD_ENTAILMENT": 105,
+    "BACKWARD_ENTAILMENT": 105,
+    "EQUIVALENCE": 156,
+    "NEGATIVE_OTHER": 116
+   },
+   "10/10 全对": {
+    "FORWARD_ENTAILMENT": 656,
+    "BACKWARD_ENTAILMENT": 656,
+    "EQUIVALENCE": 516,
+    "NEGATIVE_OTHER": 192
+   },
+   "0/10 全错": {
+    "FORWARD_ENTAILMENT": 60,
+    "BACKWARD_ENTAILMENT": 60,
+    "EQUIVALENCE": 66,
+    "NEGATIVE_OTHER": 88
+   }
+  },
+  "all_wrong_same_label": 191,
+  "all_wrong_and_qwen_3of3_wrong": 163
+ },
+ "teacher_fit": [
+  {
+   "file": "formal/teachers/fold0/seed42/teacher.jsonl",
+   "fit_rows": 2148,
+   "acc": 0.973,
+   "gold_prob_median": 0.9967,
+   "share_gold_prob_gt_0.9": 0.9288,
+   "T2_entropy_mean_nats": 0.443
+  },
+  {
+   "file": "formal/teachers/fold0/seed43/teacher.jsonl",
+   "fit_rows": 2148,
+   "acc": 0.9679,
+   "gold_prob_median": 0.9963,
+   "share_gold_prob_gt_0.9": 0.9097,
+   "T2_entropy_mean_nats": 0.473
+  },
+  {
+   "file": "formal/teachers/fold0/seed44/teacher.jsonl",
+   "fit_rows": 2148,
+   "acc": 0.9711,
+   "gold_prob_median": 0.992,
+   "share_gold_prob_gt_0.9": 0.9269,
+   "T2_entropy_mean_nats": 0.537
+  },
+  {
+   "file": "formal/teachers/fold1/seed42/teacher.jsonl",
+   "fit_rows": 2161,
+   "acc": 0.9732,
+   "gold_prob_median": 0.9974,
+   "share_gold_prob_gt_0.9": 0.9301,
+   "T2_entropy_mean_nats": 0.42
+  },
+  {
+   "file": "formal/teachers/fold1/seed43/teacher.jsonl",
+   "fit_rows": 2161,
+   "acc": 0.9699,
+   "gold_prob_median": 0.997,
+   "share_gold_prob_gt_0.9": 0.9398,
+   "T2_entropy_mean_nats": 0.432
+  },
+  {
+   "file": "formal/teachers/fold1/seed44/teacher.jsonl",
+   "fit_rows": 2161,
+   "acc": 0.9519,
+   "gold_prob_median": 0.9925,
+   "share_gold_prob_gt_0.9": 0.8334,
+   "T2_entropy_mean_nats": 0.563
+  },
+  {
+   "file": "formal/teachers/fold2/seed42/teacher.jsonl",
+   "fit_rows": 2155,
+   "acc": 0.9666,
+   "gold_prob_median": 0.9942,
+   "share_gold_prob_gt_0.9": 0.9216,
+   "T2_entropy_mean_nats": 0.47
+  },
+  {
+   "file": "formal/teachers/fold2/seed43/teacher.jsonl",
+   "fit_rows": 2155,
+   "acc": 0.9726,
+   "gold_prob_median": 0.9945,
+   "share_gold_prob_gt_0.9": 0.9234,
+   "T2_entropy_mean_nats": 0.479
+  },
+  {
+   "file": "formal/teachers/fold2/seed44/teacher.jsonl",
+   "fit_rows": 2155,
+   "acc": 0.9397,
+   "gold_prob_median": 0.9829,
+   "share_gold_prob_gt_0.9": 0.8065,
+   "T2_entropy_mean_nats": 0.69
+  },
+  {
+   "file": "formal/teachers/fold3/seed42/teacher.jsonl",
+   "fit_rows": 2152,
+   "acc": 0.9735,
+   "gold_prob_median": 0.9963,
+   "share_gold_prob_gt_0.9": 0.9433,
+   "T2_entropy_mean_nats": 0.423
+  },
+  {
+   "file": "formal/teachers/fold3/seed43/teacher.jsonl",
+   "fit_rows": 2152,
+   "acc": 0.9521,
+   "gold_prob_median": 0.987,
+   "share_gold_prob_gt_0.9": 0.8536,
+   "T2_entropy_mean_nats": 0.639
+  },
+  {
+   "file": "formal/teachers/fold3/seed44/teacher.jsonl",
+   "fit_rows": 2152,
+   "acc": 0.9721,
+   "gold_prob_median": 0.9963,
+   "share_gold_prob_gt_0.9": 0.9303,
+   "T2_entropy_mean_nats": 0.449
+  },
+  {
+   "file": "formal/teachers/fold4/seed42/teacher.jsonl",
+   "fit_rows": 2159,
+   "acc": 0.9764,
+   "gold_prob_median": 0.9987,
+   "share_gold_prob_gt_0.9": 0.9412,
+   "T2_entropy_mean_nats": 0.334
+  },
+  {
+   "file": "formal/teachers/fold4/seed43/teacher.jsonl",
+   "fit_rows": 2159,
+   "acc": 0.9676,
+   "gold_prob_median": 0.997,
+   "share_gold_prob_gt_0.9": 0.9194,
+   "T2_entropy_mean_nats": 0.434
+  },
+  {
+   "file": "formal/teachers/fold4/seed44/teacher.jsonl",
+   "fit_rows": 2159,
+   "acc": 0.9727,
+   "gold_prob_median": 0.9965,
+   "share_gold_prob_gt_0.9": 0.9203,
+   "T2_entropy_mean_nats": 0.425
+  }
+ ]
+}
