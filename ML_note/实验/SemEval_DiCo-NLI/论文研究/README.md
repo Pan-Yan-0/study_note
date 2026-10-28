@@ -57,7 +57,8 @@
 论文研究/
 ├── README.md                       本页：错误分类、选文、结论
 ├── 交回SemEval对话的实验.md          要跑的实验（设计、对照、算力），由 SemEval 对话决定
-├── 阅读表/                          每篇一个文件：三遍法笔记 + 阅读表
+├── 精读/                            Pan-Yan-0 自己精读的进度和笔记，以及读论文的方法
+├── 阅读表/                          Claude 的预读：每篇一个文件，三遍法笔记 + 阅读表
 ├── code/error_taxonomy.py          错误分类（只读 OOF）
 ├── code/assumption_checks.py       论文假设的检查：WordNet 关系、跨种子地图、教师在训练行上的置信度
 └── results/                        上面两个脚本的输出
