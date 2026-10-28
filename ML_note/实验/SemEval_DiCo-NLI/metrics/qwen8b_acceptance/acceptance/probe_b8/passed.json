@@ -1,0 +1,107 @@
+{
+  "pipeline": "ce340cba577e5d63d361cce7e5a844241a0e174c295c0816fea26ed2e6bfee2e",
+  "batch": 8,
+  "info": {
+    "best_epoch": 3,
+    "forward_check": {
+      "autocast_ce_path": [
+        true,
+        "torch.bfloat16"
+      ],
+      "autocast_hidden_path": [
+        true,
+        "torch.bfloat16"
+      ],
+      "max_letter_logprob_diff": 0.0,
+      "argmax_agreement": 1.0,
+      "rows": 8
+    },
+    "trainable_params": 43646976,
+    "steps": 3,
+    "steps_per_epoch": 1,
+    "train_minutes_last_session": 1.4,
+    "seconds_per_step": 21.15,
+    "resumed_from_epoch": 0,
+    "resume": {
+      "checkpoint": null,
+      "epoch": 0,
+      "files": [],
+      "skipped": []
+    },
+    "adapter_checks": [
+      {
+        "epoch": 3,
+        "tensors": 504,
+        "has_proj": false,
+        "val_argmax_agreement": 1.0,
+        "val_max_prob_diff": 0.0,
+        "val_weighted_f1": 0.5526883181103501,
+        "recorded_val_weighted_f1": 0.5526883181103501
+      }
+    ],
+    "load_memory": {
+      "before_load": {
+        "allocated_gib": 0.0,
+        "reserved_gib": 0.0
+      },
+      "after_load": {
+        "allocated_gib": 15.26,
+        "reserved_gib": 15.26
+      }
+    },
+    "peak_memory_gib": 16.99,
+    "fit_rows": 16,
+    "val_rows": 244,
+    "fit_tokens": 3454
+  },
+  "runtime": {
+    "gpu": "NVIDIA A10",
+    "torch": "2.6.0+cu124",
+    "cuda": "12.4",
+    "python": "3.11.11",
+    "precision": "bf16",
+    "packages": {
+      "transformers": "5.19.0",
+      "peft": "0.21.2",
+      "accelerate": "1.15.0",
+      "datasets": "5.1.0",
+      "numpy": "2.4.6",
+      "safetensors": "0.8.0",
+      "tokenizers": "0.23.3",
+      "huggingface_hub": "2.2.0"
+    }
+  },
+  "max_prompt_tokens": 222,
+  "inference": {
+    "scored": 1448,
+    "seconds": 98.05724625100038
+  },
+  "resource_only_scores": {
+    "holdout": {
+      "plain": {
+        "weighted_f1": 0.5737618489101508,
+        "soft_cons": 0.39768339768339767,
+        "hard_cons": 0.3474903474903475
+      },
+      "sym": {
+        "weighted_f1": 0.6502863642250538,
+        "soft_cons": 0.861003861003861,
+        "hard_cons": 0.6293436293436293
+      }
+    },
+    "dev": {
+      "plain": {
+        "weighted_f1": 0.5325225971117796,
+        "soft_cons": 0.33935018050541516,
+        "hard_cons": 0.296028880866426
+      },
+      "sym": {
+        "weighted_f1": 0.5878293643076247,
+        "soft_cons": 0.8772563176895307,
+        "hard_cons": 0.5884476534296029
+      }
+    }
+  },
+  "peak_after_inference_gib": 16.9885311126709,
+  "wall_seconds": 184.7051219079999
+}

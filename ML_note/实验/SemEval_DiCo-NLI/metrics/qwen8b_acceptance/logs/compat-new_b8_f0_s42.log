@@ -1,0 +1,17 @@
+运行平台： 阿里云 PAI-DSW ；结果目录： /mnt/workspace/dico_qwen8b_v4/work
+模型下载地址： https://hf-mirror.com ；模型缓存： /mnt/workspace/dico_qwen8b_v4/hf_cache
+方法： ce {'lora_dropout': 0.0, 'loss': 'CE'} ；SMOKE： False
+模型来源：本地已核验快照（ModelScope），没有网络下载。
+模型快照： cdbee75f17c01a7cc42f958dc650907174af0554 ；读概率的字母 token： {'A': [32, 362], 'B': [33, 425], 'C': [34, 356], 'D': [35, 422]} ；训练目标 token： {'A': 362, 'B': 425, 'C': 356, 'D': 422}
+Loading weights:   0%|          | 0/398 [00:00<?, ?it/s]Loading weights:   4%|▍         | 16/398 [00:00<00:02, 154.18it/s]Loading weights:  11%|█         | 42/398 [00:00<00:01, 211.19it/s]Loading weights:  17%|█▋        | 69/398 [00:00<00:01, 218.56it/s]Loading weights:  25%|██▍       | 98/398 [00:00<00:01, 233.76it/s]Loading weights:  31%|███       | 124/398 [00:00<00:01, 231.30it/s]Loading weights:  38%|███▊      | 153/398 [00:00<00:01, 240.13it/s]Loading weights:  45%|████▌     | 180/398 [00:00<00:00, 245.07it/s]Loading weights:  52%|█████▏    | 208/398 [00:00<00:00, 248.52it/s]Loading weights:  59%|█████▉    | 235/398 [00:00<00:00, 246.20it/s]Loading weights:  66%|██████▋   | 264/398 [00:01<00:00, 251.61it/s]Loading weights:  73%|███████▎  | 290/398 [00:01<00:00, 246.57it/s]Loading weights:  80%|████████  | 319/398 [00:01<00:00, 252.13it/s]Loading weights:  87%|████████▋ | 345/398 [00:01<00:00, 248.05it/s]Loading weights:  94%|█████████▍| 374/398 [00:01<00:00, 252.79it/s]Loading weights: 100%|██████████| 398/398 [00:01<00:00, 246.14it/s]
+    加载模型：加载前已分配显存 0.0 GiB，加载后 7.49 GiB
+    从头训练
+[transformers] The tokenizer has new PAD/BOS/EOS tokens that differ from the model config and generation config. The model config and generation config were aligned accordingly, being updated with the tokenizer's values. Updated tokens: {'pad_token_id': 151643}.
+    前向核对：交叉熵路径 autocast (True, 'torch.bfloat16')，隐状态路径 (True, 'torch.bfloat16')；8 行的四类 log 概率最大差 0，argmax 一致 100%
+  0%|          | 0/3 [00:00<?, ?it/s] 33%|███▎      | 1/3 [00:03<00:06,  3.39s/it]    第 1 轮：训练损失 -  内层验证 WF1 1.0000（目前最好是第 1 轮）
+ 67%|██████▋   | 2/3 [00:08<00:04,  4.33s/it]    第 2 轮：训练损失 -  内层验证 WF1 1.0000（目前最好是第 1 轮）
+    step 3/3  5.3 秒/步  这一组的训练预计还要 0 分钟
+100%|██████████| 3/3 [00:13<00:00,  4.88s/it]    第 3 轮：训练损失 -  内层验证 WF1 1.0000（目前最好是第 1 轮）
+                                             {'train_runtime': '17.09', 'train_samples_per_second': '2.809', 'train_steps_per_second': '0.176', 'train_loss': '0.00451', 'epoch': '3'}
+100%|██████████| 3/3 [00:15<00:00,  4.88s/it]100%|██████████| 3/3 [00:15<00:00,  5.26s/it]
+    载入第 1 轮的权重：504 个张量和文件逐位相同；内层验证逐条预测和训练时一致 100.0%，概率最大差 0，WF1 1.0000（训练时 1.0000）

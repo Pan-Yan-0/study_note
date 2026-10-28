@@ -1,0 +1,79 @@
+{
+ "best_epoch": 2,
+ "forward_check": {
+  "autocast_ce_path": [
+   true,
+   "torch.bfloat16"
+  ],
+  "autocast_hidden_path": [
+   true,
+   "torch.bfloat16"
+  ],
+  "max_letter_logprob_diff": 0.0,
+  "argmax_agreement": 1.0,
+  "rows": 8
+ },
+ "trainable_params": 43646976,
+ "steps": 28,
+ "steps_per_epoch": 14,
+ "train_minutes_last_session": 1.7,
+ "seconds_per_step": 3.73,
+ "resumed_from_epoch": 1,
+ "resume": {
+  "checkpoint": "checkpoint-14",
+  "epoch": 1,
+  "files": [
+   "README.md",
+   "adapter_config.json",
+   "adapter_model.safetensors",
+   "chat_template.jinja",
+   "optimizer.pt",
+   "rng_state.pth",
+   "scheduler.pt",
+   "tokenizer.json",
+   "tokenizer_config.json",
+   "trainer_state.json",
+   "training_args.bin"
+  ],
+  "skipped": [
+   {
+    "checkpoint": "checkpoint-999999",
+    "reason": "trainer_state.json 不完整（JSONDecodeError）"
+   }
+  ]
+ },
+ "adapter_checks": [
+  {
+   "epoch": 1,
+   "tensors": 504,
+   "has_proj": false,
+   "val_argmax_agreement": 1.0,
+   "val_max_prob_diff": 0.0,
+   "val_weighted_f1": 0.6907072068087114,
+   "recorded_val_weighted_f1": 0.6907072068087114
+  },
+  {
+   "epoch": 2,
+   "tensors": 504,
+   "has_proj": false,
+   "val_argmax_agreement": 1.0,
+   "val_max_prob_diff": 0.0,
+   "val_weighted_f1": 0.7359278351298473,
+   "recorded_val_weighted_f1": 0.7359278351298473
+  }
+ ],
+ "load_memory": {
+  "before_load": {
+   "allocated_gib": 0.02,
+   "reserved_gib": 0.07
+  },
+  "after_load": {
+   "allocated_gib": 15.27,
+   "reserved_gib": 15.29
+  }
+ },
+ "peak_memory_gib": 16.99,
+ "fit_rows": 222,
+ "val_rows": 244,
+ "fit_tokens": 45182
+}

@@ -1,0 +1,30 @@
+{
+  "pipeline": "ce340cba577e5d63d361cce7e5a844241a0e174c295c0816fea26ed2e6bfee2e",
+  "passed": true,
+  "runtime": {
+    "gpu": "NVIDIA A10",
+    "torch": "2.6.0+cu124",
+    "cuda": "12.4",
+    "python": "3.11.11",
+    "precision": "bf16",
+    "packages": {
+      "transformers": "5.19.0",
+      "peft": "0.21.2",
+      "accelerate": "1.15.0",
+      "datasets": "5.1.0",
+      "numpy": "2.4.6",
+      "safetensors": "0.8.0",
+      "tokenizers": "0.23.3",
+      "huggingface_hub": "2.2.0"
+    }
+  },
+  "choice": {
+    "batch": 8,
+    "grad_acc": 2,
+    "eval_tokens_per_batch": 8192,
+    "precision": "bf16",
+    "model": "Qwen/Qwen3-8B",
+    "revision": "b968826d9c46dd6066d109eabc6255188de91218"
+  },
+  "time_utc": "2026-10-28T02:32:06.369034+00:00"
+}
