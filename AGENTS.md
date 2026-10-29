@@ -23,7 +23,7 @@ Claude 在 Pan-Yan-0 的 study_note 仓库里工作时用的备忘：要遵守�
 - **对话分工（Pan-Yan-0 10-28 定的）**：所有 Claude 对话和 GPT / Codex 共用这一个 AGENTS.md，改之前先 `git fetch`、只改自己负责的条目、改完尽快推送。
   - SemEval 对话：实验设计、代码、运行结果、实验 README，以及把论文研究交回的想法落成对照实验。
   - 论文研究对话：按错误分类选论文、预读和精读、阅读表、低成本离线检查；只写 `ML_note/实验/SemEval_DiCo-NLI/论文研究/`，要跑的实验写进其中的《交回SemEval对话的实验》，由 SemEval 对话决定。
-  - 学习对话：讲解概念、出题批改，每晚整理进原理笔记。
+  - 学习对话：讲解概念、出题批改，每晚整理进原理笔记；模型压缩方向的论文精读笔记写进 `ML_note/论文阅读/`（和 SemEval 的论文研究分开）。
 - 当前待办仍以 [实验状态与算力计划](ML_note/实验/SemEval_DiCo-NLI/实验状态与算力计划.md) 为准；方案达成一致后再更新 [冻结计划](ML_note/实验/SemEval_DiCo-NLI/更大模型与数据扩充计划.md) 的变更记录。交接本身不启动新增 GPU 训练或付费生成。
 
 ## 2. 背景
@@ -42,6 +42,7 @@ skills/                    教学 skill 的旧版，现行版本在私有 skill 
 ML_note/
 ├── 实验结果汇总.md         全部实验结果速览
 ├── 实验/IMDB/  实验/SST2/  每个实验一个文件夹：README、code/、notebooks/、metrics/
+├── 论文阅读/               README（索引和读法）、模型压缩/（每篇论文一个文件）
 ├── 原理笔记/               BERT/  DeBERTa/  LLM/  LoRA/  NLI/  反向传播/
 └── 吴恩达机器学习/          课程笔记
 Coursera-ML-AndrewNg-Notes-master/   课程资料
@@ -152,6 +153,7 @@ Coursera-ML-AndrewNg-Notes-master/   课程资料
   - 排期（10-22）：蒸馏学生、mDeBERTa 上的 R-Drop / SCL / MoCo、西语 / 巴语 / 跨语言同数据的 mDeBERTa 基线、之后 Qwen 上的技巧，主要放阿里云 A10（月底前约 28 个 A10 小时，月底作废）。Qwen 技巧放 A10 时，先在 A10 上重跑 3 轮基线作对照，不和 T4 的结果直接相减。
   - 算力分配：Kaggle（每周额度，能后台跑）只留给超过一小时的 Qwen 任务；Colab、腾讯 Cloud Studio 要开着页面，白天跑 mDeBERTa 类短任务和 SMOKE；阿里云 A10 抢到才算。同一组比较不混用不同的卡（A10 / 4090 用 bf16，T4 用 fp16）。
 - **原理学习**：第一章（情感分类、反向传播）已通关，笔记在 `ML_note/原理笔记/`；第二章跟着 SemEval 实验学（`ML_note/原理笔记/NLI/`），已讲句对输入、SoftCons / HardCons、对称化、R-Drop 与 KL、方向版 R-Drop，下一课是方向版 R-Drop 的实验结果和 SCL。
+- **模型压缩方向（候选主线，待和导师确认）**：读 ShortGPT、AdaPruner、Minitron，笔记在 `ML_note/论文阅读/模型压缩/`。ShortGPT 第一遍和第二遍主体完成，AdaPruner 第一遍完成，Minitron 未读。下一步：Minitron 第一遍，然后带着问题和导师谈。
 - **待办**：GitHub 仓库首页默认显示 `master`，`note` 的最新内容在首页看不到。改法等 Pan-Yan-0 决定：
   - 把默认分支改成 `note`；
   - 在 `master` 的 README 加入口；

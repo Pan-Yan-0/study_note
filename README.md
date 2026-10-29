@@ -10,6 +10,8 @@ ML_note/
 │   ├── IMDB/             README、code/、notebooks/、metrics/、notes/
 │   ├── SST2/             README、code/、notebooks/、metrics/
 │   └── SemEval_DiCo-NLI/ README、code/、notebooks/、metrics/
+├── 论文阅读/              按方向分的论文精读笔记
+│   └── 模型压缩/          ShortGPT、AdaPruner、Minitron
 ├── 原理笔记/
 │   └── BERT/  DeBERTa/  LLM/  LoRA/  NLI/  反向传播/
 └── 吴恩达机器学习/         课程各部分的笔记
@@ -29,6 +31,15 @@ ML_note/
 - [SemEval文件导航](ML_note/实验/SemEval_DiCo-NLI/文件导航与维护规则.md)：摘要、登记、原始输出和历史记录的分工。
 
 每个项目的README负责结果、问题、下一步；原始输出保存在metrics，自动登记表从结果生成，不手改。
+
+## 论文阅读：模型压缩
+
+剪枝和蒸馏方向的论文精读，索引和读法见 [论文阅读/README](ML_note/论文阅读/README.md)。
+
+| 论文 | 剪什么 | 进度 |
+|---|---|---|
+| [ShortGPT](ML_note/论文阅读/模型压缩/ShortGPT.md) | 整层（深度剪枝），按 BI 删层 | 第一遍 ✅，第二遍主体 ✅ |
+| [AdaPruner](ML_note/论文阅读/模型压缩/AdaPruner.md) | 层内耦合结构（宽度剪枝），贝叶斯优化搜索校准数据和重要性指标 | 第一遍 ✅ |
 
 ## 论文与原理笔记
 
