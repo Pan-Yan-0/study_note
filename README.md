@@ -40,6 +40,7 @@ ML_note/
 |---|---|---|
 | [ShortGPT](ML_note/论文阅读/模型压缩/ShortGPT.md) | 整层（深度剪枝），按 BI 删层 | 第一遍 ✅，第二遍主体 ✅ |
 | [AdaPruner](ML_note/论文阅读/模型压缩/AdaPruner.md) | 层内耦合结构（宽度剪枝），贝叶斯优化搜索校准数据和重要性指标 | 第一遍 ✅ |
+| [Minitron](ML_note/论文阅读/模型压缩/Minitron.md) | 深度和宽度都做；先校正教师再蒸馏，深度剪枝删连续的层 | 第一遍 ✅ |
 
 ## 论文与原理笔记
 
