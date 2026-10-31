@@ -42,8 +42,9 @@ skills/                    教学 skill 的旧版，现行版本在私有 skill 
 ML_note/
 ├── 实验结果汇总.md         全部实验结果速览
 ├── 实验/IMDB/  实验/SST2/  每个实验一个文件夹：README、code/、notebooks/、metrics/
-├── 论文阅读/               README（索引和读法）、模型压缩/（每篇论文一个文件）
-├── 原理笔记/               BERT/  DeBERTa/  LLM/  LoRA/  NLI/  反向传播/
+│   实验/ShortGPT_BI删层/   模型压缩方向的动手实验（学习对话负责）
+├── 论文阅读/               README（索引和读法）、模型压缩/（每篇论文一个文件，另有研究想法记录）
+├── 原理笔记/               BERT/  DeBERTa/  LLM/  LoRA/  NLI/  PyTorch/  反向传播/  推理优化/
 └── 吴恩达机器学习/          课程笔记
 Coursera-ML-AndrewNg-Notes-master/   课程资料
 ```
@@ -153,7 +154,7 @@ Coursera-ML-AndrewNg-Notes-master/   课程资料
   - 排期（10-22）：蒸馏学生、mDeBERTa 上的 R-Drop / SCL / MoCo、西语 / 巴语 / 跨语言同数据的 mDeBERTa 基线、之后 Qwen 上的技巧，主要放阿里云 A10（月底前约 28 个 A10 小时，月底作废）。Qwen 技巧放 A10 时，先在 A10 上重跑 3 轮基线作对照，不和 T4 的结果直接相减。
   - 算力分配：Kaggle（每周额度，能后台跑）只留给超过一小时的 Qwen 任务；Colab、腾讯 Cloud Studio 要开着页面，白天跑 mDeBERTa 类短任务和 SMOKE；阿里云 A10 抢到才算。同一组比较不混用不同的卡（A10 / 4090 用 bf16，T4 用 fp16）。
 - **原理学习**：第一章（情感分类、反向传播）已通关，笔记在 `ML_note/原理笔记/`；第二章跟着 SemEval 实验学（`ML_note/原理笔记/NLI/`），已讲句对输入、SoftCons / HardCons、对称化、R-Drop 与 KL、方向版 R-Drop，下一课是方向版 R-Drop 的实验结果和 SCL。
-- **模型压缩方向（候选主线，待和导师确认）**：读 ShortGPT、AdaPruner、Minitron，笔记在 `ML_note/论文阅读/模型压缩/`。方向已定为 NLP 推理优化（Pan-Yan-0 10-30 定的，除非导师说做不了，否则不换），剪枝为入口。ShortGPT 第一遍和第二遍主体完成，AdaPruner、Minitron 第一遍完成，一阶泰勒重要性已讲。研究想法记在 `ML_note/论文阅读/模型压缩/研究想法记录.md`。下一步：Shortened LLaMA 定向阅读，再和导师谈；不急于定题或开实验。
+- **模型压缩方向（候选主线，待和导师确认）**：读 ShortGPT、AdaPruner、Minitron，笔记在 `ML_note/论文阅读/模型压缩/`。方向已定为 NLP 推理优化（Pan-Yan-0 10-30 定的，除非导师说做不了，否则不换），剪枝为入口。ShortGPT 第一遍和第二遍主体完成，AdaPruner、Minitron 第一遍完成，一阶泰勒重要性已讲，Shortened LLaMA 定向阅读完成。研究想法、查新现状和 GPT 的更正记在 `ML_note/论文阅读/模型压缩/研究想法记录.md`。显存估算概念单元已讲（`原理笔记/推理优化/`）。动手实验 `ML_note/实验/ShortGPT_BI删层/`：Qwen3-8B 上按 BI 删层、不恢复，Kaggle 2×T4；`bi_from_pair` 和 `drop_layers` 由 Pan-Yan-0 自己写（Python / PyTorch 从零学起，笔记在 `原理笔记/PyTorch/`），SMOKE 已跑通，正式运行已提交，结果回来后一起读并回答 notebook 第 7 节的讨论题。Llama-2 的 HF 权限申请被拒，默认用 Qwen3-8B。下一步：读正式结果；访存受限与延迟 / 吞吐的概念单元；AdaPruner 第二遍（见导师前）；不急于定题。
 - **待办**：GitHub 仓库首页默认显示 `master`，`note` 的最新内容在首页看不到。改法等 Pan-Yan-0 决定：
   - 把默认分支改成 `note`；
   - 在 `master` 的 README 加入口；

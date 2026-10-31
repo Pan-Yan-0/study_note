@@ -11,8 +11,11 @@
 | ShortGPT（arXiv 2403.03853） | 整层（深度） | 主结果不恢复；附加实验用 MLP 替换被删的层再训练 | 第一遍 ✅，第二遍主体 ✅ | [ShortGPT.md](模型压缩/ShortGPT.md) |
 | AdaPruner（AAAI 2025） | 层内耦合结构（宽度） | LoRA 微调 | 第一遍 ✅，第二遍：一阶泰勒重要性 ✅ | [AdaPruner.md](模型压缩/AdaPruner.md) |
 | Minitron（arXiv 2408.11796） | 深度和宽度都做，分开比较 | 先校正教师，再蒸馏 | 第一遍 ✅ | [Minitron.md](模型压缩/Minitron.md) |
+| Shortened LLaMA（arXiv 2402.02834） | 整块（深度），和宽度剪枝比较 | LoRA；高剪枝率下深度模型另做继续预训练 | 定向阅读 ✅ | [Shortened_LLaMA.md](模型压缩/Shortened_LLaMA.md) |
 
-**研究想法**：[研究想法记录.md](模型压缩/研究想法记录.md)，按"观察 → 候选原因 → 怎么检验 → 现状"记录。
+**研究想法**：[研究想法记录.md](模型压缩/研究想法记录.md)，按"观察 → 候选原因 → 怎么检验 → 现状"记录；也记了查新现状和领域里相关的方向。
+
+**动手实验**：[ShortGPT BI 删层（Qwen3-8B，Kaggle）](../实验/ShortGPT_BI删层/README.md)。
 
 **三篇第一遍读完后的线索**：ShortGPT 在不恢复的条件下发现深度剪枝更好；Minitron 用蒸馏恢复后发现宽度剪枝更准、深度剪枝更快。两篇的模型和数据也不同，要在同一个模型上只改恢复方式，才能判断是不是恢复方式造成的。详见 [Minitron.md](模型压缩/Minitron.md) 第 3 节。
 

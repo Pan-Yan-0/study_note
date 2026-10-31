@@ -1,0 +1,44 @@
+{
+ "model": "Qwen/Qwen3-8B",
+ "revision": "b968826d9c46dd6066d109eabc6255188de91218",
+ "dtype": "float16",
+ "calib": "Salesforce/wikitext:wikitext-2-raw-v1:train（拼接后按顺序切段）",
+ "n_calib": 4,
+ "seq_len": 512,
+ "ppl_max_windows": 5,
+ "tasks": [
+  "piqa",
+  "arc_easy",
+  "winogrande"
+ ],
+ "limit": 50,
+ "lmeval_batch": 1,
+ "speed": [
+  512,
+  128,
+  [
+   1
+  ],
+  1,
+  0
+ ],
+ "configs": [
+  {
+   "name": "full",
+   "method": "none",
+   "n": 0
+  },
+  {
+   "name": "bi_4",
+   "method": "bi",
+   "n": 4
+  }
+ ],
+ "versions": {
+  "torch": "2.11.0+cu128",
+  "transformers": "4.57.6",
+  "accelerate": "1.15.0",
+  "lm_eval": "0.4.13",
+  "datasets": "5.0.1"
+ }
+}
