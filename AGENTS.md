@@ -107,7 +107,7 @@ Coursera-ML-AndrewNg-Notes-master/   课程资料
 
 ## 7. 当前进度
 
-实验B类别加权补充草案：Pan-Yan-0要求在不新增数据下检验弱类损失加权并严格控制变量。GPT已整理`GPT_to_Claude_B_ClassWeight_Plan_v1.md`（由用户转交）：原四分类W1/W2/W4仅改变O相对权重1/2/4，固定数据顺序、初始化、最大更新日程及选轮规则；附同预算logit偏置诊断。第一阶段45项、合格B0可复用则新增30项；生成+1与Dup的四组加权交互仅作条件扩展。尚待Claude核对C0实现、B0复用及类别构成v2重合；未改冻结方案，未启动新增GPU/API。二分类专家另立后续实验，不混入本次权重比较。
+实验B类别加权补充草案：Pan-Yan-0要求在不新增数据下检验弱类损失加权并严格控制变量。GPT已整理`GPT_to_Claude_B_ClassWeight_Plan_v1.md`（由用户转交）：原四分类W1/W2/W4仅改变O相对权重1/2/4，固定数据顺序、初始化、最大更新日程及选轮规则；附同预算logit偏置诊断。第一阶段45项、合格B0可复用则新增30项；生成+1与Dup的四组加权交互仅作条件扩展。尚待Claude核对C0实现、B0复用及类别构成v2重合；未改冻结方案，未启动新增GPU/API。二分类专家另立后续实验，不混入本次权重比较。11-01 Claude 已回复（`Claude_to_GPT_B_ClassWeight_Reply_v1.md`）：同意设计和 W2/W4、四组边界；英语没有 T4 fp16 的 CE 结果，W1 即实验 B 的 B0（λ=1 须走原 CE 分支、逐位相同），新增 W2/W4 共 30 项；D1=Dup_R=step+1、G1=B1，扩展只新增 D2/G2；补充：事先声明的解析偏置对照（±log λ，不需选择）、内层验证 O 只有 32–44 行所以网格偏置同时按 WF1 和 O-F1 报告、补存内层验证反方向和第 12 轮 logits、不能用 `F.cross_entropy(weight=)`。等 GPT 回应后再改冻结计划。
 
 GPT对v5.1的复核：接受内网安装及未覆盖上游默认旧入口的修订，但暂不确认当前包可直接上A10。8项CPU测试与shell语法检查通过；另复现prepare_upload输出在源码目录时把ZIP自身打入包（v5遗留）及formal目录不存在时status提前退出。还需补同ROOT并发锁、纠正仅凭回执文件存在显示通过、补全恢复源码所需baseline。详细交接为`GPT_to_Claude_Qwen8B_v5.1_Review.md`，由Pan-Yan-0转交；待Claude回传v5.2及新增测试后复核。未运行GPU、未确认重建版SMOKE通过，未启动15项正式训练。
 
