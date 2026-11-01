@@ -1,5 +1,7 @@
 # SemEval-2027 Task 2：DiCo-NLI
 
+[Qwen3-8B v5 重建代码与运行说明](code/qwen8b_v5/README.md)：CPU检查通过，待Claude审阅和新的A10验收；不沿用v4验收资格。
+
 当前规划的初步实验阶段已完成：四赛道基线与SFT、英语训练技巧比较，以及英语五折SFT和蒸馏验证均已有归档证据。进入结果诊断、论文研究和数据扩充设计阶段；不等于所有语言的所有方法都已全面验证。
 
 任务输入为短语对，输出 EQUIVALENCE、FORWARD_ENTAILMENT、BACKWARD_ENTAILMENT、NEGATIVE_OTHER。反向输入的F/B互换；模型只读取文本，不使用pair编号等标签泄漏特征。
@@ -100,3 +102,4 @@ R-Drop相对CE平均+0.67个百分点，五种子中四升一降；家族重抽�
 [文件导航与维护规则](文件导航与维护规则.md)说明每层职责。`metrics/`保存可复核输出，`code/`保存实际代码与复算脚本，`notebooks/`保留早期入口；不要用历史notebook覆盖已验证版本。权重由运行者本地保留。
 
 实验由Pan-Yan-0运行，Claude与GPT协作编写和审阅；GPT完成联合队列、补跑、独立复算和归档；Claude又从逐折logits和概率独立重建了全部OOF与第六组预测，官方评分、配对差和区间一致（[code/claude_recheck_joint.py](code/claude_recheck_joint.py)）。数据与评分来自[官方仓库](https://github.com/ilopezgazpio/SemEval-2027-Task-2-DiCo-NLI)。历史来源和论文引用保留在早期详录。
+

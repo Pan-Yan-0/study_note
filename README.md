@@ -1,5 +1,7 @@
 # Pan-Yan-0 的学习笔记（note 分支）
 
+[Qwen3-8B v5 重建代码与运行说明](ML_note/实验/SemEval_DiCo-NLI/code/qwen8b_v5/README.md)：CPU检查通过，待Claude审阅和新的A10验收；不沿用v4验收资格。
+
 
 机器学习与 NLP 的实验记录、论文笔记和课程笔记。实验和笔记都在 [ML_note/](ML_note/) 下。
 
@@ -76,3 +78,4 @@ ML_note/
 | [无监督学习（聚类、降维、异常检测、推荐系统）](ML_note/吴恩达机器学习/无监督学习笔记_PDF第13-16章.md) | 讲义第 13–16 章 |
 
 [Coursera-ML-AndrewNg-Notes-master/](Coursera-ML-AndrewNg-Notes-master/) 是黄海广整理的 2014 版课程中文笔记，作为参考资料保存。
+
