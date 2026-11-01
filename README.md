@@ -27,7 +27,7 @@ ML_note/
 | [SemEval-2027 DiCo-NLI](ML_note/实验/SemEval_DiCo-NLI/README.md) | 初步实验阶段完成；进入语义错误诊断和数据扩充设计 | 英语五折OOF sym WF1：Qwen SFT 84.37%；mDeBERTa R-Drop 80.69%、CE 80.03%（五种子）；KD 80.22%、匹配CE 80.23%（三种子）。西语/巴语/跨语言mDeBERTa CE五折三种子OOF：77.97% / 73.45% / 74.95%。Qwen技巧仅英语单折，新方法多语言验证待后续安排 |
 | [SST-2](ML_note/实验/SST2/README.md) | 指令学习与微调对照完成 | 验证872条：DeepSeek 95.18%、Gemma 3 12B 94.61%、Qwen 4B 93.81%；DeBERTa全量95.60% |
 | [IMDB](ML_note/实验/IMDB/README.md) | 编码器与大模型微调完成 | Kaggle AUC：DeBERTa-v2-xxlarge LoRA 0.98294；Qwen3-4B指令微调0.99493 |
-| [ShortGPT BI 删层（Qwen3-8B）](ML_note/实验/ShortGPT_BI删层/README.md) | SMOKE 在 Kaggle 2×T4 上跑通，正式运行中 | ShortGPT 方法的迁移实验，不恢复；SMOKE 只验证链路，数字不作结论 |
+| [ShortGPT BI 删层（Qwen3-8B）](ML_note/实验/ShortGPT_BI删层/README.md) | 正式运行完成（Kaggle 2×T4，61 分钟） | 删 9 层不恢复：PPL 9.71 → 1074，arc_easy 80.9 → 42.6；decode 加速 1.31–1.33 倍。PPL 和准确率对"BI 删层 vs 从后往前删"给出相反结论 |
 
 - [全部实验结果汇总](ML_note/实验结果汇总.md)：跨项目结果表、评测口径与历史记录。
 - [SemEval完成清单与后续安排](ML_note/实验/SemEval_DiCo-NLI/实验状态与算力计划.md)：当前待办和算力状态。
@@ -59,6 +59,7 @@ ML_note/
 | [解码器大模型与路线 C 学习笔记](ML_note/原理笔记/LLM/解码器大模型与路线C学习笔记.md) | 因果掩码与上下文、agent、提示的成本、解码器结构、cot 与概率、LoRA 分类器 / 嵌入 + 逻辑回归 / 蒸馏、指令微调（SFT）与 T4 用时估算、交叉熵与熵、KV cache 存的是激活、开思考为什么常被截断 |
 | [DiCo-NLI 句对输入与一致性学习笔记](ML_note/原理笔记/NLI/DiCo-NLI句对输入与一致性学习笔记.md) | SemEval 赛题的四个标签和两个方向，模型怎么分清两段短语（段向量、位置），SoftCons 与 HardCons，对称化，R-Drop 与 KL，方向版 R-Drop |
 | [显存估算学习笔记](ML_note/原理笔记/推理优化/显存估算学习笔记.md) | 推理和训练的显存组成，KV cache 和 GQA，LoRA / QLoRA 估算，多卡切分，用 Kaggle 实测核对，访存受限的线索 |
+| [评测指标与访存受限学习笔记](ML_note/原理笔记/推理优化/评测指标与访存受限学习笔记.md) | PPL、零样本选择题、acc 与 acc_norm、TTFT 与 decode 吞吐、batch；PPL 和准确率为什么相反；访存受限与删层加速；KV cache 怎么存（PagedAttention） |
 | [张量与删层代码学习笔记](ML_note/原理笔记/PyTorch/张量与删层代码学习笔记.md) | 张量维度与 `dim`、FP16 溢出、`ModuleList` 与引用、列表推导式、`set`、`enumerate`、`getattr`，删层后为什么要重新编号，Kaggle 上的三个报错 |
 | [反向传播学习笔记](ML_note/原理笔记/反向传播/反向传播学习笔记.md) | 两层小网络从后往前推：损失对分数的梯度 p − q，传到 W₂、h，穿过 ReLU 到 W₁；反向传播与梯度下降的分工 |
 | [IMDB 六模型实战与概念问答](ML_note/实验/IMDB/notes/IMDB六模型实战与概念问答.md) | GloVe 六模型的概念问答整理 |
