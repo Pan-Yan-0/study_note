@@ -107,7 +107,7 @@ Coursera-ML-AndrewNg-Notes-master/   课程资料
 
 ## 7. 当前进度
 
-8B代码恢复：用户澄清A10完成的是SMOKE，尚无15项正式训练完成证据。原v4源码找不到，已授权重建；新实现见[Qwen8B v5](ML_note/实验/SemEval_DiCo-NLI/code/qwen8b_v5/README.md)。原上游训练核心字节保持不变；v3上传包是失败记录，不能替代v4通过记录。v5完成CPU检查，尚待Claude独立审阅与新A10验收；正式入口要求本版SMOKE和4B兼容性回执。源码随结果归档；不得用旧v4回执放行重建版。
+8B代码恢复：用户澄清A10完成的是SMOKE，尚无15项正式训练完成证据。原v4源码找不到，已授权重建；新实现见[Qwen8B v5](ML_note/实验/SemEval_DiCo-NLI/code/qwen8b_v5/README.md)。原上游训练核心字节保持不变；v3上传包是失败记录，不能替代v4通过记录。v5完成CPU检查，尚待Claude独立审阅与新A10验收；正式入口要求本版SMOKE和4B兼容性回执。源码随结果归档；不得用旧v4回执放行重建版。11-01 Claude 已审阅 v5：无阻断问题；改了两处并加一个会话外壳，记为 v5.1（代码身份 `dbb1cce9…`，交接包 `Qwen8B_v5.1_claude.zip`，由 Pan-Yan-0 转交）：setup 的 torch 改走阿里云内网镜像；compat 的旧入口改为不加任何覆盖的上游默认，并比较两边的 `fingerprint()`。等 GPT 确认后再把 v5.1 提交进仓库；这次 A10 实例按 check（验收）→ formal（15 项）的顺序跑。
 
 后续规划交接：Pan-Yan-0 最新反馈 A10 阶段已经弄完；GPT 本轮尚未取得可核验的 8B 正式结果包，当前仓库仍只归档工程验收，因此不重复安排已完成运行，也不提前填写正式成绩或剩余额度。GPT6astra 已整理 `GPT_to_Claude_SemEval_Next_Experiments_v1.md`（由 Pan-Yan-0 转交，未归档进仓库）：建议 A 结果验收与 B 数据扩充接口、CPU 检查并行；先试点，再做两个来源 +1 与 B0、匹配 step+1 的对照，最多 60 项，后续 +2/+4 的触发规则先补冻。逐折 R 与来源选择规则仍需同步冻结计划；类别构成 v2 等待原 ZIP 复核，交叉拟合 KD 的教师训练及选轮都须排除目标家族。此文件是规划草案，不表示新增 GPU/API 已获执行授权。
 
