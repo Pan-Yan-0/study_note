@@ -205,6 +205,30 @@ def joint_run(rid, method):
     return r
 
 
+def qwen8b_run(rid):
+    """实验 A：Qwen3-8B 英语五折三种子（A10，v5.5 队列，上游训练核心和 JOINT-QWEN 相同）。变量来自每个任务的 task.json。"""
+    root = os.path.join(M, "qwen8b_a1")
+    seeds = [42, 43, 44]
+    tasks = [rj(os.path.join(root, "formal", f"seed{s}", f"fold{k}", "task.json")) for s in seeds for k in range(5)]
+    t = tasks[0]
+    for task in tasks:
+        assert not task["smoke"] and task["pipeline"] == t["pipeline"] and task["settings"]["lora"] == t["settings"]["lora"]
+        assert task["settings"]["train"] == t["settings"]["train"] and task["runtime"] == t["runtime"]
+    st, env = t["settings"], t["runtime"]
+    variables = {"model": t["model"], "model_revision": t["revision"], "prompt": short(st["prompt_text"]),
+                 "split": dict(st["split"], holdout_fold="0–4"),
+                 "train_data": "track1 按家族五折，每折只训练fit，内层验证选轮",
+                 "method": "LoRA SFT，只算答案字母的交叉熵", "inference": "plain 和 sym（F / B 互换后平均）",
+                 "lora": st["lora"], "train": st["train"], "selection": "内层验证原方向 WF1，同分取早的",
+                 "lib": st["pins"], "data_sha256": t["data"]}
+    return {"id": rid, "desc": "Qwen3-8B CE SFT 英语五折三种子（实验 A）", "track": 1, "variables": variables,
+            "platform": {"platform": "阿里云 PAI-DSW", "gpu": [env["gpu"]], "dtype": ["torch.bfloat16"], "torch": [env["torch"]]},
+            "code": {"version": st["version"] + "（qwen8b_v5.5 队列，代码身份 " + t["pipeline"][:12] + "）",
+                     "code_sha256": [rj(os.path.join(root, "MANIFEST.json"))["files"]["source/upstream_qwen.py"][:12]]},
+            "metrics_dir": "metrics/qwen8b_a1", "seeds": [str(s) for s in seeds],
+            "evals": {"oof": {str(s): {m: preds(os.path.join(root, "oof", f"seed{s}_{m}.csv")) for m in ("plain", "sym")} for s in seeds}}}
+
+
 def multilang_run(rid, track, fold0_only=False):
     """Kaggle T4 上 mDeBERTa CE（第五组 C0 配方）的西语 / 巴语 / 跨语言五折三种子；dev 只有 fold 0 的模型评过。"""
     root = os.path.join(M, "mdeberta_multilang_oof")
@@ -251,6 +275,7 @@ RUNS = [
     ("JOINT-DIR_RDROP", lambda: joint_run("JOINT-DIR_RDROP", "dir_rdrop")),
     ("JOINT-SCL", lambda: joint_run("JOINT-SCL", "scl")),
     ("JOINT-MOCO_M0.999", lambda: joint_run("JOINT-MOCO_M0.999", "moco_m0.999")),
+    ("A1-QWEN8B", lambda: qwen8b_run("A1-QWEN8B")),
     ("JOINT-QWEN", lambda: joint_run("JOINT-QWEN", "qwen")),
     ("JOINT-KD", lambda: joint_run("JOINT-KD", "kd")),
     ("MDB-G5-T1-CE", lambda: mdeberta_methods_run("MDB-G5-T1-CE", 1, "ce", "第五组 track1 ce，fold 0 三种子")),
@@ -290,6 +315,7 @@ COMPARISONS = [
     ("JOINT-CMP-DIR_RDROP", "JOINT-DIR_RDROP", "JOINT-CE", "oof", "英语五折配对比较：dir_rdrop 对 CE"),
     ("JOINT-CMP-SCL", "JOINT-SCL", "JOINT-CE", "oof", "英语五折配对比较：scl 对 CE"),
     ("JOINT-CMP-MOCO_M0.999", "JOINT-MOCO_M0.999", "JOINT-CE", "oof", "英语五折配对比较：moco_m0.999 对 CE"),
+    ("A1-CMP-8B-4B", "A1-QWEN8B", "JOINT-QWEN", "oof", "实验 A：Qwen3-8B 对 Qwen3-4B-Instruct-2507（同划分、同种子、同配方；系统比较，模型不同）"),
     ("JOINT-CMP-QWEN", "JOINT-QWEN", "JOINT-CE", "oof", "英语五折配对比较：qwen 对 CE"),
     ("JOINT-CMP-KD", "JOINT-KD", "JOINT-CE", "oof", "英语五折配对比较：kd 对 CE"),
     ("CMP-12", "QWEN-Q1-DROP", "QWEN-Q0-CE", "fold0", "只加 dropout 对 CE"),
@@ -325,6 +351,7 @@ NOTES = {
     "JOINT-CMP-DIR_RDROP": "使用共同种子；fold0已用于探索，五折并非独立隐藏测试。区间不包含重新训练随机性。",
     "JOINT-CMP-SCL": "使用共同种子；fold0已用于探索，五折并非独立隐藏测试。区间不包含重新训练随机性。",
     "JOINT-CMP-MOCO_M0.999": "使用共同种子；fold0已用于探索，五折并非独立隐藏测试。区间不包含重新训练随机性。",
+    "A1-CMP-8B-4B": "登记的变量只差模型；未登记的分词器、聊天模板（8B 带空 think 块）和后训练方式也不同，所以是系统比较。按事先规则（均值 > 0 且区间下限 > 0）不算提升。区间不包含重新训练随机性。",
     "JOINT-CMP-QWEN": "使用共同种子；fold0已用于探索，五折并非独立隐藏测试。区间不包含重新训练随机性。",
     "JOINT-CMP-KD": "使用共同种子；fold0已用于探索，五折并非独立隐藏测试。区间不包含重新训练随机性。",
     "ML-CMP-T2": "执行环境迁移复现：同一 fold 0 只有 608 行，单个种子的差可到 3 个百分点，逐条预测 87–89% 相同",

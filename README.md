@@ -1,6 +1,6 @@
 # Pan-Yan-0 的学习笔记（note 分支）
 
-[Qwen3-8B v5 重建代码与运行说明](ML_note/实验/SemEval_DiCo-NLI/code/qwen8b_v5/README.md)：CPU检查通过，待Claude审阅和新的A10验收；不沿用v4验收资格。
+[实验A：Qwen3-8B英语五折三种子](ML_note/实验/SemEval_DiCo-NLI/metrics/qwen8b_a1/README.md)已完成：OOF sym WF1 84.87%，对4B同种子差+0.50个百分点、区间包含0，按事先规则不算提升。
 
 
 机器学习与 NLP 的实验记录、论文笔记和课程笔记。实验和笔记都在 [ML_note/](ML_note/) 下。
@@ -24,7 +24,7 @@ ML_note/
 
 | 项目 | 当前进度 | 主要结果与范围 |
 |---|---|---|
-| [SemEval-2027 DiCo-NLI](ML_note/实验/SemEval_DiCo-NLI/README.md) | 初步实验阶段完成；进入语义错误诊断和数据扩充设计 | 英语五折OOF sym WF1：Qwen SFT 84.37%；mDeBERTa R-Drop 80.69%、CE 80.03%（五种子）；KD 80.22%、匹配CE 80.23%（三种子）。西语/巴语/跨语言mDeBERTa CE五折三种子OOF：77.97% / 73.45% / 74.95%。Qwen技巧仅英语单折，新方法多语言验证待后续安排 |
+| [SemEval-2027 DiCo-NLI](ML_note/实验/SemEval_DiCo-NLI/README.md) | 初步实验阶段完成；进入语义错误诊断和数据扩充设计 | 英语五折OOF sym WF1：Qwen3-8B SFT 84.87%、Qwen3-4B SFT 84.37%（差别不显著）；mDeBERTa R-Drop 80.69%、CE 80.03%（五种子）；KD 80.22%、匹配CE 80.23%（三种子）。西语/巴语/跨语言mDeBERTa CE五折三种子OOF：77.97% / 73.45% / 74.95%。Qwen技巧仅英语单折，新方法多语言验证待后续安排 |
 | [SST-2](ML_note/实验/SST2/README.md) | 指令学习与微调对照完成 | 验证872条：DeepSeek 95.18%、Gemma 3 12B 94.61%、Qwen 4B 93.81%；DeBERTa全量95.60% |
 | [IMDB](ML_note/实验/IMDB/README.md) | 编码器与大模型微调完成 | Kaggle AUC：DeBERTa-v2-xxlarge LoRA 0.98294；Qwen3-4B指令微调0.99493 |
 | [ShortGPT BI 删层（Qwen3-8B）](ML_note/实验/ShortGPT_BI删层/README.md) | 正式运行完成（Kaggle 2×T4，61 分钟） | 删 9 层不恢复：PPL 9.71 → 1074，arc_easy 80.9 → 42.6；decode 加速 1.31–1.33 倍。PPL 和准确率对"BI 删层 vs 从后往前删"给出相反结论 |

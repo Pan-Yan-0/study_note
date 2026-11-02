@@ -1,11 +1,14 @@
 """One GPU job per subprocess. Simulated interruption exits before reload."""
 import argparse, importlib.util, importlib.metadata, os, sys, platform, time
 from common import *
-def load(root,data,fold,smoke,batch):
+def load(root,data,fold,smoke,batch,overrides=True):
+    """overrides=False 只给 compat 的旧入口用：除路径和环境变量外，上游的全局设置一个都不改。"""
     os.environ.update(DICO_WORK=str(root),DICO_DIR=str(data),DICO_METHOD='ce',DICO_SMOKE='1' if smoke else '0',HF_ENDPOINT=os.environ.get('HF_ENDPOINT','https://hf-mirror.com'))
+    if 'hf-mirror' in os.environ['HF_ENDPOINT']: os.environ.setdefault('HF_HUB_DISABLE_XET','1')  # v5.5：同上游第 101 行，镜像不转发 Xet 存储
     spec=importlib.util.spec_from_file_location('v5_upstream',HERE/'upstream_qwen.py'); q=importlib.util.module_from_spec(spec); spec.loader.exec_module(q)
-    q.MODEL=MODEL; q.MODEL_REVISION=REV; q.HOLDOUT_FOLD=fold
-    q.TRAIN_BATCH=batch; q.GRAD_ACC=16//batch; q.LORA_DROPOUT=0
+    if overrides:
+        q.MODEL=MODEL; q.MODEL_REVISION=REV; q.HOLDOUT_FOLD=fold
+        q.TRAIN_BATCH=batch; q.GRAD_ACC=16//batch; q.LORA_DROPOUT=0
     require((data/'final_data').is_dir(),'请先解压官方数据并指定 --data')
     require(q.fingerprint()['data_sha256']==read(HERE/'expected_data.json'),'官方数据与原验收版本不一致')
     return q
@@ -16,13 +19,36 @@ def runtime():
     require(torch.cuda.is_bf16_supported(),'需要原生 bf16')
     return {'python':platform.python_version(),'torch':torch.__version__,'cuda':torch.version.cuda,'gpu':torch.cuda.get_device_name(0),'precision':'bf16','packages':{k:importlib.metadata.version(k) for k in ('transformers','peft','accelerate','datasets','numpy','safetensors','tokenizers','huggingface_hub')}}
 
+def fetch_verified(q,rev):
+    """v5.5：先用上游的 ModelScope 下载（含逐文件核对）；ModelScope 出错时，改从 HF_ENDPOINT 按固定 commit 下载，
+    并用同样的办法逐文件核对（大文件比 SHA-256，小文件比 git blob 哈希），对不上就停。q.MODEL 决定下载哪个模型。"""
+    try: return q.fetch_from_modelscope(rev)
+    except Exception as e: print(f'ModelScope 没成功（{type(e).__name__}: {str(e)[:300]}），改从 {os.environ["HF_ENDPOINT"]} 下载',flush=True)
+    from huggingface_hub import HfApi, snapshot_download
+    info=HfApi().model_info(q.MODEL,revision=rev,files_metadata=True); require(info.sha==rev,'Hugging Face 快照不同: '+str(info.sha))
+    path=snapshot_download(q.MODEL,revision=rev)
+    bad,checked=[],0
+    for sib in info.siblings:
+        name=sib.rfilename
+        if name in q.MODEL_SKIP_CHECK: continue
+        f=Path(path)/name
+        if not f.is_file(): bad.append(name+'：没下载到'); continue
+        lfs=sib.lfs
+        if lfs: ok=q.file_digest(str(f),'sha256')==(lfs['sha256'] if isinstance(lfs,dict) else lfs.sha256)
+        else: ok=q.file_digest(str(f),'sha1',b'blob %d\0'%f.stat().st_size)==sib.blob_id
+        checked+=1
+        if not ok: bad.append(name+'：内容不同')
+    require(checked>0 and not bad,'镜像下载的文件和 Hugging Face 快照记录对不上：'+str(bad[:5]))
+    print(f'从 {os.environ["HF_ENDPOINT"]} 下载，{checked} 个文件都和快照 {rev} 逐个核对一致：',path,flush=True)
+    return path,rev,os.environ['HF_ENDPOINT']+'（ModelScope 失败后改用；已按 Hugging Face 快照逐文件核对）'
+
 def run(a):
     root=Path(a.root).resolve(); data=Path(a.data).resolve(); root.mkdir(parents=True,exist_ok=True)
     q=load(root,data,a.fold,a.kind in ('interrupt','resume','smoke','probe'),a.batch)
     ident={'pipeline':pipeline(),'model':MODEL,'revision':REV,'data':q.fingerprint()['data_sha256'],'batch':a.batch,'grad_acc':16//a.batch}
     bind(root/'identity.json',ident)
     if a.kind=='download':
-        path,rev,source=q.fetch_from_modelscope(REV)
+        path,rev,source=fetch_verified(q,REV)
         require(rev==REV,'模型快照不同')
         p=Path(path); files={str(f.relative_to(p)):sha(f) for f in sorted(p.rglob('*')) if f.is_file()}
         write(root/'model.json',{'path':str(p),'revision':rev,'source':source,'files':files}); return

@@ -1,0 +1,19 @@
+运行平台： PAI-DSW ；结果目录： /mnt/workspace/dico_qwen8b_v5
+模型下载地址： https://hf-mirror.com ；模型缓存： /mnt/workspace/dico_qwen8b_v5/hf_cache
+方法： ce {'lora_dropout': 0.0, 'loss': 'CE'} ；SMOKE： True
+模型快照： b968826d9c46dd6066d109eabc6255188de91218 ；读概率的字母 token： {'A': [32, 362], 'B': [33, 425], 'C': [34, 356], 'D': [35, 422]} ；训练目标 token： {'A': 362, 'B': 425, 'C': 356, 'D': 422}
+损失自检通过：监督对比、对称 KL 和逐条参考实现一致；autocast 里仍是 fp32；队列的环形写入正确
+Loading weights:   0%|          | 0/399 [00:00<?, ?it/s]Loading weights:   0%|          | 1/399 [00:00<00:41,  9.60it/s]Loading weights:   1%|          | 2/399 [00:00<00:55,  7.10it/s]Loading weights:   7%|▋         | 27/399 [00:00<00:03, 95.86it/s]Loading weights:  13%|█▎        | 50/399 [00:00<00:02, 139.63it/s]Loading weights:  20%|█▉        | 78/399 [00:00<00:01, 183.46it/s]Loading weights:  26%|██▌       | 103/399 [00:00<00:01, 200.27it/s]Loading weights:  32%|███▏      | 126/399 [00:00<00:01, 205.04it/s]Loading weights:  37%|███▋      | 149/399 [00:00<00:01, 208.03it/s]Loading weights:  44%|████▍     | 177/399 [00:01<00:00, 227.44it/s]Loading weights:  51%|█████     | 202/399 [00:01<00:00, 220.73it/s]Loading weights:  57%|█████▋    | 226/399 [00:01<00:00, 221.66it/s]Loading weights:  63%|██████▎   | 253/399 [00:01<00:00, 233.42it/s]Loading weights:  70%|██████▉   | 278/399 [00:01<00:00, 234.15it/s]Loading weights:  76%|███████▌  | 302/399 [00:01<00:00, 232.44it/s]Loading weights:  82%|████████▏ | 326/399 [00:01<00:00, 228.72it/s]Loading weights:  88%|████████▊ | 351/399 [00:01<00:00, 233.09it/s]Loading weights:  95%|█████████▍| 378/399 [00:01<00:00, 236.68it/s]Loading weights: 100%|██████████| 399/399 [00:01<00:00, 204.30it/s]
+    加载模型：加载前已分配显存 0.01 GiB，加载后 15.26 GiB
+    跳过检查点 checkpoint-999999：trainer_state.json 不完整（JSONDecodeError）；已移到 /mnt/workspace/dico_qwen8b_v5/smoke/seed42/fold0/checkpoints_invalid/checkpoint-999999-20261102-101417
+    从检查点 checkpoint-13 接着训练（已完成 1 轮）
+[transformers] The tokenizer has new PAD/BOS/EOS tokens that differ from the model config and generation config. The model config and generation config were aligned accordingly, being updated with the tokenizer's values. Updated tokens: {'pad_token_id': 151643}.
+    前向核对：交叉熵路径 autocast (True, 'torch.bfloat16')，隐状态路径 (True, 'torch.bfloat16')；8 行的四类 log 概率最大差 0，argmax 一致 100%
+  0%|          | 0/26 [00:00<?, ?it/s] 54%|█████▍    | 14/26 [00:04<00:03,  3.48it/s] 58%|█████▊    | 15/26 [00:07<00:06,  1.67it/s] 62%|██████▏   | 16/26 [00:11<00:09,  1.06it/s] 65%|██████▌   | 17/26 [00:15<00:12,  1.37s/it]    step 18/26  3.7 秒/步  这一组的训练预计还要 0 分钟
+ 69%|██████▉   | 18/26 [00:18<00:14,  1.77s/it] 73%|███████▎  | 19/26 [00:22<00:14,  2.14s/it] 77%|███████▋  | 20/26 [00:26<00:15,  2.52s/it]                                                77%|███████▋  | 20/26 [00:26<00:15,  2.52s/it] 81%|████████  | 21/26 [00:30<00:14,  2.80s/it] 85%|████████▍ | 22/26 [00:33<00:12,  3.01s/it] 88%|████████▊ | 23/26 [00:37<00:09,  3.27s/it] 92%|█████████▏| 24/26 [00:41<00:06,  3.40s/it] 96%|█████████▌| 25/26 [00:45<00:03,  3.49s/it]{'loss': '0.7922', 'grad_norm': '2.645', 'learning_rate': '2.917e-05', 'epoch': '1.56'}
+    step 26/26  3.6 秒/步  这一组的训练预计还要 0 分钟
+100%|██████████| 26/26 [00:47<00:00,  3.08s/it]    第 2 轮：训练损失 0.7922  内层验证 WF1 0.6922（目前最好是第 2 轮）
+                                               100%|██████████| 26/26 [01:05<00:00,  3.08s/it]100%|██████████| 26/26 [01:05<00:00,  2.50s/it]
+{'train_runtime': '66.26', 'train_samples_per_second': '3.019', 'train_steps_per_second': '0.196', 'train_loss': '0.7927', 'epoch': '2'}
+    载入第 1 轮的权重：504 个张量和文件逐位相同；内层验证逐条预测和训练时一致 100.0%，概率最大差 0，WF1 0.6083（训练时 0.6083）
+    载入第 2 轮的权重：504 个张量和文件逐位相同；内层验证逐条预测和训练时一致 100.0%，概率最大差 0，WF1 0.6922（训练时 0.6922）

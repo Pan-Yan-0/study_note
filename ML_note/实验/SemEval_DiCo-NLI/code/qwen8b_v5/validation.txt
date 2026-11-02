@@ -1,17 +1,13 @@
-test_completed_artifact_damage (test_queue.Checks.test_completed_artifact_damage) ... ok
-test_formal_rejects_without_confirmation (test_queue.Checks.test_formal_rejects_without_confirmation) ... ok
-test_identity_change (test_queue.Checks.test_identity_change) ... ok
-test_oof_duplicate_missing (test_queue.Checks.test_oof_duplicate_missing) ... ok
-test_plan_subprocess (test_queue.Checks.test_plan_subprocess) ... ok
-test_probability (test_queue.Checks.test_probability) ... ok
-test_seed_major (test_queue.Checks.test_seed_major) ... ok
-test_source_identity (test_queue.Checks.test_source_identity) ... ok
+v5.5 代码身份（common.pipeline）：f2f1baa343504a42cb9edd86a48a9bde22f9490ddcef6a596d62ca29ce166693
+上游 upstream_qwen.py：502e638814ba2b7a840f33aa3b481de1f1e0bf2887ff7d976dd86131d3b603b0（未改）
+相对 v5.4（74f537c3…）只改下载：worker.fetch_verified（ModelScope 出错时改从 HF_ENDPOINT 按固定 commit 下载，逐文件核验）、
+compat 的 4B 下载用同一函数、下载超时 1200 秒 → 7200 秒、镜像下载时设 HF_HUB_DISABLE_XET=1（同上游第 101 行）；
+a10_session.sh（不进代码身份）加 all 命令。
 
-----------------------------------------------------------------------
-Ran 8 tests in 0.081s
+== python3 -m unittest test_queue（Claude 云端环境，无 torch；新增 V55 五项：ModelScope 成功时不碰 HF、
+   回退后逐文件核验通过、篡改大文件 / 篡改小文件 / 缺文件 / 快照 commit 不同都会停、超时 2 小时、两处下载都用回退函数）
+Ran 18 tests in 4.443s  OK 
+== bash -n run_a10.sh a10_session.sh：通过
+== a10_session.sh all 用 CPU 实测：plan 通过；download 失败（无 torch）后停止，不再继续；有任务在跑时拒绝重复启动
 
-OK
-
-Python compileall: PASS
-bash -n: PASS
-GPU / actual model / real-data split execution: NOT RUN
+GPU / 真实模型 / 真实 hf-mirror 下载：未运行

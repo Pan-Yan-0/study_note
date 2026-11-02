@@ -1,0 +1,17 @@
+运行平台： PAI-DSW ；结果目录： /mnt/workspace/dico_qwen8b_v5
+模型下载地址： https://hf-mirror.com ；模型缓存： /mnt/workspace/dico_qwen8b_v5/hf_cache
+方法： ce {'lora_dropout': 0.0, 'loss': 'CE'} ；SMOKE： True
+模型快照： b968826d9c46dd6066d109eabc6255188de91218 ；读概率的字母 token： {'A': [32, 362], 'B': [33, 425], 'C': [34, 356], 'D': [35, 422]} ；训练目标 token： {'A': 362, 'B': 425, 'C': 356, 'D': 422}
+损失自检通过：监督对比、对称 KL 和逐条参考实现一致；autocast 里仍是 fp32；队列的环形写入正确
+Loading weights:   0%|          | 0/399 [00:00<?, ?it/s]Loading weights:   0%|          | 1/399 [00:00<00:43,  9.07it/s]Loading weights:   1%|          | 2/399 [00:00<00:54,  7.30it/s]Loading weights:   7%|▋         | 26/399 [00:00<00:03, 93.54it/s]Loading weights:  12%|█▏        | 49/399 [00:00<00:02, 138.36it/s]Loading weights:  18%|█▊        | 72/399 [00:00<00:01, 164.00it/s]Loading weights:  25%|██▌       | 100/399 [00:00<00:01, 198.98it/s]Loading weights:  31%|███▏      | 125/399 [00:00<00:01, 210.25it/s]Loading weights:  37%|███▋      | 148/399 [00:00<00:01, 211.66it/s]Loading weights:  43%|████▎     | 171/399 [00:01<00:01, 212.62it/s]Loading weights:  49%|████▉     | 197/399 [00:01<00:00, 222.15it/s]Loading weights:  56%|█████▌    | 224/399 [00:01<00:00, 230.07it/s]Loading weights:  62%|██████▏   | 248/399 [00:01<00:00, 221.89it/s]Loading weights:  69%|██████▉   | 275/399 [00:01<00:00, 234.60it/s]Loading weights:  75%|███████▌  | 301/399 [00:01<00:00, 238.34it/s]Loading weights:  81%|████████▏ | 325/399 [00:01<00:00, 226.04it/s]Loading weights:  88%|████████▊ | 351/399 [00:01<00:00, 234.96it/s]Loading weights:  95%|█████████▍| 378/399 [00:01<00:00, 238.24it/s]Loading weights: 100%|██████████| 399/399 [00:01<00:00, 203.67it/s]
+    加载模型：加载前已分配显存 0.01 GiB，加载后 15.26 GiB
+    从头训练
+[transformers] The tokenizer has new PAD/BOS/EOS tokens that differ from the model config and generation config. The model config and generation config were aligned accordingly, being updated with the tokenizer's values. Updated tokens: {'pad_token_id': 151643}.
+    前向核对：交叉熵路径 autocast (True, 'torch.bfloat16')，隐状态路径 (True, 'torch.bfloat16')；8 行的四类 log 概率最大差 0，argmax 一致 100%
+  0%|          | 0/2 [00:00<?, ?it/s] 50%|█████     | 1/2 [00:04<00:04,  4.09s/it]    第 1 轮：训练损失 -  内层验证 WF1 0.4720（目前最好是第 1 轮）
+    step 2/2  20.6 秒/步  这一组的训练预计还要 0 分钟
+100%|██████████| 2/2 [00:24<00:00, 13.79s/it]    第 2 轮：训练损失 -  内层验证 WF1 0.5209（目前最好是第 2 轮）
+                                             100%|██████████| 2/2 [00:41<00:00, 13.79s/it]100%|██████████| 2/2 [00:41<00:00, 20.69s/it]
+{'train_runtime': '42.74', 'train_samples_per_second': '0.749', 'train_steps_per_second': '0.047', 'train_loss': '7.251', 'epoch': '2'}
+    载入第 1 轮的权重：504 个张量和文件逐位相同；内层验证逐条预测和训练时一致 100.0%，概率最大差 0，WF1 0.4720（训练时 0.4720）
+    载入第 2 轮的权重：504 个张量和文件逐位相同；内层验证逐条预测和训练时一致 100.0%，概率最大差 0，WF1 0.5209（训练时 0.5209）

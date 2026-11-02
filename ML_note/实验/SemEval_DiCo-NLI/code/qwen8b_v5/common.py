@@ -6,6 +6,10 @@ UPSTREAM = '502e638814ba2b7a840f33aa3b481de1f1e0bf2887ff7d976dd86131d3b603b0'
 MODEL = 'Qwen/Qwen3-8B'
 REV = 'b968826d9c46dd6066d109eabc6255188de91218'
 SOURCES = ('common.py','worker.py','a1_queue.py','upstream_qwen.py','run_a10.sh','compat.py','expected_data.json')
+# 交接和打包用的同一份白名单（prepare_upload 和 pack 共用）；SOURCES 之外的不进代码身份
+SHIP = SOURCES + ('README.md','test_queue.py','prepare_upload.py','a10_session.sh','GPT_to_Claude_v5.md','Claude_to_GPT_v5.2.md')
+BASELINE = {'baseline/zero4b_cache_a10_t1.jsonl':'a4bff3d86fac722ada51bb7632577c033da51d88a6da6b762921a18969b40c2e'}  # 仓库 metrics/qwen_sft_a10_t1/track1/zero_shot/cache.jsonl 的副本
+LOCK_NAMES = ('.queue.lock','.session.lock')
 def require(ok, message):
     if not ok: raise ValueError(message)
 def sha(p):
@@ -38,3 +42,19 @@ def verify(d,identity):
         p=d/n; require(p.resolve().is_relative_to(d.resolve()),'非法回执路径')
         require(p.is_file() and sha(p)==h,'完成文件缺失/变化: '+n)
 def tasks(): return [(f,s) for s in (42,43,44) for f in range(5)]
+
+def ship_files():
+    """白名单里实际存在的文件（相对 HERE），随包缓存必须和登记的哈希一致。"""
+    out = [n for n in SHIP if (HERE/n).is_file()]
+    for n, h in BASELINE.items():
+        require((HERE/n).is_file() and sha(HERE/n) == h, '随包零样本缓存缺失或被改动: '+n); out.append(n)
+    return out
+def root_lock(root):
+    """同一个 ROOT 同时只允许一个协调器写入。非阻塞：已有进程持有时立即报错。返回的文件对象要一直持有。"""
+    import fcntl
+    p = Path(root)/'.queue.lock'; p.parent.mkdir(parents=True, exist_ok=True)
+    f = open(p, 'a+')
+    try: fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        f.close(); raise ValueError('这个 ROOT 已有任务正在运行（%s 被占用）。用 status 看进度，不要重复启动。' % p)
+    return f
