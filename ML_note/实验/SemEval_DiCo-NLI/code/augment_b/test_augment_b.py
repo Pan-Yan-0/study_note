@@ -59,7 +59,7 @@ class Pipeline(unittest.TestCase):
                 self.assertTrue(all(p["sample_id"] in set(split[str(k)]["fit"]) for p in b["parents"]))
             self.assertIn("real examples from the dataset", b["prompt"])
         self.assertEqual(len(fam), 195)
-        d = po.load(f"{self.pkg}/debug/debug_b02.json")
+        d = po.load(f"{self.pkg}/debug/debug_b03.json")
         self.assertIn("hand-written examples", d["prompt"]); self.assertNotIn("real examples", d["prompt"])
 
     def test_check_format(self):
