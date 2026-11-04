@@ -1,0 +1,28 @@
+You are writing new training examples for a phrase-level natural language inference task.
+
+TASK
+Each example is an ordered pair of short English phrases (text1, text2). The phrases are chunks like those found in image captions or news headlines: noun phrases, verb phrases, prepositional phrases, or short headline fragments. The label gives the inference relation from text1 to text2:
+- EQUIVALENCE: each phrase entails the other.
+- FORWARD_ENTAILMENT: text1 entails text2, but text2 does not entail text1.
+- NEGATIVE_OTHER: neither phrase entails the other. The two phrases should still be about a comparable part of a scene or story (for example a different place, attribute, number, action or participant), not random unrelated phrases.
+
+FORMAT EXAMPLES (written by hand for this instruction; they show the output format only)
+{"text1": "a red kite above the dunes", "text2": "a kite in the air", "label": "FORWARD_ENTAILMENT"}
+{"text1": "the mayor of the town", "text2": "the town's mayor", "label": "EQUIVALENCE"}
+{"text1": "on a crowded ferry", "text2": "near the empty harbor", "label": "NEGATIVE_OTHER"}
+
+REFERENCE PAIRS (real examples from the dataset, with their labels; use them only to match the domain, length and phrase style)
+{reference_pairs}
+
+WHAT TO WRITE
+Write exactly {n_equivalence} EQUIVALENCE pairs, {n_forward} FORWARD_ENTAILMENT pairs and {n_other} NEGATIVE_OTHER pairs ({n_total} pairs in total).
+Rules:
+1. Every pair must be new. Do not copy, paraphrase, translate or reorder any reference pair, and do not reuse a reference phrase.
+2. Keep each phrase short, similar in length to the reference phrases.
+3. text1 and text2 must be different strings, and no pair may appear twice.
+4. Use only the information in this message. Do not open files, search the web or look at any other material.
+
+OUTPUT
+Return only one JSON object and nothing else, with no Markdown code fence:
+{"batch_id": "{batch_id}", "pairs": [{"text1": "...", "text2": "...", "label": "..."}, ...]}
+Each label must be exactly one of EQUIVALENCE, FORWARD_ENTAILMENT, NEGATIVE_OTHER.
