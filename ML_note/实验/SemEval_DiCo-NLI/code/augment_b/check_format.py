@@ -9,7 +9,8 @@
   4. label 不在本批允许的标签里；
   5. 各标签的对数和配额不完全相等。
 重复、过长、和官方数据或父样本相同等问题不算格式错误，不触发重试，交给 process_outputs.py 确定性过滤。
-空回复、超时、工具报错属于基础设施错误，由调度方另记 status=infra_error，不经过本脚本。
+只有能证实的基础设施故障（超时、工具报错、连接中断）才由调度方记 status=infra_error，不经过本脚本；
+模型正常结束却返回空内容，按格式不合格处理。每批最多：1 次基础设施重派 + 1 次格式重试，总共不超过 3 次尝试。
 """
 import hashlib, json, sys
 from collections import Counter
@@ -30,12 +31,15 @@ def check(batch, raw):
     s, fenced = parse(raw)
     out = {"status": "ok", "reasons": reasons, "fence_stripped": fenced,
            "raw_sha256": hashlib.sha256(raw.encode("utf-8")).hexdigest(), "pairs": None}
+    parsed = True
     try:
         obj = json.loads(s)
     except Exception as e:
         reasons.append(f"不是完整的 JSON：{type(e).__name__}")
-        obj = None
-    if obj is not None:
+        parsed, obj = False, None
+    if not s:
+        reasons.append("空回复（模型正常结束却没有内容，按格式不合格记）")
+    elif parsed:
         if not isinstance(obj, dict):
             reasons.append("顶层不是 JSON 对象")
         else:
@@ -58,8 +62,9 @@ def check(batch, raw):
                         reasons.append(f"配额不符：要求 {batch['quota_pairs']}，实际 {dict(got)}")
                     else:
                         out["pairs"] = [{"text1": p["text1"], "text2": p["text2"], "label": p["label"]} for p in pairs]
-    if reasons:
+    if reasons or out["pairs"] is None:
         out["status"] = "format_fail"
+        if not reasons: reasons.append("没有得到合格的 pairs")
     return out
 
 

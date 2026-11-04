@@ -11,16 +11,17 @@ FORMAT EXAMPLES (written by hand for this instruction; they show the output form
 {"text1": "the mayor of the town", "text2": "the town's mayor", "label": "EQUIVALENCE"}
 {"text1": "on a crowded ferry", "text2": "near the empty harbor", "label": "NEGATIVE_OTHER"}
 
-REFERENCE PAIRS (real examples from the dataset, with their labels; use them only to match the domain, length and phrase style)
+REFERENCE PAIRS ({reference_source}, with their labels; use them only to match the domain, length and phrase style)
 {reference_pairs}
 
 WHAT TO WRITE
 Write exactly {n_equivalence} EQUIVALENCE pairs, {n_forward} FORWARD_ENTAILMENT pairs and {n_other} NEGATIVE_OTHER pairs ({n_total} pairs in total).
 Rules:
-1. Every pair must be new. Do not copy, paraphrase, translate or reorder any reference pair, and do not reuse a reference phrase.
-2. Keep each phrase short, similar in length to the reference phrases.
-3. text1 and text2 must be different strings, and no pair may appear twice.
-4. Use only the information in this message. Do not open files, search the web or look at any other material.
+1. Every pair must be new. Do not copy, paraphrase, translate or reorder any reference pair, and do not reuse any reference phrase, not even as one side of a pair.
+2. Make the pairs varied: use different topics and different kinds of differences between text1 and text2. Do not use the same pattern (for example the same kind of word change) for more than two pairs.
+3. Keep each phrase short, similar in length to the reference phrases.
+4. text1 and text2 must be different strings, and no pair may appear twice.
+5. Use only the information in this message. Do not open files, search the web or look at any other material.
 
 OUTPUT
 Return only one JSON object and nothing else, with no Markdown code fence:
