@@ -2,9 +2,10 @@ You are writing new training examples for a phrase-level natural language infere
 
 TASK
 Each example is an ordered pair of short English phrases (text1, text2). The phrases are chunks like those found in image captions or news headlines: noun phrases, verb phrases, prepositional phrases, or short headline fragments. The label gives the inference relation from text1 to text2:
-- EQUIVALENCE: each phrase entails the other.
-- FORWARD_ENTAILMENT: text1 entails text2, but text2 does not entail text1.
+- EQUIVALENCE: each phrase entails the other. Everything said in one phrase must also follow from the other, so neither phrase may add a place, time, participant, attribute or other detail that the other does not imply.
+- FORWARD_ENTAILMENT: text1 entails text2, but text2 does not entail text1. Everything text2 says must follow from text1; text1 adds something more specific.
 - NEGATIVE_OTHER: neither phrase entails the other. The two phrases should still be about a comparable part of a scene or story (for example a different place, attribute, number, action or participant), not random unrelated phrases.
+Things that are related, likely or usually seen together do not count as entailment; only what must be true counts.
 
 FORMAT EXAMPLES (written by hand for this instruction; they show the output format only)
 {"text1": "a red kite above the dunes", "text2": "a kite in the air", "label": "FORWARD_ENTAILMENT"}

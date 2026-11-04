@@ -12,7 +12,7 @@ from collections import Counter, defaultdict
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SE = os.path.dirname(os.path.dirname(HERE))
-VERSION = "augb-pilot-v2"
+VERSION = "augb-pilot-v3"
 SEED = 20261104
 PILOT = {"batches_4fold": 2, "batches_other": 1, "n_4fold_sigs": 5, "n_other_sigs": 5, "parents_per_batch": 13,
          "quota": {"EQUIVALENCE": 3, "FORWARD_ENTAILMENT": 7, "NEGATIVE_OTHER": 4}}
@@ -22,7 +22,8 @@ SOURCE_TEXT = {"real": "real examples from the dataset", "hand": "hand-written e
 
 
 def sha_bytes(b): return hashlib.sha256(b).hexdigest()
-def sha_file(p): return sha_bytes(open(p, "rb").read())
+def sha_file(p):
+    with open(p, "rb") as f: return sha_bytes(f.read())
 def canon(obj): return json.dumps(obj, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
 def norm(s): return " ".join(s.lower().split())
 
@@ -146,8 +147,8 @@ def main():
     hand = json.load(open(os.path.join(HERE, "handwritten_reference_pairs.json"), encoding="utf-8"))
     hits = [x for e in examples + hand for x in (e["text1"], e["text2"]) if norm(x) in phrases]
     assert len(examples) == 3 and len(hand) == PILOT["parents_per_batch"] and not hits, hits
-    dprompt = fill(template, hand, q, "debug_b01", "hand")
-    debug = {"batch_id": "debug_b01", "package_version": VERSION, "stage": "debug", "signature": "", "usable_folds": [],
+    dprompt = fill(template, hand, q, "debug_b02", "hand")
+    debug = {"batch_id": "debug_b02", "package_version": VERSION, "stage": "debug", "signature": "", "usable_folds": [],
              "context_parent_ids": [], "context_parent_families": [], "parents": hand, "quota_pairs": q, "allowed_labels": sorted(q),
              "template_sha256": sha_file(template_path), "split_manifest_sha256": split_sha,
              "prompt": dprompt, "prompt_sha256": sha_bytes(dprompt.encode("utf-8"))}

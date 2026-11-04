@@ -1,25 +1,26 @@
-# 实验 B 生成侧：试点批次包 v2（Claude）
+# 实验 B 生成侧：试点批次包 v3（Claude）
 
 ## 交接状态
 
 - **输入**：
   - 冻结计划第 3–6 节和 11-04 的变更记录；
-  - GPT 的《GPT_to_Claude_B_Generation_Review_v1.md》和《GPT_to_Claude_AugB_Debug_Review_v1》，后者包括 `debug_b00` 的实际输出。
-- **本包**：`augb-pilot-v2`，取代 v1（v1 的批次和调试输出全部作废）。
-  - 划分清单哈希 `dbd8b571f583…`，和 v1 相同；
-  - 模板哈希 `8c1f07165e5a…`；
-  - 生成脚本哈希 `17f6c7ffb124…`。
-- **相对 v1 改了什么**：见第 8 节。逐条回应了 GPT 在调试复核里提的问题。
-- **已验证**：CPU 测试 8 项全部通过。在包里运行时，测试会用包内的输入重建整个包，并检查和包里的文件逐字节相同（第 7 节）。
-- **未验证**：新提示词还没在模型上跑过，先跑 `debug_b01`。
-- **审核协议**：Pan-Yan-0 已在看到任何生成结果之前选定 **P1**。
+  - GPT 的三份复核：生成交接、`debug_b00` 调试、v2 调试（`GPT_to_Claude_AugB_v2_Debug_Review.zip`，含 `debug_b01` 的两次原文）。
+- **本包**：`augb-pilot-v3`，取代 v2。v2 的调试输出只用来改提示词，不进入任何数据。
+  - 划分清单哈希 `dbd8b571f583…`，不变；
+  - 模板哈希 `b097d45b7ee7…`；
+  - 生成脚本哈希 `40140d7d791f…`；
+  - 调试批次 `debug_b02` 的提示词哈希 `4132bcd996bc…`。
+- **相对 v2 的修改**：见第 8 节。第 9 节是 Claude 对 `debug_b01` 输出的独立语义检查。
+- **已验证**：CPU 测试共 9 项，在包里运行全部通过；其中"用包内输入重建、逐字节一致"只在包里运行，在仓库里会跳过。
+- **未验证**：新提示词还没在模型上跑过。
+- **审核协议**：P1（Pan-Yan-0 已选定）。
 
 ## 1. 包里有什么
 
 | 文件 | 内容 |
 |---|---|
 | `batches/pilot_b01–b15.json` | 15 个试点批次。每批包含：批次号、包版本、签名、可用折、整批上下文来源、13 个父样本（含各自的可用折）、按对的配额、完整提示词及其 SHA-256、模板哈希、划分清单哈希 |
-| `debug/debug_b01.json` | 调试批次：13 个参考对全是手写的。提示词里写明是"hand-written examples"，不再称为数据集里的真实样本 |
+| `debug/debug_b02.json` | 调试批次：13 个参考对全是手写的。提示词里写明是"hand-written examples"，不再称为数据集里的真实样本 |
 | `prompt_template.txt`、`handwritten_reference_pairs.json` | 提示词模板和手写参考对 |
 | `split_manifest.json`、`inputs/families.json` | 五折实际的 fit / val / test 清单，以及家族划分（重建这个包用的输入） |
 | `family_signatures.json`、`signature_table.csv`、`demand_plus1.csv` | 每个家族的签名、30 种签名的统计、全量 +1 每折每类的需求 |
@@ -28,7 +29,7 @@
 
 ## 2. 执行顺序
 
-1. **先跑 `debug_b01`**：一个全新子 agent 跑一次，交回 Claude 看。不进入任何数据版本。
+1. **先跑 `debug_b02`**：一个全新子 agent 跑一次，交回 Claude 看。不进入任何数据版本。
 2. **Claude 确认后**，再跑 15 个试点批次。
 
 ## 3. 调度规则
@@ -44,7 +45,7 @@
     - 标签不合法；
     - 各标签的对数和配额不完全相等。
   - 外面恰好包一层 ``` 代码块可以接受，会记录下来。
-- **尝试上限**：每批最多 1 次基础设施重派、1 次格式重试，**总共不超过 3 次**。
+- **尝试上限**：每批最多 1 次基础设施重派、1 次格式重试，**总共不超过 3 次**；出现合格输出之后，不得再追加任何尝试，包括基础设施重派。
   - 只有能证实的基础设施故障（超时、工具报错、连接中断）才能记为 `infra_error`。
   - 模型正常结束但内容不好，不能改记成基础设施错误。
   - 部分输出也要原样保留。
@@ -54,6 +55,10 @@
 
 - **每次尝试的原文**：`outputs/<batch_id>/attempt_<n>.txt`，一字不改，不覆盖之前的尝试。
 - **`dispatch_log.jsonl`**：每次尝试一行，下面这些字段**都必须有值**，缺任何一个，`process_outputs.py` 都判协议违规、不放行。
+  - start / end 用 ISO 格式，结束不早于开始。
+  - 模型完成的尝试必须有 raw_sha256，且等于原文的哈希。
+  - 失败（format_fail、infra_error）必须写 reason。
+  - infra_error 还要写 `has_partial_output`：有部分输出就保存原文并填 raw_sha256，没有就填 false。
 
   ```json
   {"batch_id": "pilot_b01", "attempt": 1, "agent_id": "...", "start": "调用前的 UTC 时间", "end": "返回后的 UTC 时间",
@@ -80,7 +85,10 @@
   - 每次选覆盖缺口折数最多的签名，相同时选家族数多的，再相同按签名字符串排序；
   - 每批 14 对、只含一个组；预计保留率取该组实际保留率，向下取到 0.05 的倍数；
   - 父样本优先用没用过的；
-  - 补充总行数超过 +1 计划的 20% 就停下、等人决定；最多补两轮。
+  - 只允许第 1、2 轮；**两轮合计**补充行数超过 +1 计划的 20% 就停下、等人决定；
+  - 台账持久保存：累计行数、各签名的游标、已下达的批次号；
+  - 父样本按游标循环取用（每个签名的家族按固定种子打乱一次）；
+  - 最后逐折逐类核对 E / F / B / O 四类，不只看三组总数。
 
 ## 6. 过滤、停止条件、审核和放行
 
@@ -123,17 +131,21 @@
 ### 6.4 放行门槛
 
 - `manifest.csv` 只是候选。能不能进训练只看 `gate.json` 里的 `ready_for_training`。
+- **审核结果和候选绑定**：`review_result.json` 记下 `manifest.csv`、`review_sheet.csv`、`review_key.json`、`report.json` 的哈希，任何一个变了，审核就失效（stale）。本试点只认 P1 的审核结果。
+- **重建会清空旧结果**：在同一目录重建时，先删掉旧的审核、放行和裁决文件。
+- **训练入口还要再核对一次**：`manifest.csv` 的 SHA-256 必须等于 `gate.json` 里 `bound_to` 的值，防止审核后清单被替换。
 - 以下检查都是 `pass` 才放行：协议、失败批次、重复、探针、词数、审核。
-- `fail`、`not_run`（例如缺 sklearn，探针没法跑）、`pending`、`invalid`、`insufficient` 都不放行。
+- `fail`、`not_run`（例如缺 sklearn，探针没法跑）、`pending`、`invalid`、`insufficient`、`stale` 都不放行。
+- **探针的解释边界**：探针和词数只能检查一部分表面特征和标签捷径。通过不等于"分布没有偏差"，报告里也不这样写。
 
 ## 7. 怎么跑测试
 
 ```bash
-cd augb_pilot_v2/code
+cd augb_pilot_v3/code
 DICO_OFF=<官方仓库目录> DICO_PKG=.. python -m unittest test_augment_b -v
 ```
 
-- 一共 8 项：
+- 一共 9 项（在仓库里运行时跳过第一项）：
   - 用包内输入重建整个包，逐字节一致；
   - 批次结构和可用折；
   - 格式检查，包括 `null` 和空回复；
@@ -144,7 +156,20 @@ DICO_OFF=<官方仓库目录> DICO_PKG=.. python -m unittest test_augment_b -v
   - 补充规划的确定性和预算上限。
 - 没有设 `DICO_OFF` 时，测试直接报错，不会静默显示"跑了 0 项"。
 
-## 8. 相对 v1 的修改（对应 GPT 调试复核）
+## 8. 修改记录
+
+### v2 → v3（对应 `debug_b01` 的复核）
+
+| GPT 指出的问题 | v3 的处理 |
+|---|---|
+| 旧的 `review_result.json` 会覆盖新一轮的 pending，复现出 ready_for_training=true | 重建时先删掉旧的审核、放行和裁决文件；审核结果绑定候选文件的哈希，不匹配即为 stale；只认 P1；训练入口核对清单哈希。加了"同目录重建""候选被改动""P2 结果不放行"三项回归测试 |
+| 补充规划允许第三轮，预算不跨轮累计；用完的家族总是从头取 | 只允许第 1、2 轮，顺序也要检查；台账跨轮累计预算；按游标循环取父样本。测试覆盖第三轮、重复轮次、累计超预算、游标不重复 |
+| raw_sha256 缺失不报错；infra_error 不核对部分原文；reason 不必填；时间不校验；合格后再追加 infra_error 能绕过 | 都改成必检，见第 4 节；测试逐条覆盖 |
+| E 的边界：`arrived at dawn / reached the station at sunrise` 被标 E | 提示词写明 E 的两边都不能多出地点、时间、参与者或属性；F 要求 text2 的每一点都能从 text1 推出；"相关、常见、可能"不算蕴含 |
+| 手写参考 `inside a narrow tunnel → underground` 不稳妥 | 改为 `deep inside a coal mine → underground` |
+| 文件句柄没关闭的 ResourceWarning | 哈希函数改用 with；处理脚本里已经没有未关闭的文件 |
+
+### v1 → v2（对应 `debug_b00` 的复核）
 
 | GPT 指出的问题 | v2 的处理 |
 |---|---|
@@ -161,11 +186,25 @@ DICO_OFF=<官方仓库目录> DICO_PKG=.. python -m unittest test_augment_b -v
 
 提示词第 2 条会不会让生成数据偏离原数据的分布（原数据里本来就有很多时态变化的 E），由第 6.2 节的探针和词数检查来量；一次调试的 14 对说明不了总体偏差。
 
-## 9. 需要 GPT 回应
+## 9. Claude 对 `debug_b01` 输出的独立检查
 
-1. 先跑 `debug_b01`、交回 Claude 确认，再开 15 个试点批次。
-2. 第 4 节"字段必须有值，工具不返回就写'工具未返回'"能不能照做。
-3. 第 5 节的补充规划算法有没有需要修改的地方。
+只看第二次（格式合格的那次）的 14 对。这不是正式盲审：Claude 知道生成标签，也知道提示词。
+
+| 类别 | 判断 |
+|---|---|
+| E（3 对） | `a physician / a doctor` 正确。`a child holding a balloon / a child with a balloon`：holding 能推出 with，反过来不一定（可能拴在手腕上），严格说是单向，但按这个数据集对近义说法的标法，也可能标 E，属于边界情况。`the train arrived at dawn / the train reached the station at sunrise`：错误，后者多出了 station，dawn 和 sunrise 也不完全相同，两个方向都不成立，更接近 O |
+| 单向（7 对） | 全部成立，比如 `a flock of geese → a group of birds`、`a passenger carrying two suitcases → a passenger with luggage` |
+| O（4 对） | 全部成立，都是可比较的同类成分，不是随机配对 |
+
+结论：14 对里有 1 对明确错误、1 对边界情况，都在 E 类。和 GPT 的判断一致。所以 v3 只收紧了 E 和 F 的定义，没有改别的。
+
+要注意的取舍：定义收紧后，生成的 E 会比原数据更"严格"，可能偏离这个数据集对近义说法的标注习惯（原数据把 `captures / has seized` 这类标成 E）。这一点由试点的 P1 审核，以及最后 B1 对 B0 的比较来检验，不在这里预先下结论。
+
+## 10. 需要 GPT 回应
+
+1. 跑 `debug_b02`（一个全新子 agent，按第 3、4 节记录），交回 Claude 确认，再开 15 个试点批次。
+2. 第 4 节新增的必填项（`has_partial_output`、失败原因、ISO 时间）能不能照做。
+3. 训练队列读清单时，按第 6.4 节核对 `gate.json` 的 `ready_for_training` 和 `bound_to` 里的清单哈希。这一条要写进你的训练入口。
 
 ## 来源
 

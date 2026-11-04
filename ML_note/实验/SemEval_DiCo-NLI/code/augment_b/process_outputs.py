@@ -9,7 +9,10 @@ build 导出的 manifest.csv 只是候选；能不能进入训练只看 gate.jso
 任何一项检查失败、没有执行、依赖缺失、协议违规或审核没有完成，都是 false。
 
 交回目录：outputs/<batch_id>/attempt_<n>.txt（原样全文）和 dispatch_log.jsonl（每次尝试一行）。
-尝试上限：每批最多 1 次基础设施重派 + 1 次格式重试，总共不超过 3 次。
+尝试上限：每批最多 1 次基础设施重派 + 1 次格式重试，总共不超过 3 次；出现合格输出后不得再追加任何尝试。
+调度记录必填：agent_id、start / end（ISO 时间，结束不早于开始）、requested_model、visible_model、prompt_sha256、status；
+模型完成的尝试必须有 raw_sha256 且和原文一致；失败必须写 reason；infra_error 必须写 has_partial_output，有部分输出就保留原文和哈希。
+审核结果绑定 manifest / review_sheet / review_key / report 的哈希，任一变化即失效；本试点只认 P1。
 过滤（按顺序，命中第一条就去掉；只做确定性检查，不做语义筛选）：
   same_text            两侧规范化后相同
   length               任一侧词数不在 1–20
@@ -35,7 +38,8 @@ GROUPS = ("EQUIVALENCE", "FORWARD_ENTAILMENT", "NEGATIVE_OTHER")
 
 def norm(s): return " ".join(s.lower().split())
 def words(s): return len(s.split())
-def sha_file(p): return hashlib.sha256(open(p, "rb").read()).hexdigest()
+def sha_file(p):
+    with open(p, "rb") as f: return hashlib.sha256(f.read()).hexdigest()
 
 
 def read_csv(p):
@@ -92,13 +96,25 @@ def probe(pairs, seed=REVIEW_SEED):
     return balanced_accuracy_score(y, pred)
 
 
+def parse_time(x):
+    from datetime import datetime
+    if not isinstance(x, str): raise TypeError
+    return datetime.fromisoformat(x.replace("Z", "+00:00"))
+
+
 def verdict(value, threshold):
     if value is None: return "not_run"
     return "fail" if value > threshold else "pass"
 
 
+DERIVED = ("manifest.csv", "filter_decisions.csv", "attempts.csv", "review_sheet.csv", "review_key.json", "report.json",
+           "gate.json", "review_result.json", "adjudication_list.csv")
+
+
 def build(pkg, ret, off, out, data_version):
     os.makedirs(out, exist_ok=True)
+    for name in DERIVED:  # 重建时让旧的审核结果和放行记录全部失效
+        if os.path.exists(f"{out}/{name}"): os.remove(f"{out}/{name}")
     problems = []
     pkg_manifest = load(f"{pkg}/MANIFEST.json")
     for rel, h in pkg_manifest["files"].items():
@@ -122,22 +138,35 @@ def build(pkg, ret, off, out, data_version):
         if len(infra) > 1: problems.append(f"{bid}：基础设施重派超过 1 次")
         if len(model) > 2: problems.append(f"{bid}：模型尝试超过 2 次")
         if len(entries) > 3: problems.append(f"{bid}：总尝试超过 3 次")
+        first_ok = next((e["attempt"] for e in entries if e["status"] == "ok"), None)
+        if first_ok is not None and entries[-1]["attempt"] > first_ok: problems.append(f"{bid}：已有合格输出后又追加了尝试")
         for e in entries:
-            if e.get("prompt_sha256") != b["prompt_sha256"]: problems.append(f"{bid} 第 {e['attempt']} 次：提示词哈希不一致")
+            tag = f"{bid} 第 {e['attempt']} 次"
+            if e.get("prompt_sha256") != b["prompt_sha256"]: problems.append(f"{tag}：提示词哈希不一致")
             for k in ("agent_id", "start", "end", "requested_model", "visible_model"):
-                if not e.get(k): problems.append(f"{bid} 第 {e['attempt']} 次：调度记录缺 {k}")
+                if not e.get(k): problems.append(f"{tag}：调度记录缺 {k}")
+            if e["status"] not in ("ok", "format_fail", "infra_error"): problems.append(f"{tag}：状态不合法 {e['status']}")
+            if e["status"] != "ok" and not e.get("reason"): problems.append(f"{tag}：失败没有写原因")
+            try:
+                t0, t1 = parse_time(e.get("start")), parse_time(e.get("end"))
+                if t1 < t0: problems.append(f"{tag}：结束时间早于开始时间")
+            except (TypeError, ValueError):
+                problems.append(f"{tag}：起止时间不是 ISO 格式")
+            path = f"{ret}/outputs/{bid}/attempt_{e['attempt']}.txt"
             if e["status"] == "infra_error":
+                # 基础设施失败：必须写明有没有部分输出；有就保留原文并核对哈希
+                if "has_partial_output" not in e: problems.append(f"{tag}：基础设施失败没写 has_partial_output")
+                elif e["has_partial_output"] != os.path.exists(path): problems.append(f"{tag}：has_partial_output 和实际文件不符")
+                elif os.path.exists(path) and e.get("raw_sha256") != sha_file(path): problems.append(f"{tag}：部分输出的哈希和日志不同")
                 attempts_report.append({"batch_id": bid, "attempt": e["attempt"], "status": "infra_error", "reasons": e.get("reason", "")})
                 continue
-            path = f"{ret}/outputs/{bid}/attempt_{e['attempt']}.txt"
             if not os.path.exists(path): problems.append(f"{bid}：缺 attempt_{e['attempt']}.txt"); continue
             with open(path, encoding="utf-8") as f: r = check(b, f.read())
-            if r["status"] != e["status"]: problems.append(f"{bid} 第 {e['attempt']} 次：日志状态 {e['status']}，脚本判定 {r['status']}")
-            if e.get("raw_sha256") and e["raw_sha256"] != r["raw_sha256"]: problems.append(f"{bid} 第 {e['attempt']} 次：原文哈希和日志不同")
+            if r["status"] != e["status"]: problems.append(f"{tag}：日志状态 {e['status']}，脚本判定 {r['status']}")
+            if e.get("raw_sha256") != r["raw_sha256"]: problems.append(f"{tag}：原文哈希缺失或和日志不同")
             attempts_report.append({"batch_id": bid, "attempt": e["attempt"], "status": r["status"], "reasons": "；".join(r["reasons"]),
                                     "raw_sha256": r["raw_sha256"], "visible_model": e.get("visible_model", "")})
             if r["status"] == "ok" and bid not in chosen: chosen[bid] = (e, r)
-        if len(model) > 1 and model[0]["status"] == "ok": problems.append(f"{bid}：第一次已合格却又重试")
     failed = sorted(set(batches) - set(chosen))
 
     # ---------- 过滤和展开 ----------
@@ -238,13 +267,20 @@ def build(pkg, ret, off, out, data_version):
     return report
 
 
+def bound_files(out):
+    return {n: sha_file(f"{out}/{n}") for n in ("manifest.csv", "review_sheet.csv", "review_key.json", "report.json")}
+
+
 def write_gate(out):
     report = load(f"{out}/report.json")
     checks = dict(report["checks"])
+    current = bound_files(out)
     if os.path.exists(f"{out}/review_result.json"):
-        checks["review"] = load(f"{out}/review_result.json")["status"]
-    gate = {"checks": checks, "ready_for_training": all(v == "pass" for v in checks.values()),
-            "rule": "所有检查都是 pass 才放行；fail / not_run / pending / invalid / insufficient 都不放行"}
+        rr = load(f"{out}/review_result.json")
+        checks["review"] = rr["status"] if rr.get("bound_to") == current and rr.get("protocol") == "P1" else "stale_or_wrong_protocol"
+    gate = {"checks": checks, "ready_for_training": all(v == "pass" for v in checks.values()), "bound_to": current,
+            "rule": "所有检查都是 pass 才放行；fail / not_run / pending / invalid / insufficient / stale 都不放行。"
+                    "训练入口必须核对 manifest.csv 的 SHA-256 等于 bound_to 里的值"}
     dump(f"{out}/gate.json", gate)
     return gate
 
@@ -319,7 +355,7 @@ def score(out, protocol, a_path, b_path):
     else: status = "pass"
     result = {"protocol": protocol, "status": status, "errors": errs, "by_group": by_group,
               "threshold": STOP["review_mismatch"], "min_decided_per_group": MIN_DECIDED,
-              "inputs_sha256": {"a": sha_file(a_path), "b": sha_file(b_path)}}
+              "inputs_sha256": {"a": sha_file(a_path), "b": sha_file(b_path)}, "bound_to": bound_files(out)}
     dump(f"{out}/review_result.json", result)
     gate = write_gate(out)
     print(json.dumps({"review": result, "gate": gate}, ensure_ascii=False, indent=1))
