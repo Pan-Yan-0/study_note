@@ -16,11 +16,9 @@ import supplement  # noqa: E402
 
 
 def fake_pairs(batch, tag):
-    out = []
-    for lab, n in batch["quota_pairs"].items():
-        for i in range(n):
-            out.append({"text1": f"zq{tag}{lab[:3].lower()}{i} pier", "text2": f"zq{tag}{lab[:3].lower()}{i} by water", "label": lab})
-    return out
+    """按 ref_labels 的顺序（第 k 对对应参考对 Rk）造假的生成输出。"""
+    return [{"text1": f"zq{tag}{lab[:3].lower()}{i} pier", "text2": f"zq{tag}{lab[:3].lower()}{i} by water", "label": lab}
+            for i, lab in enumerate(batch["ref_labels"])]
 
 
 def write_ann(path, rows):
@@ -60,8 +58,12 @@ class Pipeline(unittest.TestCase):
             self.assertIn("real examples from the dataset", b["prompt"])
             mx = max(len(p[k].split()) for p in b["parents"] for k in ("text1", "text2"))  # 长度要求来自本批父样本
             self.assertIn(f"No phrase may have more than {mx} words.", b["prompt"]); self.assertNotIn("{ref_", b["prompt"])
-        self.assertEqual(len(fam), 195)
-        d = po.load(f"{self.pkg}/debug/debug_b04.json")
+        self.assertEqual(len(fam), 210)
+        for b in self.batches.values():  # 每批按配额分层：ref_labels 和父样本标签一致，计数等于配额
+            self.assertEqual(b["ref_labels"], [p["label"] for p in b["parents"]])
+            self.assertEqual({l: b["ref_labels"].count(l) for l in b["quota_pairs"]}, b["quota_pairs"])
+            self.assertIn(f"R{len(b['parents'])}: ", b["prompt"])
+        d = po.load(f"{self.pkg}/debug/debug_b05.json")
         self.assertIn("hand-written examples", d["prompt"]); self.assertNotIn("real examples", d["prompt"])
 
     def test_check_format(self):
@@ -73,6 +75,10 @@ class Pipeline(unittest.TestCase):
             self.assertEqual(check(b, raw)["status"], "format_fail", raw[:20])
         x = json.loads(good); x["pairs"].pop(); self.assertEqual(check(b, json.dumps(x))["status"], "format_fail")
         x = json.loads(good); x["pairs"][0]["label"] = "BACKWARD_ENTAILMENT"; self.assertEqual(check(b, json.dumps(x))["status"], "format_fail")
+        # 计数对但顺序错（第 k 对的标签和 Rk 不同）也是格式不合格
+        x = json.loads(good); i = next(k for k, l in enumerate(b["ref_labels"]) if l != b["ref_labels"][0])
+        x["pairs"][0], x["pairs"][i] = x["pairs"][i], x["pairs"][0]
+        r = check(b, json.dumps(x)); self.assertEqual(r["status"], "format_fail"); self.assertIn("对应参考对", r["reasons"][0])
 
     def make_return(self, name, broken=True):
         ret = f"{self.t}/{name}"
@@ -205,25 +211,37 @@ class Pipeline(unittest.TestCase):
             po.probe = orig
         self.assertEqual(r["checks"]["probe_gap"], "not_run")
 
+    def test_mirror_diagnosis(self):
+        """diagnose_pilot.mirror 按 pair_uid 的序号找到对应参考对 Rk，标签逐位一致；假输出的实词和父样本不重叠。"""
+        import diagnose_pilot
+        ret, _ = self.make_return("ret_mirror", broken=False)
+        out = f"{self.t}/out_mirror"; po.build(self.pkg, ret, OFF, out, "test")
+        m = diagnose_pilot.mirror(out, self.pkg)
+        self.assertEqual(set(m["same_construction_share"]), {"EQUIVALENCE", "FORWARD_ENTAILMENT", "NEGATIVE_OTHER"})
+        self.assertGreater(m["content_word_jaccard_with_parent"]["share_zero"], 0.9)  # 假输出只有 pier / water 可能和父样本撞
+        self.assertEqual(diagnose_pilot.content_jaccard("the red barn", "a red barn door"), 2 / 3)  # 不计 the / a
+        self.assertEqual(diagnose_pilot.kind("old dog", "dog"), "text2_subset")
+
     def test_supplement_plan(self):
-        sig = {"0134": ["a", "b"], "0124": ["c"], "1234": ["d", "e", "f"], "024": ["g"]}
+        sig = {"0134": {"E": ["a", "b"], "O": ["a2"]}, "0124": {"E": ["c"]}, "1234": {"E": ["d", "e", "f"], "O": ["d2"]}, "024": {"E": ["g"]}}
         kr = {"E": 0.83, "U": 0.9, "O": 0.7}
         deficit = {(0, "E"): 30, (2, "E"): 10, (3, "O"): 5}
         b1, st1, led1 = supplement.plan(deficit, sig, kr, 3000, supplement.new_ledger(), 1)
         b2, st2, _ = supplement.plan(deficit, sig, kr, 3000, supplement.new_ledger(), 1)
         self.assertEqual(st1, "ok"); self.assertEqual(b1, b2)  # 确定性
         self.assertEqual([b["signature"] for b in b1 if b["group"] == "E"][0], "0124")  # 同时覆盖 0、2 折
-        self.assertTrue(all(len(b["parent_families"]) <= 13 for b in b1))
+        self.assertTrue(all(len(b["parent_families"]) == b["quota_pairs"][supplement.LABEL_OF[b["group"]]] <= 14 for b in b1))
+        self.assertTrue(all(set(b["parent_families"]) <= set(sig[b["signature"]][b["group"]]) for b in b1))  # 父样本来自本组
         with self.assertRaises(ValueError): supplement.plan(deficit, sig, kr, 3000, led1, 3)   # 不允许第三轮
         with self.assertRaises(ValueError): supplement.plan(deficit, sig, kr, 3000, led1, 1)   # 同一轮不能再来
         with self.assertRaises(ValueError): supplement.plan(deficit, sig, kr, 3000, supplement.new_ledger(), 2)
         # 预算跨轮累计：每轮各 14 行，计划 100 行 → 第一轮 14% 通过，第二轮累计 28% 超过 20%
-        small = {(0, "O"): 1}
-        _, s1, l1 = supplement.plan(small, sig, {"E": 1, "U": 1, "O": 1}, 100, supplement.new_ledger(), 1)
-        _, s2, _ = supplement.plan(small, sig, {"E": 1, "U": 1, "O": 1}, 100, l1, 2)
+        small, osig = {(0, "O"): 1}, {"0134": {"O": [f"o{i}" for i in range(20)]}}  # 一批 14 个 O 父样本 = 14 行
+        _, s1, l1 = supplement.plan(small, osig, {"E": 1, "U": 1, "O": 1}, 100, supplement.new_ledger(), 1)
+        _, s2, _ = supplement.plan(small, osig, {"E": 1, "U": 1, "O": 1}, 100, l1, 2)
         self.assertEqual(s1, "ok"); self.assertIn("预算不足", s2)
         # 游标循环：同一签名连续两批取到不同的家族
-        big = {k: list("abcdefghijklmnopqrstuvwxyz") for k in ("0134",)}
+        big = {"0134": {"E": [f"e{i}" for i in range(28)]}}  # 两批各 14 个，正好不重叠
         bb, _, _ = supplement.plan({(0, "E"): 40}, big, {"E": 1, "U": 1, "O": 1}, 10 ** 6, supplement.new_ledger(), 1)
         self.assertGreaterEqual(len(bb), 2); self.assertFalse(set(bb[0]["parent_families"]) & set(bb[1]["parent_families"]))
 

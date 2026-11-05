@@ -7,7 +7,8 @@
   2. batch_id 和批次文件不同；没有 pairs 列表；
   3. 某一项缺 text1 / text2 / label，或不是字符串，或文本去空白后为空；
   4. label 不在本批允许的标签里；
-  5. 各标签的对数和配额不完全相等。
+  5. 各标签的对数和配额不完全相等；
+  6. 批次有 ref_labels（v6 起按父样本仿写）时，第 k 对的标签和第 k 个参考对不同。
 重复、过长、和官方数据或父样本相同等问题不算格式错误，不触发重试，交给 process_outputs.py 确定性过滤。
 只有能证实的基础设施故障（超时、工具报错、连接中断）才由调度方记 status=infra_error，不经过本脚本；
 模型正常结束却返回空内容，按格式不合格处理。每批最多：1 次基础设施重派 + 1 次格式重试，总共不超过 3 次尝试。
@@ -56,6 +57,13 @@ def check(batch, raw):
                         reasons.append(f"第 {i} 项有空文本")
                     if p["label"] not in batch["allowed_labels"]:
                         reasons.append(f"第 {i} 项标签不合法：{p['label']}")
+                refs = batch.get("ref_labels")
+                if not reasons and refs is not None:
+                    if len(pairs) != len(refs):
+                        reasons.append(f"对数和参考对数不同：要求 {len(refs)}，实际 {len(pairs)}")
+                    else:
+                        bad = [k + 1 for k, (p, l) in enumerate(zip(pairs, refs)) if p["label"] != l]
+                        if bad: reasons.append(f"第 {bad} 对的标签和对应参考对不同")
                 if not reasons:
                     got = Counter(p["label"] for p in pairs)
                     if dict(got) != {k: v for k, v in batch["quota_pairs"].items() if v}:

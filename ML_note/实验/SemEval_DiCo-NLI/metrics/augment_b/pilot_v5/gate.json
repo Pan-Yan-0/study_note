@@ -1,0 +1,18 @@
+{
+ "checks": {
+  "protocol": "pass",
+  "batch_fail_rate": "pass",
+  "dup_rate": "pass",
+  "probe_gap": "fail",
+  "length_dev": "pass",
+  "review": "pending"
+ },
+ "ready_for_training": false,
+ "bound_to": {
+  "manifest.csv": "5a69ab93455ef90f458186cb2f05b534f507d590745d00a6e3530103ae3cd759",
+  "review_sheet.csv": "63dbcf437536d1c347c130862e0724108213a7a87f4d541770223b0cc70842f8",
+  "review_key.json": "26e093542636a304ac1f966ee4bdf17985e6f990765f33f6bf857694f0d6b82e",
+  "report.json": "ab96091c8363690d822fd851ccb1b198f8b4492a551f2f1c304a23c502ba3979"
+ },
+ "rule": "所有检查都是 pass 才放行；fail / not_run / pending / invalid / insufficient / stale 都不放行。训练入口必须核对 manifest.csv 的 SHA-256 等于 bound_to 里的值"
+}

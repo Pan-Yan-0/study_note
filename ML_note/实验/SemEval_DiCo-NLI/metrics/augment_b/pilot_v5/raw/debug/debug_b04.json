@@ -1,0 +1,90 @@
+{
+ "batch_id": "debug_b04",
+ "package_version": "augb-pilot-v5",
+ "stage": "debug",
+ "signature": "",
+ "usable_folds": [],
+ "context_parent_ids": [],
+ "context_parent_families": [],
+ "parents": [
+  {
+   "text1": "an old fisherman",
+   "text2": "a fisherman",
+   "label": "FORWARD_ENTAILMENT"
+  },
+  {
+   "text1": "Flooding hits coastal villages",
+   "text2": "villages flooded",
+   "label": "FORWARD_ENTAILMENT"
+  },
+  {
+   "text1": "purchased",
+   "text2": "bought",
+   "label": "EQUIVALENCE"
+  },
+  {
+   "text1": "deep inside a coal mine",
+   "text2": "underground",
+   "label": "FORWARD_ENTAILMENT"
+  },
+  {
+   "text1": "'s brand-new bicycle",
+   "text2": "'s bicycle",
+   "label": "FORWARD_ENTAILMENT"
+  },
+  {
+   "text1": "the French capital",
+   "text2": "Paris",
+   "label": "EQUIVALENCE"
+  },
+  {
+   "text1": "7",
+   "text2": "2 firefighters",
+   "label": "NEGATIVE_OTHER"
+  },
+  {
+   "text1": "on a muddy trail",
+   "text2": "on a path",
+   "label": "FORWARD_ENTAILMENT"
+  },
+  {
+   "text1": "behind a wooden barn",
+   "text2": "beside a stone wall",
+   "label": "NEGATIVE_OTHER"
+  },
+  {
+   "text1": "a huge crowd",
+   "text2": "a very large crowd",
+   "label": "EQUIVALENCE"
+  },
+  {
+   "text1": "Three cyclists",
+   "text2": "An old couple",
+   "label": "NEGATIVE_OTHER"
+  },
+  {
+   "text1": "scored a late goal",
+   "text2": "scored",
+   "label": "FORWARD_ENTAILMENT"
+  },
+  {
+   "text1": "a teenager on skates",
+   "text2": "a skater",
+   "label": "FORWARD_ENTAILMENT"
+  }
+ ],
+ "quota_pairs": {
+  "EQUIVALENCE": 3,
+  "FORWARD_ENTAILMENT": 7,
+  "NEGATIVE_OTHER": 4
+ },
+ "allowed_labels": [
+  "EQUIVALENCE",
+  "FORWARD_ENTAILMENT",
+  "NEGATIVE_OTHER"
+ ],
+ "template_sha256": "9715b0d1e2b9683a19f4eeff48b4b6c2004e12e6c86557c19855dbd1601c9eff",
+ "split_manifest_sha256": "dbd8b571f5836352bb88b7018ec4471b5038801e37c588ef4e04342430aaba17",
+ "prompt": "You are writing new training examples for a phrase-level natural language inference task.\n\nTASK\nEach example is an ordered pair of short English phrases (text1, text2). The phrases are chunks like those found in image captions or news headlines: noun phrases, verb phrases, prepositional phrases, or short headline fragments. The label gives the inference relation from text1 to text2:\n- EQUIVALENCE: each phrase entails the other. Everything said in one phrase must also follow from the other, so neither phrase may add a place, time, participant, attribute or other detail that the other does not imply.\n- FORWARD_ENTAILMENT: text1 entails text2, but text2 does not entail text1. Everything text2 says must follow from text1; text1 adds something more specific.\n- NEGATIVE_OTHER: neither phrase entails the other. The two phrases should still be about a comparable part of a scene or story (for example a different place, attribute, number, action or participant), not random unrelated phrases.\nThings that are related, likely or usually seen together do not count as entailment; only what must be true counts.\n\nFORMAT EXAMPLES (written by hand for this instruction; they show the output format only)\n{\"text1\": \"red kite above dunes\", \"text2\": \"kite in the air\", \"label\": \"FORWARD_ENTAILMENT\"}\n{\"text1\": \"town mayor\", \"text2\": \"mayor of the town\", \"label\": \"EQUIVALENCE\"}\n{\"text1\": \"crowded ferry\", \"text2\": \"empty harbor\", \"label\": \"NEGATIVE_OTHER\"}\n\nREFERENCE PAIRS (hand-written examples in the style of the dataset, with their labels; use them only to match the domain, length and phrase style)\n{\"text1\": \"an old fisherman\", \"text2\": \"a fisherman\", \"label\": \"FORWARD_ENTAILMENT\"}\n{\"text1\": \"Flooding hits coastal villages\", \"text2\": \"villages flooded\", \"label\": \"FORWARD_ENTAILMENT\"}\n{\"text1\": \"purchased\", \"text2\": \"bought\", \"label\": \"EQUIVALENCE\"}\n{\"text1\": \"deep inside a coal mine\", \"text2\": \"underground\", \"label\": \"FORWARD_ENTAILMENT\"}\n{\"text1\": \"'s brand-new bicycle\", \"text2\": \"'s bicycle\", \"label\": \"FORWARD_ENTAILMENT\"}\n{\"text1\": \"the French capital\", \"text2\": \"Paris\", \"label\": \"EQUIVALENCE\"}\n{\"text1\": \"7\", \"text2\": \"2 firefighters\", \"label\": \"NEGATIVE_OTHER\"}\n{\"text1\": \"on a muddy trail\", \"text2\": \"on a path\", \"label\": \"FORWARD_ENTAILMENT\"}\n{\"text1\": \"behind a wooden barn\", \"text2\": \"beside a stone wall\", \"label\": \"NEGATIVE_OTHER\"}\n{\"text1\": \"a huge crowd\", \"text2\": \"a very large crowd\", \"label\": \"EQUIVALENCE\"}\n{\"text1\": \"Three cyclists\", \"text2\": \"An old couple\", \"label\": \"NEGATIVE_OTHER\"}\n{\"text1\": \"scored a late goal\", \"text2\": \"scored\", \"label\": \"FORWARD_ENTAILMENT\"}\n{\"text1\": \"a teenager on skates\", \"text2\": \"a skater\", \"label\": \"FORWARD_ENTAILMENT\"}\n\nLENGTH AND STYLE OF THIS BATCH\nThe 26 reference phrases above have 2.7 words on average; half of them have 2 to 4 words, and the longest has 5 words. 8 of the 26 start with \"a\", \"an\" or \"the\". Within a reference pair, the two phrases differ in length by 1.5 words on average.\n- Your phrases must have the same average length as the reference phrases. No phrase may have more than 5 words.\n- Within each pair, the two phrases should differ in length about as much as the reference pairs with the same label do.\n- Start about the same share of phrases with \"a\", \"an\" or \"the\" as the reference phrases do.\n\nWHAT TO WRITE\nWrite exactly 3 EQUIVALENCE pairs, 7 FORWARD_ENTAILMENT pairs and 4 NEGATIVE_OTHER pairs (14 pairs in total).\nRules:\n1. Every pair must be new. Do not copy, paraphrase, translate or reorder any reference pair, and do not reuse any reference phrase, not even as one side of a pair.\n2. Make the pairs varied: use different topics and different kinds of differences between text1 and text2. Do not use the same pattern (for example the same kind of word change) for more than two pairs.\n3. Follow LENGTH AND STYLE OF THIS BATCH above.\n4. text1 and text2 must be different strings, and no pair may appear twice.\n5. Do not write pairs whose only difference is a number or a quantity (for example \"five lanterns\" / \"eight lanterns\").\n6. Use only the information in this message. Do not open files, search the web or look at any other material.\n7. Before answering, check that you wrote exactly 3 EQUIVALENCE, 7 FORWARD_ENTAILMENT and 4 NEGATIVE_OTHER pairs, that every pair has text1, text2 and label, and that no phrase has more than 5 words.\n\nOUTPUT\nReturn only one JSON object and nothing else, with no Markdown code fence:\n{\"batch_id\": \"debug_b04\", \"pairs\": [{\"text1\": \"...\", \"text2\": \"...\", \"label\": \"...\"}, ...]}\nEach label must be exactly one of EQUIVALENCE, FORWARD_ENTAILMENT, NEGATIVE_OTHER.\n",
+ "prompt_sha256": "19504a1f2bf24e23eeb67543aecd4f4dc73e1b12036f14c4a6605e67e931b704"
+}

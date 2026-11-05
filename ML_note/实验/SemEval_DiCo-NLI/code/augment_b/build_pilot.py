@@ -6,15 +6,20 @@
 - 签名：一个家族在哪些折里属于 fit。一批只放同一签名的父样本；子样本可用折 = 整批上下文来源可用折的交集。
 - 配额按"短语对"下达：E / 单向（以 FORWARD 形式，text1 推出 text2）/ O；方向由 process_outputs.py 确定性展开。
 - 父样本按原方向展示；原方向标签是 BACKWARD 的，交换两侧后按 FORWARD 展示（只为和生成标签同一形式）。
+- v6 起按父样本仿写：每批按配额分层抽父样本（E 3 / 单向 7 / O 4），每个父样本 Rk 对应生成一对 Gk，
+  标签相同、关系类型相同、内容不同。批次文件的 ref_labels 记下 R1…Rn 的标签，check_format.py 逐位核对。
+  只差一个数量的父样本（label_conventions.number_pair）不选，因为提示词禁止生成这类对。
 """
-import argparse, csv, hashlib, json, os, random, shutil
+import argparse, csv, hashlib, json, os, random, shutil, sys
 from collections import Counter, defaultdict
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SE = os.path.dirname(os.path.dirname(HERE))
-VERSION = "augb-pilot-v5"
+sys.path.insert(0, os.path.dirname(HERE)); sys.path.insert(0, HERE)  # 仓库里在上一层，批次包里在 code/ 同一层
+from label_conventions import number_pair  # noqa: E402
+VERSION = "augb-pilot-v6"
 SEED = 20261104
-PILOT = {"batches_4fold": 2, "batches_other": 1, "n_4fold_sigs": 5, "n_other_sigs": 5, "parents_per_batch": 13,
+PILOT = {"batches_4fold": 2, "batches_other": 1, "n_4fold_sigs": 5, "n_other_sigs": 5, "parents_per_batch": 14,
          "quota": {"EQUIVALENCE": 3, "FORWARD_ENTAILMENT": 7, "NEGATIVE_OTHER": 4}}
 MARGIN = 1.25
 GROUP = {"EQUIVALENCE": "E", "FORWARD_ENTAILMENT": "U", "BACKWARD_ENTAILMENT": "U", "NEGATIVE_OTHER": "O"}
@@ -33,27 +38,16 @@ def write_json(path, obj):
     with open(path, "w", encoding="utf-8") as f: json.dump(obj, f, ensure_ascii=False, indent=1)
 
 
-ARTICLES = ("a", "an", "the")
-
-
-def ref_stats(refs):
-    """本批参考对的长度和开头冠词统计，只用本批父样本（不看标签），写进提示词的长度要求。"""
-    w = sorted(len(norm(p[k]).split()) for p in refs for k in ("text1", "text2"))
-    n = len(w)
-    diff = sum(abs(len(norm(p["text1"]).split()) - len(norm(p["text2"]).split())) for p in refs) / len(refs)
-    art = sum(norm(p[k]).split()[0] in ARTICLES for p in refs for k in ("text1", "text2"))
-    return {"n_ref_phrases": n, "ref_mean_words": f"{sum(w) / n:.1f}", "ref_q1": w[int(0.25 * (n - 1))],
-            "ref_q3": w[int(0.75 * (n - 1))], "ref_max_words": w[-1], "ref_mean_diff": f"{diff:.1f}", "ref_article": art}
-
-
-def fill(template, refs, quota, batch_id, source):
-    ref = "\n".join(json.dumps({"text1": p["text1"], "text2": p["text2"], "label": p["label"]}, ensure_ascii=False) for p in refs)
-    out = template
-    for k, v in ref_stats(refs).items(): out = out.replace("{" + k + "}", str(v))
-    out = (out.replace("{reference_source}", SOURCE_TEXT[source]).replace("{reference_pairs}", ref)
-           .replace("{n_equivalence}", str(quota["EQUIVALENCE"])).replace("{n_forward}", str(quota["FORWARD_ENTAILMENT"]))
-           .replace("{n_other}", str(quota["NEGATIVE_OTHER"])).replace("{n_total}", str(sum(quota.values())))
-           .replace("{batch_id}", batch_id))
+def fill(template, refs, batch_id, source):
+    """参考对编号 R1…Rn；长度上限取本批参考短语里最长的词数（不读标签）。"""
+    ref = "\n".join(f"R{k}: " + json.dumps({"text1": p["text1"], "text2": p["text2"], "label": p["label"]}, ensure_ascii=False)
+                     for k, p in enumerate(refs, 1))
+    q = Counter(p["label"] for p in refs)
+    mx = max(len(norm(p[x]).split()) for p in refs for x in ("text1", "text2"))
+    out = (template.replace("{reference_source}", SOURCE_TEXT[source]).replace("{reference_pairs}", ref)
+           .replace("{n_equivalence}", str(q["EQUIVALENCE"])).replace("{n_forward}", str(q["FORWARD_ENTAILMENT"]))
+           .replace("{n_other}", str(q["NEGATIVE_OTHER"])).replace("{n_total}", str(len(refs)))
+           .replace("{ref_max_words}", str(mx)).replace("{batch_id}", batch_id))
     assert "{reference_" not in out and "{n_" not in out and "{ref_" not in out
     return out
 
@@ -132,39 +126,49 @@ def main():
     template = open(template_path, encoding="utf-8").read()
     q = PILOT["quota"]
     batches, n = [], 0
+    def parent_of(f):
+        pid = sorted({byid[i]["pair_id"] for i in fam_rows[f]})[0]
+        r = byid[f"{pid}__en-en__original"]
+        t1, t2, lab = r["text1"], r["text2"], r["label"]
+        if lab == "BACKWARD_ENTAILMENT": t1, t2, lab = t2, t1, "FORWARD_ENTAILMENT"
+        return {"sample_id": r["instance_id"], "pair_id": pid, "family_id": f, "usable_folds": list(signature[f]),
+                "text1": t1, "text2": t2, "label": lab, "shown_swapped": r["label"] == "BACKWARD_ENTAILMENT"}
+    skipped_number = 0
     for s in four + other:
         fs = sorted(sig_fams[s]); rng.shuffle(fs)
+        pool = defaultdict(list)  # 按标签分层，打乱后的顺序不变
+        for f in fs:
+            p = parent_of(f)
+            if number_pair(p["text1"], p["text2"]): skipped_number += 1; continue
+            pool[p["label"]].append(p)
         for b in range(PILOT["batches_4fold"] if s in four else PILOT["batches_other"]):
-            chosen = fs[b * PILOT["parents_per_batch"]:(b + 1) * PILOT["parents_per_batch"]]
-            assert len(chosen) == PILOT["parents_per_batch"]
-            parents = []
-            for f in chosen:
-                pid = sorted({byid[i]["pair_id"] for i in fam_rows[f]})[0]
-                r = byid[f"{pid}__en-en__original"]
-                t1, t2, lab = r["text1"], r["text2"], r["label"]
-                if lab == "BACKWARD_ENTAILMENT": t1, t2, lab = t2, t1, "FORWARD_ENTAILMENT"
-                parents.append({"sample_id": r["instance_id"], "pair_id": pid, "family_id": f, "usable_folds": list(signature[f]),
-                                "text1": t1, "text2": t2, "label": lab, "shown_swapped": r["label"] == "BACKWARD_ENTAILMENT"})
+            parents = [p for lab, k in q.items() for p in pool[lab][b * k:(b + 1) * k]]
+            assert len(parents) == PILOT["parents_per_batch"] == sum(q.values()), (s, b)
+            rng.shuffle(parents)
             n += 1
             bid = f"pilot_b{n:02d}"
-            prompt = fill(template, parents, q, bid, "real")
+            prompt = fill(template, parents, bid, "real")
             batches.append({"batch_id": bid, "package_version": VERSION, "stage": "pilot", "signature": "".join(map(str, s)),
                             "usable_folds": sorted(set.intersection(*[set(p["usable_folds"]) for p in parents])),
                             "context_parent_ids": [p["sample_id"] for p in parents],
                             "context_parent_families": [p["family_id"] for p in parents],
-                            "parents": parents, "quota_pairs": q, "allowed_labels": sorted(q),
+                            "parents": parents, "ref_labels": [p["label"] for p in parents],
+                            "quota_pairs": q, "allowed_labels": sorted(q),
                             "template_sha256": sha_file(template_path), "split_manifest_sha256": split_sha,
                             "prompt": prompt, "prompt_sha256": sha_bytes(prompt.encode("utf-8"))})
 
     # 手写材料（格式示例、调试参考对）不能出现在官方训练集或 dev 里（短语级检查）
     phrases = {norm(x) for r in rows + dev for x in (r["text1"], r["text2"])}
-    examples = [json.loads(l) for l in template.split("FORMAT EXAMPLES")[1].split("REFERENCE PAIRS")[0].splitlines() if l.startswith("{")]
+    examples = [json.loads(l.split("->")[k].strip()) for l in template.split("MIRROR EXAMPLES")[1].split("REFERENCE PAIRS")[0].splitlines()
+                if l.startswith("{") for k in (0, 1)]
     hand = json.load(open(os.path.join(HERE, "handwritten_reference_pairs.json"), encoding="utf-8"))
     hits = [x for e in examples + hand for x in (e["text1"], e["text2"]) if norm(x) in phrases]
-    assert len(examples) == 3 and len(hand) == PILOT["parents_per_batch"] and not hits, hits
-    dprompt = fill(template, hand, q, "debug_b04", "hand")
-    debug = {"batch_id": "debug_b04", "package_version": VERSION, "stage": "debug", "signature": "", "usable_folds": [],
-             "context_parent_ids": [], "context_parent_families": [], "parents": hand, "quota_pairs": q, "allowed_labels": sorted(q),
+    assert len(examples) == 4 and len(hand) == PILOT["parents_per_batch"] and not hits, hits
+    assert Counter(p["label"] for p in hand) == Counter(q) and not any(number_pair(p["text1"], p["text2"]) for p in hand)
+    dprompt = fill(template, hand, "debug_b05", "hand")
+    debug = {"batch_id": "debug_b05", "package_version": VERSION, "stage": "debug", "signature": "", "usable_folds": [],
+             "context_parent_ids": [], "context_parent_families": [], "parents": hand, "ref_labels": [p["label"] for p in hand],
+             "quota_pairs": q, "allowed_labels": sorted(q),
              "template_sha256": sha_file(template_path), "split_manifest_sha256": split_sha,
              "prompt": dprompt, "prompt_sha256": sha_bytes(dprompt.encode("utf-8"))}
 
@@ -188,7 +192,8 @@ def main():
                                         "files": {p: sha_file(os.path.join(out, p)) for p in files}})
     tot = Counter()
     for b in batches: tot.update(b["quota_pairs"])
-    print(f"{VERSION}：签名 {len(sig_fams)} 种；试点 {len(batches)} 批、{sum(len(b['parents']) for b in batches)} 个父样本；配额（对）{dict(tot)}")
+    print(f"{VERSION}：签名 {len(sig_fams)} 种；试点 {len(batches)} 批、{sum(len(b['parents']) for b in batches)} 个父样本；配额（对）{dict(tot)}；"
+          f"跳过只差数量的候选父样本 {skipped_number} 个")
 
 
 if __name__ == "__main__":
