@@ -60,6 +60,7 @@ ML_note/
 | [DiCo-NLI 句对输入与一致性学习笔记](ML_note/原理笔记/NLI/DiCo-NLI句对输入与一致性学习笔记.md) | SemEval 赛题的四个标签和两个方向，模型怎么分清两段短语（段向量、位置），SoftCons 与 HardCons，对称化，R-Drop 与 KL，方向版 R-Drop |
 | [显存估算学习笔记](ML_note/原理笔记/推理优化/显存估算学习笔记.md) | 推理和训练的显存组成，KV cache 和 GQA，LoRA / QLoRA 估算，多卡切分，用 Kaggle 实测核对，访存受限的线索 |
 | [评测指标与访存受限学习笔记](ML_note/原理笔记/推理优化/评测指标与访存受限学习笔记.md) | PPL、零样本选择题、acc 与 acc_norm、TTFT 与 decode 吞吐、batch；PPL 和准确率为什么相反；访存受限与删层加速；KV cache 怎么存（PagedAttention） |
+| [泰勒重要性小实验学习笔记](ML_note/原理笔记/PyTorch/泰勒重要性小实验学习笔记.md) | MLP 中间通道的向量级泰勒重要性；泰勒估计和真实删除的对比（扰动小时准、整个删掉高估 3–5 倍、排名基本对）；训练好的模型为什么要二阶；`with` 和 `no_grad`、副作用、读报错 |
 | [张量与删层代码学习笔记](ML_note/原理笔记/PyTorch/张量与删层代码学习笔记.md) | 张量维度与 `dim`、FP16 溢出、`ModuleList` 与引用、列表推导式、`set`、`enumerate`、`getattr`，删层后为什么要重新编号，Kaggle 上的三个报错 |
 | [反向传播学习笔记](ML_note/原理笔记/反向传播/反向传播学习笔记.md) | 两层小网络从后往前推：损失对分数的梯度 p − q，传到 W₂、h，穿过 ReLU 到 W₁；反向传播与梯度下降的分工 |
 | [IMDB 六模型实战与概念问答](ML_note/实验/IMDB/notes/IMDB六模型实战与概念问答.md) | GloVe 六模型的概念问答整理 |
