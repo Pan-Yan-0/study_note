@@ -8,23 +8,29 @@ Each example is an ordered pair of short English phrases (text1, text2). The phr
 Things that are related, likely or usually seen together do not count as entailment; only what must be true counts.
 
 FORMAT EXAMPLES (written by hand for this instruction; they show the output format only)
-{"text1": "a red kite above the dunes", "text2": "a kite in the air", "label": "FORWARD_ENTAILMENT"}
-{"text1": "the mayor of the town", "text2": "the town's mayor", "label": "EQUIVALENCE"}
-{"text1": "on a crowded ferry", "text2": "near the empty harbor", "label": "NEGATIVE_OTHER"}
+{"text1": "red kite above dunes", "text2": "kite in the air", "label": "FORWARD_ENTAILMENT"}
+{"text1": "town mayor", "text2": "mayor of the town", "label": "EQUIVALENCE"}
+{"text1": "crowded ferry", "text2": "empty harbor", "label": "NEGATIVE_OTHER"}
 
 REFERENCE PAIRS ({reference_source}, with their labels; use them only to match the domain, length and phrase style)
 {reference_pairs}
+
+LENGTH AND STYLE OF THIS BATCH
+The {n_ref_phrases} reference phrases above have {ref_mean_words} words on average; half of them have {ref_q1} to {ref_q3} words, and the longest has {ref_max_words} words. {ref_article} of the {n_ref_phrases} start with "a", "an" or "the". Within a reference pair, the two phrases differ in length by {ref_mean_diff} words on average.
+- Your phrases must have the same average length as the reference phrases. No phrase may have more than {ref_max_words} words.
+- Within each pair, the two phrases should differ in length about as much as the reference pairs with the same label do.
+- Start about the same share of phrases with "a", "an" or "the" as the reference phrases do.
 
 WHAT TO WRITE
 Write exactly {n_equivalence} EQUIVALENCE pairs, {n_forward} FORWARD_ENTAILMENT pairs and {n_other} NEGATIVE_OTHER pairs ({n_total} pairs in total).
 Rules:
 1. Every pair must be new. Do not copy, paraphrase, translate or reorder any reference pair, and do not reuse any reference phrase, not even as one side of a pair.
 2. Make the pairs varied: use different topics and different kinds of differences between text1 and text2. Do not use the same pattern (for example the same kind of word change) for more than two pairs.
-3. Keep each phrase short, similar in length to the reference phrases.
+3. Follow LENGTH AND STYLE OF THIS BATCH above.
 4. text1 and text2 must be different strings, and no pair may appear twice.
 5. Do not write pairs whose only difference is a number or a quantity (for example "five lanterns" / "eight lanterns").
 6. Use only the information in this message. Do not open files, search the web or look at any other material.
-7. Before answering, check that you wrote exactly {n_equivalence} EQUIVALENCE, {n_forward} FORWARD_ENTAILMENT and {n_other} NEGATIVE_OTHER pairs, and that every pair has text1, text2 and label.
+7. Before answering, check that you wrote exactly {n_equivalence} EQUIVALENCE, {n_forward} FORWARD_ENTAILMENT and {n_other} NEGATIVE_OTHER pairs, that every pair has text1, text2 and label, and that no phrase has more than {ref_max_words} words.
 
 OUTPUT
 Return only one JSON object and nothing else, with no Markdown code fence:

@@ -12,7 +12,7 @@ from collections import Counter, defaultdict
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SE = os.path.dirname(os.path.dirname(HERE))
-VERSION = "augb-pilot-v4"
+VERSION = "augb-pilot-v5"
 SEED = 20261104
 PILOT = {"batches_4fold": 2, "batches_other": 1, "n_4fold_sigs": 5, "n_other_sigs": 5, "parents_per_batch": 13,
          "quota": {"EQUIVALENCE": 3, "FORWARD_ENTAILMENT": 7, "NEGATIVE_OTHER": 4}}
@@ -33,13 +33,28 @@ def write_json(path, obj):
     with open(path, "w", encoding="utf-8") as f: json.dump(obj, f, ensure_ascii=False, indent=1)
 
 
+ARTICLES = ("a", "an", "the")
+
+
+def ref_stats(refs):
+    """本批参考对的长度和开头冠词统计，只用本批父样本（不看标签），写进提示词的长度要求。"""
+    w = sorted(len(norm(p[k]).split()) for p in refs for k in ("text1", "text2"))
+    n = len(w)
+    diff = sum(abs(len(norm(p["text1"]).split()) - len(norm(p["text2"]).split())) for p in refs) / len(refs)
+    art = sum(norm(p[k]).split()[0] in ARTICLES for p in refs for k in ("text1", "text2"))
+    return {"n_ref_phrases": n, "ref_mean_words": f"{sum(w) / n:.1f}", "ref_q1": w[int(0.25 * (n - 1))],
+            "ref_q3": w[int(0.75 * (n - 1))], "ref_max_words": w[-1], "ref_mean_diff": f"{diff:.1f}", "ref_article": art}
+
+
 def fill(template, refs, quota, batch_id, source):
     ref = "\n".join(json.dumps({"text1": p["text1"], "text2": p["text2"], "label": p["label"]}, ensure_ascii=False) for p in refs)
-    out = (template.replace("{reference_source}", SOURCE_TEXT[source]).replace("{reference_pairs}", ref)
+    out = template
+    for k, v in ref_stats(refs).items(): out = out.replace("{" + k + "}", str(v))
+    out = (out.replace("{reference_source}", SOURCE_TEXT[source]).replace("{reference_pairs}", ref)
            .replace("{n_equivalence}", str(quota["EQUIVALENCE"])).replace("{n_forward}", str(quota["FORWARD_ENTAILMENT"]))
            .replace("{n_other}", str(quota["NEGATIVE_OTHER"])).replace("{n_total}", str(sum(quota.values())))
            .replace("{batch_id}", batch_id))
-    assert "{reference_" not in out and "{n_" not in out
+    assert "{reference_" not in out and "{n_" not in out and "{ref_" not in out
     return out
 
 
@@ -147,8 +162,8 @@ def main():
     hand = json.load(open(os.path.join(HERE, "handwritten_reference_pairs.json"), encoding="utf-8"))
     hits = [x for e in examples + hand for x in (e["text1"], e["text2"]) if norm(x) in phrases]
     assert len(examples) == 3 and len(hand) == PILOT["parents_per_batch"] and not hits, hits
-    dprompt = fill(template, hand, q, "debug_b03", "hand")
-    debug = {"batch_id": "debug_b03", "package_version": VERSION, "stage": "debug", "signature": "", "usable_folds": [],
+    dprompt = fill(template, hand, q, "debug_b04", "hand")
+    debug = {"batch_id": "debug_b04", "package_version": VERSION, "stage": "debug", "signature": "", "usable_folds": [],
              "context_parent_ids": [], "context_parent_families": [], "parents": hand, "quota_pairs": q, "allowed_labels": sorted(q),
              "template_sha256": sha_file(template_path), "split_manifest_sha256": split_sha,
              "prompt": dprompt, "prompt_sha256": sha_bytes(dprompt.encode("utf-8"))}

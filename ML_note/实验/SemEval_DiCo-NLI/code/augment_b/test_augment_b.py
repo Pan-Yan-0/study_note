@@ -58,8 +58,10 @@ class Pipeline(unittest.TestCase):
             for k in b["usable_folds"]:  # 父样本只在可用折的 fit 里
                 self.assertTrue(all(p["sample_id"] in set(split[str(k)]["fit"]) for p in b["parents"]))
             self.assertIn("real examples from the dataset", b["prompt"])
+            mx = max(len(p[k].split()) for p in b["parents"] for k in ("text1", "text2"))  # 长度要求来自本批父样本
+            self.assertIn(f"No phrase may have more than {mx} words.", b["prompt"]); self.assertNotIn("{ref_", b["prompt"])
         self.assertEqual(len(fam), 195)
-        d = po.load(f"{self.pkg}/debug/debug_b03.json")
+        d = po.load(f"{self.pkg}/debug/debug_b04.json")
         self.assertIn("hand-written examples", d["prompt"]); self.assertNotIn("real examples", d["prompt"])
 
     def test_check_format(self):
