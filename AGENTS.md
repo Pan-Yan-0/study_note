@@ -107,7 +107,7 @@ Coursera-ML-AndrewNg-Notes-master/   课程资料
 
 ## 7. 当前进度
 
-GPT v4调试交回：包清单哈希一致、9项CPU测试实跑通过。debug_b03由全新GPT6Luna一次生成14对（E3/F7/O4），格式合格，无重试。原始输出与日志在 `GPT_to_Claude_AugB_v4_Debug.zip`，由Pan-Yan-0转交Claude；重点核对aircraft/plane标E的范围差异，cannot hear/deaf和所有格解释的边界。未开15批、未训练；等待Claude语义检查。数量规则未直接注入提示词，但规避数量对的设计受既往全数据观察启发，报告需保留探索历史，不能声称完全未受留出信息影响。
+GPT v4调试交回：包清单哈希一致、9项CPU测试实跑通过。debug_b03由全新GPT6Luna一次生成14对（E3/F7/O4），格式合格，无重试。原始输出与日志在 `GPT_to_Claude_AugB_v4_Debug.zip`，由Pan-Yan-0转交Claude；重点核对aircraft/plane标E的范围差异，cannot hear/deaf和所有格解释的边界。未开15批、未训练；等待Claude语义检查。数量规则未直接注入提示词，但规避数量对的设计受既往全数据观察启发，报告需保留探索历史，不能声称完全未受留出信息影响。Claude 已独立检查 `debug_b03`：没有明确错误，3 对边界都在 E 类（aircraft/plane 严格说是单向）；单向 7 对、O 4 对都成立，单向里 3 对是删一个形容词，超过提示词的多样性要求。决定冻结 v4、不再按调试样本改提示词，E 的质量交给 P1 的 30% 门槛；试点前固定两条只报告的口径（只差数量的对按 `number_pair` 统计、单向对删词比例），数量规则的来历已写进 `code/augment_b/README.md` 和冻结计划变更记录。下一步：GPT 用 v4 开 15 个试点批次并原样交回，Claude 跑 `process_outputs.py build`、查停止条件、准备 P1 审核表。交接 `Claude_to_GPT_AugB_v4_Go.md`（由 Pan-Yan-0 转交）。
 
 GPT v3调试交回：`augb_pilot_v3_claude.zip` 清单哈希一致、CPU 9项测试实跑通过；按本次单次调试要求，`debug_b02` 仅调用一次全新GPT6Luna，返回13对（E3/F6/O4），格式检查因少1对F失败，尚未用格式重试额度。原始输出、日志及语义疑点在 `GPT_to_Claude_AugB_v3_Debug.zip`，由Pan-Yan-0转交Claude。重点复核帐篷下/内部、captain/leader及数量O的任务口径。未开15批、未训练；等待Claude检查后继续。Claude 已检查 `debug_b02`：13 对没有明确错误，3 对是边界情况（captain/leader、帐篷下/里、数量对）。数量对按数据集的标法应是蕴含，生成器标成了 O；这条规则是从全部训练标签归纳的，写进提示词会破坏可用折隔离。所以改为 v4（`augb_pilot_v4_claude.zip`，模板 `dbfc1d32…`，生成脚本 `2ce2ef55…`）：提示词禁止只差数量的对，并要求作答前自查对数，代码不变，包内 9 项测试通过。没有用 v3 剩下的那次重试。下一步：GPT 跑 `debug_b03`。
 
