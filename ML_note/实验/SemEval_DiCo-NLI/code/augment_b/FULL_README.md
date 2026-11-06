@@ -267,6 +267,7 @@ DICO_OFF=<官方仓库目录> DICO_PKG=../pilot_v6 python -m unittest test_augme
 - Claude 是派发方，原定不当审核人；Pan-Yan-0 定这次由 Claude 先标，后面还有两步复核。
 - 放行规则：Haiku E 的不一致率 ≤ 原数据 E 的不一致率 + 15 个百分点，两边可判定项都 ≥ 10。通过时，合并目录的审核结果记为 `P1C-R`：E 用这次复审，单向和 O 沿用 P1C（已经按绝对门槛通过），原 P1C 结果另存为 `review_result_P1C.json`。
 - 不通过就做 v7：只收紧"多出修饰语"，人名变体和所指相同的说法保留。
+- 执行时（11-06）：Pan-Yan-0 表示按比赛金标的尺度自己会判得偏严，全部采纳 Claude 的初标（SHA-256 `a33f31ec…`），所以实际是两步：Claude 初标 → GPT 对照参考卡复审。
 
 ## 来源
 
