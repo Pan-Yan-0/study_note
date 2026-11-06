@@ -293,7 +293,7 @@ def write_gate(out):
         rr = load(f"{out}/review_result.json")
         ok_protocols = {"P1"}
         if os.path.exists(f"{out}/sources.json") and load(f"{out}/sources.json").get("pilot_reviewed") is False:
-            ok_protocols.add("P1C")  # 只在 Haiku 合并（--pilot-unreviewed）上接受，FULL_README 第 10 节
+            ok_protocols |= {"P1C", "P1C-R"}  # 只在 Haiku 合并（--pilot-unreviewed）上接受，FULL_README 第 10、11 节
         checks["review"] = rr["status"] if rr.get("bound_to") == current and rr.get("protocol") in ok_protocols else "stale_or_wrong_protocol"
     gate = {"checks": checks, "ready_for_training": all(v == "pass" for v in checks.values()), "bound_to": current,
             "rule": "所有检查都是 pass 才放行；fail / not_run / pending / invalid / insufficient / stale 都不放行。"
