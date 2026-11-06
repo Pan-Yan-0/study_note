@@ -4,6 +4,7 @@
   python process_outputs.py adjudicate <输出目录> <Claude标注.csv>                # P2：生成待裁决清单 adjudication_list.csv
   python process_outputs.py score <输出目录> P1 <Pan-Yan-0标注.csv> <Claude标注.csv>
   python process_outputs.py score <输出目录> P2 <Claude标注.csv> <裁决.csv>
+  python process_outputs.py score <输出目录> P1C <共识标注.csv>                    # Haiku 合并后的 P1 偏离：一份共识标注
 
 build 导出的 manifest.csv 只是候选；能不能进入训练只看 gate.json 的 ready_for_training，
 任何一项检查失败、没有执行、依赖缺失、协议违规或审核没有完成，都是 false。
@@ -290,7 +291,10 @@ def write_gate(out):
     current = bound_files(out)
     if os.path.exists(f"{out}/review_result.json"):
         rr = load(f"{out}/review_result.json")
-        checks["review"] = rr["status"] if rr.get("bound_to") == current and rr.get("protocol") == "P1" else "stale_or_wrong_protocol"
+        ok_protocols = {"P1"}
+        if os.path.exists(f"{out}/sources.json") and load(f"{out}/sources.json").get("pilot_reviewed") is False:
+            ok_protocols.add("P1C")  # 只在 Haiku 合并（--pilot-unreviewed）上接受，FULL_README 第 10 节
+        checks["review"] = rr["status"] if rr.get("bound_to") == current and rr.get("protocol") in ok_protocols else "stale_or_wrong_protocol"
     gate = {"checks": checks, "ready_for_training": all(v == "pass" for v in checks.values()), "bound_to": current,
             "rule": "所有检查都是 pass 才放行；fail / not_run / pending / invalid / insufficient / stale 都不放行。"
                     "训练入口必须核对 manifest.csv 的 SHA-256 等于 bound_to 里的值"}
@@ -331,6 +335,7 @@ def adjudication_list(out, claude_path):
 
 def score(out, protocol, a_path, b_path):
     """P1：a = Pan-Yan-0，b = Claude，各自独立标注全部项；只看两人都给确定标签且一致的项。
+    P1C：a = 一份共识标注（GPT 先标、Pan-Yan-0 审核修改；两份不独立），b 不用；可判定 = 非 U，没有"两人分歧"可剔除。
     P2：a = Claude 全部项；b = 裁决表，必须覆盖 adjudication_list.csv 的全部项；最终标签 = 裁决（有）或 Claude 的。
     每类：抽样不足 20、或可判定的项少于 MIN_DECIDED → insufficient；不一致率 > 30% → fail；否则 pass。"""
     keyfile = load(f"{out}/review_key.json"); key = keyfile["items"]
@@ -338,6 +343,8 @@ def score(out, protocol, a_path, b_path):
     a, ea = read_ann(a_path, list(key)); errs += [f"标注 A：{e}" for e in ea]
     if protocol == "P1":
         b, eb = read_ann(b_path, list(key)); errs += [f"标注 B：{e}" for e in eb]
+    elif protocol == "P1C":
+        b = {}
     else:
         need = [r["review_id"] for r in read_csv(f"{out}/adjudication_list.csv")]
         b, eb = read_ann(b_path, need); errs += [f"裁决：{e}" for e in eb]
@@ -350,6 +357,11 @@ def score(out, protocol, a_path, b_path):
             if x is None or y is None: continue
             if "UNSURE" in (x, y): res[g]["unsure"] += 1; continue
             if x != y: res[g]["annotators_disagree"] += 1; continue
+            res[g]["decided"] += 1; res[g]["mismatch"] += x != exp
+        elif protocol == "P1C":
+            x = a.get(rid)
+            if x is None: continue
+            if x == "UNSURE": res[g]["unsure"] += 1; continue
             res[g]["decided"] += 1; res[g]["mismatch"] += x != exp
         else:
             x = b.get(rid) or a.get(rid)
@@ -368,7 +380,7 @@ def score(out, protocol, a_path, b_path):
     else: status = "pass"
     result = {"protocol": protocol, "status": status, "errors": errs, "by_group": by_group,
               "threshold": STOP["review_mismatch"], "min_decided_per_group": MIN_DECIDED,
-              "inputs_sha256": {"a": sha_file(a_path), "b": sha_file(b_path)}, "bound_to": bound_files(out)}
+              "inputs_sha256": {"a": sha_file(a_path), "b": sha_file(b_path) if protocol != "P1C" else None}, "bound_to": bound_files(out)}
     dump(f"{out}/review_result.json", result)
     gate = write_gate(out)
     print(json.dumps({"review": result, "gate": gate}, ensure_ascii=False, indent=1))
@@ -383,4 +395,4 @@ if __name__ == "__main__":
     elif cmd == "adjudicate":
         adjudication_list(os.path.abspath(sys.argv[2]), sys.argv[3])
     elif cmd == "score":
-        score(os.path.abspath(sys.argv[2]), sys.argv[3], sys.argv[4], sys.argv[5])
+        score(os.path.abspath(sys.argv[2]), sys.argv[3], sys.argv[4], sys.argv[5] if len(sys.argv) > 5 else None)

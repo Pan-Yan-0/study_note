@@ -147,6 +147,18 @@ class Full(unittest.TestCase):
         stages = po.load(f"{t}/mh/review_key.json")["coverage"]["stages"]
         self.assertIn("pilot", stages)                                        # 试点也在 P1 的总体里
         self.assertFalse(po.load(f"{t}/mh/sources.json")["pilot_reviewed"])
+        # P1C：一份共识标注；照生成标签标 → 放行，全标 U → insufficient；普通合并（试点已审核）不接受 P1C
+        key = po.load(f"{t}/mh/review_key.json")["items"]
+        for name, f in (("c_ok", lambda v: LETTER[v["generated_label_shown_orientation"]]), ("c_u", lambda v: "U")):
+            with open(f"{t}/{name}.csv", "w", newline="", encoding="utf-8") as fh:
+                w = csv.writer(fh); w.writerow(["review_id", "label"]); w.writerows([(rid, f(v)) for rid, v in key.items()])
+        po.score(f"{t}/mh", "P1C", f"{t}/c_u.csv", None)
+        self.assertEqual(po.load(f"{t}/mh/review_result.json")["status"], "insufficient")
+        po.score(f"{t}/mh", "P1C", f"{t}/c_ok.csv", None)
+        self.assertEqual(po.load(f"{t}/mh/gate.json")["checks"]["review"], "pass")   # 这里没跑补充轮，fold_quota 仍失败
+        merge_full.merge(OFF, f"{t}/m_reviewed", {"pilot": (PILOT_PKG, PILOT_OUT), "main": (self.main, f"{t}/out_main_h")})
+        po.score(f"{t}/m_reviewed", "P1C", f"{t}/c_ok.csv", None)                     # 编号恰好一致也不接受：试点已审核的合并只认 P1
+        self.assertEqual(po.load(f"{t}/m_reviewed/gate.json")["checks"]["review"], "stale_or_wrong_protocol")
 
 
 if __name__ == "__main__":
