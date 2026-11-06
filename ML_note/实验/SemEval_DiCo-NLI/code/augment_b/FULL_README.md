@@ -250,6 +250,8 @@ DICO_OFF=<官方仓库目录> DICO_PKG=../pilot_v6 python -m unittest test_augme
   - m_orig < 30%：审核标准基本接受数据集的 E，生成 E 的问题算生成质量。v7 对 E 禁止任何一侧多出信息，包括全名对姓、多出头衔或身份、多出修饰语。
   - m_orig ≥ 30%：30% 的门槛本身会拒掉原数据的 E。v7 只收紧修饰语和具体程度，人名变体保留；跑 v7 之前先把门槛问题交回 Pan-Yan-0。
 
+**对照结果**（[e_control](../../metrics/augment_b/e_control/README.md)）：原数据 E 的不一致率 m_orig = 44%（8/18），和 Haiku 生成 E 的 47% 几乎一样；按规则走 m_orig ≥ 30% 这一支，门槛问题交回 Pan-Yan-0。
+
 **之后**（按对照结果改提示词，另写）：E 专用批次、smoke、P1 只审 E；过滤里补一条两侧数字不同的对的检查（这次有一对 "9 Italian sailors → 8 maritime workers" 没被 `number_pair` 筛出）。
 
 ## 来源
