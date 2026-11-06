@@ -145,6 +145,26 @@ class Pipeline(unittest.TestCase):
             self.assertIn(frag, ps)
         self.assertFalse(po.load(f"{self.t}/out_proto/gate.json")["ready_for_training"])
 
+    def test_prompt_newline_deviation(self):
+        """协议修订 1：只差末尾一个换行符、且写明期望哈希的尝试记为偏差，不算失败；其他提示词不一致仍是失败。"""
+        h = lambda s: hashlib.sha256(s.encode("utf-8")).hexdigest()
+        ret, log = self.make_return("ret_lf", broken=False)
+        b = self.batches[log[0]["batch_id"]]
+        log[0]["prompt_sha256"] = h(b["prompt"][:-1]); log[0]["expected_prompt_sha256"] = b["prompt_sha256"]
+        with open(f"{ret}/dispatch_log.jsonl", "w", encoding="utf-8") as f:
+            for e in log: f.write(json.dumps(e) + "\n")
+        r = po.build(self.pkg, ret, OFF, f"{self.t}/out_lf", "test")
+        self.assertEqual(r["checks"]["protocol"], "pass", r["problems"])
+        self.assertEqual([(d["batch_id"], d["attempt"]) for d in r["stats"]["prompt_deviations"]], [(log[0]["batch_id"], 1)])
+        b1, b2 = self.batches[log[1]["batch_id"]], self.batches[log[2]["batch_id"]]
+        log[1]["prompt_sha256"] = h(b1["prompt"][:-1])                                        # 没写期望哈希
+        log[2]["prompt_sha256"] = h(b2["prompt"] + " "); log[2]["expected_prompt_sha256"] = b2["prompt_sha256"]  # 不只差换行符
+        with open(f"{ret}/dispatch_log.jsonl", "w", encoding="utf-8") as f:
+            for e in log: f.write(json.dumps(e) + "\n")
+        r = po.build(self.pkg, ret, OFF, f"{self.t}/out_lf2", "test")
+        self.assertEqual(r["checks"]["protocol"], "fail")
+        self.assertEqual(sum("提示词哈希不一致" in p for p in r["problems"]), 2)
+
     def test_infra_partial_output(self):
         ret, log = self.make_return("ret_infra", broken=False)
         bid = "pilot_b04"; b = self.batches[bid]

@@ -13,6 +13,9 @@ build 导出的 manifest.csv 只是候选；能不能进入训练只看 gate.jso
 调度记录必填：agent_id、start / end（ISO 时间，结束不早于开始）、requested_model、visible_model、prompt_sha256、status；
 模型完成的尝试必须有 raw_sha256 且和原文一致；失败必须写 reason；infra_error 必须写 has_partial_output，有部分输出就保留原文和哈希。
 审核结果绑定 manifest / review_sheet / review_key / report 的哈希，任一变化即失效；本试点只认 P1。
+提示词核对（协议修订 1，11-06，全量主轮出现后定的；没有看任何生成内容）：记录的 prompt_sha256 必须等于批次文件的值；
+唯一例外是"冻结提示词去掉末尾一个换行符"的哈希，而且日志写明 expected_prompt_sha256 等于批次文件的值，
+这种尝试记为 prompt_deviations（单独列出，不算协议失败）。其他任何不一致都是协议失败。
 过滤（按顺序，命中第一条就去掉；只做确定性检查，不做语义筛选）：
   same_text            两侧规范化后相同
   length               任一侧词数不在 1–20
@@ -29,6 +32,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from check_format import check  # noqa: E402
 
 FILTER_VERSION = "augb-filter-v2"
+PROTOCOL_VERSION = "augb-protocol-r1"
 REVIEW_SEED, REVIEW_PER_GROUP, MIN_DECIDED, N_SPOT = 20261104, 20, 10, 10
 STOP = {"batch_fail_rate": 0.05, "dup_rate": 0.10, "review_mismatch": 0.30, "probe_gap": 0.15, "length_dev": 0.50}
 LABELS = ["EQUIVALENCE", "FORWARD_ENTAILMENT", "BACKWARD_ENTAILMENT", "NEGATIVE_OTHER"]
@@ -115,7 +119,7 @@ def build(pkg, ret, off, out, data_version):
     os.makedirs(out, exist_ok=True)
     for name in DERIVED:  # 重建时让旧的审核结果和放行记录全部失效
         if os.path.exists(f"{out}/{name}"): os.remove(f"{out}/{name}")
-    problems = []
+    problems, deviations = [], []
     pkg_manifest = load(f"{pkg}/MANIFEST.json")
     for rel, h in pkg_manifest["files"].items():
         if sha_file(f"{pkg}/{rel}") != h: problems.append(f"批次包文件变了：{rel}")
@@ -142,7 +146,13 @@ def build(pkg, ret, off, out, data_version):
         if first_ok is not None and entries[-1]["attempt"] > first_ok: problems.append(f"{bid}：已有合格输出后又追加了尝试")
         for e in entries:
             tag = f"{bid} 第 {e['attempt']} 次"
-            if e.get("prompt_sha256") != b["prompt_sha256"]: problems.append(f"{tag}：提示词哈希不一致")
+            if e.get("prompt_sha256") != b["prompt_sha256"]:
+                p = b["prompt"]
+                lf_only = (p.endswith("\n") and e.get("prompt_sha256") == hashlib.sha256(p[:-1].encode("utf-8")).hexdigest()
+                           and e.get("expected_prompt_sha256") == b["prompt_sha256"])
+                if lf_only: deviations.append({"batch_id": bid, "attempt": e["attempt"], "difference": "末尾换行符缺失",
+                                               "sent_prompt_sha256": e["prompt_sha256"], "expected_prompt_sha256": b["prompt_sha256"]})
+                else: problems.append(f"{tag}：提示词哈希不一致")
             for k in ("agent_id", "start", "end", "requested_model", "visible_model"):
                 if not e.get(k): problems.append(f"{tag}：调度记录缺 {k}")
             if e["status"] not in ("ok", "format_fail", "infra_error"): problems.append(f"{tag}：状态不合法 {e['status']}")
@@ -219,7 +229,7 @@ def build(pkg, ret, off, out, data_version):
     mw = lambda ps: sum(words(x) for t1, t2, _ in ps for x in (t1, t2)) / (2 * len(ps))
     acc_o, acc_g = probe(orig), probe(gen)
     stats = {"batches": len(batches), "failed_batches": failed, "batch_fail_rate": len(failed) / len(batches),
-             "pairs_returned": n_pairs, "removed": dict(removed),
+             "pairs_returned": n_pairs, "removed": dict(removed), "prompt_deviations": deviations,
              "dup_rate": (removed["dup_parent"] + removed["dup_official"] + removed["dup_generated"]) / n_pairs if n_pairs else None,
              "reuse_parent_phrase_rate": removed["reuse_parent_phrase"] / n_pairs if n_pairs else None,
              "any_official_phrase_rate": sum(d["any_official_phrase"] for d in decisions) / n_pairs if n_pairs else None,
@@ -255,7 +265,7 @@ def build(pkg, ret, off, out, data_version):
     write_csv(f"{out}/review_sheet.csv", rows, ["review_id", "text1", "text2", "label", "note"])
     dump(f"{out}/review_key.json", {"seed": REVIEW_SEED, "per_group": REVIEW_PER_GROUP, "short_of_quota": short_of, "items": key})
     if short_of: checks["review"] = "fail"; problems.append(f"可审核的对不足每类 {REVIEW_PER_GROUP}：{short_of}")
-    meta = {"filter_version": FILTER_VERSION, "data_version": data_version, "status": "candidate",
+    meta = {"filter_version": FILTER_VERSION, "protocol_version": PROTOCOL_VERSION, "data_version": data_version, "status": "candidate",
             "split_manifest_sha256": pkg_manifest["split_manifest_sha256"], "package_version": pkg_manifest.get("version"),
             "package_manifest_sha256": sha_file(f"{pkg}/MANIFEST.json"), "dispatch_log_sha256": sha_file(f"{ret}/dispatch_log.jsonl"),
             "manifest_sha256": sha_file(f"{out}/manifest.csv"), "processor_sha256": sha_file(__file__),
