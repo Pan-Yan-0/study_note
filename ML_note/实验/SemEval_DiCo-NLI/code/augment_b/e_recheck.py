@@ -73,7 +73,12 @@ def build(off, merged, control, out):
 
 def score(out, merged, final_path):
     key = po.load(f"{out}/recheck_key.json")["items"]
-    ann, errs = po.read_ann(final_path, list(key))
+    alias = {"EQ": "E", "FE": "F", "BE": "B"}  # 审核表用的是 EQ / FE / BE 写法
+    norm_path = f"{out}/final_normalized.csv"
+    rows = po.read_csv(final_path)
+    for r in rows: r["label"] = alias.get(r["label"].strip().upper(), r["label"])
+    po.write_csv(norm_path, rows, list(rows[0]))
+    ann, errs = po.read_ann(norm_path, list(key))
     if errs: raise SystemExit(f"标注不合法：{errs[:5]}")
     res = {}
     for src in ("haiku", "orig"):

@@ -1,16 +1,8 @@
 {
- "protocol": "P1C",
- "status": "fail",
+ "protocol": "P1C-R",
+ "status": "pass",
  "errors": [],
  "by_group": {
-  "EQUIVALENCE": {
-   "sampled": 20,
-   "decided": 19,
-   "mismatch": 9,
-   "unsure": 1,
-   "mismatch_rate": 0.47368421052631576,
-   "status": "fail"
-  },
   "FORWARD_ENTAILMENT": {
    "sampled": 20,
    "decided": 18,
@@ -26,14 +18,23 @@
    "unsure": 2,
    "mismatch_rate": 0.0,
    "status": "pass"
+  },
+  "EQUIVALENCE": {
+   "recheck": {
+    "decided": 20,
+    "mismatch": 3,
+    "mismatch_rate": 0.15
+   },
+   "original_reference": {
+    "decided": 20,
+    "mismatch": 4,
+    "mismatch_rate": 0.2
+   },
+   "status": "pass"
   }
  },
- "threshold": 0.3,
- "min_decided_per_group": 10,
- "inputs_sha256": {
-  "a": "a2bf3d85f4fc082f925fb18bb1a437f0c1106d6b366f2b2abcde84ad285944fc",
-  "b": null
- },
+ "recheck_result_sha256": "0d31cd16149b63d9b9c2b67224c55158e5bd4e79841c363b31eb7d2e9dd80636",
+ "p1c_result_sha256": "6d04b2a84fcfeaf5acdd99a57716927e5b2d58229b3441759907554bac90a155",
  "bound_to": {
   "manifest.csv": "b380b4a6a836e7056b6f30405a48ed1d9ce66852b78f0be4f8ccf201769e0882",
   "review_sheet.csv": "2377716dfb82eb81e68bd4ad32ee4357212ce07256e2c4a200641f7e9296b45c",
