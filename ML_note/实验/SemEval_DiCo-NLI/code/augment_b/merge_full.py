@@ -1,6 +1,10 @@
 """全量 +1 的合并、逐折选用、第二次 P1 抽样和总放行（方案 B；规则在看到全量输出之前定下）。
 
-  python merge_full.py <官方仓库目录> <合并输出目录> pilot=<包目录>:<处理结果目录> main=<包目录>:<处理结果目录> [supp1=...] [supp2=...]
+  python merge_full.py <官方仓库目录> <合并输出目录> pilot=<包目录>:<处理结果目录> main=<包目录>:<处理结果目录> [supp1=...] [supp2=...] [--pilot-unreviewed]
+
+--pilot-unreviewed（Haiku 单一来源，FULL_README 第 10 节）：试点阶段只做过自动检查、没有单独做 P1。
+  这时试点按其他阶段的方式核对（协议、清单哈希），另外要求它的自动停止条件全部通过；
+  第二次 P1 的总体是全部阶段的被选用对（不再只抽新增），这次 P1 就是全部数据唯一的一次人工审核。
 
 各阶段先各自跑 process_outputs.py build；本脚本只做跨阶段的事：
 1. 来源核对：试点的 gate.json 必须已放行，manifest.csv 的哈希等于它的 bound_to；其余阶段的 report.json 协议必须 pass，
@@ -38,7 +42,7 @@ FIELDS = ["sample_id", "pair_uid", "direction", "text1", "text2", "label", "sour
 def sha(p): return po.sha_file(p)
 
 
-def merge(off, out, specs):
+def merge(off, out, specs, pilot_reviewed=True):
     os.makedirs(out, exist_ok=True)
     for name in po.DERIVED + ("fold_selection.csv", "sources.json", "concentration.json"):
         if os.path.exists(f"{out}/{name}"): os.remove(f"{out}/{name}")
@@ -55,12 +59,15 @@ def merge(off, out, specs):
         elif man["split_manifest_sha256"] != split_sha: problems.append(f"{st}：划分清单哈希和试点不同")
         rep = po.load(f"{res}/report.json"); stage_reports[st] = rep
         msha = sha(f"{res}/manifest.csv")
-        if st == "pilot":
+        if st == "pilot" and pilot_reviewed:
             gate = po.load(f"{res}/gate.json")
             if not gate["ready_for_training"] or gate["bound_to"]["manifest.csv"] != msha: problems.append("试点没有放行或清单哈希不符")
         else:
             if rep["checks"]["protocol"] != "pass": problems.append(f"{st}：协议检查没有通过")
             if rep["meta"]["manifest_sha256"] != msha: problems.append(f"{st}：清单哈希和 report 不符")
+            if st == "pilot":
+                bad = [k for k, v in rep["checks"].items() if k != "review" and v != "pass"]
+                if bad: problems.append(f"试点（未单独审核）的自动检查没有全部通过：{bad}")
         for x in sorted(os.listdir(f"{pkg}/batches")):
             b = po.load(f"{pkg}/batches/{x}"); batches[b["batch_id"]] = (st, b)
         sources[st] = {"package_manifest_sha256": sha(f"{pkg}/MANIFEST.json"), "manifest_sha256": msha,
@@ -126,7 +133,7 @@ def merge(off, out, specs):
         return {"pairs": len(gen), "probe_generated": acc_g, "probe_original": acc_o,
                 "probe_gap": acc_g - acc_o if acc_g is not None and acc_o is not None else None,
                 "mean_words_generated": mw(gen), "length_dev": abs(mw(gen) - mw(orig)) / mw(orig)}
-    allp = sorted(pairs); newp = sorted(u for u in pairs if pairs[u]["stage"] != "pilot")
+    allp = sorted(pairs); newp = sorted(u for u in pairs if pairs[u]["stage"] != "pilot" or not pilot_reviewed)
     n_batches = sum(r["stats"]["batches"] for r in stage_reports.values())
     n_failed = sum(len(r["stats"]["failed_batches"]) for r in stage_reports.values())
     n_ret = sum(r["stats"]["pairs_returned"] for r in stage_reports.values())
@@ -165,7 +172,7 @@ def merge(off, out, specs):
                     "stage": pairs[s["_uid"]]["stage"], "signature": "".join(map(str, pairs[s["_uid"]]["usable"]))}
         rws.append({"review_id": rid, "text1": s["text1"], "text2": s["text2"], "label": "", "note": ""})
     po.write_csv(f"{out}/review_sheet.csv", rws, ["review_id", "text1", "text2", "label", "note"])
-    po.dump(f"{out}/review_key.json", {"seed": REVIEW2_SEED, "per_group": po.REVIEW_PER_GROUP, "population": "新增、过滤后、至少一折选用",
+    po.dump(f"{out}/review_key.json", {"seed": REVIEW2_SEED, "per_group": po.REVIEW_PER_GROUP, "population": "新增、过滤后、至少一折选用" if pilot_reviewed else "全部阶段、过滤后、至少一折选用（试点未单独审核）",
                                        "short_of_quota": short_of, "items": key,
                                        "coverage": {"stages": dict(Counter(v["stage"] for v in key.values())),
                                                     "signatures": dict(Counter(v["signature"] for v in key.values()))}})
@@ -184,7 +191,7 @@ def merge(off, out, specs):
         "top1pct_rule": "ceil(0.01 × 有子对的家族数) 个家族", "top1pct_families": top_n, "top1pct_share_of_kept_pairs": top / len(pairs)})
 
     po.dump(f"{out}/sources.json", {"split_manifest_sha256": split_sha, "stages": sources,
-                                     "select_seed": SELECT_SEED, "review2_seed": REVIEW2_SEED, "merger_sha256": sha(__file__)})
+                                     "pilot_reviewed": pilot_reviewed, "select_seed": SELECT_SEED, "review2_seed": REVIEW2_SEED, "merger_sha256": sha(__file__)})
     meta = {"status": "candidate", "split_manifest_sha256": split_sha, "manifest_sha256": sha(f"{out}/manifest.csv"),
             "fold_selection_sha256": sha(f"{out}/fold_selection.csv"), "sources_sha256": sha(f"{out}/sources.json"),
             "merger_sha256": sha(__file__), "processor_sha256": sha(po.__file__)}
@@ -199,6 +206,7 @@ if __name__ == "__main__":
     off, out = os.path.abspath(sys.argv[1]), os.path.abspath(sys.argv[2])
     specs = {}
     for a in sys.argv[3:]:
+        if a == "--pilot-unreviewed": continue
         st, v = a.split("=", 1); pkg, res = v.split(":", 1)
         specs[st] = (os.path.abspath(pkg), os.path.abspath(res))
-    merge(off, out, specs)
+    merge(off, out, specs, pilot_reviewed="--pilot-unreviewed" not in sys.argv)

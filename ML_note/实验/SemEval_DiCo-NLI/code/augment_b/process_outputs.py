@@ -211,7 +211,7 @@ def build(pkg, ret, off, out, data_version):
             if p["label"] == "FORWARD_ENTAILMENT": rows.append(("flipped", p["text2"], p["text1"], "BACKWARD_ENTAILMENT"))
             for d, t1, t2, l in rows:
                 manifest.append({"sample_id": f"{uid}__{d}", "pair_uid": uid, "direction": d, "text1": t1, "text2": t2, "label": l,
-                                 "source": "luna", "generator_model": e.get("visible_model", ""), "batch_id": bid, "attempt": e["attempt"],
+                                 "source": e.get("source", "luna"), "generator_model": e.get("requested_model", "") if e.get("source") else e.get("visible_model", ""), "batch_id": bid, "attempt": e["attempt"],
                                  "context_parent_families": ";".join(b["context_parent_families"]),
                                  "context_parent_ids": ";".join(b["context_parent_ids"]),
                                  "usable_folds": ";".join(map(str, b["usable_folds"])), "tier_by_fold": "", "data_version": data_version})

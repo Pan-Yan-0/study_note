@@ -130,5 +130,24 @@ class Full(unittest.TestCase):
         self.assertFalse(po.write_gate(f"{t}/m2")["ready_for_training"])
 
 
+    def test_pilot_unreviewed(self):
+        """Haiku 单一来源：试点只有自动检查，第二次 P1 的总体包括试点阶段。"""
+        t = self.t
+        fake_return(PILOT_PKG, f"{t}/ret_pilot_h")
+        po.build(PILOT_PKG, f"{t}/ret_pilot_h", OFF, f"{t}/out_pilot_h", "test-haiku-pilot")
+        self.assertFalse(os.path.exists(f"{t}/out_pilot_h/gate.json") and po.load(f"{t}/out_pilot_h/gate.json")["ready_for_training"])
+        fake_return(self.main, f"{t}/ret_main_h")
+        po.build(self.main, f"{t}/ret_main_h", OFF, f"{t}/out_main_h", "test-haiku-main")
+        specs = {"pilot": (PILOT_PKG, f"{t}/out_pilot_h"), "main": (self.main, f"{t}/out_main_h")}
+        merge_full.merge(OFF, f"{t}/mh_strict", specs)                       # 默认要求试点已放行 → 协议失败
+        self.assertEqual(po.load(f"{t}/mh_strict/report.json")["checks"]["protocol"], "fail")
+        merge_full.merge(OFF, f"{t}/mh", specs, pilot_reviewed=False)
+        r = po.load(f"{t}/mh/report.json")
+        self.assertEqual(r["problems"], [])
+        stages = po.load(f"{t}/mh/review_key.json")["coverage"]["stages"]
+        self.assertIn("pilot", stages)                                        # 试点也在 P1 的总体里
+        self.assertFalse(po.load(f"{t}/mh/sources.json")["pilot_reviewed"])
+
+
 if __name__ == "__main__":
     unittest.main()

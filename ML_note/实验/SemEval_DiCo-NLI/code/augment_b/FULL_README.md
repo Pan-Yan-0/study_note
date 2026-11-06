@@ -2,7 +2,7 @@
 
 ## 交接状态
 
-- **生成器改为 Haiku 5.5 单一来源**（11-06，Pan-Yan-0 定）：由 Claude 调度，先用 v6 的 15 个试点批次 smoke，见第 10 节。GPT 生成的数据只留档。
+- **生成器改为 Haiku 5.5 单一来源**（11-06，Pan-Yan-0 定）：由 Claude 调度，见第 10 节。GPT 生成的数据只留档。**Haiku 已生成完**：smoke 15 批、主轮 121 批、补充第 1 轮 9 批全部第一次就合格，合并后自动检查和逐折配额都通过，只差 P1（Pan-Yan-0 和 GPT 独立标注，交接包 `AugB_Haiku_P1_Review.zip`）。统计在 `metrics/augment_b/haiku_full/`。
 - **生成器模型未确认**：GPT 说明之前的子 agent 实际用的是 GPT6astra、不是 Luna（已修复）。影响范围待确认，见第 9 节。
 - **v1.1 和 v1 的区别**：只改了处理代码里的提示词核对（协议修订 1，见第 8 节），加了一项测试。`main/` 的 121 个批次和 v1 逐字节相同（`main/MANIFEST.json` 不变），GPT 已经交回的 6 批不用重跑。
 - **输入**：
@@ -11,7 +11,7 @@
 - **本包**：主轮 121 批（`main/batches/main_b001`–`main_b121`）。CPU 预算干跑在 `dryrun_full.json`。全量生成后要用的合并、逐折选用、第二次 P1 和总放行的代码都在 `code/` 里，规则在看到全量输出之前写定（第 4 节）。
 - **生成侧和 v6 相同**：提示词模板 `45c22b02e11a…`（直接从试点包复制，哈希一致）、格式检查、过滤和停止条件都没有改。
 - **已验证**：
-  - `code/test_full.py` 2 项：主轮包能逐字节重建；假输出走完 主轮 → 合并 → 补充规划 → 补充轮 → 再合并 → 第二次 P1 → 放行。
+  - `code/test_full.py` 3 项（含 Haiku 的未审核试点合并）：主轮包能逐字节重建；假输出走完 主轮 → 合并 → 补充规划 → 补充轮 → 再合并 → 第二次 P1 → 放行。
   - `code/test_augment_b.py` 11 项：v6 试点包仍能逐字节重建，并包括协议修订 1 的测试。
   - 两组都在包内通过。
 - **未验证**：真实的保留率。v6 的 97% 只来自 10 个签名，其余签名不保证。
@@ -216,6 +216,19 @@ DICO_OFF=<官方仓库目录> DICO_PKG=../pilot_v6 python -m unittest test_augme
 - 子 agent 有读文件的工具，派发说明禁止读其他文件，但技术上不能强制，和 GPT 的子 agent 一样。
 - 子 agent 是否会带上本仓库的 CLAUDE.md / AGENTS.md 作为上下文，不确定。AGENTS.md 里有从训练标签归纳的计数规则描述，提示词本身已经禁止只差数量的对。
 - Haiku 比 Luna 小，质量要看 smoke 和最后的 P1。
+
+**实现**：
+- `haiku_dispatch.py`：`prep` 写提示词文件并核对哈希；`wrapper` 打印派发说明（模板 `690dd6c4…`）；`record` 算回复哈希、跑格式检查、追加日志（`source: claude-haiku-5-5`、`requested_model: haiku`）。
+- `process_outputs.py`：manifest 的 `source` 取日志里的 `source`（GPT 的旧日志没有这个字段，仍记 luna），`generator_model` 记 `requested_model`。
+- `merge_full.py --pilot-unreviewed`：试点按其他阶段核对，另外要求它的自动检查全部通过；第二次 P1 的总体包括试点阶段。
+
+**结果**（[metrics/augment_b/haiku_full](../../metrics/augment_b/haiku_full/README.md)）：
+- smoke：15 批第一次就合格，210 对全部保留，词数偏离 0.6%，探针 +2.8 pp，全部通过，所以按规则跑了主轮。
+- 主轮：121 批第一次就合格，保留 1,478 / 1,489 对，词数偏离 0.2%，探针 +2.2 pp。
+- 补充第 1 轮：按实际缺口规划 9 批（224 行，预算上限 586），全部合格；之后每折四类都补满，不需要第 2 轮。
+- 合并：145 批、1,805 对、选用 1,794 对；重复 1.0%；126 个家族用了 2 次。
+- 子 agent 每次带约 10 万 token 的初始上下文，只调用 3–4 次工具；初始上下文的内容无法证明。
+- P1 审核表 60 对（试点 7、主轮 50、补充 3），答案封存 `57f50c0f…`。
 
 ## 来源
 
