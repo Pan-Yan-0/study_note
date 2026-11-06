@@ -2,7 +2,7 @@
 
 ## 交接状态
 
-- **生成器改为 Haiku 5.5 单一来源**（11-06，Pan-Yan-0 定）：由 Claude 调度，见第 10 节。GPT 生成的数据只留档。**Haiku 已生成完**：smoke 15 批、主轮 121 批、补充第 1 轮 9 批全部第一次就合格，合并后自动检查和逐折配额都通过，只差 P1（Pan-Yan-0 和 GPT 独立标注，交接包 `AugB_Haiku_P1_Review.zip`）。统计在 `metrics/augment_b/haiku_full/`。
+- **生成器改为 Haiku 5.5 单一来源**（11-06，Pan-Yan-0 定）：由 Claude 调度，见第 10 节。GPT 生成的数据只留档。**Haiku 已生成完，P1 没有通过**：自动检查和逐折配额都通过，但按共识标注（`P1C`）计分时 E 的不一致率 47%（9/19）超过 30%，单向 22%、O 0% 通过；不放行、不训练，报告导师。结果在 `metrics/augment_b/haiku_full/`。
 - **生成器模型未确认**：GPT 说明之前的子 agent 实际用的是 GPT6astra、不是 Luna（已修复）。影响范围待确认，见第 9 节。
 - **v1.1 和 v1 的区别**：只改了处理代码里的提示词核对（协议修订 1，见第 8 节），加了一项测试。`main/` 的 121 个批次和 v1 逐字节相同（`main/MANIFEST.json` 不变），GPT 已经交回的 6 批不用重跑。
 - **输入**：
@@ -236,6 +236,8 @@ DICO_OFF=<官方仓库目录> DICO_PKG=../pilot_v6 python -m unittest test_augme
 - 和原 P1 的区别：原 P1 只看两人一致的项，两人分歧的项会被剔除；P1C 没有可剔除的分歧项，每个确定标签都计入，所以不比原规则宽松。
 - 代码：`process_outputs.py score <输出目录> P1C <共识标注.csv>`。`gate.json` 只在 `sources.json` 记了 `pilot_reviewed: false`（Haiku 合并）时接受 P1C，其他合并仍只认 P1。
 - 报告里写明：这一次人工审核是 GPT 和 Pan-Yan-0 的共识判断，不是两人独立判断，审核人之间的一致率无从得知。
+
+**P1 结果**：E 19 项可判定、9 项不一致（47%，fail）；单向 18 项、4 项（22%，pass）；O 18 项、0 项（pass）。`gate.json` 的 review 为 fail，不放行。分析和可选的下一步见 [haiku_full README](../../metrics/augment_b/haiku_full/README.md)。
 
 ## 来源
 
