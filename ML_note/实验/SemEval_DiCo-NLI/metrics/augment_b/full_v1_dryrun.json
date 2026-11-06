@@ -1,0 +1,453 @@
+{
+ "demand_rows": {
+  "0-BACKWARD_ENTAILMENT": 631,
+  "0-EQUIVALENCE": 574,
+  "0-FORWARD_ENTAILMENT": 631,
+  "0-NEGATIVE_OTHER": 354,
+  "1-BACKWARD_ENTAILMENT": 641,
+  "1-EQUIVALENCE": 580,
+  "1-FORWARD_ENTAILMENT": 641,
+  "1-NEGATIVE_OTHER": 330,
+  "2-BACKWARD_ENTAILMENT": 619,
+  "2-EQUIVALENCE": 594,
+  "2-FORWARD_ENTAILMENT": 619,
+  "2-NEGATIVE_OTHER": 354,
+  "3-BACKWARD_ENTAILMENT": 645,
+  "3-EQUIVALENCE": 572,
+  "3-FORWARD_ENTAILMENT": 645,
+  "3-NEGATIVE_OTHER": 338,
+  "4-BACKWARD_ENTAILMENT": 636,
+  "4-EQUIVALENCE": 586,
+  "4-FORWARD_ENTAILMENT": 636,
+  "4-NEGATIVE_OTHER": 342
+ },
+ "best_case_keep_1": {
+  "deficit_rows": {
+   "0-BAC": 37.0,
+   "0-EQU": 10.0,
+   "0-FOR": 37.0,
+   "0-NEG": 5.0,
+   "1-BAC": 32.0,
+   "1-EQU": 4.0,
+   "1-FOR": 32.0,
+   "1-NEG": 13.0,
+   "2-BAC": 30.0,
+   "2-EQU": 8.0,
+   "2-FOR": 30.0,
+   "2-NEG": 12.0,
+   "3-BAC": 37.0,
+   "3-EQU": 8.0,
+   "3-FOR": 37.0,
+   "3-NEG": 11.0,
+   "4-BAC": 39.0,
+   "4-EQU": 8.0,
+   "4-FOR": 39.0,
+   "4-NEG": 10.0
+  },
+  "surplus_rows": {
+   "0-BAC": 0.0,
+   "0-EQU": 0.0,
+   "0-FOR": 0.0,
+   "0-NEG": 0.0,
+   "1-BAC": 0.0,
+   "1-EQU": 0.0,
+   "1-FOR": 0.0,
+   "1-NEG": 0.0,
+   "2-BAC": 0.0,
+   "2-EQU": 0.0,
+   "2-FOR": 0.0,
+   "2-NEG": 0.0,
+   "3-BAC": 0.0,
+   "3-EQU": 0.0,
+   "3-FOR": 0.0,
+   "3-NEG": 0.0,
+   "4-BAC": 0.0,
+   "4-EQU": 0.0,
+   "4-FOR": 0.0,
+   "4-NEG": 0.0
+  }
+ },
+ "pilot_keep": {
+  "deficit_rows": {
+   "0-BAC": 51.9,
+   "0-EQU": 32.3,
+   "0-FOR": 51.9,
+   "0-NEG": 10.1,
+   "1-BAC": 47.3,
+   "1-EQU": 26.8,
+   "1-FOR": 47.3,
+   "1-NEG": 17.6,
+   "2-BAC": 44.5,
+   "2-EQU": 31.0,
+   "2-FOR": 44.5,
+   "2-NEG": 16.9,
+   "3-BAC": 52.2,
+   "3-EQU": 30.2,
+   "3-FOR": 52.2,
+   "3-NEG": 15.7,
+   "4-BAC": 54.1,
+   "4-EQU": 31.1,
+   "4-FOR": 54.1,
+   "4-NEG": 14.9
+  },
+  "surplus_rows": {
+   "0-BAC": 0.0,
+   "0-EQU": 0.0,
+   "0-FOR": 0.0,
+   "0-NEG": 0.0,
+   "1-BAC": 0.0,
+   "1-EQU": 0.0,
+   "1-FOR": 0.0,
+   "1-NEG": 0.0,
+   "2-BAC": 0.0,
+   "2-EQU": 0.0,
+   "2-FOR": 0.0,
+   "2-NEG": 0.0,
+   "3-BAC": 0.0,
+   "3-EQU": 0.0,
+   "3-FOR": 0.0,
+   "3-NEG": 0.0,
+   "4-BAC": 0.0,
+   "4-EQU": 0.0,
+   "4-FOR": 0.0,
+   "4-NEG": 0.0
+  }
+ },
+ "supplement_round1": {
+  "status": "ok",
+  "keep_rate_used": {
+   "E": 0.95,
+   "U": 0.95,
+   "O": 0.95
+  },
+  "budget_denominator_rows": 2934,
+  "budget_rows": 586.8000000000001,
+  "budget_rule": "两轮累计下达的补充行数 > 0.20 × 分母 就停",
+  "batches": 12,
+  "pairs": 168,
+  "rows_issued": 294,
+  "families_used_twice": 168,
+  "by_group": {
+   "E": 3,
+   "U": 6,
+   "O": 3
+  },
+  "deficit_rows_by_fold_group": {
+   "0-E": 32.3,
+   "0-O": 10.1,
+   "0-U": 103.7,
+   "1-E": 26.8,
+   "1-O": 17.6,
+   "1-U": 94.5,
+   "2-E": 31.0,
+   "2-O": 16.9,
+   "2-U": 89.0,
+   "3-E": 30.2,
+   "3-O": 15.7,
+   "3-U": 104.5,
+   "4-E": 31.1,
+   "4-O": 14.9,
+   "4-U": 108.2
+  },
+  "plan": [
+   {
+    "batch_id": "supp1_b001",
+    "signature": "0124",
+    "group": "E",
+    "quota_pairs": {
+     "EQUIVALENCE": 14
+    },
+    "parent_families": [
+     "dico_phrasis_0001107",
+     "dico_phrasis_0000646",
+     "dico_phrasis_0001287",
+     "dico_phrasis_0001076",
+     "dico_phrasis_0001161",
+     "dico_phrasis_0001182",
+     "dico_phrasis_0001146",
+     "dico_phrasis_0001295",
+     "dico_phrasis_0000678",
+     "dico_phrasis_0001125",
+     "dico_phrasis_0001205",
+     "dico_phrasis_0000638",
+     "dico_phrasis_0000871",
+     "dico_phrasis_0001238"
+    ]
+   },
+   {
+    "batch_id": "supp1_b002",
+    "signature": "0134",
+    "group": "E",
+    "quota_pairs": {
+     "EQUIVALENCE": 14
+    },
+    "parent_families": [
+     "dico_phrasis_0001178",
+     "dico_phrasis_0000770",
+     "dico_phrasis_0000807",
+     "dico_phrasis_0001253",
+     "dico_phrasis_0001054",
+     "dico_phrasis_0001094",
+     "dico_phrasis_0001002",
+     "dico_phrasis_0001283",
+     "dico_phrasis_0001098",
+     "dico_phrasis_0001230",
+     "dico_phrasis_0000993",
+     "dico_phrasis_0000798",
+     "dico_phrasis_0000843",
+     "dico_phrasis_0001042"
+    ]
+   },
+   {
+    "batch_id": "supp1_b003",
+    "signature": "1234",
+    "group": "E",
+    "quota_pairs": {
+     "EQUIVALENCE": 14
+    },
+    "parent_families": [
+     "dico_phrasis_0000956",
+     "dico_phrasis_0001022",
+     "dico_phrasis_0001189",
+     "dico_phrasis_0000706",
+     "dico_phrasis_0001081",
+     "dico_phrasis_0000794",
+     "dico_phrasis_0000989",
+     "dico_phrasis_0000892",
+     "dico_phrasis_0000775",
+     "dico_phrasis_0001262",
+     "dico_phrasis_0001027",
+     "dico_phrasis_0001313",
+     "dico_phrasis_0001158",
+     "dico_phrasis_0000891"
+    ]
+   },
+   {
+    "batch_id": "supp1_b004",
+    "signature": "0134",
+    "group": "U",
+    "quota_pairs": {
+     "FORWARD_ENTAILMENT": 14
+    },
+    "parent_families": [
+     "dico_phrasis_0001443",
+     "dico_phrasis_0000248",
+     "dico_phrasis_0000112",
+     "dico_phrasis_0000336",
+     "dico_phrasis_0001746",
+     "dico_phrasis_0001916",
+     "dico_phrasis_0001789",
+     "dico_phrasis_0001560",
+     "dico_phrasis_0001793",
+     "dico_phrasis_0001701",
+     "dico_phrasis_0001412",
+     "dico_phrasis_0001851",
+     "dico_phrasis_0000585",
+     "dico_phrasis_0000572"
+    ]
+   },
+   {
+    "batch_id": "supp1_b005",
+    "signature": "1234",
+    "group": "U",
+    "quota_pairs": {
+     "FORWARD_ENTAILMENT": 14
+    },
+    "parent_families": [
+     "dico_phrasis_0000233",
+     "dico_phrasis_0000062",
+     "dico_phrasis_0001489",
+     "dico_phrasis_0000382",
+     "dico_phrasis_0001481",
+     "dico_phrasis_0001684",
+     "dico_phrasis_0001430",
+     "dico_phrasis_0000260",
+     "dico_phrasis_0001601",
+     "dico_phrasis_0001409",
+     "dico_phrasis_0001697",
+     "dico_phrasis_0001609",
+     "dico_phrasis_0001622",
+     "dico_phrasis_0001632"
+    ]
+   },
+   {
+    "batch_id": "supp1_b006",
+    "signature": "0124",
+    "group": "U",
+    "quota_pairs": {
+     "FORWARD_ENTAILMENT": 14
+    },
+    "parent_families": [
+     "dico_phrasis_0000051",
+     "dico_phrasis_0001759",
+     "dico_phrasis_0000134",
+     "dico_phrasis_0001913",
+     "dico_phrasis_0001791",
+     "dico_phrasis_0001415",
+     "dico_phrasis_0000242",
+     "dico_phrasis_0000025",
+     "dico_phrasis_0001725",
+     "dico_phrasis_0001513",
+     "dico_phrasis_0001639",
+     "dico_phrasis_0000597",
+     "dico_phrasis_0001699",
+     "dico_phrasis_0000148"
+    ]
+   },
+   {
+    "batch_id": "supp1_b007",
+    "signature": "0123",
+    "group": "U",
+    "quota_pairs": {
+     "FORWARD_ENTAILMENT": 14
+    },
+    "parent_families": [
+     "dico_phrasis_0001826",
+     "dico_phrasis_0001829",
+     "dico_phrasis_0000073",
+     "dico_phrasis_0000358",
+     "dico_phrasis_0000517",
+     "dico_phrasis_0001480",
+     "dico_phrasis_0000628",
+     "dico_phrasis_0000534",
+     "dico_phrasis_0001688",
+     "dico_phrasis_0000297",
+     "dico_phrasis_0000060",
+     "dico_phrasis_0000412",
+     "dico_phrasis_0000479",
+     "dico_phrasis_0000292"
+    ]
+   },
+   {
+    "batch_id": "supp1_b008",
+    "signature": "0234",
+    "group": "U",
+    "quota_pairs": {
+     "FORWARD_ENTAILMENT": 14
+    },
+    "parent_families": [
+     "dico_phrasis_0001474",
+     "dico_phrasis_0001652",
+     "dico_phrasis_0000203",
+     "dico_phrasis_0001943",
+     "dico_phrasis_0000566",
+     "dico_phrasis_0000612",
+     "dico_phrasis_0000191",
+     "dico_phrasis_0000586",
+     "dico_phrasis_0000001",
+     "dico_phrasis_0000089",
+     "dico_phrasis_0000121",
+     "dico_phrasis_0000333",
+     "dico_phrasis_0001648",
+     "dico_phrasis_0001498"
+    ]
+   },
+   {
+    "batch_id": "supp1_b009",
+    "signature": "0134",
+    "group": "U",
+    "quota_pairs": {
+     "FORWARD_ENTAILMENT": 14
+    },
+    "parent_families": [
+     "dico_phrasis_0001425",
+     "dico_phrasis_0001403",
+     "dico_phrasis_0000253",
+     "dico_phrasis_0000384",
+     "dico_phrasis_0001533",
+     "dico_phrasis_0001549",
+     "dico_phrasis_0000285",
+     "dico_phrasis_0001807",
+     "dico_phrasis_0000159",
+     "dico_phrasis_0001470",
+     "dico_phrasis_0001531",
+     "dico_phrasis_0000546",
+     "dico_phrasis_0000615",
+     "dico_phrasis_0000591"
+    ]
+   },
+   {
+    "batch_id": "supp1_b010",
+    "signature": "0234",
+    "group": "O",
+    "quota_pairs": {
+     "NEGATIVE_OTHER": 14
+    },
+    "parent_families": [
+     "dico_phrasis_0003173",
+     "dico_phrasis_0003238",
+     "dico_phrasis_0002425",
+     "dico_phrasis_0002447",
+     "dico_phrasis_0002752",
+     "dico_phrasis_0002474",
+     "dico_phrasis_0003045",
+     "dico_phrasis_0002545",
+     "dico_phrasis_0003240",
+     "dico_phrasis_0003043",
+     "dico_phrasis_0003262",
+     "dico_phrasis_0003132",
+     "dico_phrasis_0002469",
+     "dico_phrasis_0002631"
+    ]
+   },
+   {
+    "batch_id": "supp1_b011",
+    "signature": "1234",
+    "group": "O",
+    "quota_pairs": {
+     "NEGATIVE_OTHER": 14
+    },
+    "parent_families": [
+     "dico_phrasis_0002907",
+     "dico_phrasis_0002431",
+     "dico_phrasis_0002897",
+     "dico_phrasis_0003150",
+     "dico_phrasis_0002053",
+     "dico_phrasis_0002134",
+     "dico_phrasis_0002854",
+     "dico_phrasis_0003207",
+     "dico_phrasis_0002546",
+     "dico_phrasis_0003154",
+     "dico_phrasis_0003029",
+     "dico_phrasis_0002153",
+     "dico_phrasis_0003247",
+     "dico_phrasis_0002783"
+    ]
+   },
+   {
+    "batch_id": "supp1_b012",
+    "signature": "0124",
+    "group": "O",
+    "quota_pairs": {
+     "NEGATIVE_OTHER": 14
+    },
+    "parent_families": [
+     "dico_phrasis_0003308",
+     "dico_phrasis_0002605",
+     "dico_phrasis_0002749",
+     "dico_phrasis_0002485",
+     "dico_phrasis_0002803",
+     "dico_phrasis_0003109",
+     "dico_phrasis_0003156",
+     "dico_phrasis_0003041",
+     "dico_phrasis_0002697",
+     "dico_phrasis_0002541",
+     "dico_phrasis_0002633",
+     "dico_phrasis_0003001",
+     "dico_phrasis_0002921",
+     "dico_phrasis_0003092"
+    ]
+   }
+  ]
+ },
+ "supplement_round2": "期望下不需要：第 1 轮按预计保留率规划，预计补足；只在实际仍有缺口时启用，台账累计、预算共用",
+ "main_round": {
+  "batches": 121,
+  "parents": 1489,
+  "by_label": {
+   "NEGATIVE_OTHER": 404,
+   "FORWARD_ENTAILMENT": 732,
+   "EQUIVALENCE": 353
+  }
+ }
+}

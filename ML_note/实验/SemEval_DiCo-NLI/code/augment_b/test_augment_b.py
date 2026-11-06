@@ -223,7 +223,8 @@ class Pipeline(unittest.TestCase):
         self.assertEqual(diagnose_pilot.kind("old dog", "dog"), "text2_subset")
 
     def test_supplement_plan(self):
-        sig = {"0134": {"E": ["a", "b"], "O": ["a2"]}, "0124": {"E": ["c"]}, "1234": {"E": ["d", "e", "f"], "O": ["d2"]}, "024": {"E": ["g"]}}
+        sig = {"0134": {"E": [f"a{i}" for i in range(6)], "O": [f"o{i}" for i in range(10)]}, "0124": {"E": [f"c{i}" for i in range(9)]},
+               "1234": {"E": ["d", "e", "f"], "O": ["d2"]}, "024": {"E": ["g"]}}
         kr = {"E": 0.83, "U": 0.9, "O": 0.7}
         deficit = {(0, "E"): 30, (2, "E"): 10, (3, "O"): 5}
         b1, st1, led1 = supplement.plan(deficit, sig, kr, 3000, supplement.new_ledger(), 1)
@@ -240,6 +241,12 @@ class Pipeline(unittest.TestCase):
         _, s1, l1 = supplement.plan(small, osig, {"E": 1, "U": 1, "O": 1}, 100, supplement.new_ledger(), 1)
         _, s2, _ = supplement.plan(small, osig, {"E": 1, "U": 1, "O": 1}, 100, l1, 2)
         self.assertEqual(s1, "ok"); self.assertIn("预算不足", s2)
+        # 每个家族最多用 2 次（台账里带着主轮的使用次数）：只剩 1 个家族、已用 1 次，补一批后用满，再有缺口就停
+        cap = {"0134": {"E": ["z"]}}
+        bc, sc, lc = supplement.plan({(0, "E"): 1}, cap, {"E": 1, "U": 1, "O": 1}, 10 ** 6, supplement.new_ledger({"z": 1}), 1)
+        self.assertEqual(sc, "ok"); self.assertEqual(lc["uses"]["z"], 2)
+        _, sc2, _ = supplement.plan({(0, "E"): 1}, cap, {"E": 1, "U": 1, "O": 1}, 10 ** 6, lc, 2)
+        self.assertIn("用满", sc2)
         # 游标循环：同一签名连续两批取到不同的家族
         big = {"0134": {"E": [f"e{i}" for i in range(28)]}}  # 两批各 14 个，正好不重叠
         bb, _, _ = supplement.plan({(0, "E"): 40}, big, {"E": 1, "U": 1, "O": 1}, 10 ** 6, supplement.new_ledger(), 1)

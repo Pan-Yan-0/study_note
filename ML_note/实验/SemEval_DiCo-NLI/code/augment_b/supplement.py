@@ -10,17 +10,20 @@
   5. 只允许第 1、2 轮；第二轮后仍有缺口就停下报告。
   6. 父样本（v6 起按父样本仿写，一个父样本对应一对）：每个签名、每个组的家族按固定种子打乱一次，
      台账里按"签名-组"保存游标，每批从游标起取 PAIRS_PER_BATCH 个、循环取用；该组家族不够一批时少取，对数随之减少。
-  台账（ledger）在两轮之间持久保存：累计行数、各签名游标、已下达的批次号。
+  台账（ledger）在两轮之间持久保存：累计行数、各签名游标、已下达的批次号、每个家族已用次数。
+  7. 每个家族最多用 MAX_USES 次（方案 B：主轮各用一次，补充轮最多再用一次）。游标跳过已用满的家族；
+     某个签名-组的家族都用满了，就换下一个签名；所有签名都用满还有缺口，就停下报告。
 """
 import json, math, random
 
-PAIRS_PER_BATCH, BUDGET, SEED = 14, 0.20, 20261104
+PAIRS_PER_BATCH, BUDGET, SEED, MAX_USES = 14, 0.20, 20261104, 2
 ROWS_PER_PAIR = {"E": 2, "U": 2, "O": 1}
 LABEL_OF = {"E": "EQUIVALENCE", "U": "FORWARD_ENTAILMENT", "O": "NEGATIVE_OTHER"}
 
 
-def new_ledger():
-    return {"rows_issued": 0, "cursor": {}, "batches": [], "rounds_done": []}
+def new_ledger(uses=None):
+    """uses：主轮（和试点）已经用过的家族及次数，例如每个家族 1。"""
+    return {"rows_issued": 0, "cursor": {}, "batches": [], "rounds_done": [], "uses": dict(uses or {})}
 
 
 def plan(deficit, sig_families, keep_rate, planned_rows, ledger, round_no):
@@ -36,16 +39,23 @@ def plan(deficit, sig_families, keep_rate, planned_rows, ledger, round_no):
     for g in "EUO":
         kr = math.floor(keep_rate[g] * 20) / 20
         if kr <= 0: return [], f"{g} 组保留率为 0，无法规划", ledger
-        cands = [s for s in sig_families if sig_families[s].get(g)]
+        uses = led.setdefault("uses", {})
+        free = lambda s: [f for f in sig_families[s].get(g, []) if uses.get(f, 0) < MAX_USES]
         while any(D.get((k, g), 0) > 0 for k in range(5)):
             need = {k for k in range(5) if D.get((k, g), 0) > 0}
-            if not cands: return [], f"{g} 组没有可用的父样本", ledger
-            s = min(cands, key=lambda s: (-len(need & {int(c) for c in s}), -len(sig_families[s][g]), s))
-            if not need & {int(c) for c in s}: return [], f"{g} 组的缺口折 {sorted(need)} 没有可用签名", ledger
+            cands = [s for s in sig_families if free(s)]
+            if not cands: return [], f"{g} 组的父家族都已用满 {MAX_USES} 次，仍有缺口", ledger
+            s = min(cands, key=lambda s: (-len(need & {int(c) for c in s}), -len(free(s)), s))
+            if not need & {int(c) for c in s}:
+                return [], f"{g} 组的缺口折 {sorted(need)} 没有还能用的签名（签名不覆盖，或家族已用满 {MAX_USES} 次）", ledger
             fams = sorted(sig_families[s][g]); random.Random(f"{SEED}-{s}-{g}").shuffle(fams)
             key = f"{s}-{g}"; c = led["cursor"].get(key, 0)
-            pick = [fams[(c + i) % len(fams)] for i in range(min(PAIRS_PER_BATCH, len(fams)))]
-            led["cursor"][key] = (c + len(pick)) % len(fams)
+            pick, j = [], 0
+            while len(pick) < PAIRS_PER_BATCH and j < len(fams):  # 从游标起循环一圈，跳过用满的
+                f = fams[(c + j) % len(fams)]; j += 1
+                if uses.get(f, 0) < MAX_USES and f not in pick: pick.append(f)
+            led["cursor"][key] = (c + j) % len(fams)
+            for f in pick: uses[f] = uses.get(f, 0) + 1
             for k in (int(c) for c in s): D[(k, g)] = D.get((k, g), 0) - len(pick) * ROWS_PER_PAIR[g] * kr
             led["rows_issued"] += len(pick) * ROWS_PER_PAIR[g]
             if led["rows_issued"] > BUDGET * planned_rows:

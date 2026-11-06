@@ -268,7 +268,10 @@ def build(pkg, ret, off, out, data_version):
 
 
 def bound_files(out):
-    return {n: sha_file(f"{out}/{n}") for n in ("manifest.csv", "review_sheet.csv", "review_key.json", "report.json")}
+    """放行绑定的文件。全量合并目录（merge_full.py）另有逐折选用和来源清单，存在时一起绑定；试点目录没有这两个文件，绑定方式不变。"""
+    names = ["manifest.csv", "review_sheet.csv", "review_key.json", "report.json"]
+    names += [n for n in ("fold_selection.csv", "sources.json") if os.path.exists(f"{out}/{n}")]
+    return {n: sha_file(f"{out}/{n}") for n in names}
 
 
 def write_gate(out):
