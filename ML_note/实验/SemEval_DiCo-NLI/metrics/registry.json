@@ -913,6 +913,210 @@
    }
   },
   {
+   "id": "AUGB-B0",
+   "desc": "实验 B +1：B0，mDeBERTa CE 英语五折三种子（Kaggle）",
+   "track": 1,
+   "variables": {
+    "model": "microsoft/mdeberta-v3-base",
+    "model_revision": "a0484667b22365f84929a935b5e50a51f71f159d",
+    "prompt": "不适用",
+    "train": {
+     "max_epochs": 12,
+     "lr": 2e-05,
+     "batch_size": 32,
+     "max_length": 96,
+     "warmup_ratio": 0.1,
+     "weight_decay": 0.01,
+     "gradient_clip": 1.0,
+     "precision": "fp16",
+     "seed_policy": "init=seed*1000+fold; per-epoch fresh shuffle RNG (not archived C0 RNG stream)",
+     "selection": "original_direction_weighted_f1，earliest"
+    },
+    "split": {
+     "folds": 5,
+     "fold_seed": 2027,
+     "inner_fraction": 0.1,
+     "holdout_fold": "0–4"
+    },
+    "method": "ce",
+    "method_params": "无",
+    "data_sha256": {
+     "fold_selection.csv": "6f289cbac76e",
+     "manifest.csv": "b380b4a6a836",
+     "split_manifest.json": "f9363290af28"
+    },
+    "train_data": "track1 按家族五折，每折只训练fit，内层验证选轮",
+    "selection": "original_direction_weighted_f1",
+    "inference": "plain 和 sym（F / B 互换后平均）",
+    "lib": {
+     "transformers": "4.57.6"
+    }
+   },
+   "platform": {
+    "platform": "Kaggle",
+    "gpu": [
+     "Tesla T4"
+    ],
+    "dtype": [
+     "fp16"
+    ],
+    "torch": [
+     "2.11.0+cu128"
+    ]
+   },
+   "code": {
+    "version": "train_augb.py v2（GPT）",
+    "code_sha256": [
+     "385ed94be565"
+    ]
+   },
+   "metrics_dir": "metrics/augment_b/train_plus1",
+   "seeds": [
+    "42",
+    "43",
+    "44"
+   ],
+   "scores_sym_wf1_mean": {
+    "oof": 0.7937
+   }
+  },
+  {
+   "id": "AUGB-B1-HAIKU",
+   "desc": "实验 B +1：B1-Haiku，mDeBERTa CE 英语五折三种子（Kaggle）",
+   "track": 1,
+   "variables": {
+    "model": "microsoft/mdeberta-v3-base",
+    "model_revision": "a0484667b22365f84929a935b5e50a51f71f159d",
+    "prompt": "不适用",
+    "train": {
+     "max_epochs": 12,
+     "lr": 2e-05,
+     "batch_size": 32,
+     "max_length": 96,
+     "warmup_ratio": 0.1,
+     "weight_decay": 0.01,
+     "gradient_clip": 1.0,
+     "precision": "fp16",
+     "seed_policy": "init=seed*1000+fold; per-epoch fresh shuffle RNG (not archived C0 RNG stream)",
+     "selection": "original_direction_weighted_f1，earliest"
+    },
+    "split": {
+     "folds": 5,
+     "fold_seed": 2027,
+     "inner_fraction": 0.1,
+     "holdout_fold": "0–4"
+    },
+    "method": "ce",
+    "method_params": "无",
+    "data_sha256": {
+     "fold_selection.csv": "6f289cbac76e",
+     "manifest.csv": "b380b4a6a836",
+     "split_manifest.json": "f9363290af28"
+    },
+    "train_data": "track1 按家族五折，每折 fit + 该折选用的 Haiku 生成行（+1，清单 b380b4a6），内层验证只用原数据",
+    "selection": "original_direction_weighted_f1",
+    "inference": "plain 和 sym（F / B 互换后平均）",
+    "lib": {
+     "transformers": "4.57.6"
+    }
+   },
+   "platform": {
+    "platform": "Kaggle",
+    "gpu": [
+     "Tesla T4"
+    ],
+    "dtype": [
+     "fp16"
+    ],
+    "torch": [
+     "2.11.0+cu128"
+    ]
+   },
+   "code": {
+    "version": "train_augb.py v2（GPT）",
+    "code_sha256": [
+     "385ed94be565"
+    ]
+   },
+   "metrics_dir": "metrics/augment_b/train_plus1",
+   "seeds": [
+    "42",
+    "43",
+    "44"
+   ],
+   "scores_sym_wf1_mean": {
+    "oof": 0.8227
+   }
+  },
+  {
+   "id": "AUGB-STEP1",
+   "desc": "实验 B +1：step+1，mDeBERTa CE 英语五折三种子（Kaggle）",
+   "track": 1,
+   "variables": {
+    "model": "microsoft/mdeberta-v3-base",
+    "model_revision": "a0484667b22365f84929a935b5e50a51f71f159d",
+    "prompt": "不适用",
+    "train": {
+     "max_epochs": 12,
+     "lr": 2e-05,
+     "batch_size": 32,
+     "max_length": 96,
+     "warmup_ratio": 0.1,
+     "weight_decay": 0.01,
+     "gradient_clip": 1.0,
+     "precision": "fp16",
+     "seed_policy": "init=seed*1000+fold; per-epoch fresh shuffle RNG (not archived C0 RNG stream)",
+     "selection": "original_direction_weighted_f1，earliest"
+    },
+    "split": {
+     "folds": 5,
+     "fold_seed": 2027,
+     "inner_fraction": 0.1,
+     "holdout_fold": "0–4"
+    },
+    "method": "ce",
+    "method_params": "无",
+    "data_sha256": {
+     "fold_selection.csv": "6f289cbac76e",
+     "manifest.csv": "b380b4a6a836",
+     "split_manifest.json": "f9363290af28"
+    },
+    "train_data": "track1 按家族五折，每折 fit 每行重复两次（行数和 B1-Haiku 相同），内层验证选轮",
+    "selection": "original_direction_weighted_f1",
+    "inference": "plain 和 sym（F / B 互换后平均）",
+    "lib": {
+     "transformers": "4.57.6"
+    }
+   },
+   "platform": {
+    "platform": "Kaggle",
+    "gpu": [
+     "Tesla T4"
+    ],
+    "dtype": [
+     "fp16"
+    ],
+    "torch": [
+     "2.11.0+cu128"
+    ]
+   },
+   "code": {
+    "version": "train_augb.py v2（GPT）",
+    "code_sha256": [
+     "385ed94be565"
+    ]
+   },
+   "metrics_dir": "metrics/augment_b/train_plus1",
+   "seeds": [
+    "42",
+    "43",
+    "44"
+   ],
+   "scores_sym_wf1_mean": {
+    "oof": 0.8059
+   }
+  },
+  {
    "id": "JOINT-QWEN",
    "desc": "Qwen CE SFT 英语五折三种子",
    "track": 1,
@@ -3462,6 +3666,280 @@
     "ci95": [
      -0.0089,
      0.0023
+    ]
+   }
+  },
+  {
+   "id": "AUGB-CMP-B1-B0",
+   "new": "AUGB-B1-HAIKU",
+   "old": "AUGB-B0",
+   "eval": "oof",
+   "purpose": "实验 B +1：加 Haiku 生成数据 对 只用原数据",
+   "design": "单一计划改动",
+   "environment": "一致",
+   "unknown": [],
+   "note": "按冻结计划第 1 节的规则算提升；三个种子都升。和 AUGB-CMP-B1-STEP1 一起都通过，才算扩充有效。审核不是独立双盲、E 的放行门槛在第一次 P1 后改定（见 metrics/augment_b/train_plus1/README.md）。区间不包含重新训练随机性。",
+   "changed": {
+    "train_data": [
+     "track1 按家族五折，每折 fit + 该折选用的 Haiku 生成行（+1，清单 b380b4a6），内层验证只用原数据",
+     "track1 按家族五折，每折只训练fit，内层验证选轮"
+    ]
+   },
+   "lib_diff": {},
+   "platform_diff": {},
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 3042,
+    "families": 1725,
+    "per_seed": {
+     "42": 0.0319,
+     "43": 0.0265,
+     "44": 0.0289
+    },
+    "mean": 0.0291,
+    "ci95": [
+     0.0189,
+     0.0389
+    ]
+   }
+  },
+  {
+   "id": "AUGB-CMP-B1-STEP1",
+   "new": "AUGB-B1-HAIKU",
+   "old": "AUGB-STEP1",
+   "eval": "oof",
+   "purpose": "实验 B +1：加 Haiku 生成数据 对 原数据重复到同样行数（同计划步数）",
+   "design": "单一计划改动",
+   "environment": "一致",
+   "unknown": [],
+   "note": "两边每折行数、计划步数、学习率日程相同，只差多出来的那一半是生成数据还是原数据的重复；三个种子都升，按规则算提升。实际更新次数因 fp16 跳步差 0–2 次，只报告。区间不包含重新训练随机性。",
+   "changed": {
+    "train_data": [
+     "track1 按家族五折，每折 fit + 该折选用的 Haiku 生成行（+1，清单 b380b4a6），内层验证只用原数据",
+     "track1 按家族五折，每折 fit 每行重复两次（行数和 B1-Haiku 相同），内层验证选轮"
+    ]
+   },
+   "lib_diff": {},
+   "platform_diff": {},
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 3042,
+    "families": 1725,
+    "per_seed": {
+     "42": 0.0105,
+     "43": 0.0276,
+     "44": 0.0123
+    },
+    "mean": 0.0168,
+    "ci95": [
+     0.0073,
+     0.0258
+    ]
+   }
+  },
+  {
+   "id": "AUGB-CMP-STEP1-B0",
+   "new": "AUGB-STEP1",
+   "old": "AUGB-B0",
+   "eval": "oof",
+   "purpose": "实验 B +1：原数据重复两遍 对 一遍（只看步数加倍的作用，描述）",
+   "design": "单一计划改动",
+   "environment": "一致",
+   "unknown": [],
+   "note": "步数加倍本身也有作用（seed 43 略降），所以 B1-Haiku 对 B0 的提升里有一部分来自更多更新；扩充是否有效看 AUGB-CMP-B1-STEP1。",
+   "changed": {
+    "train_data": [
+     "track1 按家族五折，每折 fit 每行重复两次（行数和 B1-Haiku 相同），内层验证选轮",
+     "track1 按家族五折，每折只训练fit，内层验证选轮"
+    ]
+   },
+   "lib_diff": {},
+   "platform_diff": {},
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 3042,
+    "families": 1725,
+    "per_seed": {
+     "42": 0.0214,
+     "43": -0.0012,
+     "44": 0.0166
+    },
+    "mean": 0.0123,
+    "ci95": [
+     0.0043,
+     0.0204
+    ]
+   }
+  },
+  {
+   "id": "AUGB-CMP-B0-JOINTCE",
+   "new": "AUGB-B0",
+   "old": "JOINT-CE",
+   "eval": "oof",
+   "purpose": "实验 B 的 B0（Kaggle T4 fp16）对第五组 CE（A10 bf16），同划分同种子 42–44（执行环境迁移，描述）",
+   "design": "系统比较（多处不同，不能归因到单个变量）",
+   "environment": "卡或精度不同",
+   "unknown": [],
+   "note": "训练变量的记录方式不同，自动列出的差别多是写法；实际差别是卡和精度（T4 fp16 对 A10 bf16）、库版本，以及初始化和打乱的随机数流（B0 用 seed×1000+fold、每轮独立生成器）。B0 不是 JOINT-CE 的复现，只作参照。",
+   "changed": {
+    "data_sha256.final_data/dev/dico_nli_dev_track1_participant_labeled.csv": [
+     "（无此项）",
+     "80b7152f7ccf0d349d42ad2f098988106689b918b36337e5756b121d17513511"
+    ],
+    "data_sha256.final_data/dev/dico_nli_dev_track1_reference.csv": [
+     "（无此项）",
+     "8d5cd11c1c60df3c9b59254d12a60fb2cf43e91dde01b46c8a8f296b806134bc"
+    ],
+    "data_sha256.final_data/train/dico_nli_train_track1_participant_labeled.csv": [
+     "（无此项）",
+     "5e8dd9f3a7e000933fec3c9e64d064f9a25586f141f58d6e6afb47c4fc797211"
+    ],
+    "data_sha256.final_data/train/dico_nli_train_track1_reference.csv": [
+     "（无此项）",
+     "c8f4d8587711e0beaefc115606e5c29c3e78dc6660e074967428af0fed069ee4"
+    ],
+    "data_sha256.fold_selection.csv": [
+     "6f289cbac76e",
+     "（无此项）"
+    ],
+    "data_sha256.manifest.csv": [
+     "b380b4a6a836",
+     "（无此项）"
+    ],
+    "data_sha256.split_manifest.json": [
+     "f9363290af28",
+     "（无此项）"
+    ],
+    "method": [
+     "ce",
+     "编码器分类训练"
+    ],
+    "method_params": [
+     "无",
+     "（无此项）"
+    ],
+    "method_params.loss": [
+     "（无此项）",
+     "ce"
+    ],
+    "prompt": [
+     "不适用",
+     "（无此项）"
+    ],
+    "selection": [
+     "original_direction_weighted_f1",
+     "内层验证原方向 WF1，同分取早的"
+    ],
+    "split.inner_seed": [
+     "（无此项）",
+     "FOLD_SEED*100+fold+1"
+    ],
+    "train.batch": [
+     "（无此项）",
+     32
+    ],
+    "train.batch_size": [
+     32,
+     "（无此项）"
+    ],
+    "train.eval_batch": [
+     "（无此项）",
+     64
+    ],
+    "train.grad_clip": [
+     "（无此项）",
+     1.0
+    ],
+    "train.gradient_clip": [
+     1.0,
+     "（无此项）"
+    ],
+    "train.max_len": [
+     "（无此项）",
+     96
+    ],
+    "train.max_length": [
+     96,
+     "（无此项）"
+    ],
+    "train.precision": [
+     "fp16",
+     "（无此项）"
+    ],
+    "train.seed_policy": [
+     "init=seed*1000+fold; per-epoch fresh shuffle RNG (not archived C0 RNG stream)",
+     "（无此项）"
+    ],
+    "train.selection": [
+     "original_direction_weighted_f1，earliest",
+     "内层验证原方向 WF1，同分取早的"
+    ]
+   },
+   "lib_diff": {
+    "lib.transformers": [
+     "4.57.6",
+     "5.19.0"
+    ]
+   },
+   "platform_diff": {
+    "dtype": [
+     [
+      "fp16"
+     ],
+     [
+      "torch.bfloat16"
+     ]
+    ],
+    "gpu": [
+     [
+      "Tesla T4"
+     ],
+     [
+      "NVIDIA A10"
+     ]
+    ],
+    "platform": [
+     "Kaggle",
+     "阿里云 PAI-DSW"
+    ],
+    "torch": [
+     [
+      "2.11.0+cu128"
+     ],
+     [
+      "2.6.0+cu124"
+     ]
+    ]
+   },
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 3042,
+    "families": 1725,
+    "per_seed": {
+     "42": -0.0078,
+     "43": -0.0066,
+     "44": -0.0114
+    },
+    "mean": -0.0086,
+    "ci95": [
+     -0.0169,
+     -0.0
     ]
    }
   },

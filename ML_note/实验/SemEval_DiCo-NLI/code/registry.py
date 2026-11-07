@@ -229,6 +229,39 @@ def qwen8b_run(rid):
             "evals": {"oof": {str(s): {m: preds(os.path.join(root, "oof", f"seed{s}_{m}.csv")) for m in ("plain", "sym")} for s in seeds}}}
 
 
+def augb_run(rid, group):
+    """实验 B +1：B0 / B1-Haiku / step+1，英语五折三种子（Kaggle T4 fp16，GPT 的 train_augb.py v2）。
+    OOF 由 code/claude_recheck_augb.py 从每个任务的四类概率重建。"""
+    root = os.path.join(M, "augment_b", "train_plus1")
+    d = {"B0": "B0", "B1-Haiku": "B1-Haiku", "step+1": "stepplus1"}[group]
+    seeds = [42, 43, 44]
+    tasks = [rj(os.path.join(root, "tasks", d, f"seed{s}", f"fold{k}", "task.json")) for s in seeds for k in range(5)]
+    done = [rj(os.path.join(root, "tasks", d, f"seed{s}", f"fold{k}", "done.json")) for s in seeds for k in range(5)]
+    t = tasks[0]
+    for task in tasks:
+        assert all(task[k] == t[k] for k in ["model", "revision", "config", "data_sha256", "code_sha256", "stable_environment"])
+        assert not task["smoke"] and task["group"] == group
+    env = done[0]["environment"]
+    assert all(x["environment"] == env for x in done)
+    c = t["config"]
+    data = {"B0": "track1 按家族五折，每折只训练fit，内层验证选轮",
+            "B1-Haiku": "track1 按家族五折，每折 fit + 该折选用的 Haiku 生成行（+1，清单 b380b4a6），内层验证只用原数据",
+            "step+1": "track1 按家族五折，每折 fit 每行重复两次（行数和 B1-Haiku 相同），内层验证选轮"}[group]
+    variables = {"model": t["model"], "model_revision": t["revision"], "prompt": "不适用",
+                 "train": {"max_epochs": c["max_epochs"], "lr": c["lr"], "batch_size": c["batch_size"], "max_length": c["max_length"],
+                           "warmup_ratio": c["warmup_ratio"], "weight_decay": c["weight_decay"], "gradient_clip": c["gradient_clip"],
+                           "precision": c["precision"], "seed_policy": c["seed_note"], "selection": c["validation"] + "，" + c["selection_tie"]},
+                 "split": {"folds": 5, "fold_seed": c["split_seed"], "inner_fraction": c["inner_family_fraction"], "holdout_fold": "0–4"},
+                 "method": "ce", "method_params": "无", "data_sha256": {k: v[:12] for k, v in t["data_sha256"].items()},
+                 "train_data": data, "selection": c["validation"], "inference": "plain 和 sym（F / B 互换后平均）",
+                 "lib": {"transformers": env["transformers"]}}
+    return {"id": rid, "desc": f"实验 B +1：{group}，mDeBERTa CE 英语五折三种子（Kaggle）", "track": 1, "variables": variables,
+            "platform": {"platform": "Kaggle", "gpu": [env["gpu"]], "dtype": [env["precision"]], "torch": [env["torch"]]},
+            "code": {"version": "train_augb.py v2（GPT）", "code_sha256": [t["code_sha256"][:12]]},
+            "metrics_dir": "metrics/augment_b/train_plus1", "seeds": [str(s) for s in seeds],
+            "evals": {"oof": {str(s): {m: preds(os.path.join(root, "oof", f"{d}_seed{s}_{m}.csv")) for m in ("plain", "sym")} for s in seeds}}}
+
+
 def multilang_run(rid, track, fold0_only=False):
     """Kaggle T4 上 mDeBERTa CE（第五组 C0 配方）的西语 / 巴语 / 跨语言五折三种子；dev 只有 fold 0 的模型评过。"""
     root = os.path.join(M, "mdeberta_multilang_oof")
@@ -276,6 +309,9 @@ RUNS = [
     ("JOINT-SCL", lambda: joint_run("JOINT-SCL", "scl")),
     ("JOINT-MOCO_M0.999", lambda: joint_run("JOINT-MOCO_M0.999", "moco_m0.999")),
     ("A1-QWEN8B", lambda: qwen8b_run("A1-QWEN8B")),
+    ("AUGB-B0", lambda: augb_run("AUGB-B0", "B0")),
+    ("AUGB-B1-HAIKU", lambda: augb_run("AUGB-B1-HAIKU", "B1-Haiku")),
+    ("AUGB-STEP1", lambda: augb_run("AUGB-STEP1", "step+1")),
     ("JOINT-QWEN", lambda: joint_run("JOINT-QWEN", "qwen")),
     ("JOINT-KD", lambda: joint_run("JOINT-KD", "kd")),
     ("MDB-G5-T1-CE", lambda: mdeberta_methods_run("MDB-G5-T1-CE", 1, "ce", "第五组 track1 ce，fold 0 三种子")),
@@ -315,6 +351,10 @@ COMPARISONS = [
     ("JOINT-CMP-DIR_RDROP", "JOINT-DIR_RDROP", "JOINT-CE", "oof", "英语五折配对比较：dir_rdrop 对 CE"),
     ("JOINT-CMP-SCL", "JOINT-SCL", "JOINT-CE", "oof", "英语五折配对比较：scl 对 CE"),
     ("JOINT-CMP-MOCO_M0.999", "JOINT-MOCO_M0.999", "JOINT-CE", "oof", "英语五折配对比较：moco_m0.999 对 CE"),
+    ("AUGB-CMP-B1-B0", "AUGB-B1-HAIKU", "AUGB-B0", "oof", "实验 B +1：加 Haiku 生成数据 对 只用原数据"),
+    ("AUGB-CMP-B1-STEP1", "AUGB-B1-HAIKU", "AUGB-STEP1", "oof", "实验 B +1：加 Haiku 生成数据 对 原数据重复到同样行数（同计划步数）"),
+    ("AUGB-CMP-STEP1-B0", "AUGB-STEP1", "AUGB-B0", "oof", "实验 B +1：原数据重复两遍 对 一遍（只看步数加倍的作用，描述）"),
+    ("AUGB-CMP-B0-JOINTCE", "AUGB-B0", "JOINT-CE", "oof", "实验 B 的 B0（Kaggle T4 fp16）对第五组 CE（A10 bf16），同划分同种子 42–44（执行环境迁移，描述）"),
     ("A1-CMP-8B-4B", "A1-QWEN8B", "JOINT-QWEN", "oof", "实验 A：Qwen3-8B 对 Qwen3-4B-Instruct-2507（同划分、同种子、同配方；系统比较，模型不同）"),
     ("JOINT-CMP-QWEN", "JOINT-QWEN", "JOINT-CE", "oof", "英语五折配对比较：qwen 对 CE"),
     ("JOINT-CMP-KD", "JOINT-KD", "JOINT-CE", "oof", "英语五折配对比较：kd 对 CE"),
@@ -351,6 +391,10 @@ NOTES = {
     "JOINT-CMP-DIR_RDROP": "使用共同种子；fold0已用于探索，五折并非独立隐藏测试。区间不包含重新训练随机性。",
     "JOINT-CMP-SCL": "使用共同种子；fold0已用于探索，五折并非独立隐藏测试。区间不包含重新训练随机性。",
     "JOINT-CMP-MOCO_M0.999": "使用共同种子；fold0已用于探索，五折并非独立隐藏测试。区间不包含重新训练随机性。",
+    "AUGB-CMP-B1-B0": "按冻结计划第 1 节的规则算提升；三个种子都升。和 AUGB-CMP-B1-STEP1 一起都通过，才算扩充有效。审核不是独立双盲、E 的放行门槛在第一次 P1 后改定（见 metrics/augment_b/train_plus1/README.md）。区间不包含重新训练随机性。",
+    "AUGB-CMP-B1-STEP1": "两边每折行数、计划步数、学习率日程相同，只差多出来的那一半是生成数据还是原数据的重复；三个种子都升，按规则算提升。实际更新次数因 fp16 跳步差 0–2 次，只报告。区间不包含重新训练随机性。",
+    "AUGB-CMP-STEP1-B0": "步数加倍本身也有作用（seed 43 略降），所以 B1-Haiku 对 B0 的提升里有一部分来自更多更新；扩充是否有效看 AUGB-CMP-B1-STEP1。",
+    "AUGB-CMP-B0-JOINTCE": "训练变量的记录方式不同，自动列出的差别多是写法；实际差别是卡和精度（T4 fp16 对 A10 bf16）、库版本，以及初始化和打乱的随机数流（B0 用 seed×1000+fold、每轮独立生成器）。B0 不是 JOINT-CE 的复现，只作参照。",
     "A1-CMP-8B-4B": "登记的变量只差模型；未登记的分词器、聊天模板（8B 带空 think 块）和后训练方式也不同，所以是系统比较。按事先规则（均值 > 0 且区间下限 > 0）不算提升。区间不包含重新训练随机性。",
     "JOINT-CMP-QWEN": "使用共同种子；fold0已用于探索，五折并非独立隐藏测试。区间不包含重新训练随机性。",
     "JOINT-CMP-KD": "使用共同种子；fold0已用于探索，五折并非独立隐藏测试。区间不包含重新训练随机性。",

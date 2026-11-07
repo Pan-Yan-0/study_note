@@ -40,7 +40,7 @@
 
 ## 下一步
 
-Haiku 数据已放行：交训练侧跑 B0 / B1-Haiku / step+1（英语五折三种子，共 45 项），对照和核对按 FULL_README 第 5 节。
+Haiku 数据已放行并完成训练，结果见 [+1 训练对照](../train_plus1/README.md)。
 
 ## 来源
 
