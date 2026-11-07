@@ -2,6 +2,7 @@
 
   python build_full.py main <官方仓库目录> <v6 试点包目录> <输出目录>
   python build_full.py supp <官方仓库目录> <v6 试点包目录> <补充计划.json> <输出目录>
+  python build_full.py round <官方仓库目录> <v6 试点包目录> <轮次 2|3|4> <输出目录>      （+2 / +4 的规模轮）
 
 - 家族、签名、父样本的取法和 v6 试点完全相同（build_pilot.py 的 parent_of：家族里字典序最小的 pair_id 的原方向，
   BACKWARD 交换成 FORWARD 展示；只差一个数量的父样本不用）。划分清单、家族表从试点包读，并核对试点包的 MANIFEST。
@@ -110,6 +111,27 @@ def plan_main(world):
     return out
 
 
+def plan_round(world, r):
+    """规模轮（+2 / +4，Pan-Yan-0 11-07 定）：全部合格家族（含试点用过的）各用一次，种子 SEED + r 重新打乱、重新组批，
+    所以同一个家族在不同轮里和不同的家族同批，提示词不重复。分层和装批规则和主轮相同。"""
+    rng = random.Random(SEED + r)
+    by_sig = defaultdict(list)
+    for f in world["eligible"]: by_sig[world["signature"][f]].append(f)
+    out = []
+    for s in sorted(by_sig, key=lambda s: (-len(by_sig[s]), s)):
+        fs = sorted(by_sig[s]); rng.shuffle(fs)
+        pool = defaultdict(list)
+        for f in fs: pool[world["eligible"][f]["label"]].append(world["eligible"][f])
+        while all(len(pool[l]) >= k for l, k in STRATA.items()):
+            refs = [pool[l].pop(0) for l, k in STRATA.items() for _ in range(k)]
+            rng.shuffle(refs); out.append((s, refs))
+        left = {p["family_id"] for l in pool for p in pool[l]}
+        rest = [world["eligible"][f] for f in fs if f in left]
+        for i in range(0, len(rest), PER_BATCH):
+            refs = rest[i:i + PER_BATCH]; rng.shuffle(refs); out.append((s, refs))
+    return out
+
+
 def make_batch(bid, stage, s, refs, template, template_path, split_sha):
     prompt = fill(template, refs, bid, "real")
     q = dict(Counter(p["label"] for p in refs))
@@ -159,6 +181,17 @@ def main():
         c = Counter(p["label"] for b in batches for p in b["parents"])
         print(f"{VERSION} 主轮：{len(batches)} 批、{len(used)} 个父家族（每个一次），{dict(c)}；"
               f"分层满批 {sum(1 for b in batches if b['quota_pairs'] == STRATA)} 批")
+    elif cmd == "round":
+        r, out = int(sys.argv[4]), os.path.abspath(sys.argv[5])
+        assert r in (2, 3, 4)
+        plan = plan_round(world, r)
+        batches = [make_batch(f"r{r}_b{i:03d}", f"r{r}", s, refs, template, template_path, world["split_sha"])
+                   for i, (s, refs) in enumerate(plan, 1)]
+        used = [p["family_id"] for b in batches for p in b["parents"]]
+        assert len(used) == len(set(used)) == len(world["eligible"])
+        write_package(out, batches, world, pilot_pkg, {"stage": f"r{r}", "round_seed": SEED + r})
+        c = Counter(p["label"] for b in batches for p in b["parents"])
+        print(f"{VERSION} 规模轮 r{r}：{len(batches)} 批、{len(used)} 个父家族（每个一次），{dict(c)}")
     elif cmd == "supp":
         plan_path, out = os.path.abspath(sys.argv[4]), os.path.abspath(sys.argv[5])
         sp = jload(plan_path)
@@ -168,8 +201,8 @@ def main():
             refs = [world["eligible"][f] for f in x["parent_families"]]
             assert all(GROUP[p["label"]] == x["group"] for p in refs)
             s = tuple(int(c) for c in x["signature"])
-            batches.append(make_batch(x["batch_id"], f"supp{sp['round']}", s, refs, template, template_path, world["split_sha"]))
-        write_package(out, batches, world, pilot_pkg, {"stage": f"supp{sp['round']}", "supplement_plan_sha256": sha_file(plan_path)})
+            batches.append(make_batch(x["batch_id"], sp.get("stage") or f"supp{sp['round']}", s, refs, template, template_path, world["split_sha"]))
+        write_package(out, batches, world, pilot_pkg, {"stage": sp.get("stage") or f"supp{sp['round']}", "supplement_plan_sha256": sha_file(plan_path)})
         print(f"{VERSION} 补充第 {sp['round']} 轮：{len(batches)} 批")
     else:
         raise SystemExit(__doc__)

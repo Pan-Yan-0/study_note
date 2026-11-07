@@ -30,7 +30,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import process_outputs as po  # noqa: E402
 
-STAGES = ("pilot", "main", "supp1", "supp2")
+STAGES = ("pilot", "main", "supp1", "supp2", "r2", "s2a", "s2b", "r3", "r4", "s4a", "s4b")  # 规模轮（+2 / +4）排在 +1 的阶段之后，+1 的选用不变
 SELECT_SEED, REVIEW2_SEED = 20261106, 20261107
 GROUP_OF = {"EQUIVALENCE": "EQUIVALENCE", "FORWARD_ENTAILMENT": "FORWARD_ENTAILMENT", "BACKWARD_ENTAILMENT": "FORWARD_ENTAILMENT",
             "NEGATIVE_OTHER": "NEGATIVE_OTHER"}
@@ -42,9 +42,11 @@ FIELDS = ["sample_id", "pair_uid", "direction", "text1", "text2", "label", "sour
 def sha(p): return po.sha_file(p)
 
 
-def merge(off, out, specs, pilot_reviewed=True):
+def merge(off, out, specs, pilot_reviewed=True, tiers=(1,), review_stages=None):
+    """tiers：要选用的规模（+1 / +2 / +4，嵌套：每折每类按同一个固定顺序取前 k × fit 行）。
+    review_stages：第二次 P1 只从这些阶段抽（规模轮只审新增的那部分）；None 时沿用原规则。"""
     os.makedirs(out, exist_ok=True)
-    for name in po.DERIVED + ("fold_selection.csv", "sources.json", "concentration.json"):
+    for name in po.DERIVED + ("fold_selection.csv", "sources.json", "concentration.json", "fold_selection_scale.csv", "pool_order.json"):
         if os.path.exists(f"{out}/{name}"): os.remove(f"{out}/{name}")
     problems, sources = [], {}
     stages = [s for s in STAGES if s in specs]
@@ -105,6 +107,8 @@ def merge(off, out, specs, pilot_reviewed=True):
     # ---------- 5：逐折选用 ----------
     need_rows = {"EQUIVALENCE": 2, "FORWARD_ENTAILMENT": 2, "NEGATIVE_OTHER": 1}
     selection, quota, short = [], {}, {}
+    scale_rows, order_out, quota_scale, short_scale = [], {}, {}, {}
+    top = max(tiers)
     for kf in range(5):
         fit = Counter(lab_of[i] for i in world_split[str(kf)]["fit"])
         demand = {"EQUIVALENCE": fit["EQUIVALENCE"], "FORWARD_ENTAILMENT": fit["FORWARD_ENTAILMENT"] + fit["BACKWARD_ENTAILMENT"],
@@ -116,6 +120,15 @@ def merge(off, out, specs, pilot_reviewed=True):
             ordered = []
             for st in STAGES:
                 part = sorted(u for u in cand if pairs[u]["stage"] == st); rng.shuffle(part); ordered += part
+            order_out[f"{kf}-{g}"] = ordered
+            prev = []
+            for t in sorted(tiers):
+                tk = ordered[:t * d // need_rows[g]]; gt = len(tk) * need_rows[g]
+                quota_scale[f"{t}-{kf}-{g}"] = {"demand_rows": t * d, "selected_rows": gt, "candidates_pairs": len(cand)}
+                if gt != t * d and t == top: short_scale[f"{kf}-{g}"] = t * d - gt
+                for u in tk[len(prev):]:
+                    scale_rows += [{"fold": kf, "sample_id": s, "pair_uid": u, "tier": t} for s in pairs[u]["rows"]]
+                prev = tk
             take = ordered[:d // need_rows[g]]
             got = len(take) * need_rows[g]
             quota[f"{kf}-{g}"] = {"demand_rows": d, "selected_rows": got, "candidates_pairs": len(cand)}
@@ -123,6 +136,12 @@ def merge(off, out, specs, pilot_reviewed=True):
             for u in take: selection += [{"fold": kf, "sample_id": s, "pair_uid": u} for s in pairs[u]["rows"]]
     po.write_csv(f"{out}/fold_selection.csv", selection, ["fold", "sample_id", "pair_uid"])
     selected = {r["pair_uid"] for r in selection}
+    if tuple(tiers) != (1,):
+        po.write_csv(f"{out}/fold_selection_scale.csv", scale_rows, ["fold", "sample_id", "pair_uid", "tier"])
+        po.dump(f"{out}/pool_order.json", {"rule": "每折每组的候选对按阶段顺序、阶段内固定种子打乱；+k 取前 k × fit 行；类别构成的 G 组取各类前缀",
+                                           "tiers": sorted(tiers), "order": order_out})
+        selected = {r["pair_uid"] for r in scale_rows}
+        short = short_scale
 
     # ---------- 6：自动检查（合并后全部候选；新增部分另算） ----------
     orig = po.canonical_original(train)
@@ -134,6 +153,7 @@ def merge(off, out, specs, pilot_reviewed=True):
                 "probe_gap": acc_g - acc_o if acc_g is not None and acc_o is not None else None,
                 "mean_words_generated": mw(gen), "length_dev": abs(mw(gen) - mw(orig)) / mw(orig)}
     allp = sorted(pairs); newp = sorted(u for u in pairs if pairs[u]["stage"] != "pilot" or not pilot_reviewed)
+    if review_stages is not None: newp = sorted(u for u in pairs if pairs[u]["stage"] in review_stages)
     n_batches = sum(r["stats"]["batches"] for r in stage_reports.values())
     n_failed = sum(len(r["stats"]["failed_batches"]) for r in stage_reports.values())
     n_ret = sum(r["stats"]["pairs_returned"] for r in stage_reports.values())
@@ -144,6 +164,7 @@ def merge(off, out, specs, pilot_reviewed=True):
              "pairs_returned": n_ret, "dup_rate": n_dup / n_ret, "dropped_cross_stage": dict(dropped),
              "kept_pairs": len(pairs), "kept_pairs_by_stage": dict(Counter(x["stage"] for x in pairs.values())),
              "selected_pairs": len(selected), "fold_quota": quota, "fold_quota_short": short,
+             "tiers": sorted(tiers), "fold_quota_scale": quota_scale,
              "surface_all": s_all, "surface_new_only": s_new,
              "probe_gap": s_all["probe_gap"], "length_dev": s_all["length_dev"]}
     checks = {"protocol": "fail" if problems else "pass",
@@ -172,7 +193,7 @@ def merge(off, out, specs, pilot_reviewed=True):
                     "stage": pairs[s["_uid"]]["stage"], "signature": "".join(map(str, pairs[s["_uid"]]["usable"]))}
         rws.append({"review_id": rid, "text1": s["text1"], "text2": s["text2"], "label": "", "note": ""})
     po.write_csv(f"{out}/review_sheet.csv", rws, ["review_id", "text1", "text2", "label", "note"])
-    po.dump(f"{out}/review_key.json", {"seed": REVIEW2_SEED, "per_group": po.REVIEW_PER_GROUP, "population": "新增、过滤后、至少一折选用" if pilot_reviewed else "全部阶段、过滤后、至少一折选用（试点未单独审核）",
+    po.dump(f"{out}/review_key.json", {"seed": REVIEW2_SEED, "per_group": po.REVIEW_PER_GROUP, "population": f"阶段 {sorted(review_stages)} 的、过滤后、至少一折选用" if review_stages is not None else "新增、过滤后、至少一折选用" if pilot_reviewed else "全部阶段、过滤后、至少一折选用（试点未单独审核）",
                                        "short_of_quota": short_of, "items": key,
                                        "coverage": {"stages": dict(Counter(v["stage"] for v in key.values())),
                                                     "signatures": dict(Counter(v["signature"] for v in key.values()))}})
@@ -190,7 +211,7 @@ def merge(off, out, specs, pilot_reviewed=True):
         "max_kept_pairs_one_family": max(kept_c.values()),
         "top1pct_rule": "ceil(0.01 × 有子对的家族数) 个家族", "top1pct_families": top_n, "top1pct_share_of_kept_pairs": top / len(pairs)})
 
-    po.dump(f"{out}/sources.json", {"split_manifest_sha256": split_sha, "stages": sources,
+    po.dump(f"{out}/sources.json", {"split_manifest_sha256": split_sha, "stages": sources, **({"tiers": sorted(tiers)} if tuple(tiers) != (1,) else {}),
                                      "pilot_reviewed": pilot_reviewed, "select_seed": SELECT_SEED, "review2_seed": REVIEW2_SEED, "merger_sha256": sha(__file__)})
     meta = {"status": "candidate", "split_manifest_sha256": split_sha, "manifest_sha256": sha(f"{out}/manifest.csv"),
             "fold_selection_sha256": sha(f"{out}/fold_selection.csv"), "sources_sha256": sha(f"{out}/sources.json"),
@@ -206,7 +227,9 @@ if __name__ == "__main__":
     off, out = os.path.abspath(sys.argv[1]), os.path.abspath(sys.argv[2])
     specs = {}
     for a in sys.argv[3:]:
-        if a == "--pilot-unreviewed": continue
+        if a == "--pilot-unreviewed" or a.startswith("--tiers=") or a.startswith("--review-stages="): continue
         st, v = a.split("=", 1); pkg, res = v.split(":", 1)
         specs[st] = (os.path.abspath(pkg), os.path.abspath(res))
-    merge(off, out, specs, pilot_reviewed="--pilot-unreviewed" not in sys.argv)
+    tiers = tuple(int(x) for x in next((a.split("=", 1)[1] for a in sys.argv if a.startswith("--tiers=")), "1").split(","))
+    rs = next((a.split("=", 1)[1].split(",") for a in sys.argv if a.startswith("--review-stages=")), None)
+    merge(off, out, specs, pilot_reviewed="--pilot-unreviewed" not in sys.argv, tiers=tiers, review_stages=rs)

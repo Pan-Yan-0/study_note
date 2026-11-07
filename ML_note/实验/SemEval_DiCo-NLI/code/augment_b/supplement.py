@@ -26,43 +26,47 @@ def new_ledger(uses=None):
     return {"rows_issued": 0, "cursor": {}, "batches": [], "rounds_done": [], "uses": dict(uses or {})}
 
 
-def plan(deficit, sig_families, keep_rate, planned_rows, ledger, round_no):
+def plan(deficit, sig_families, keep_rate, planned_rows, ledger, round_no, max_uses=None, label=None):
     """deficit: {(fold, group): 行数}；sig_families: {"0134": {"E": [家族, ...], "U": [...], "O": [...]}}（家族按父样本的组分开，
     不含只差数量的父样本）；keep_rate: {group: 比例}；
     planned_rows: +1 计划总行数；ledger: 上一轮返回的台账（第 1 轮用 new_ledger()）。
     返回 (本轮批次列表, 状态, 新台账)。状态不是 "ok" 时不要下达本轮批次。"""
-    if round_no not in (1, 2): raise ValueError("补充最多两轮")
-    if round_no in ledger["rounds_done"] or (round_no == 2 and 1 not in ledger["rounds_done"]):
-        raise ValueError("轮次顺序不对")
+    # 规模轮（+2 / +4）的补充：label 给出批次前缀（s2a、s4a 等），max_uses 是该规模的家族上限，由 plan_scale_supp.py 调用
+    if label is None:
+        if round_no not in (1, 2): raise ValueError("补充最多两轮")
+        if round_no in ledger["rounds_done"] or (round_no == 2 and 1 not in ledger["rounds_done"]):
+            raise ValueError("轮次顺序不对")
+    elif label in ledger["rounds_done"]: raise ValueError("这一轮补充已经做过")
+    MAXU = MAX_USES if max_uses is None else max_uses
     led = json.loads(json.dumps(ledger))
     D, batches = dict(deficit), []
     for g in "EUO":
         kr = math.floor(keep_rate[g] * 20) / 20
         if kr <= 0: return [], f"{g} 组保留率为 0，无法规划", ledger
         uses = led.setdefault("uses", {})
-        free = lambda s: [f for f in sig_families[s].get(g, []) if uses.get(f, 0) < MAX_USES]
+        free = lambda s: [f for f in sig_families[s].get(g, []) if uses.get(f, 0) < MAXU]
         while any(D.get((k, g), 0) > 0 for k in range(5)):
             need = {k for k in range(5) if D.get((k, g), 0) > 0}
             cands = [s for s in sig_families if free(s)]
-            if not cands: return [], f"{g} 组的父家族都已用满 {MAX_USES} 次，仍有缺口", ledger
+            if not cands: return [], f"{g} 组的父家族都已用满 {MAXU} 次，仍有缺口", ledger
             s = min(cands, key=lambda s: (-len(need & {int(c) for c in s}), -len(free(s)), s))
             if not need & {int(c) for c in s}:
-                return [], f"{g} 组的缺口折 {sorted(need)} 没有还能用的签名（签名不覆盖，或家族已用满 {MAX_USES} 次）", ledger
+                return [], f"{g} 组的缺口折 {sorted(need)} 没有还能用的签名（签名不覆盖，或家族已用满 {MAXU} 次）", ledger
             fams = sorted(sig_families[s][g]); random.Random(f"{SEED}-{s}-{g}").shuffle(fams)
             key = f"{s}-{g}"; c = led["cursor"].get(key, 0)
             pick, j = [], 0
             while len(pick) < PAIRS_PER_BATCH and j < len(fams):  # 从游标起循环一圈，跳过用满的
                 f = fams[(c + j) % len(fams)]; j += 1
-                if uses.get(f, 0) < MAX_USES and f not in pick: pick.append(f)
+                if uses.get(f, 0) < MAXU and f not in pick: pick.append(f)
             led["cursor"][key] = (c + j) % len(fams)
             for f in pick: uses[f] = uses.get(f, 0) + 1
             for k in (int(c) for c in s): D[(k, g)] = D.get((k, g), 0) - len(pick) * ROWS_PER_PAIR[g] * kr
             led["rows_issued"] += len(pick) * ROWS_PER_PAIR[g]
             if led["rows_issued"] > BUDGET * planned_rows:
                 return [], f"预算不足：两轮累计补充 {led['rows_issued']} 行，超过计划的 {BUDGET:.0%}，停下等人决定", ledger
-            bid = f"supp{round_no}_b{len(batches) + 1:03d}"
+            bid = f"{label}_b{len(batches) + 1:03d}" if label else f"supp{round_no}_b{len(batches) + 1:03d}"
             batches.append({"batch_id": bid, "signature": s, "group": g, "quota_pairs": {LABEL_OF[g]: len(pick)},
                             "parent_families": pick})
             led["batches"].append(bid)
-    led["rounds_done"].append(round_no)
+    led["rounds_done"].append(label or round_no)
     return batches, "ok", led
