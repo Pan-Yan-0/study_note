@@ -4,7 +4,7 @@ Claude 在 Pan-Yan-0 的 study_note 仓库里工作时用的备忘：要遵守�
 
 ## 1. 最重要的几条
 
-1. **称呼和语言**：称呼 Pan-Yan-0（GitHub 用户名），不用中文名；交流和文档都用中文。
+1. **称呼和语言**：称呼 Pan-Yan-0（GitHub 用户名），不用中文名；交流和文档都用中文，但**专业名词保留英文原词**（如 fold、seed、OOF、batch、checkpoint、warmup、family、subagent、SMOKE），不硬译成中文（Pan-Yan-0 11-07 定的）。
 2. **仓库是公开的，导师也会看**：不写学习画像、经验值、个人邮箱、令牌和本机路径。教学方法、画像和经验存档只放在 claude.ai 上 Pan-Yan-0 的私有 skill `cognitive-tutoring` 里。
 3. **工作分支是 `note`**：`master`、`d2l`、`cuda_study`、`math_modeling` 不要动（`d2l` 由每周的定时任务单独维护）。
 4. **任何决策都要有实验支持**（导师原话："扩充数据，参数选取，我也说不清好不好，实验结果说明好不好"）：
@@ -75,7 +75,7 @@ Coursera-ML-AndrewNg-Notes-master/   课程资料
   ```
 - **提交信息末尾的署名**：
   - 加 `Co-Authored-By: Claude …` 和会话链接。
-  - 含 GPT 写的代码、Notebook 或文字时，再加 `Co-authored-by: GPT6.1sol <noreply@openai.com>`。换了别的 GPT 模型（如 GPT6astra），就换成实际参与的那个名字；拿不准时问 Pan-Yan-0。
+  - 含 GPT 写的代码、Notebook 或文字时，再加 `Co-authored-by: Codex <noreply@openai.com>`（Pan-Yan-0 11-07 定的，不再区分具体模型名）。
 - **推送前**：先 `git fetch`；检查 diff 里没有密钥、令牌和邮箱。
 - **只用普通推送**：不强推，不为了补署名改写已推送的历史。推送失败就停下来，说明是哪一步、报了什么错。
 - **结果文件**：`.gitignore` 忽略了 `*.csv`、`*.json`，要提交的指标文件用 `git add -f`。
