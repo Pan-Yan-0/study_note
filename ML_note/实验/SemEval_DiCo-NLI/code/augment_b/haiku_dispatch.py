@@ -135,7 +135,10 @@ def harvest(pkg, run, sub_dir):
         writes = [x["file"] for x in t["tools"] if x["name"] in ("Write", "Edit")]
         other = [x["name"] for x in t["tools"] if x["name"] not in ("Read", "Write", "SubagentHandback", "ToolSearch")]
         e["wrapper_exact"] = t["wrapper_exact"]
-        if not t["wrapper_exact"]:
+        if t["api_models"] in ([], ["<synthetic>"]) and not t["tools"]:
+            # API 限额等：subagent 没有拿到任何模型回复，也没调用工具；记 infra_error，可以按协议重派
+            e.update(status="infra_error", reason="API 没有返回模型回复（限额），subagent 没有调用工具", has_partial_output=False)
+        elif not t["wrapper_exact"]:
             e.update(status="tool_violation", reason="subagent 收到的任务和固定派发说明不一致")
         elif not e["model_verified"]:
             e.update(status="model_mismatch", reason=f"API 返回的 model 是 {t['api_models']}，不是 {HAIKU_API}")

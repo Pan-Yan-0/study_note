@@ -156,7 +156,7 @@ def build(pkg, ret, off, out, data_version):
                 else: problems.append(f"{tag}：提示词哈希不一致")
             for k in ("agent_id", "start", "end", "requested_model", "visible_model"):
                 if not e.get(k): problems.append(f"{tag}：调度记录缺 {k}")
-            if e["status"] not in ("ok", "format_fail", "infra_error"): problems.append(f"{tag}：状态不合法 {e['status']}")
+            if e["status"] not in ("ok", "format_fail", "infra_error", "tool_violation"): problems.append(f"{tag}：状态不合法 {e['status']}")
             if e["status"] != "ok" and not e.get("reason"): problems.append(f"{tag}：失败没有写原因")
             try:
                 t0, t1 = parse_time(e.get("start")), parse_time(e.get("end"))
@@ -170,6 +170,12 @@ def build(pkg, ret, off, out, data_version):
                 elif e["has_partial_output"] != os.path.exists(path): problems.append(f"{tag}：has_partial_output 和实际文件不符")
                 elif os.path.exists(path) and e.get("raw_sha256") != sha_file(path): problems.append(f"{tag}：部分输出的哈希和日志不同")
                 attempts_report.append({"batch_id": bid, "attempt": e["attempt"], "status": "infra_error", "reasons": e.get("reason", "")})
+                continue
+            if e["status"] == "tool_violation":
+                # 工具违规：输出作废，永不参与选用；协议（section 10）没有允许这种重派，记为待裁定的偏离
+                problems.append(f"{tag}：tool_violation，输出作废、不选用；协议外的重派，待 Pan-Yan-0 裁定")
+                attempts_report.append({"batch_id": bid, "attempt": e["attempt"], "status": "tool_violation", "reasons": e.get("reason", ""),
+                                        "raw_sha256": sha_file(path) if os.path.exists(path) else "", "visible_model": e.get("visible_model", "")})
                 continue
             if not os.path.exists(path): problems.append(f"{bid}：缺 attempt_{e['attempt']}.txt"); continue
             with open(path, encoding="utf-8") as f: r = check(b, f.read())
