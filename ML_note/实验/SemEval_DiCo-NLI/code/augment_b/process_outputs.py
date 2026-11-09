@@ -129,7 +129,7 @@ def build(pkg, ret, off, out, data_version):
     with open(f"{ret}/dispatch_log.jsonl", encoding="utf-8") as f:
         for l in f:
             if l.strip(): log.append(json.loads(l))
-    attempts_report, chosen = [], {}
+    attempts_report, chosen, discarded = [], {}, {}
     by_batch = defaultdict(list)
     for e in log:
         if e["batch_id"] not in batches: problems.append(f"调度记录里有包外批次：{e['batch_id']}")
@@ -145,6 +145,15 @@ def build(pkg, ret, off, out, data_version):
         if len(entries) > 3: problems.append(f"{bid}：总尝试超过 3 次")
         first_ok = next((e["attempt"] for e in entries if e["status"] == "ok"), None)
         if first_ok is not None and entries[-1]["attempt"] > first_ok: problems.append(f"{bid}：已有合格输出后又追加了尝试")
+        violated = [e for e in entries if e["status"] == "tool_violation"]
+        if violated:
+            # 工具违规（11-09 裁定方案 A）：整批作废，该批任何输出（包括之后的重派）都不用；记为 discarded，不算协议失败
+            discarded[bid] = violated[0].get("reason", "")
+            for e in entries:
+                attempts_report.append({"batch_id": bid, "attempt": e["attempt"],
+                                        "status": "tool_violation" if e["status"] == "tool_violation" else "discarded_after_violation",
+                                        "reasons": e.get("reason", ""), "raw_sha256": "", "visible_model": e.get("visible_model", "")})
+            continue
         for e in entries:
             tag = f"{bid} 第 {e['attempt']} 次"
             if e.get("prompt_sha256") != b["prompt_sha256"]:
@@ -170,12 +179,6 @@ def build(pkg, ret, off, out, data_version):
                 elif e["has_partial_output"] != os.path.exists(path): problems.append(f"{tag}：has_partial_output 和实际文件不符")
                 elif os.path.exists(path) and e.get("raw_sha256") != sha_file(path): problems.append(f"{tag}：部分输出的哈希和日志不同")
                 attempts_report.append({"batch_id": bid, "attempt": e["attempt"], "status": "infra_error", "reasons": e.get("reason", "")})
-                continue
-            if e["status"] == "tool_violation":
-                # 工具违规：输出作废，永不参与选用；协议（section 10）没有允许这种重派，记为待裁定的偏离
-                problems.append(f"{tag}：tool_violation，输出作废、不选用；协议外的重派，待 Pan-Yan-0 裁定")
-                attempts_report.append({"batch_id": bid, "attempt": e["attempt"], "status": "tool_violation", "reasons": e.get("reason", ""),
-                                        "raw_sha256": sha_file(path) if os.path.exists(path) else "", "visible_model": e.get("visible_model", "")})
                 continue
             if not os.path.exists(path): problems.append(f"{bid}：缺 attempt_{e['attempt']}.txt"); continue
             with open(path, encoding="utf-8") as f: r = check(b, f.read())
@@ -235,7 +238,7 @@ def build(pkg, ret, off, out, data_version):
     gen = [(p["text1"], p["text2"], p["label"]) for _, _, p in kept]
     mw = lambda ps: sum(words(x) for t1, t2, _ in ps for x in (t1, t2)) / (2 * len(ps))
     acc_o, acc_g = probe(orig), probe(gen)
-    stats = {"batches": len(batches), "failed_batches": failed, "batch_fail_rate": len(failed) / len(batches),
+    stats = {"batches": len(batches), "failed_batches": failed, "discarded_batches": discarded, "batch_fail_rate": len(failed) / len(batches),
              "pairs_returned": n_pairs, "removed": dict(removed), "prompt_deviations": deviations,
              "dup_rate": (removed["dup_parent"] + removed["dup_official"] + removed["dup_generated"]) / n_pairs if n_pairs else None,
              "reuse_parent_phrase_rate": removed["reuse_parent_phrase"] / n_pairs if n_pairs else None,

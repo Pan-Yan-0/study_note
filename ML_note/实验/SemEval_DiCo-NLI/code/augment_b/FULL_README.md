@@ -270,6 +270,13 @@ DICO_OFF=<官方仓库目录> DICO_PKG=../pilot_v6 python -m unittest test_augme
 - **结果**（[e_recheck](../../metrics/augment_b/e_recheck/README.md)）：Haiku E 不一致 3/20（15%），原数据 E 4/20（20%），通过；审核结果记为 `P1C-R`，`gate.json` 全部 pass，`ready_for_training: true`，清单 `b380b4a6…`。
 - 执行时（11-06）：Pan-Yan-0 表示按比赛金标的尺度自己会判得偏严，全部采纳 Claude 的初标（SHA-256 `a33f31ec…`），所以实际是两步：Claude 初标 → GPT 对照参考卡复审。
 
+## 13. tool_violation 的处理（11-09，Pan-Yan-0 裁定方案 A）
+
+- r4_b073 第 1 次的子 agent 多调用了一次 `Bash`（`mkdir -p` 自己的输出目录，没有改动内容）。第 10 节没有允许工具违规后重派，之前的重派是协议外操作。
+- 裁定：整批作废。该批任何输出（包括第 2 次的合格输出）都不用；`process_outputs.py` 把它记为 `discarded_batches`，计入 `failed_batches`，不算协议失败。
+- 影响：r4 少 14 对（1,699 → 1,685 对，manifest 2,877 行）；批次失败 1/136，远低于 5% 的停止条件。
+- 代码：`process_outputs.py` 只认 `ok`、`format_fail`、`infra_error`、`tool_violation` 四种状态；`tool_violation` 的批次不选用任何输出。r2、r3、r4 用同一版本的处理器重建。
+
 ## 来源
 
 批次、干跑、合并和测试代码由 Claude 编写；方案 B 和合并规则吸收了 GPT 11-06 的复核意见；生成由 GPT 调度 GPT6Luna 子 agent 执行。
