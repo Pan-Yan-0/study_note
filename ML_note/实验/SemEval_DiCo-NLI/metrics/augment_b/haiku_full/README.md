@@ -34,7 +34,7 @@
 
 ## 问题
 
-- 子 agent 每次启动约 10 万 token 上下文，很可能带上了仓库的 CLAUDE.md / AGENTS.md（里面有从训练标签归纳的计数规则描述）。派发说明禁止读其他文件，日志里每个子 agent 只调用了 3–4 次工具（读提示词、写回复），但它的初始上下文是什么，这边无法证明。提示词本身禁止只差数量的对，`number_pair` 统计为 0。
+- **生成器的初始上下文里有仓库的 CLAUDE.md / AGENTS.md**（11-09 从每个子 agent 的 transcript 证实，见 FULL_README 第 14 节）：除了提示词，子 agent 启动时还带着这两个文件（约 35 KB，是派发当时的版本，AGENTS.md 里有从训练标签归纳的计数规则和 E 类口径的描述），另有记忆文件目录和每个文件一行的说明（不含正文）、Project 挂载说明和 skill 列表。派发说明禁止读其他文件，每个子 agent 只调用了 3–4 次工具（读提示词、写回复）。提示词本身禁止只差数量的对，`number_pair` 统计为 0。这一节的数据（试点、主轮、补充第 1 轮）reasoning effort 都是 `medium`。
 - Agent 工具不单独返回实际模型身份，`visible_model` 记为"未返回"；`requested_model` 是实际传给工具的参数 `haiku`。
 - 审核方式偏离了原协议：两份标注不独立，审核人之间的一致率无从得知（见 FULL_README 第 10 节）。
 

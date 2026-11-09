@@ -1,0 +1,397 @@
+{
+ "meta": {
+  "status": "candidate",
+  "split_manifest_sha256": "dbd8b571f5836352bb88b7018ec4471b5038801e37c588ef4e04342430aaba17",
+  "manifest_sha256": "24704e11c0b99033746dc1a857df8ee4a665772bf68d4b23ee97b44958a26599",
+  "fold_selection_sha256": "6f289cbac76e62143660cf849e61fe3e167b16b1e6dd1d18f635c7c1db0066a4",
+  "sources_sha256": "357f3920fa05ce3b84a7bce46c3c3dd59a57531374c037fc9046e4767bc3756c",
+  "merger_sha256": "330544cb0c179eb1adf6412aa6b4f5926a98f5339ffc5ada10f457c905661b27",
+  "processor_sha256": "cb51a66203a8a47c686df61047ade8ca25e369dcf96fb6787f02c191870a654e"
+ },
+ "stats": {
+  "stages": [
+   "pilot",
+   "main",
+   "supp1",
+   "r2",
+   "s2a",
+   "r3",
+   "r4",
+   "s4a",
+   "s4b"
+  ],
+  "batches": 616,
+  "failed_batches": 1,
+  "batch_fail_rate": 0.0016233766233766235,
+  "pairs_returned": 7790,
+  "dup_rate": 0.07458279845956355,
+  "dropped_cross_stage": {
+   "main": 3,
+   "supp1": 5,
+   "r2": 67,
+   "s2a": 10,
+   "r3": 157,
+   "r4": 179,
+   "s4a": 76,
+   "s4b": 8
+  },
+  "kept_pairs": 7204,
+  "kept_pairs_by_stage": {
+   "pilot": 210,
+   "main": 1475,
+   "supp1": 120,
+   "r2": 1616,
+   "s2a": 129,
+   "r3": 1524,
+   "r4": 1489,
+   "s4a": 593,
+   "s4b": 48
+  },
+  "selected_pairs": 7174,
+  "fold_quota": {
+   "0-EQUIVALENCE": {
+    "demand_rows": 574,
+    "selected_rows": 574,
+    "candidates_pairs": 1238
+   },
+   "0-FORWARD_ENTAILMENT": {
+    "demand_rows": 1262,
+    "selected_rows": 1262,
+    "candidates_pairs": 2532
+   },
+   "0-NEGATIVE_OTHER": {
+    "demand_rows": 354,
+    "selected_rows": 354,
+    "candidates_pairs": 1449
+   },
+   "1-EQUIVALENCE": {
+    "demand_rows": 580,
+    "selected_rows": 580,
+    "candidates_pairs": 1246
+   },
+   "1-FORWARD_ENTAILMENT": {
+    "demand_rows": 1282,
+    "selected_rows": 1282,
+    "candidates_pairs": 2736
+   },
+   "1-NEGATIVE_OTHER": {
+    "demand_rows": 330,
+    "selected_rows": 330,
+    "candidates_pairs": 1332
+   },
+   "2-EQUIVALENCE": {
+    "demand_rows": 594,
+    "selected_rows": 594,
+    "candidates_pairs": 1191
+   },
+   "2-FORWARD_ENTAILMENT": {
+    "demand_rows": 1238,
+    "selected_rows": 1238,
+    "candidates_pairs": 2495
+   },
+   "2-NEGATIVE_OTHER": {
+    "demand_rows": 354,
+    "selected_rows": 354,
+    "candidates_pairs": 1452
+   },
+   "3-EQUIVALENCE": {
+    "demand_rows": 572,
+    "selected_rows": 572,
+    "candidates_pairs": 1155
+   },
+   "3-FORWARD_ENTAILMENT": {
+    "demand_rows": 1290,
+    "selected_rows": 1290,
+    "candidates_pairs": 2732
+   },
+   "3-NEGATIVE_OTHER": {
+    "demand_rows": 338,
+    "selected_rows": 338,
+    "candidates_pairs": 1355
+   },
+   "4-EQUIVALENCE": {
+    "demand_rows": 586,
+    "selected_rows": 586,
+    "candidates_pairs": 1270
+   },
+   "4-FORWARD_ENTAILMENT": {
+    "demand_rows": 1272,
+    "selected_rows": 1272,
+    "candidates_pairs": 2716
+   },
+   "4-NEGATIVE_OTHER": {
+    "demand_rows": 342,
+    "selected_rows": 342,
+    "candidates_pairs": 1395
+   }
+  },
+  "fold_quota_short": {},
+  "tiers": [
+   1,
+   2,
+   4
+  ],
+  "fold_quota_scale": {
+   "1-0-EQUIVALENCE": {
+    "demand_rows": 574,
+    "selected_rows": 574,
+    "candidates_pairs": 1238
+   },
+   "2-0-EQUIVALENCE": {
+    "demand_rows": 1148,
+    "selected_rows": 1148,
+    "candidates_pairs": 1238
+   },
+   "4-0-EQUIVALENCE": {
+    "demand_rows": 2296,
+    "selected_rows": 2296,
+    "candidates_pairs": 1238
+   },
+   "1-0-FORWARD_ENTAILMENT": {
+    "demand_rows": 1262,
+    "selected_rows": 1262,
+    "candidates_pairs": 2532
+   },
+   "2-0-FORWARD_ENTAILMENT": {
+    "demand_rows": 2524,
+    "selected_rows": 2524,
+    "candidates_pairs": 2532
+   },
+   "4-0-FORWARD_ENTAILMENT": {
+    "demand_rows": 5048,
+    "selected_rows": 5048,
+    "candidates_pairs": 2532
+   },
+   "1-0-NEGATIVE_OTHER": {
+    "demand_rows": 354,
+    "selected_rows": 354,
+    "candidates_pairs": 1449
+   },
+   "2-0-NEGATIVE_OTHER": {
+    "demand_rows": 708,
+    "selected_rows": 708,
+    "candidates_pairs": 1449
+   },
+   "4-0-NEGATIVE_OTHER": {
+    "demand_rows": 1416,
+    "selected_rows": 1416,
+    "candidates_pairs": 1449
+   },
+   "1-1-EQUIVALENCE": {
+    "demand_rows": 580,
+    "selected_rows": 580,
+    "candidates_pairs": 1246
+   },
+   "2-1-EQUIVALENCE": {
+    "demand_rows": 1160,
+    "selected_rows": 1160,
+    "candidates_pairs": 1246
+   },
+   "4-1-EQUIVALENCE": {
+    "demand_rows": 2320,
+    "selected_rows": 2320,
+    "candidates_pairs": 1246
+   },
+   "1-1-FORWARD_ENTAILMENT": {
+    "demand_rows": 1282,
+    "selected_rows": 1282,
+    "candidates_pairs": 2736
+   },
+   "2-1-FORWARD_ENTAILMENT": {
+    "demand_rows": 2564,
+    "selected_rows": 2564,
+    "candidates_pairs": 2736
+   },
+   "4-1-FORWARD_ENTAILMENT": {
+    "demand_rows": 5128,
+    "selected_rows": 5128,
+    "candidates_pairs": 2736
+   },
+   "1-1-NEGATIVE_OTHER": {
+    "demand_rows": 330,
+    "selected_rows": 330,
+    "candidates_pairs": 1332
+   },
+   "2-1-NEGATIVE_OTHER": {
+    "demand_rows": 660,
+    "selected_rows": 660,
+    "candidates_pairs": 1332
+   },
+   "4-1-NEGATIVE_OTHER": {
+    "demand_rows": 1320,
+    "selected_rows": 1320,
+    "candidates_pairs": 1332
+   },
+   "1-2-EQUIVALENCE": {
+    "demand_rows": 594,
+    "selected_rows": 594,
+    "candidates_pairs": 1191
+   },
+   "2-2-EQUIVALENCE": {
+    "demand_rows": 1188,
+    "selected_rows": 1188,
+    "candidates_pairs": 1191
+   },
+   "4-2-EQUIVALENCE": {
+    "demand_rows": 2376,
+    "selected_rows": 2376,
+    "candidates_pairs": 1191
+   },
+   "1-2-FORWARD_ENTAILMENT": {
+    "demand_rows": 1238,
+    "selected_rows": 1238,
+    "candidates_pairs": 2495
+   },
+   "2-2-FORWARD_ENTAILMENT": {
+    "demand_rows": 2476,
+    "selected_rows": 2476,
+    "candidates_pairs": 2495
+   },
+   "4-2-FORWARD_ENTAILMENT": {
+    "demand_rows": 4952,
+    "selected_rows": 4952,
+    "candidates_pairs": 2495
+   },
+   "1-2-NEGATIVE_OTHER": {
+    "demand_rows": 354,
+    "selected_rows": 354,
+    "candidates_pairs": 1452
+   },
+   "2-2-NEGATIVE_OTHER": {
+    "demand_rows": 708,
+    "selected_rows": 708,
+    "candidates_pairs": 1452
+   },
+   "4-2-NEGATIVE_OTHER": {
+    "demand_rows": 1416,
+    "selected_rows": 1416,
+    "candidates_pairs": 1452
+   },
+   "1-3-EQUIVALENCE": {
+    "demand_rows": 572,
+    "selected_rows": 572,
+    "candidates_pairs": 1155
+   },
+   "2-3-EQUIVALENCE": {
+    "demand_rows": 1144,
+    "selected_rows": 1144,
+    "candidates_pairs": 1155
+   },
+   "4-3-EQUIVALENCE": {
+    "demand_rows": 2288,
+    "selected_rows": 2288,
+    "candidates_pairs": 1155
+   },
+   "1-3-FORWARD_ENTAILMENT": {
+    "demand_rows": 1290,
+    "selected_rows": 1290,
+    "candidates_pairs": 2732
+   },
+   "2-3-FORWARD_ENTAILMENT": {
+    "demand_rows": 2580,
+    "selected_rows": 2580,
+    "candidates_pairs": 2732
+   },
+   "4-3-FORWARD_ENTAILMENT": {
+    "demand_rows": 5160,
+    "selected_rows": 5160,
+    "candidates_pairs": 2732
+   },
+   "1-3-NEGATIVE_OTHER": {
+    "demand_rows": 338,
+    "selected_rows": 338,
+    "candidates_pairs": 1355
+   },
+   "2-3-NEGATIVE_OTHER": {
+    "demand_rows": 676,
+    "selected_rows": 676,
+    "candidates_pairs": 1355
+   },
+   "4-3-NEGATIVE_OTHER": {
+    "demand_rows": 1352,
+    "selected_rows": 1352,
+    "candidates_pairs": 1355
+   },
+   "1-4-EQUIVALENCE": {
+    "demand_rows": 586,
+    "selected_rows": 586,
+    "candidates_pairs": 1270
+   },
+   "2-4-EQUIVALENCE": {
+    "demand_rows": 1172,
+    "selected_rows": 1172,
+    "candidates_pairs": 1270
+   },
+   "4-4-EQUIVALENCE": {
+    "demand_rows": 2344,
+    "selected_rows": 2344,
+    "candidates_pairs": 1270
+   },
+   "1-4-FORWARD_ENTAILMENT": {
+    "demand_rows": 1272,
+    "selected_rows": 1272,
+    "candidates_pairs": 2716
+   },
+   "2-4-FORWARD_ENTAILMENT": {
+    "demand_rows": 2544,
+    "selected_rows": 2544,
+    "candidates_pairs": 2716
+   },
+   "4-4-FORWARD_ENTAILMENT": {
+    "demand_rows": 5088,
+    "selected_rows": 5088,
+    "candidates_pairs": 2716
+   },
+   "1-4-NEGATIVE_OTHER": {
+    "demand_rows": 342,
+    "selected_rows": 342,
+    "candidates_pairs": 1395
+   },
+   "2-4-NEGATIVE_OTHER": {
+    "demand_rows": 684,
+    "selected_rows": 684,
+    "candidates_pairs": 1395
+   },
+   "4-4-NEGATIVE_OTHER": {
+    "demand_rows": 1368,
+    "selected_rows": 1368,
+    "candidates_pairs": 1395
+   }
+  },
+  "surface_all": {
+   "pairs": 7204,
+   "probe_generated": 0.5367122709752804,
+   "probe_original": 0.5008765251829733,
+   "probe_gap": 0.03583574579230708,
+   "mean_words_generated": 3.03470294280955,
+   "length_dev": 0.008606775440432143
+  },
+  "surface_new_only": {
+   "pairs": 5399,
+   "probe_generated": 0.5328484010739037,
+   "probe_original": 0.5008765251829733,
+   "probe_gap": 0.031971875890930423,
+   "mean_words_generated": 3.046212261529913,
+   "length_dev": 0.012431985703455174
+  },
+  "probe_gap": 0.03583574579230708,
+  "length_dev": 0.008606775440432143
+ },
+ "checks": {
+  "protocol": "pass",
+  "batch_fail_rate": "pass",
+  "dup_rate": "pass",
+  "probe_gap": "pass",
+  "length_dev": "pass",
+  "fold_quota": "pass",
+  "review": "pending"
+ },
+ "thresholds": {
+  "batch_fail_rate": 0.05,
+  "dup_rate": 0.1,
+  "review_mismatch": 0.3,
+  "probe_gap": 0.15,
+  "length_dev": 0.5
+ },
+ "problems": []
+}

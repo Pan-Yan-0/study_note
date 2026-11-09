@@ -291,11 +291,24 @@ DICO_OFF=<官方仓库目录> DICO_PKG=../pilot_v6 python -m unittest test_augme
 **偏离：reasoning effort 不一致**
 - subagent 的 reasoning effort 跟随调度会话当时的模型自动选择，派发参数里没有指定。调度会话 11-09 中途从 Opus 换成 Haiku，所以 r4_b045–b136 的 92 批是 `high`；其余全部（试点、主轮、补充第 1 轮、r2、s2a、r3、r4_b001–b044）是 `medium`。high 的输出 token 中位数约 11,000，medium 约 6,200–8,200。
 - 冻结协议没有规定 effort，这是一个没有控制的生成设置。r4 的 high 批次和 r3（medium）的表面统计接近：探针平衡准确率 0.520 / 0.528，过滤比例 1.2% / 1.1%，平均词数 2.98 / 3.00，FWD 一侧词集包含另一侧 47.7% / 47.9%，EQ 两侧无共同词 33.9% / 30.7%；O 两侧无共同词 23.2% / 29.1%（原数据约 25%）。标签正确率没有测，表面统计接近不等于质量相同。
-- 处理方式待 Pan-Yan-0 定。
+- Pan-Yan-0 11-09 定：保留这批数据，偏离写进报告；之后的派发（s4a、s4b 起）在派发参数里显式指定 `effort: medium`，核对结果 s4a 49 批、s4b 4 批全部是 `medium`。
 
 **上下文**：每个 subagent 的初始 context 除了仓库的 CLAUDE.md、AGENTS.md（约 35 KB，是派发当时磁盘上的版本），还有记忆文件的目录和每个文件一行的说明（不含正文）、Project 的挂载说明和 skill 列表。AGENTS.md 里有从训练标签归纳的计数规则和 E 类口径的描述，报告里要写明。
 
 **留给 P1 的方向错误**：只差数量的对里有两对 FWD 方向反了，r3_b054 `Koreans` → `two Koreans`、r4_b110 `Greek fishermen` → `12 Greek Fishermen`（应为 BACKWARD）。不改标签。
+
+## 15. +2 / +4 新数据的复审（11-09，Pan-Yan-0 定；在任何人标注之前写定）
+
+**范围**：最终合并 `m4`（pilot、main、supp1、r2、s2a、r3、r4、s4a、s4b，`--tiers=1,2,4`）里 +2 / +4 新增阶段（r2、s2a、r3、r4、s4a、s4b）的、被选用的 Haiku 对。+1 的部分已经过 P1C-R，不再审。
+
+**两张表，规则和 +1 的 P1C-R 相同**：
+- 表 A：`m4/review_sheet.csv`，60 对（每类 20，只来自新增阶段，`merge_full.py` 的第二次 P1 抽样），按 P1C 计分（`process_outputs.py score m4 P1C`）：去掉 U 后和生成标签不同的比例每类 ≤ 30%、可判定 ≥ 10。单向和 O 用这一步的结果。
+- 表 B：`e_recheck.py build … --stages=r2,s2a,r3,r4,s4a,s4b --seed=20261110 --exclude-keys=<11-06 的 recheck_key.json>`，60 对隐藏来源：新增阶段的 Haiku E 20、原数据 E 20（排除 E 对照和 11-06 复审用过的），干扰项各 5；参考卡同 11-06。放行：Haiku E 不一致率 ≤ 原数据 E + 15 个百分点，两边可判定 ≥ 10。
+- 合格时审核结果记为 `P1C-R`（E 用表 B，单向和 O 用表 A）；不合格就不训练 B2 / B4 / G 臂，报告结果。
+
+**流程**：Claude 先标两张表（只看审核表，不看答案和 manifest）→ GPT 对照参考卡复审（交接文件由 Pan-Yan-0 转交）→ 计分用 GPT 复审后的标签。两步不独立，报告写明。Claude 是派发方，这一点和 11-06 相同，由后一步复核。
+
+**另外报告**（不影响放行）：effort high（r4_b045–b136）和 medium 两部分各自的不一致数；第 14 节的两对方向错误如果被抽中，照常计分。
 
 ## 来源
 

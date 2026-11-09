@@ -26,15 +26,21 @@ PLAN = [("haiku", "EQUIVALENCE", 20), ("orig", "EQUIVALENCE", 20), ("haiku", "FO
 LETTER = {"EQUIVALENCE": "EQ", "FORWARD_ENTAILMENT": "FE", "BACKWARD_ENTAILMENT": "BE", "NEGATIVE_OTHER": "O"}
 
 
-def build(off, merged, control, out):
+def build(off, merged, control, out, stages=None, seed=SEED, exclude_keys=()):
+    """stages：只从这些阶段抽 Haiku 对（规模轮复审，第 15 节）；exclude_keys：之前复审的 recheck_key.json，其中的原数据对不再抽。
+    都不给时和 11-06 的复审完全相同。"""
     reviewed = {v["pair_uid"] for v in po.load(f"{merged}/review_key.json")["items"].values()}
-    selected = {r["pair_uid"] for r in po.read_csv(f"{merged}/fold_selection.csv")}
+    sel_file = f"{merged}/fold_selection_scale.csv" if stages is not None else f"{merged}/fold_selection.csv"  # 规模轮：任一规模被选用
+    selected = {r["pair_uid"] for r in po.read_csv(sel_file)}
     haiku = {}
     for r in po.read_csv(f"{merged}/manifest.csv"):
         if r["direction"] != "original" or r["pair_uid"] in reviewed or r["pair_uid"] not in selected: continue
+        if stages is not None and r["batch_id"].rsplit("_b", 1)[0] not in stages: continue
         haiku.setdefault(r["label"], []).append((r["pair_uid"], r["text1"], r["text2"]))
     ctrl = po.load(f"{control}/control_key.json")["items"]
     used = {v["pair_id"] for v in ctrl.values()}
+    for kp in exclude_keys:
+        used |= {v["id"] for v in po.load(kp)["items"].values() if v["source"] == "orig"}
     reps = {}
     for r in po.read_csv(f"{off}/final_data/train/dico_nli_train_track1_participant_labeled.csv"):
         if not r["instance_id"].endswith("__original"): continue
@@ -46,7 +52,7 @@ def build(off, merged, control, out):
         if lab == "BACKWARD_ENTAILMENT": t1, t2, lab = t2, t1, "FORWARD_ENTAILMENT"
         if r["pair_id"] in used or number_pair(t1, t2): continue
         orig.setdefault(lab, []).append((r["pair_id"], t1, t2))
-    rng = random.Random(SEED)
+    rng = random.Random(seed)
     items = []
     for src, lab, n in PLAN:
         pool = sorted((haiku if src == "haiku" else orig)[lab])
@@ -61,7 +67,8 @@ def build(off, merged, control, out):
     key = {f"Q{i:03d}": x for i, x in enumerate(items, 1)}
     po.write_csv(f"{out}/recheck_sheet.csv", [{"review_id": k, "text1": x["text1"], "text2": x["text2"], "label": "", "note": ""}
                                                for k, x in key.items()], ["review_id", "text1", "text2", "label", "note"])
-    po.dump(f"{out}/recheck_key.json", {"seed": SEED, "margin": MARGIN, "items": key})
+    meta = {} if stages is None and not exclude_keys else {"stages": sorted(stages or []), "exclude_keys_sha256": [po.sha_file(k) for k in exclude_keys]}
+    po.dump(f"{out}/recheck_key.json", {"seed": seed, "margin": MARGIN, **meta, "items": key})
     lines = ["# 参考卡：比赛数据怎么标（E 对照的 40 对，带金标）", "",
              "比赛数据视为绝对准确。拿不准时，和下面最像的例子比，按它的标法标。", "",
              "| 编号 | text1 | text2 | 金标 |", "|---|---|---|---|"]
@@ -116,6 +123,10 @@ def score(out, merged, final_path):
 
 if __name__ == "__main__":
     a = sys.argv
-    if a[1] == "build": build(*map(os.path.abspath, a[2:6]))
+    if a[1] == "build":
+        opt = lambda k: next((x.split("=", 1)[1] for x in a if x.startswith(f"--{k}=")), None)
+        st, sd, ex = opt("stages"), opt("seed"), opt("exclude-keys")
+        build(*map(os.path.abspath, a[2:6]), stages=st.split(",") if st else None, seed=int(sd) if sd else SEED,
+              exclude_keys=tuple(os.path.abspath(p) for p in ex.split(",")) if ex else ())
     elif a[1] == "score": score(os.path.abspath(a[2]), os.path.abspath(a[3]), a[4])
     else: raise SystemExit(__doc__)
