@@ -165,6 +165,30 @@ class Pipeline(unittest.TestCase):
         self.assertEqual(r["checks"]["protocol"], "fail")
         self.assertEqual(sum("提示词哈希不一致" in p for p in r["problems"]), 2)
 
+    def test_tool_violation_discards_batch(self):
+        """第 13 节（方案 A）：有 tool_violation 的批次整批作废（之后合格的重派也不用），本身不算协议失败；
+        同一批里别的尝试的调度问题（如 model_mismatch）仍然算协议失败。"""
+        ret, log = self.make_return("ret_tv", broken=False)
+        bid = log[0]["batch_id"]
+        shutil.copy(f"{ret}/outputs/{bid}/attempt_1.txt", f"{ret}/outputs/{bid}/attempt_2.txt")
+        log[0] = dict(log[0], status="tool_violation", reason="其他工具 ['Bash']")
+        log.insert(1, dict(log[0], attempt=2, status="ok", reason=""))
+        with open(f"{ret}/dispatch_log.jsonl", "w", encoding="utf-8") as f:
+            for e in log: f.write(json.dumps(e) + "\n")
+        r = po.build(self.pkg, ret, OFF, f"{self.t}/out_tv", "test")
+        self.assertEqual(r["checks"]["protocol"], "pass", r["problems"])
+        self.assertEqual(r["stats"]["failed_batches"], [bid])
+        self.assertEqual(list(r["stats"]["discarded_batches"]), [bid])
+        self.assertFalse(any(row["batch_id"] == bid for row in po.read_csv(f"{self.t}/out_tv/manifest.csv")))
+        st = {(a["attempt"], a["status"]) for a in po.read_csv(f"{self.t}/out_tv/attempts.csv") if a["batch_id"] == bid}
+        self.assertEqual(st, {("1", "tool_violation"), ("2", "discarded_after_violation")})
+        log[1] = dict(log[1], status="model_mismatch", reason="API 返回的 model 不是 Haiku")   # 作废批次里的模型不符不能被掩盖
+        with open(f"{ret}/dispatch_log.jsonl", "w", encoding="utf-8") as f:
+            for e in log: f.write(json.dumps(e) + "\n")
+        r = po.build(self.pkg, ret, OFF, f"{self.t}/out_tv2", "test")
+        self.assertEqual(r["checks"]["protocol"], "fail")
+        self.assertTrue(any("状态不合法 model_mismatch" in p for p in r["problems"]), r["problems"])
+
     def test_infra_partial_output(self):
         ret, log = self.make_return("ret_infra", broken=False)
         bid = "pilot_b04"; b = self.batches[bid]

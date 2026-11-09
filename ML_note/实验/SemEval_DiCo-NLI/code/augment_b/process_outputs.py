@@ -145,15 +145,10 @@ def build(pkg, ret, off, out, data_version):
         if len(entries) > 3: problems.append(f"{bid}：总尝试超过 3 次")
         first_ok = next((e["attempt"] for e in entries if e["status"] == "ok"), None)
         if first_ok is not None and entries[-1]["attempt"] > first_ok: problems.append(f"{bid}：已有合格输出后又追加了尝试")
+        # 工具违规（第 13 节，方案 A）：整批作废，该批任何输出（包括之后的重派）都不用，记为 discarded，本身不算协议失败；
+        # 但每次尝试的调度记录照常核对，所以同一批里的 model_mismatch、提示词不一致等仍然算协议失败
         violated = [e for e in entries if e["status"] == "tool_violation"]
-        if violated:
-            # 工具违规（11-09 裁定方案 A）：整批作废，该批任何输出（包括之后的重派）都不用；记为 discarded，不算协议失败
-            discarded[bid] = violated[0].get("reason", "")
-            for e in entries:
-                attempts_report.append({"batch_id": bid, "attempt": e["attempt"],
-                                        "status": "tool_violation" if e["status"] == "tool_violation" else "discarded_after_violation",
-                                        "reasons": e.get("reason", ""), "raw_sha256": "", "visible_model": e.get("visible_model", "")})
-            continue
+        if violated: discarded[bid] = violated[0].get("reason", "")
         for e in entries:
             tag = f"{bid} 第 {e['attempt']} 次"
             if e.get("prompt_sha256") != b["prompt_sha256"]:
@@ -179,6 +174,12 @@ def build(pkg, ret, off, out, data_version):
                 elif e["has_partial_output"] != os.path.exists(path): problems.append(f"{tag}：has_partial_output 和实际文件不符")
                 elif os.path.exists(path) and e.get("raw_sha256") != sha_file(path): problems.append(f"{tag}：部分输出的哈希和日志不同")
                 attempts_report.append({"batch_id": bid, "attempt": e["attempt"], "status": "infra_error", "reasons": e.get("reason", "")})
+                continue
+            if violated:
+                attempts_report.append({"batch_id": bid, "attempt": e["attempt"],
+                                        "status": "tool_violation" if e["status"] == "tool_violation" else "discarded_after_violation",
+                                        "reasons": e.get("reason", ""), "raw_sha256": sha_file(path) if os.path.exists(path) else "",
+                                        "visible_model": e.get("visible_model", "")})
                 continue
             if not os.path.exists(path): problems.append(f"{bid}：缺 attempt_{e['attempt']}.txt"); continue
             with open(path, encoding="utf-8") as f: r = check(b, f.read())

@@ -275,8 +275,28 @@ DICO_OFF=<官方仓库目录> DICO_PKG=../pilot_v6 python -m unittest test_augme
 - r4_b073 第 1 次的子 agent 多调用了一次 `Bash`（`mkdir -p` 自己的输出目录，没有改动内容）。第 10 节没有允许工具违规后重派，之前的重派是协议外操作。
 - 裁定：整批作废。该批任何输出（包括第 2 次的合格输出）都不用；`process_outputs.py` 把它记为 `discarded_batches`，计入 `failed_batches`，不算协议失败。
 - 影响：r4 少 14 对（1,699 → 1,685 对，manifest 2,877 行）；批次失败 1/136，远低于 5% 的停止条件。
-- 代码：`process_outputs.py` 只认 `ok`、`format_fail`、`infra_error`、`tool_violation` 四种状态；`tool_violation` 的批次不选用任何输出。r2、r3、r4 用同一版本的处理器重建。
+- 代码：`process_outputs.py` 只认 `ok`、`format_fail`、`infra_error`、`tool_violation` 四种状态；有 `tool_violation` 的批次不选用任何输出，但该批每次尝试的调度记录照常核对，同一批里的 `model_mismatch`、提示词不一致等仍算协议失败（测试 `test_tool_violation_discards_batch`）。
+- 修改经过：原来的处理器把 b073 第 1 次判成 ok 并选用；第一次修改改为不选用违规的尝试；第二次改为整批作废，但跳过了作废批次的全部核对；第三次补上核对。r4 在这些修改之前没有进入合并或训练；r2、r3、r4 用最后的处理器重建，manifest 和审核表与修改前逐字节相同（除 r4 的 b073 外）。
+
+## 14. Haiku 调度的独立核对（11-09）
+
+不依赖 `haiku_dispatch.py` 的判定，用 `audit_haiku.py` 直接读每个 subagent 的 transcript，核对 r2、s2a、r3、r4 共 459 次派发，没有发现问题：
+- 每个 subagent 的 API 回复 model 都是 `claude-haiku-5-5`，transcript 里的模型身份也是 Haiku 5.5；收到的任务逐字等于固定派发说明。
+- 磁盘上的 `attempt_N.txt` 逐字等于 subagent 自己 Write 的内容，没有经调度方改动；日志里的回复哈希、提示词哈希和起止时间都和 transcript 一致。
+- 合格的尝试只 Read 了本批提示词、只 Write 了本批输出；唯一的例外是 r4_b073 第 1 次（第 13 节）。
+- 40 次 `infra_error`（r3、r4 各 20 次）都是额度用满：没有模型回复、没有工具调用、没有输出文件。
+- 没有日志之外的派发：这几个运行目录对应的 subagent 都登记了。另有一个 Sonnet 的调度方测试（11-07，没有 Agent 工具，什么都没派发、没读写文件）和一个只回复 ok 的上下文探针，都不产生数据。
+- r2 用现在的处理器重建，manifest 和 +2 合并（`m2`）里记录的哈希逐字节相同。
+
+**偏离：reasoning effort 不一致**
+- subagent 的 reasoning effort 跟随调度会话当时的模型自动选择，派发参数里没有指定。调度会话 11-09 中途从 Opus 换成 Haiku，所以 r4_b045–b136 的 92 批是 `high`；其余全部（试点、主轮、补充第 1 轮、r2、s2a、r3、r4_b001–b044）是 `medium`。high 的输出 token 中位数约 11,000，medium 约 6,200–8,200。
+- 冻结协议没有规定 effort，这是一个没有控制的生成设置。r4 的 high 批次和 r3（medium）的表面统计接近：探针平衡准确率 0.520 / 0.528，过滤比例 1.2% / 1.1%，平均词数 2.98 / 3.00，FWD 一侧词集包含另一侧 47.7% / 47.9%，EQ 两侧无共同词 33.9% / 30.7%；O 两侧无共同词 23.2% / 29.1%（原数据约 25%）。标签正确率没有测，表面统计接近不等于质量相同。
+- 处理方式待 Pan-Yan-0 定。
+
+**上下文**：每个 subagent 的初始 context 除了仓库的 CLAUDE.md、AGENTS.md（约 35 KB，是派发当时磁盘上的版本），还有记忆文件的目录和每个文件一行的说明（不含正文）、Project 的挂载说明和 skill 列表。AGENTS.md 里有从训练标签归纳的计数规则和 E 类口径的描述，报告里要写明。
+
+**留给 P1 的方向错误**：只差数量的对里有两对 FWD 方向反了，r3_b054 `Koreans` → `two Koreans`、r4_b110 `Greek fishermen` → `12 Greek Fishermen`（应为 BACKWARD）。不改标签。
 
 ## 来源
 
-批次、干跑、合并和测试代码由 Claude 编写；方案 B 和合并规则吸收了 GPT 11-06 的复核意见；生成由 GPT 调度 GPT6Luna 子 agent 执行。
+批次、干跑、合并和测试代码由 Claude 编写；方案 B 和合并规则吸收了 GPT 11-06 的复核意见；v6 试点和主轮检查点的生成由 GPT 调度 GPT6Luna 子 agent 执行，第 10 节起改由 Claude 调度 Haiku 5.5 子 agent。

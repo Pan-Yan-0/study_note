@@ -13,7 +13,8 @@
 - 从每个 subagent 自己的 transcript（<subagents 目录>/agent-<id>.jsonl 和 .meta.json）读：agent_id、起止时间、
   API 实际返回的 model 字段（api_models）、调用了哪些工具和读写了哪些文件。
 - 只有 api_models 恰好是 {claude-haiku-5-5}、只 Read 了本批提示词文件、只 Write 了本批输出文件，才按格式检查记 ok / format_error；
-  模型不是 Haiku 记 model_mismatch（协议失败，不重派，停下）；读写了别的文件记 tool_violation（同样停下）。
+  模型不是 Haiku 记 model_mismatch（协议失败，不重派，停下）；读写了别的文件或用了别的工具记 tool_violation（整批作废、不重派，FULL_README 第 13 节）。
+  subagent 的 reasoning effort 跟随调度会话的模型自动选择，日志不记录；核对见 audit_haiku.py 和第 14 节。
 - 每个 subagent 的初始 context 里有没有仓库的 CLAUDE.md / AGENTS.md（instructions 附件）也照实记下（context_files）。
 
   python haiku_dispatch.py verify <subagents 目录> <描述前缀> <输出.json>        事后核对已登记的批次（按 meta.json 的描述匹配）
