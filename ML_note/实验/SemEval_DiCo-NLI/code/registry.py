@@ -272,13 +272,17 @@ AUGB_C1 = {"B0": ("B0", "track1 按家族五折，每折只训练 fit"),
            "Dup-E1": ("Dup-E1", "fit + 按 mixquota-v1 的 E1 构成重复采样 fit（行数 = 2·fit）"),
            "Dup-D1": ("Dup-D1", "fit + 按 mixquota-v1 的 D1 构成重复采样 fit（行数 = 2·fit）"),
            "Dup-O1": ("Dup-O1", "fit + 按 mixquota-v1 的 O1 构成重复采样 fit（行数 = 2·fit）")}
+AUGB_C2 = {"B2-Haiku": ("B2-Haiku", "fit + 规模轮清单 24704e11 的第 1、2 层（+2，嵌套，第 1 层 = +1 的选用）"),
+           "B4-Haiku": ("B4-Haiku", "fit + 规模轮清单 24704e11 的第 1、2、4 层（+4，嵌套）"),
+           **{f"G-{p}": (f"G-{p}", f"fit + 按 mixquota-v1 的 {p} 构成取 Haiku 生成行（pool_order 7d373345，每类行数和 Dup-{p} 相同）")
+              for p in ("U4", "BAL", "E1", "D1", "O1")}}
 
 
-def augb_c1_run(rid, group, bias=None):
+def augb_c1_run(rid, group, bias=None, commit="1"):
     """实验 B Commit 1：Claude 的 train_augb_v3.py（v2 的训练核心 + 新组），英语五折三种子（Kaggle T4 fp16）。
     OOF 由 code/claude_recheck_augb_c1.py 从四类概率重建；bias=λ 时是 W 组在推理时把 O 的 logit 减 log λ。"""
-    root = os.path.join(M, "augment_b", "train_c1")
-    d, data = AUGB_C1[group]
+    root = os.path.join(M, "augment_b", f"train_c{commit}")
+    d, data = (AUGB_C1 if commit == "1" else AUGB_C2)[group]
     seeds = [42, 43, 44]
     tasks = [rj(os.path.join(root, "tasks", d, f"seed{s}", f"fold{k}", "task.json")) for s in seeds for k in range(5)]
     done = [rj(os.path.join(root, "tasks", d, f"seed{s}", f"fold{k}", "done.json")) for s in seeds for k in range(5)]
@@ -301,11 +305,11 @@ def augb_c1_run(rid, group, bias=None):
                  "inference": "plain 和 sym（F / B 互换后平均）" + (f"；O 的 logit 减 log {lam:g}（两个方向都减，再对称化）" if bias else ""),
                  "lib": {"transformers": env["transformers"]}}
     name = d if not bias else f"{group}-bias"
-    return {"id": rid, "desc": f"实验 B Commit 1：{group}{'（偏置对照）' if bias else ''}，mDeBERTa 英语五折三种子（Kaggle）", "track": 1,
+    return {"id": rid, "desc": f"实验 B Commit {commit}：{group}{'（偏置对照）' if bias else ''}，mDeBERTa 英语五折三种子（Kaggle）", "track": 1,
             "variables": variables,
             "platform": {"platform": "Kaggle", "gpu": [env["gpu"]], "dtype": [env["precision"]], "torch": [env["torch"]]},
             "code": {"version": "train_augb_v3.py（Claude）", "code_sha256": [t["code_sha256"][:12]]},
-            "metrics_dir": "metrics/augment_b/train_c1", "seeds": [str(s) for s in seeds],
+            "metrics_dir": f"metrics/augment_b/train_c{commit}", "seeds": [str(s) for s in seeds],
             "evals": {"oof": {str(s): {m: preds(os.path.join(root, "oof", f"{name}_seed{s}_{m}.csv")) for m in ("plain", "sym")} for s in seeds}}}
 
 
@@ -371,6 +375,13 @@ RUNS = [
     ("AUGB-DUP-E1", lambda: augb_c1_run("AUGB-DUP-E1", "Dup-E1")),
     ("AUGB-DUP-D1", lambda: augb_c1_run("AUGB-DUP-D1", "Dup-D1")),
     ("AUGB-DUP-O1", lambda: augb_c1_run("AUGB-DUP-O1", "Dup-O1")),
+    ("AUGB-B2-HAIKU", lambda: augb_c1_run("AUGB-B2-HAIKU", "B2-Haiku", commit="2")),
+    ("AUGB-B4-HAIKU", lambda: augb_c1_run("AUGB-B4-HAIKU", "B4-Haiku", commit="2")),
+    ("AUGB-G-U4", lambda: augb_c1_run("AUGB-G-U4", "G-U4", commit="2")),
+    ("AUGB-G-BAL", lambda: augb_c1_run("AUGB-G-BAL", "G-BAL", commit="2")),
+    ("AUGB-G-E1", lambda: augb_c1_run("AUGB-G-E1", "G-E1", commit="2")),
+    ("AUGB-G-D1", lambda: augb_c1_run("AUGB-G-D1", "G-D1", commit="2")),
+    ("AUGB-G-O1", lambda: augb_c1_run("AUGB-G-O1", "G-O1", commit="2")),
     ("JOINT-QWEN", lambda: joint_run("JOINT-QWEN", "qwen")),
     ("JOINT-KD", lambda: joint_run("JOINT-KD", "kd")),
     ("MDB-G5-T1-CE", lambda: mdeberta_methods_run("MDB-G5-T1-CE", 1, "ce", "第五组 track1 ce，fold 0 三种子")),
@@ -426,6 +437,22 @@ COMPARISONS = [
     ("AUGB-CMP-DUPE1-STEP1", "AUGB-DUP-E1", "AUGB-STEP1", "oof", "类别构成 E1 的重复采样 对 按原比例重复一遍（Dup_c − Dup_R，描述；跨 v3 / v2 代码）"),
     ("AUGB-CMP-DUPD1-STEP1", "AUGB-DUP-D1", "AUGB-STEP1", "oof", "类别构成 D1 的重复采样 对 按原比例重复一遍（Dup_c − Dup_R，描述；跨 v3 / v2 代码）"),
     ("AUGB-CMP-DUPO1-STEP1", "AUGB-DUP-O1", "AUGB-STEP1", "oof", "类别构成 O1 的重复采样 对 按原比例重复一遍（Dup_c − Dup_R，描述；跨 v3 / v2 代码）"),
+    ("AUGB-CMP-B2-B0", "AUGB-B2-HAIKU", "AUGB-C1-B0", "oof", "实验 B +2：加 Haiku 生成数据 对 只用原数据"),
+    ("AUGB-CMP-B2-STEP2", "AUGB-B2-HAIKU", "AUGB-STEP2", "oof", "实验 B +2：加 Haiku 生成数据 对 原数据重复到同样行数（同计划步数）"),
+    ("AUGB-CMP-B4-B0", "AUGB-B4-HAIKU", "AUGB-C1-B0", "oof", "实验 B +4：加 Haiku 生成数据 对 只用原数据"),
+    ("AUGB-CMP-B4-STEP4", "AUGB-B4-HAIKU", "AUGB-STEP4", "oof", "实验 B +4：加 Haiku 生成数据 对 原数据重复到同样行数（同计划步数）"),
+    ("AUGB-CMP-B4-B2", "AUGB-B4-HAIKU", "AUGB-B2-HAIKU", "oof", "实验 B 规模曲线：+4 对 +2（描述；+2 ⊂ +4，步数不同）"),
+    ("AUGB-CMP-B2-B1", "AUGB-B2-HAIKU", "AUGB-B1-HAIKU", "oof", "实验 B 规模曲线：+2 对 +1（描述；跨 v3 / v2 代码，步数不同）"),
+    ("AUGB-CMP-GU4-DUPU4", "AUGB-G-U4", "AUGB-DUP-U4", "oof", "类别构成 U4：生成数据 对 同构成的原数据重复采样（G_c − Dup_c，同代码同步数）"),
+    ("AUGB-CMP-GU4-B1", "AUGB-G-U4", "AUGB-B1-HAIKU", "oof", "类别构成 U4 的生成数据 对 按原比例的生成数据（G_c − G_R；跨 v3 / v2 代码）"),
+    ("AUGB-CMP-GBAL-DUPBAL", "AUGB-G-BAL", "AUGB-DUP-BAL", "oof", "类别构成 BAL：生成数据 对 同构成的原数据重复采样（G_c − Dup_c，同代码同步数）"),
+    ("AUGB-CMP-GBAL-B1", "AUGB-G-BAL", "AUGB-B1-HAIKU", "oof", "类别构成 BAL 的生成数据 对 按原比例的生成数据（G_c − G_R；跨 v3 / v2 代码）"),
+    ("AUGB-CMP-GE1-DUPE1", "AUGB-G-E1", "AUGB-DUP-E1", "oof", "类别构成 E1：生成数据 对 同构成的原数据重复采样（G_c − Dup_c，同代码同步数）"),
+    ("AUGB-CMP-GE1-B1", "AUGB-G-E1", "AUGB-B1-HAIKU", "oof", "类别构成 E1 的生成数据 对 按原比例的生成数据（G_c − G_R；跨 v3 / v2 代码）"),
+    ("AUGB-CMP-GD1-DUPD1", "AUGB-G-D1", "AUGB-DUP-D1", "oof", "类别构成 D1：生成数据 对 同构成的原数据重复采样（G_c − Dup_c，同代码同步数）"),
+    ("AUGB-CMP-GD1-B1", "AUGB-G-D1", "AUGB-B1-HAIKU", "oof", "类别构成 D1 的生成数据 对 按原比例的生成数据（G_c − G_R；跨 v3 / v2 代码）"),
+    ("AUGB-CMP-GO1-DUPO1", "AUGB-G-O1", "AUGB-DUP-O1", "oof", "类别构成 O1：生成数据 对 同构成的原数据重复采样（G_c − Dup_c，同代码同步数）"),
+    ("AUGB-CMP-GO1-B1", "AUGB-G-O1", "AUGB-B1-HAIKU", "oof", "类别构成 O1 的生成数据 对 按原比例的生成数据（G_c − G_R；跨 v3 / v2 代码）"),
     ("A1-CMP-8B-4B", "A1-QWEN8B", "JOINT-QWEN", "oof", "实验 A：Qwen3-8B 对 Qwen3-4B-Instruct-2507（同划分、同种子、同配方；系统比较，模型不同）"),
     ("JOINT-CMP-QWEN", "JOINT-QWEN", "JOINT-CE", "oof", "英语五折配对比较：qwen 对 CE"),
     ("JOINT-CMP-KD", "JOINT-KD", "JOINT-CE", "oof", "英语五折配对比较：kd 对 CE"),

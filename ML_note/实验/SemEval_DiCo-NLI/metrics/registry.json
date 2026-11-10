@@ -1933,6 +1933,482 @@
    }
   },
   {
+   "id": "AUGB-B2-HAIKU",
+   "desc": "实验 B Commit 2：B2-Haiku，mDeBERTa 英语五折三种子（Kaggle）",
+   "track": 1,
+   "variables": {
+    "model": "microsoft/mdeberta-v3-base",
+    "model_revision": "a0484667b22365f84929a935b5e50a51f71f159d",
+    "prompt": "不适用",
+    "train": {
+     "max_epochs": 12,
+     "lr": 2e-05,
+     "batch_size": 32,
+     "max_length": 96,
+     "warmup_ratio": 0.1,
+     "weight_decay": 0.01,
+     "gradient_clip": 1.0,
+     "precision": "fp16",
+     "seed_policy": "init=seed*1000+fold; per-epoch fresh shuffle RNG (not archived C0 RNG stream)",
+     "selection": "original_direction_weighted_f1，earliest"
+    },
+    "split": {
+     "folds": 5,
+     "fold_seed": 2027,
+     "inner_fraction": 0.1,
+     "holdout_fold": "0–4"
+    },
+    "method": "ce",
+    "method_params": "无",
+    "data_sha256": {
+     "fold_selection.csv": "6f289cbac76e",
+     "manifest.csv": "b380b4a6a836",
+     "split_manifest.json": "f9363290af28"
+    },
+    "train_data": "fit + 规模轮清单 24704e11 的第 1、2 层（+2，嵌套，第 1 层 = +1 的选用）",
+    "selection": "original_direction_weighted_f1",
+    "inference": "plain 和 sym（F / B 互换后平均）",
+    "lib": {
+     "transformers": "4.57.6"
+    }
+   },
+   "platform": {
+    "platform": "Kaggle",
+    "gpu": [
+     "Tesla T4"
+    ],
+    "dtype": [
+     "fp16"
+    ],
+    "torch": [
+     "2.11.0+cu128"
+    ]
+   },
+   "code": {
+    "version": "train_augb_v3.py（Claude）",
+    "code_sha256": [
+     "c8ff912cf3f5"
+    ]
+   },
+   "metrics_dir": "metrics/augment_b/train_c2",
+   "seeds": [
+    "42",
+    "43",
+    "44"
+   ],
+   "scores_sym_wf1_mean": {
+    "oof": 0.8321
+   }
+  },
+  {
+   "id": "AUGB-B4-HAIKU",
+   "desc": "实验 B Commit 2：B4-Haiku，mDeBERTa 英语五折三种子（Kaggle）",
+   "track": 1,
+   "variables": {
+    "model": "microsoft/mdeberta-v3-base",
+    "model_revision": "a0484667b22365f84929a935b5e50a51f71f159d",
+    "prompt": "不适用",
+    "train": {
+     "max_epochs": 12,
+     "lr": 2e-05,
+     "batch_size": 32,
+     "max_length": 96,
+     "warmup_ratio": 0.1,
+     "weight_decay": 0.01,
+     "gradient_clip": 1.0,
+     "precision": "fp16",
+     "seed_policy": "init=seed*1000+fold; per-epoch fresh shuffle RNG (not archived C0 RNG stream)",
+     "selection": "original_direction_weighted_f1，earliest"
+    },
+    "split": {
+     "folds": 5,
+     "fold_seed": 2027,
+     "inner_fraction": 0.1,
+     "holdout_fold": "0–4"
+    },
+    "method": "ce",
+    "method_params": "无",
+    "data_sha256": {
+     "fold_selection.csv": "6f289cbac76e",
+     "manifest.csv": "b380b4a6a836",
+     "split_manifest.json": "f9363290af28"
+    },
+    "train_data": "fit + 规模轮清单 24704e11 的第 1、2、4 层（+4，嵌套）",
+    "selection": "original_direction_weighted_f1",
+    "inference": "plain 和 sym（F / B 互换后平均）",
+    "lib": {
+     "transformers": "4.57.6"
+    }
+   },
+   "platform": {
+    "platform": "Kaggle",
+    "gpu": [
+     "Tesla T4"
+    ],
+    "dtype": [
+     "fp16"
+    ],
+    "torch": [
+     "2.11.0+cu128"
+    ]
+   },
+   "code": {
+    "version": "train_augb_v3.py（Claude）",
+    "code_sha256": [
+     "c8ff912cf3f5"
+    ]
+   },
+   "metrics_dir": "metrics/augment_b/train_c2",
+   "seeds": [
+    "42",
+    "43",
+    "44"
+   ],
+   "scores_sym_wf1_mean": {
+    "oof": 0.8314
+   }
+  },
+  {
+   "id": "AUGB-G-U4",
+   "desc": "实验 B Commit 2：G-U4，mDeBERTa 英语五折三种子（Kaggle）",
+   "track": 1,
+   "variables": {
+    "model": "microsoft/mdeberta-v3-base",
+    "model_revision": "a0484667b22365f84929a935b5e50a51f71f159d",
+    "prompt": "不适用",
+    "train": {
+     "max_epochs": 12,
+     "lr": 2e-05,
+     "batch_size": 32,
+     "max_length": 96,
+     "warmup_ratio": 0.1,
+     "weight_decay": 0.01,
+     "gradient_clip": 1.0,
+     "precision": "fp16",
+     "seed_policy": "init=seed*1000+fold; per-epoch fresh shuffle RNG (not archived C0 RNG stream)",
+     "selection": "original_direction_weighted_f1，earliest"
+    },
+    "split": {
+     "folds": 5,
+     "fold_seed": 2027,
+     "inner_fraction": 0.1,
+     "holdout_fold": "0–4"
+    },
+    "method": "ce",
+    "method_params": "无",
+    "data_sha256": {
+     "fold_selection.csv": "6f289cbac76e",
+     "manifest.csv": "b380b4a6a836",
+     "split_manifest.json": "f9363290af28"
+    },
+    "train_data": "fit + 按 mixquota-v1 的 U4 构成取 Haiku 生成行（pool_order 7d373345，每类行数和 Dup-U4 相同）",
+    "selection": "original_direction_weighted_f1",
+    "inference": "plain 和 sym（F / B 互换后平均）",
+    "lib": {
+     "transformers": "4.57.6"
+    }
+   },
+   "platform": {
+    "platform": "Kaggle",
+    "gpu": [
+     "Tesla T4"
+    ],
+    "dtype": [
+     "fp16"
+    ],
+    "torch": [
+     "2.11.0+cu128"
+    ]
+   },
+   "code": {
+    "version": "train_augb_v3.py（Claude）",
+    "code_sha256": [
+     "c8ff912cf3f5"
+    ]
+   },
+   "metrics_dir": "metrics/augment_b/train_c2",
+   "seeds": [
+    "42",
+    "43",
+    "44"
+   ],
+   "scores_sym_wf1_mean": {
+    "oof": 0.8281
+   }
+  },
+  {
+   "id": "AUGB-G-BAL",
+   "desc": "实验 B Commit 2：G-BAL，mDeBERTa 英语五折三种子（Kaggle）",
+   "track": 1,
+   "variables": {
+    "model": "microsoft/mdeberta-v3-base",
+    "model_revision": "a0484667b22365f84929a935b5e50a51f71f159d",
+    "prompt": "不适用",
+    "train": {
+     "max_epochs": 12,
+     "lr": 2e-05,
+     "batch_size": 32,
+     "max_length": 96,
+     "warmup_ratio": 0.1,
+     "weight_decay": 0.01,
+     "gradient_clip": 1.0,
+     "precision": "fp16",
+     "seed_policy": "init=seed*1000+fold; per-epoch fresh shuffle RNG (not archived C0 RNG stream)",
+     "selection": "original_direction_weighted_f1，earliest"
+    },
+    "split": {
+     "folds": 5,
+     "fold_seed": 2027,
+     "inner_fraction": 0.1,
+     "holdout_fold": "0–4"
+    },
+    "method": "ce",
+    "method_params": "无",
+    "data_sha256": {
+     "fold_selection.csv": "6f289cbac76e",
+     "manifest.csv": "b380b4a6a836",
+     "split_manifest.json": "f9363290af28"
+    },
+    "train_data": "fit + 按 mixquota-v1 的 BAL 构成取 Haiku 生成行（pool_order 7d373345，每类行数和 Dup-BAL 相同）",
+    "selection": "original_direction_weighted_f1",
+    "inference": "plain 和 sym（F / B 互换后平均）",
+    "lib": {
+     "transformers": "4.57.6"
+    }
+   },
+   "platform": {
+    "platform": "Kaggle",
+    "gpu": [
+     "Tesla T4"
+    ],
+    "dtype": [
+     "fp16"
+    ],
+    "torch": [
+     "2.11.0+cu128"
+    ]
+   },
+   "code": {
+    "version": "train_augb_v3.py（Claude）",
+    "code_sha256": [
+     "c8ff912cf3f5"
+    ]
+   },
+   "metrics_dir": "metrics/augment_b/train_c2",
+   "seeds": [
+    "42",
+    "43",
+    "44"
+   ],
+   "scores_sym_wf1_mean": {
+    "oof": 0.8189
+   }
+  },
+  {
+   "id": "AUGB-G-E1",
+   "desc": "实验 B Commit 2：G-E1，mDeBERTa 英语五折三种子（Kaggle）",
+   "track": 1,
+   "variables": {
+    "model": "microsoft/mdeberta-v3-base",
+    "model_revision": "a0484667b22365f84929a935b5e50a51f71f159d",
+    "prompt": "不适用",
+    "train": {
+     "max_epochs": 12,
+     "lr": 2e-05,
+     "batch_size": 32,
+     "max_length": 96,
+     "warmup_ratio": 0.1,
+     "weight_decay": 0.01,
+     "gradient_clip": 1.0,
+     "precision": "fp16",
+     "seed_policy": "init=seed*1000+fold; per-epoch fresh shuffle RNG (not archived C0 RNG stream)",
+     "selection": "original_direction_weighted_f1，earliest"
+    },
+    "split": {
+     "folds": 5,
+     "fold_seed": 2027,
+     "inner_fraction": 0.1,
+     "holdout_fold": "0–4"
+    },
+    "method": "ce",
+    "method_params": "无",
+    "data_sha256": {
+     "fold_selection.csv": "6f289cbac76e",
+     "manifest.csv": "b380b4a6a836",
+     "split_manifest.json": "f9363290af28"
+    },
+    "train_data": "fit + 按 mixquota-v1 的 E1 构成取 Haiku 生成行（pool_order 7d373345，每类行数和 Dup-E1 相同）",
+    "selection": "original_direction_weighted_f1",
+    "inference": "plain 和 sym（F / B 互换后平均）",
+    "lib": {
+     "transformers": "4.57.6"
+    }
+   },
+   "platform": {
+    "platform": "Kaggle",
+    "gpu": [
+     "Tesla T4"
+    ],
+    "dtype": [
+     "fp16"
+    ],
+    "torch": [
+     "2.11.0+cu128"
+    ]
+   },
+   "code": {
+    "version": "train_augb_v3.py（Claude）",
+    "code_sha256": [
+     "c8ff912cf3f5"
+    ]
+   },
+   "metrics_dir": "metrics/augment_b/train_c2",
+   "seeds": [
+    "42",
+    "43",
+    "44"
+   ],
+   "scores_sym_wf1_mean": {
+    "oof": 0.8217
+   }
+  },
+  {
+   "id": "AUGB-G-D1",
+   "desc": "实验 B Commit 2：G-D1，mDeBERTa 英语五折三种子（Kaggle）",
+   "track": 1,
+   "variables": {
+    "model": "microsoft/mdeberta-v3-base",
+    "model_revision": "a0484667b22365f84929a935b5e50a51f71f159d",
+    "prompt": "不适用",
+    "train": {
+     "max_epochs": 12,
+     "lr": 2e-05,
+     "batch_size": 32,
+     "max_length": 96,
+     "warmup_ratio": 0.1,
+     "weight_decay": 0.01,
+     "gradient_clip": 1.0,
+     "precision": "fp16",
+     "seed_policy": "init=seed*1000+fold; per-epoch fresh shuffle RNG (not archived C0 RNG stream)",
+     "selection": "original_direction_weighted_f1，earliest"
+    },
+    "split": {
+     "folds": 5,
+     "fold_seed": 2027,
+     "inner_fraction": 0.1,
+     "holdout_fold": "0–4"
+    },
+    "method": "ce",
+    "method_params": "无",
+    "data_sha256": {
+     "fold_selection.csv": "6f289cbac76e",
+     "manifest.csv": "b380b4a6a836",
+     "split_manifest.json": "f9363290af28"
+    },
+    "train_data": "fit + 按 mixquota-v1 的 D1 构成取 Haiku 生成行（pool_order 7d373345，每类行数和 Dup-D1 相同）",
+    "selection": "original_direction_weighted_f1",
+    "inference": "plain 和 sym（F / B 互换后平均）",
+    "lib": {
+     "transformers": "4.57.6"
+    }
+   },
+   "platform": {
+    "platform": "Kaggle",
+    "gpu": [
+     "Tesla T4"
+    ],
+    "dtype": [
+     "fp16"
+    ],
+    "torch": [
+     "2.11.0+cu128"
+    ]
+   },
+   "code": {
+    "version": "train_augb_v3.py（Claude）",
+    "code_sha256": [
+     "c8ff912cf3f5"
+    ]
+   },
+   "metrics_dir": "metrics/augment_b/train_c2",
+   "seeds": [
+    "42",
+    "43",
+    "44"
+   ],
+   "scores_sym_wf1_mean": {
+    "oof": 0.8211
+   }
+  },
+  {
+   "id": "AUGB-G-O1",
+   "desc": "实验 B Commit 2：G-O1，mDeBERTa 英语五折三种子（Kaggle）",
+   "track": 1,
+   "variables": {
+    "model": "microsoft/mdeberta-v3-base",
+    "model_revision": "a0484667b22365f84929a935b5e50a51f71f159d",
+    "prompt": "不适用",
+    "train": {
+     "max_epochs": 12,
+     "lr": 2e-05,
+     "batch_size": 32,
+     "max_length": 96,
+     "warmup_ratio": 0.1,
+     "weight_decay": 0.01,
+     "gradient_clip": 1.0,
+     "precision": "fp16",
+     "seed_policy": "init=seed*1000+fold; per-epoch fresh shuffle RNG (not archived C0 RNG stream)",
+     "selection": "original_direction_weighted_f1，earliest"
+    },
+    "split": {
+     "folds": 5,
+     "fold_seed": 2027,
+     "inner_fraction": 0.1,
+     "holdout_fold": "0–4"
+    },
+    "method": "ce",
+    "method_params": "无",
+    "data_sha256": {
+     "fold_selection.csv": "6f289cbac76e",
+     "manifest.csv": "b380b4a6a836",
+     "split_manifest.json": "f9363290af28"
+    },
+    "train_data": "fit + 按 mixquota-v1 的 O1 构成取 Haiku 生成行（pool_order 7d373345，每类行数和 Dup-O1 相同）",
+    "selection": "original_direction_weighted_f1",
+    "inference": "plain 和 sym（F / B 互换后平均）",
+    "lib": {
+     "transformers": "4.57.6"
+    }
+   },
+   "platform": {
+    "platform": "Kaggle",
+    "gpu": [
+     "Tesla T4"
+    ],
+    "dtype": [
+     "fp16"
+    ],
+    "torch": [
+     "2.11.0+cu128"
+    ]
+   },
+   "code": {
+    "version": "train_augb_v3.py（Claude）",
+    "code_sha256": [
+     "c8ff912cf3f5"
+    ]
+   },
+   "metrics_dir": "metrics/augment_b/train_c2",
+   "seeds": [
+    "42",
+    "43",
+    "44"
+   ],
+   "scores_sym_wf1_mean": {
+    "oof": 0.819
+   }
+  },
+  {
    "id": "JOINT-QWEN",
    "desc": "Qwen CE SFT 英语五折三种子",
    "track": 1,
@@ -5252,6 +5728,614 @@
     "ci95": [
      -0.0151,
      0.0027
+    ]
+   }
+  },
+  {
+   "id": "AUGB-CMP-B2-B0",
+   "new": "AUGB-B2-HAIKU",
+   "old": "AUGB-C1-B0",
+   "eval": "oof",
+   "purpose": "实验 B +2：加 Haiku 生成数据 对 只用原数据",
+   "design": "单一计划改动",
+   "environment": "一致",
+   "unknown": [],
+   "note": "",
+   "changed": {
+    "train_data": [
+     "fit + 规模轮清单 24704e11 的第 1、2 层（+2，嵌套，第 1 层 = +1 的选用）",
+     "track1 按家族五折，每折只训练 fit"
+    ]
+   },
+   "lib_diff": {},
+   "platform_diff": {},
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 3042,
+    "families": 1725,
+    "per_seed": {
+     "42": 0.0399,
+     "43": 0.0377,
+     "44": 0.0377
+    },
+    "mean": 0.0384,
+    "ci95": [
+     0.0278,
+     0.0493
+    ]
+   }
+  },
+  {
+   "id": "AUGB-CMP-B2-STEP2",
+   "new": "AUGB-B2-HAIKU",
+   "old": "AUGB-STEP2",
+   "eval": "oof",
+   "purpose": "实验 B +2：加 Haiku 生成数据 对 原数据重复到同样行数（同计划步数）",
+   "design": "单一计划改动",
+   "environment": "一致",
+   "unknown": [],
+   "note": "",
+   "changed": {
+    "train_data": [
+     "fit + 规模轮清单 24704e11 的第 1、2 层（+2，嵌套，第 1 层 = +1 的选用）",
+     "fit 每行重复三次（+2 的行数）"
+    ]
+   },
+   "lib_diff": {},
+   "platform_diff": {},
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 3042,
+    "families": 1725,
+    "per_seed": {
+     "42": 0.025,
+     "43": 0.0263,
+     "44": 0.0236
+    },
+    "mean": 0.025,
+    "ci95": [
+     0.015,
+     0.0354
+    ]
+   }
+  },
+  {
+   "id": "AUGB-CMP-B4-B0",
+   "new": "AUGB-B4-HAIKU",
+   "old": "AUGB-C1-B0",
+   "eval": "oof",
+   "purpose": "实验 B +4：加 Haiku 生成数据 对 只用原数据",
+   "design": "单一计划改动",
+   "environment": "一致",
+   "unknown": [],
+   "note": "",
+   "changed": {
+    "train_data": [
+     "fit + 规模轮清单 24704e11 的第 1、2、4 层（+4，嵌套）",
+     "track1 按家族五折，每折只训练 fit"
+    ]
+   },
+   "lib_diff": {},
+   "platform_diff": {},
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 3042,
+    "families": 1725,
+    "per_seed": {
+     "42": 0.0292,
+     "43": 0.0397,
+     "44": 0.0443
+    },
+    "mean": 0.0378,
+    "ci95": [
+     0.0264,
+     0.0488
+    ]
+   }
+  },
+  {
+   "id": "AUGB-CMP-B4-STEP4",
+   "new": "AUGB-B4-HAIKU",
+   "old": "AUGB-STEP4",
+   "eval": "oof",
+   "purpose": "实验 B +4：加 Haiku 生成数据 对 原数据重复到同样行数（同计划步数）",
+   "design": "单一计划改动",
+   "environment": "一致",
+   "unknown": [],
+   "note": "",
+   "changed": {
+    "train_data": [
+     "fit + 规模轮清单 24704e11 的第 1、2、4 层（+4，嵌套）",
+     "fit 每行重复五次（+4 的行数）"
+    ]
+   },
+   "lib_diff": {},
+   "platform_diff": {},
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 3042,
+    "families": 1725,
+    "per_seed": {
+     "42": 0.0152,
+     "43": 0.0346,
+     "44": 0.0278
+    },
+    "mean": 0.0259,
+    "ci95": [
+     0.0146,
+     0.0376
+    ]
+   }
+  },
+  {
+   "id": "AUGB-CMP-B4-B2",
+   "new": "AUGB-B4-HAIKU",
+   "old": "AUGB-B2-HAIKU",
+   "eval": "oof",
+   "purpose": "实验 B 规模曲线：+4 对 +2（描述；+2 ⊂ +4，步数不同）",
+   "design": "单一计划改动",
+   "environment": "一致",
+   "unknown": [],
+   "note": "",
+   "changed": {
+    "train_data": [
+     "fit + 规模轮清单 24704e11 的第 1、2、4 层（+4，嵌套）",
+     "fit + 规模轮清单 24704e11 的第 1、2 层（+2，嵌套，第 1 层 = +1 的选用）"
+    ]
+   },
+   "lib_diff": {},
+   "platform_diff": {},
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 3042,
+    "families": 1725,
+    "per_seed": {
+     "42": -0.0107,
+     "43": 0.002,
+     "44": 0.0066
+    },
+    "mean": -0.0007,
+    "ci95": [
+     -0.0085,
+     0.0068
+    ]
+   }
+  },
+  {
+   "id": "AUGB-CMP-B2-B1",
+   "new": "AUGB-B2-HAIKU",
+   "old": "AUGB-B1-HAIKU",
+   "eval": "oof",
+   "purpose": "实验 B 规模曲线：+2 对 +1（描述；跨 v3 / v2 代码，步数不同）",
+   "design": "单一计划改动",
+   "environment": "一致",
+   "unknown": [],
+   "note": "",
+   "changed": {
+    "train_data": [
+     "fit + 规模轮清单 24704e11 的第 1、2 层（+2，嵌套，第 1 层 = +1 的选用）",
+     "track1 按家族五折，每折 fit + 该折选用的 Haiku 生成行（+1，清单 b380b4a6），内层验证只用原数据"
+    ]
+   },
+   "lib_diff": {},
+   "platform_diff": {},
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 3042,
+    "families": 1725,
+    "per_seed": {
+     "42": 0.008,
+     "43": 0.0112,
+     "44": 0.0088
+    },
+    "mean": 0.0094,
+    "ci95": [
+     0.0019,
+     0.0168
+    ]
+   }
+  },
+  {
+   "id": "AUGB-CMP-GU4-DUPU4",
+   "new": "AUGB-G-U4",
+   "old": "AUGB-DUP-U4",
+   "eval": "oof",
+   "purpose": "类别构成 U4：生成数据 对 同构成的原数据重复采样（G_c − Dup_c，同代码同步数）",
+   "design": "单一计划改动",
+   "environment": "一致",
+   "unknown": [],
+   "note": "",
+   "changed": {
+    "train_data": [
+     "fit + 按 mixquota-v1 的 U4 构成取 Haiku 生成行（pool_order 7d373345，每类行数和 Dup-U4 相同）",
+     "fit + 按 mixquota-v1 的 U4 构成重复采样 fit（行数 = 2·fit）"
+    ]
+   },
+   "lib_diff": {},
+   "platform_diff": {},
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 3042,
+    "families": 1725,
+    "per_seed": {
+     "42": 0.0342,
+     "43": 0.0341,
+     "44": 0.03
+    },
+    "mean": 0.0328,
+    "ci95": [
+     0.0237,
+     0.0436
+    ]
+   }
+  },
+  {
+   "id": "AUGB-CMP-GU4-B1",
+   "new": "AUGB-G-U4",
+   "old": "AUGB-B1-HAIKU",
+   "eval": "oof",
+   "purpose": "类别构成 U4 的生成数据 对 按原比例的生成数据（G_c − G_R；跨 v3 / v2 代码）",
+   "design": "单一计划改动",
+   "environment": "一致",
+   "unknown": [],
+   "note": "",
+   "changed": {
+    "train_data": [
+     "fit + 按 mixquota-v1 的 U4 构成取 Haiku 生成行（pool_order 7d373345，每类行数和 Dup-U4 相同）",
+     "track1 按家族五折，每折 fit + 该折选用的 Haiku 生成行（+1，清单 b380b4a6），内层验证只用原数据"
+    ]
+   },
+   "lib_diff": {},
+   "platform_diff": {},
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 3042,
+    "families": 1725,
+    "per_seed": {
+     "42": 0.0035,
+     "43": 0.0075,
+     "44": 0.0051
+    },
+    "mean": 0.0053,
+    "ci95": [
+     -0.0028,
+     0.0129
+    ]
+   }
+  },
+  {
+   "id": "AUGB-CMP-GBAL-DUPBAL",
+   "new": "AUGB-G-BAL",
+   "old": "AUGB-DUP-BAL",
+   "eval": "oof",
+   "purpose": "类别构成 BAL：生成数据 对 同构成的原数据重复采样（G_c − Dup_c，同代码同步数）",
+   "design": "单一计划改动",
+   "environment": "一致",
+   "unknown": [],
+   "note": "",
+   "changed": {
+    "train_data": [
+     "fit + 按 mixquota-v1 的 BAL 构成取 Haiku 生成行（pool_order 7d373345，每类行数和 Dup-BAL 相同）",
+     "fit + 按 mixquota-v1 的 BAL 构成重复采样 fit（行数 = 2·fit）"
+    ]
+   },
+   "lib_diff": {},
+   "platform_diff": {},
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 3042,
+    "families": 1725,
+    "per_seed": {
+     "42": 0.0247,
+     "43": 0.018,
+     "44": 0.0125
+    },
+    "mean": 0.0184,
+    "ci95": [
+     0.0089,
+     0.028
+    ]
+   }
+  },
+  {
+   "id": "AUGB-CMP-GBAL-B1",
+   "new": "AUGB-G-BAL",
+   "old": "AUGB-B1-HAIKU",
+   "eval": "oof",
+   "purpose": "类别构成 BAL 的生成数据 对 按原比例的生成数据（G_c − G_R；跨 v3 / v2 代码）",
+   "design": "单一计划改动",
+   "environment": "一致",
+   "unknown": [],
+   "note": "",
+   "changed": {
+    "train_data": [
+     "fit + 按 mixquota-v1 的 BAL 构成取 Haiku 生成行（pool_order 7d373345，每类行数和 Dup-BAL 相同）",
+     "track1 按家族五折，每折 fit + 该折选用的 Haiku 生成行（+1，清单 b380b4a6），内层验证只用原数据"
+    ]
+   },
+   "lib_diff": {},
+   "platform_diff": {},
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 3042,
+    "families": 1725,
+    "per_seed": {
+     "42": 0.0014,
+     "43": -0.0043,
+     "44": -0.0086
+    },
+    "mean": -0.0038,
+    "ci95": [
+     -0.0116,
+     0.0038
+    ]
+   }
+  },
+  {
+   "id": "AUGB-CMP-GE1-DUPE1",
+   "new": "AUGB-G-E1",
+   "old": "AUGB-DUP-E1",
+   "eval": "oof",
+   "purpose": "类别构成 E1：生成数据 对 同构成的原数据重复采样（G_c − Dup_c，同代码同步数）",
+   "design": "单一计划改动",
+   "environment": "一致",
+   "unknown": [],
+   "note": "",
+   "changed": {
+    "train_data": [
+     "fit + 按 mixquota-v1 的 E1 构成取 Haiku 生成行（pool_order 7d373345，每类行数和 Dup-E1 相同）",
+     "fit + 按 mixquota-v1 的 E1 构成重复采样 fit（行数 = 2·fit）"
+    ]
+   },
+   "lib_diff": {},
+   "platform_diff": {},
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 3042,
+    "families": 1725,
+    "per_seed": {
+     "42": 0.0126,
+     "43": 0.0099,
+     "44": 0.0132
+    },
+    "mean": 0.0119,
+    "ci95": [
+     0.0026,
+     0.0211
+    ]
+   }
+  },
+  {
+   "id": "AUGB-CMP-GE1-B1",
+   "new": "AUGB-G-E1",
+   "old": "AUGB-B1-HAIKU",
+   "eval": "oof",
+   "purpose": "类别构成 E1 的生成数据 对 按原比例的生成数据（G_c − G_R；跨 v3 / v2 代码）",
+   "design": "单一计划改动",
+   "environment": "一致",
+   "unknown": [],
+   "note": "",
+   "changed": {
+    "train_data": [
+     "fit + 按 mixquota-v1 的 E1 构成取 Haiku 生成行（pool_order 7d373345，每类行数和 Dup-E1 相同）",
+     "track1 按家族五折，每折 fit + 该折选用的 Haiku 生成行（+1，清单 b380b4a6），内层验证只用原数据"
+    ]
+   },
+   "lib_diff": {},
+   "platform_diff": {},
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 3042,
+    "families": 1725,
+    "per_seed": {
+     "42": -0.0023,
+     "43": -0.0031,
+     "44": 0.0024
+    },
+    "mean": -0.001,
+    "ci95": [
+     -0.0091,
+     0.0072
+    ]
+   }
+  },
+  {
+   "id": "AUGB-CMP-GD1-DUPD1",
+   "new": "AUGB-G-D1",
+   "old": "AUGB-DUP-D1",
+   "eval": "oof",
+   "purpose": "类别构成 D1：生成数据 对 同构成的原数据重复采样（G_c − Dup_c，同代码同步数）",
+   "design": "单一计划改动",
+   "environment": "一致",
+   "unknown": [],
+   "note": "",
+   "changed": {
+    "train_data": [
+     "fit + 按 mixquota-v1 的 D1 构成取 Haiku 生成行（pool_order 7d373345，每类行数和 Dup-D1 相同）",
+     "fit + 按 mixquota-v1 的 D1 构成重复采样 fit（行数 = 2·fit）"
+    ]
+   },
+   "lib_diff": {},
+   "platform_diff": {},
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 3042,
+    "families": 1725,
+    "per_seed": {
+     "42": 0.0159,
+     "43": 0.0092,
+     "44": 0.0275
+    },
+    "mean": 0.0175,
+    "ci95": [
+     0.0078,
+     0.0274
+    ]
+   }
+  },
+  {
+   "id": "AUGB-CMP-GD1-B1",
+   "new": "AUGB-G-D1",
+   "old": "AUGB-B1-HAIKU",
+   "eval": "oof",
+   "purpose": "类别构成 D1 的生成数据 对 按原比例的生成数据（G_c − G_R；跨 v3 / v2 代码）",
+   "design": "单一计划改动",
+   "environment": "一致",
+   "unknown": [],
+   "note": "",
+   "changed": {
+    "train_data": [
+     "fit + 按 mixquota-v1 的 D1 构成取 Haiku 生成行（pool_order 7d373345，每类行数和 Dup-D1 相同）",
+     "track1 按家族五折，每折 fit + 该折选用的 Haiku 生成行（+1，清单 b380b4a6），内层验证只用原数据"
+    ]
+   },
+   "lib_diff": {},
+   "platform_diff": {},
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 3042,
+    "families": 1725,
+    "per_seed": {
+     "42": -0.0037,
+     "43": -0.0067,
+     "44": 0.0056
+    },
+    "mean": -0.0016,
+    "ci95": [
+     -0.0092,
+     0.0057
+    ]
+   }
+  },
+  {
+   "id": "AUGB-CMP-GO1-DUPO1",
+   "new": "AUGB-G-O1",
+   "old": "AUGB-DUP-O1",
+   "eval": "oof",
+   "purpose": "类别构成 O1：生成数据 对 同构成的原数据重复采样（G_c − Dup_c，同代码同步数）",
+   "design": "单一计划改动",
+   "environment": "一致",
+   "unknown": [],
+   "note": "",
+   "changed": {
+    "train_data": [
+     "fit + 按 mixquota-v1 的 O1 构成取 Haiku 生成行（pool_order 7d373345，每类行数和 Dup-O1 相同）",
+     "fit + 按 mixquota-v1 的 O1 构成重复采样 fit（行数 = 2·fit）"
+    ]
+   },
+   "lib_diff": {},
+   "platform_diff": {},
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 3042,
+    "families": 1725,
+    "per_seed": {
+     "42": 0.0209,
+     "43": 0.0212,
+     "44": 0.0148
+    },
+    "mean": 0.0189,
+    "ci95": [
+     0.0086,
+     0.0291
+    ]
+   }
+  },
+  {
+   "id": "AUGB-CMP-GO1-B1",
+   "new": "AUGB-G-O1",
+   "old": "AUGB-B1-HAIKU",
+   "eval": "oof",
+   "purpose": "类别构成 O1 的生成数据 对 按原比例的生成数据（G_c − G_R；跨 v3 / v2 代码）",
+   "design": "单一计划改动",
+   "environment": "一致",
+   "unknown": [],
+   "note": "",
+   "changed": {
+    "train_data": [
+     "fit + 按 mixquota-v1 的 O1 构成取 Haiku 生成行（pool_order 7d373345，每类行数和 Dup-O1 相同）",
+     "track1 按家族五折，每折 fit + 该折选用的 Haiku 生成行（+1，清单 b380b4a6），内层验证只用原数据"
+    ]
+   },
+   "lib_diff": {},
+   "platform_diff": {},
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 3042,
+    "families": 1725,
+    "per_seed": {
+     "42": -0.0047,
+     "43": -0.0076,
+     "44": 0.0012
+    },
+    "mean": -0.0037,
+    "ci95": [
+     -0.0126,
+     0.0046
     ]
    }
   },

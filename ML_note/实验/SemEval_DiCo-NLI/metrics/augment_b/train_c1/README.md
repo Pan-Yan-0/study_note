@@ -65,7 +65,7 @@ Claude 用 `code/claude_recheck_augb_c1.py` 从每个任务的四类概率重建
 
 ## 下一步计划
 
-1. +2 / +4 的复审（`code/augment_b/FULL_README.md` 第 15 节）交回后，通过就跑 Commit 2：B2、B4（对 step+2、step+4）和 G-U4 / BAL / E1 / D1 / O1（对同构成的 Dup）。
+1. Commit 2 已完成（[结果](../train_c2/README.md)）：B2、B4 对 step+2、step+4 都显著更好；G-U4 / BAL / E1 / D1 / O1 对同构成的 Dup 都显著更好。
 2. 类别加权的后续（是否把 W4 和生成数据组合、是否试更大的 λ）等 Commit 2 的结果出来后，由 Pan-Yan-0 定；不在看结果后改这次的判定。
 
 ## 文件

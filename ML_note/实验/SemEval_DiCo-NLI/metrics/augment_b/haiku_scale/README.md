@@ -47,8 +47,8 @@
 
 ## 下一步计划
 
-1. 跑 Commit 2（`AugB_v3_Commit2`，B2-Haiku、B4-Haiku、G-U4 / BAL / E1 / D1 / O1，105 项，约 15 GPU 小时，T4 x2 墙钟约 8 小时）：B2 / B4 对 step+2 / step+4，G_c 对同构成的 Dup_c。
-2. 结果出来后同时列出 B1 / B2 / B4 各自对 step+1 / +2 / +4 的差；+1 是 v2 代码，规模轮是 v3，两者在 B0 上逐条相同（`train_c1`）。
+1. Commit 2 已完成（[结果](../train_c2/README.md)）：B2 / B4 对 step+2 / step+4 都显著更好，规模在 +2 饱和；G_c 对同构成的 Dup_c 都显著更好，但没有构成比按原比例生成更好。
+2. 这批数据目前没有别的用途；之后的叠加实验用哪个规模由 Pan-Yan-0 定。
 
 ## 文件
 
