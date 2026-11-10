@@ -1,0 +1,14 @@
+qwen4b_augb v1 代码身份（common.pipeline，含 SOURCES 和 augb_data 三个文件的哈希）：30449eece7a8d7f4df4d0195b75f16ddf2b5e659ea0a1213553f7a6dc93bcc52
+上游 upstream_qwen.py：502e638814ba2b7a840f33aa3b481de1f1e0bf2887ff7d976dd86131d3b603b0（未改，和 qwen8b_v5.5、JOINT-QWEN、第六组相同）
+compat.py：和 qwen8b_v5.5 相比只改了注释
+相对 qwen8b_v5.5 的改动：模型改回 4B（快照 cdbee75f…，同 JOINT-QWEN）；worker 加 --group（Q0 / Q-B1 / Q-step1），
+按组构造 fit；运行时核对上游五折 = 实验 B 的 split_manifest、生成行隔离；队列分两个阶段，阶段 2 要 --confirm-stage2 且阶段 1 全部完成；
+SMOKE 改为 Q-B1 的探测、Q-B1 的中断恢复、Q0 的第二种子；结果包名改为 qwen4b_augb_*；去掉 8B 空 think 模板的断言（4B-Instruct-2507 的模板由 compat 的零样本核对把关）。
+
+== DICO_TEST_DATA=<官方仓库> python3 -W error::ResourceWarning -m unittest test_queue（Claude 云端环境，无 torch）
+Ran 20 tests  OK
+  包括 RealData：用官方数据和未改动的上游 make_split，五折的 fit / val / test 和实验 B 的 split_manifest 逐折相同；
+  三组的 fit 行数为 n / 2n / 2n（n = 2190 / 2192 / 2186 / 2200 / 2200）；SMOKE 和探测的构造也走通。
+== bash -n run_a10.sh a10_session.sh：通过
+
+GPU / 真实模型 / A10：未运行
