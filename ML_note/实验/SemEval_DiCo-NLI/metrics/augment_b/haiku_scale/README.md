@@ -1,8 +1,23 @@
 # 实验 B 规模轮（+2 / +4）：Haiku 5.5 生成数据
 
-+1 之后按 Pan-Yan-0 11-07 定的规则扩到 +2、+4：+k 每个父家族最多用 2k 次，每轮重新打乱、重新分批，嵌套选用（+1 ⊂ +2 ⊂ +4）。生成器仍是 Claude Haiku 5.5 子 agent，流程见 [FULL_README](../../../code/augment_b/FULL_README.md) 第 10、13–15 节。这里只放不含文本的统计；带文本的 manifest 和审核表在复审放行之前不进仓库。
++1 之后按 Pan-Yan-0 11-07 定的规则扩到 +2、+4：+k 每个父家族最多用 2k 次，每轮重新打乱、重新分批，嵌套选用（+1 ⊂ +2 ⊂ +4）。生成器仍是 Claude Haiku 5.5 子 agent，流程见 [FULL_README](../../../code/augment_b/FULL_README.md) 第 10、13–15 节。复审已放行，全部原文、清单和审核记录都在这里。
 
 ## 结果
+
+**复审通过，+2 / +4 数据放行**（第 15 节的 P1C-R；Claude 初标 → GPT 对照参考卡复审，两步不独立）：
+
+| 表 | 类 | 可判定 | 和生成标签不同 | 门槛 | 判定 |
+|---|---|---|---|---|---|
+| A（P1C） | 单向 | 19 | 3（16%） | ≤ 30% | pass |
+| A（P1C） | O | 20 | 0（0%） | ≤ 30% | pass |
+| A（只报告） | E | 20 | 4（20%） | — | — |
+| B | Haiku E | 20 | 5（25%） | ≤ 原数据 E + 15 pp = 25% | pass（正好在门槛上） |
+| B | 原数据 E | 20 | 2（10%） | — | — |
+
+- GPT 改了 Claude 初标 12 条（表 A 6、表 B 6），其中 7 条把 E 改成单向，多是“一侧多了方式、修饰语或介词关系”；表 A 的 R033（kid 可指孩子或幼山羊）改为 U。
+- Haiku E 的不一致率正好等于门槛，再多一条就不放行；+1 时是 15% 对原数据 20%。这次原数据 E 的不一致率低（10%），门槛跟着变低。
+- 按 effort 拆开（只报告）：high 批次 16 对里不一致 2，medium 63 对里 13，样本太小，看不出差别。第 14 节的两对方向错误都没有被抽中。
+- `gate.json` 全部 pass，清单 `24704e11…`（`merged/manifest.csv`）。
 
 **各阶段**（自动停止条件全部通过）：
 
@@ -26,22 +41,22 @@
 
 - **reasoning effort 不一致**：r4_b045–b136 是 `high`，其余全部 `medium`（s4a、s4b 起在派发参数里显式指定 `medium`）。表面统计和 medium 轮次接近，标签正确率没有单独测；Pan-Yan-0 11-09 定保留这批数据，偏离写进报告。
 - **生成器的初始上下文**里有仓库的 CLAUDE.md / AGENTS.md（含从训练标签归纳的规则描述），和 +1 相同。
-- **人工复审还没做完**：两张表（单向和 O 按 P1C，E 按原数据校准）已由 Claude 初标，等 GPT 复审；`gate.json` 的 review 现在是 pending，训练入口会拒绝。
-- 已知两对方向标反的只差数量的单向对（r3_b054、r4_b110），不改标签，复审时照常计分。
-- `report_r4.json` 里作废原因中的本机路径已替换成相对路径，所以它的哈希和 `merged_sources.json` 里记的不同；其余文件是原样副本。
+- **复审不是独立双盲**：GPT 复审时看得到 Claude 的初标；Claude 是派发方。E 的放行刚好压线。
+- 已知两对方向标反的只差数量的单向对（r3_b054、r4_b110），不改标签。
+- **哈希**：各阶段的 `dispatch_log.jsonl` 和 r4 的 `report.json` 去掉了本机路径前缀，所以哈希和 `merged/sources.json` 里记的不同；`raw/` 原文、manifest、选用清单和审核文件都是原样副本。
 
 ## 下一步计划
 
-1. GPT 复审交回后计分，组合成 `P1C-R`；通过才放行。
-2. 放行后打 Commit 2 包（B2-Haiku、B4-Haiku、G-U4 / BAL / E1 / D1 / O1，105 个 task，约 15 GPU 小时，T4 x2 墙钟约 8 小时）。
-3. Commit 1、2 的结果出来后，按事先的规则比较 B1 / B2 / B4 和对应的 step 对照，以及 G 和 Dup 两组的类别构成。
+1. 跑 Commit 2（`AugB_v3_Commit2`，B2-Haiku、B4-Haiku、G-U4 / BAL / E1 / D1 / O1，105 项，约 15 GPU 小时，T4 x2 墙钟约 8 小时）：B2 / B4 对 step+2 / step+4，G_c 对同构成的 Dup_c。
+2. 结果出来后同时列出 B1 / B2 / B4 各自对 step+1 / +2 / +4 的差；+1 是 v2 代码，规模轮是 v3，两者在 B0 上逐条相同（`train_c1`）。
 
 ## 文件
 
 | 文件 | 内容 |
 |---|---|
-| `report_<阶段>.json` | 各阶段 `process_outputs.py build` 的报告 |
-| `merged_report.json`、`merged_concentration.json`、`merged_sources.json` | 最终合并 m4 的报告、家族集中度、各阶段文件哈希 |
+| `<阶段>/` | 每个阶段（r2、s2a、r3、r4、s4a、s4b）的 build 报告、逐次尝试、过滤记录、manifest、调度日志、`raw/outputs/` 子 agent 原文 |
+| `merged/` | 最终合并 m4：manifest、逐折选用（`fold_selection*.csv`、`pool_order.json`）、集中度、各阶段文件哈希、审核表和答案、P1C 与 P1C-R 结果、gate |
+| `merged/review/` | 表 B（E 复审）的审核表、答案、参考卡、计分结果；Claude 初标；GPT 交回的两张最终表、修改清单和复审报告 |
 | `audit_summary.json` | 调度独立核对的汇总（每阶段的状态、模型、effort） |
 
 ## 来源

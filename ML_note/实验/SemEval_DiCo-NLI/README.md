@@ -28,7 +28,7 @@
 | 实验A | Qwen3-8B CE SFT（和JOINT-QWEN只换模型） | 英语五折三种子，15项、3套OOF | [实验A结果](metrics/qwen8b_a1/README.md) |
 | 实验B +1 | mDeBERTa CE：B0 / B1-Haiku / step+1（Kaggle T4） | 英语五折三种子，45项、9套OOF | [实验B +1结果](metrics/augment_b/train_plus1/README.md) |
 | 实验B Commit 1 | mDeBERTa CE：B0 / W2 / W4 / step+2 / step+4 / Dup×5（Kaggle T4） | 英语五折三种子，150项；类别加权按规则不算提升，原数据重复在+1之后饱和 | [Commit 1结果](metrics/augment_b/train_c1/README.md) |
-| 实验B +2 / +4 数据 | Haiku 5.5 生成规模轮（r2 / s2a / r3 / r4 / s4a / s4b） | 512次派发，自动检查全过；复审中，训练未开始 | [规模轮数据](metrics/augment_b/haiku_scale/README.md) |
+| 实验B +2 / +4 数据 | Haiku 5.5 生成规模轮（r2 / s2a / r3 / r4 / s4a / s4b） | 512次派发，自动检查全过；复审（P1C-R）通过、已放行，Commit 2 待跑 | [规模轮数据](metrics/augment_b/haiku_scale/README.md) |
 
 不同阶段存在复用，不能把表中项目数直接相加当作独立新增训练数。SMOKE、教师导出、不同推理模式也不算新增模型训练。
 
