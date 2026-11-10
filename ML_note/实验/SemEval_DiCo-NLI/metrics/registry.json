@@ -1117,6 +1117,822 @@
    }
   },
   {
+   "id": "AUGB-C1-B0",
+   "desc": "实验 B Commit 1：B0，mDeBERTa 英语五折三种子（Kaggle）",
+   "track": 1,
+   "variables": {
+    "model": "microsoft/mdeberta-v3-base",
+    "model_revision": "a0484667b22365f84929a935b5e50a51f71f159d",
+    "prompt": "不适用",
+    "train": {
+     "max_epochs": 12,
+     "lr": 2e-05,
+     "batch_size": 32,
+     "max_length": 96,
+     "warmup_ratio": 0.1,
+     "weight_decay": 0.01,
+     "gradient_clip": 1.0,
+     "precision": "fp16",
+     "seed_policy": "init=seed*1000+fold; per-epoch fresh shuffle RNG (not archived C0 RNG stream)",
+     "selection": "original_direction_weighted_f1，earliest"
+    },
+    "split": {
+     "folds": 5,
+     "fold_seed": 2027,
+     "inner_fraction": 0.1,
+     "holdout_fold": "0–4"
+    },
+    "method": "ce",
+    "method_params": "无",
+    "data_sha256": {
+     "fold_selection.csv": "6f289cbac76e",
+     "manifest.csv": "b380b4a6a836",
+     "split_manifest.json": "f9363290af28"
+    },
+    "train_data": "track1 按家族五折，每折只训练 fit",
+    "selection": "original_direction_weighted_f1",
+    "inference": "plain 和 sym（F / B 互换后平均）",
+    "lib": {
+     "transformers": "4.57.6"
+    }
+   },
+   "platform": {
+    "platform": "Kaggle",
+    "gpu": [
+     "Tesla T4"
+    ],
+    "dtype": [
+     "fp16"
+    ],
+    "torch": [
+     "2.11.0+cu128"
+    ]
+   },
+   "code": {
+    "version": "train_augb_v3.py（Claude）",
+    "code_sha256": [
+     "c8ff912cf3f5"
+    ]
+   },
+   "metrics_dir": "metrics/augment_b/train_c1",
+   "seeds": [
+    "42",
+    "43",
+    "44"
+   ],
+   "scores_sym_wf1_mean": {
+    "oof": 0.7937
+   }
+  },
+  {
+   "id": "AUGB-W2",
+   "desc": "实验 B Commit 1：W2，mDeBERTa 英语五折三种子（Kaggle）",
+   "track": 1,
+   "variables": {
+    "model": "microsoft/mdeberta-v3-base",
+    "model_revision": "a0484667b22365f84929a935b5e50a51f71f159d",
+    "prompt": "不适用",
+    "train": {
+     "max_epochs": 12,
+     "lr": 2e-05,
+     "batch_size": 32,
+     "max_length": 96,
+     "warmup_ratio": 0.1,
+     "weight_decay": 0.01,
+     "gradient_clip": 1.0,
+     "precision": "fp16",
+     "seed_policy": "init=seed*1000+fold; per-epoch fresh shuffle RNG (not archived C0 RNG stream)",
+     "selection": "original_direction_weighted_f1，earliest"
+    },
+    "split": {
+     "folds": 5,
+     "fold_seed": 2027,
+     "inner_fraction": 0.1,
+     "holdout_fold": "0–4"
+    },
+    "method": "weighted_ce",
+    "method_params": "lambda_O=2.0",
+    "data_sha256": {
+     "fold_selection.csv": "6f289cbac76e",
+     "manifest.csv": "b380b4a6a836",
+     "split_manifest.json": "f9363290af28"
+    },
+    "train_data": "同 B0；loss = mean_i w_{y_i}·CE_i，w_O = 2/Z、其余 1/Z、Z = 1 + p_O(fit)",
+    "selection": "original_direction_weighted_f1",
+    "inference": "plain 和 sym（F / B 互换后平均）",
+    "lib": {
+     "transformers": "4.57.6"
+    }
+   },
+   "platform": {
+    "platform": "Kaggle",
+    "gpu": [
+     "Tesla T4"
+    ],
+    "dtype": [
+     "fp16"
+    ],
+    "torch": [
+     "2.11.0+cu128"
+    ]
+   },
+   "code": {
+    "version": "train_augb_v3.py（Claude）",
+    "code_sha256": [
+     "c8ff912cf3f5"
+    ]
+   },
+   "metrics_dir": "metrics/augment_b/train_c1",
+   "seeds": [
+    "42",
+    "43",
+    "44"
+   ],
+   "scores_sym_wf1_mean": {
+    "oof": 0.7955
+   }
+  },
+  {
+   "id": "AUGB-W4",
+   "desc": "实验 B Commit 1：W4，mDeBERTa 英语五折三种子（Kaggle）",
+   "track": 1,
+   "variables": {
+    "model": "microsoft/mdeberta-v3-base",
+    "model_revision": "a0484667b22365f84929a935b5e50a51f71f159d",
+    "prompt": "不适用",
+    "train": {
+     "max_epochs": 12,
+     "lr": 2e-05,
+     "batch_size": 32,
+     "max_length": 96,
+     "warmup_ratio": 0.1,
+     "weight_decay": 0.01,
+     "gradient_clip": 1.0,
+     "precision": "fp16",
+     "seed_policy": "init=seed*1000+fold; per-epoch fresh shuffle RNG (not archived C0 RNG stream)",
+     "selection": "original_direction_weighted_f1，earliest"
+    },
+    "split": {
+     "folds": 5,
+     "fold_seed": 2027,
+     "inner_fraction": 0.1,
+     "holdout_fold": "0–4"
+    },
+    "method": "weighted_ce",
+    "method_params": "lambda_O=4.0",
+    "data_sha256": {
+     "fold_selection.csv": "6f289cbac76e",
+     "manifest.csv": "b380b4a6a836",
+     "split_manifest.json": "f9363290af28"
+    },
+    "train_data": "同 B0；loss = mean_i w_{y_i}·CE_i，w_O = 4/Z、其余 1/Z、Z = 1 + 3·p_O(fit)",
+    "selection": "original_direction_weighted_f1",
+    "inference": "plain 和 sym（F / B 互换后平均）",
+    "lib": {
+     "transformers": "4.57.6"
+    }
+   },
+   "platform": {
+    "platform": "Kaggle",
+    "gpu": [
+     "Tesla T4"
+    ],
+    "dtype": [
+     "fp16"
+    ],
+    "torch": [
+     "2.11.0+cu128"
+    ]
+   },
+   "code": {
+    "version": "train_augb_v3.py（Claude）",
+    "code_sha256": [
+     "c8ff912cf3f5"
+    ]
+   },
+   "metrics_dir": "metrics/augment_b/train_c1",
+   "seeds": [
+    "42",
+    "43",
+    "44"
+   ],
+   "scores_sym_wf1_mean": {
+    "oof": 0.8015
+   }
+  },
+  {
+   "id": "AUGB-W2-BIAS",
+   "desc": "实验 B Commit 1：W2（偏置对照），mDeBERTa 英语五折三种子（Kaggle）",
+   "track": 1,
+   "variables": {
+    "model": "microsoft/mdeberta-v3-base",
+    "model_revision": "a0484667b22365f84929a935b5e50a51f71f159d",
+    "prompt": "不适用",
+    "train": {
+     "max_epochs": 12,
+     "lr": 2e-05,
+     "batch_size": 32,
+     "max_length": 96,
+     "warmup_ratio": 0.1,
+     "weight_decay": 0.01,
+     "gradient_clip": 1.0,
+     "precision": "fp16",
+     "seed_policy": "init=seed*1000+fold; per-epoch fresh shuffle RNG (not archived C0 RNG stream)",
+     "selection": "original_direction_weighted_f1，earliest"
+    },
+    "split": {
+     "folds": 5,
+     "fold_seed": 2027,
+     "inner_fraction": 0.1,
+     "holdout_fold": "0–4"
+    },
+    "method": "weighted_ce",
+    "method_params": "lambda_O=2.0",
+    "data_sha256": {
+     "fold_selection.csv": "6f289cbac76e",
+     "manifest.csv": "b380b4a6a836",
+     "split_manifest.json": "f9363290af28"
+    },
+    "train_data": "同 B0；loss = mean_i w_{y_i}·CE_i，w_O = 2/Z、其余 1/Z、Z = 1 + p_O(fit)",
+    "selection": "original_direction_weighted_f1",
+    "inference": "plain 和 sym（F / B 互换后平均）；O 的 logit 减 log 2（两个方向都减，再对称化）",
+    "lib": {
+     "transformers": "4.57.6"
+    }
+   },
+   "platform": {
+    "platform": "Kaggle",
+    "gpu": [
+     "Tesla T4"
+    ],
+    "dtype": [
+     "fp16"
+    ],
+    "torch": [
+     "2.11.0+cu128"
+    ]
+   },
+   "code": {
+    "version": "train_augb_v3.py（Claude）",
+    "code_sha256": [
+     "c8ff912cf3f5"
+    ]
+   },
+   "metrics_dir": "metrics/augment_b/train_c1",
+   "seeds": [
+    "42",
+    "43",
+    "44"
+   ],
+   "scores_sym_wf1_mean": {
+    "oof": 0.7944
+   }
+  },
+  {
+   "id": "AUGB-W4-BIAS",
+   "desc": "实验 B Commit 1：W4（偏置对照），mDeBERTa 英语五折三种子（Kaggle）",
+   "track": 1,
+   "variables": {
+    "model": "microsoft/mdeberta-v3-base",
+    "model_revision": "a0484667b22365f84929a935b5e50a51f71f159d",
+    "prompt": "不适用",
+    "train": {
+     "max_epochs": 12,
+     "lr": 2e-05,
+     "batch_size": 32,
+     "max_length": 96,
+     "warmup_ratio": 0.1,
+     "weight_decay": 0.01,
+     "gradient_clip": 1.0,
+     "precision": "fp16",
+     "seed_policy": "init=seed*1000+fold; per-epoch fresh shuffle RNG (not archived C0 RNG stream)",
+     "selection": "original_direction_weighted_f1，earliest"
+    },
+    "split": {
+     "folds": 5,
+     "fold_seed": 2027,
+     "inner_fraction": 0.1,
+     "holdout_fold": "0–4"
+    },
+    "method": "weighted_ce",
+    "method_params": "lambda_O=4.0",
+    "data_sha256": {
+     "fold_selection.csv": "6f289cbac76e",
+     "manifest.csv": "b380b4a6a836",
+     "split_manifest.json": "f9363290af28"
+    },
+    "train_data": "同 B0；loss = mean_i w_{y_i}·CE_i，w_O = 4/Z、其余 1/Z、Z = 1 + 3·p_O(fit)",
+    "selection": "original_direction_weighted_f1",
+    "inference": "plain 和 sym（F / B 互换后平均）；O 的 logit 减 log 4（两个方向都减，再对称化）",
+    "lib": {
+     "transformers": "4.57.6"
+    }
+   },
+   "platform": {
+    "platform": "Kaggle",
+    "gpu": [
+     "Tesla T4"
+    ],
+    "dtype": [
+     "fp16"
+    ],
+    "torch": [
+     "2.11.0+cu128"
+    ]
+   },
+   "code": {
+    "version": "train_augb_v3.py（Claude）",
+    "code_sha256": [
+     "c8ff912cf3f5"
+    ]
+   },
+   "metrics_dir": "metrics/augment_b/train_c1",
+   "seeds": [
+    "42",
+    "43",
+    "44"
+   ],
+   "scores_sym_wf1_mean": {
+    "oof": 0.8028
+   }
+  },
+  {
+   "id": "AUGB-STEP2",
+   "desc": "实验 B Commit 1：step+2，mDeBERTa 英语五折三种子（Kaggle）",
+   "track": 1,
+   "variables": {
+    "model": "microsoft/mdeberta-v3-base",
+    "model_revision": "a0484667b22365f84929a935b5e50a51f71f159d",
+    "prompt": "不适用",
+    "train": {
+     "max_epochs": 12,
+     "lr": 2e-05,
+     "batch_size": 32,
+     "max_length": 96,
+     "warmup_ratio": 0.1,
+     "weight_decay": 0.01,
+     "gradient_clip": 1.0,
+     "precision": "fp16",
+     "seed_policy": "init=seed*1000+fold; per-epoch fresh shuffle RNG (not archived C0 RNG stream)",
+     "selection": "original_direction_weighted_f1，earliest"
+    },
+    "split": {
+     "folds": 5,
+     "fold_seed": 2027,
+     "inner_fraction": 0.1,
+     "holdout_fold": "0–4"
+    },
+    "method": "ce",
+    "method_params": "无",
+    "data_sha256": {
+     "fold_selection.csv": "6f289cbac76e",
+     "manifest.csv": "b380b4a6a836",
+     "split_manifest.json": "f9363290af28"
+    },
+    "train_data": "fit 每行重复三次（+2 的行数）",
+    "selection": "original_direction_weighted_f1",
+    "inference": "plain 和 sym（F / B 互换后平均）",
+    "lib": {
+     "transformers": "4.57.6"
+    }
+   },
+   "platform": {
+    "platform": "Kaggle",
+    "gpu": [
+     "Tesla T4"
+    ],
+    "dtype": [
+     "fp16"
+    ],
+    "torch": [
+     "2.11.0+cu128"
+    ]
+   },
+   "code": {
+    "version": "train_augb_v3.py（Claude）",
+    "code_sha256": [
+     "c8ff912cf3f5"
+    ]
+   },
+   "metrics_dir": "metrics/augment_b/train_c1",
+   "seeds": [
+    "42",
+    "43",
+    "44"
+   ],
+   "scores_sym_wf1_mean": {
+    "oof": 0.8071
+   }
+  },
+  {
+   "id": "AUGB-STEP4",
+   "desc": "实验 B Commit 1：step+4，mDeBERTa 英语五折三种子（Kaggle）",
+   "track": 1,
+   "variables": {
+    "model": "microsoft/mdeberta-v3-base",
+    "model_revision": "a0484667b22365f84929a935b5e50a51f71f159d",
+    "prompt": "不适用",
+    "train": {
+     "max_epochs": 12,
+     "lr": 2e-05,
+     "batch_size": 32,
+     "max_length": 96,
+     "warmup_ratio": 0.1,
+     "weight_decay": 0.01,
+     "gradient_clip": 1.0,
+     "precision": "fp16",
+     "seed_policy": "init=seed*1000+fold; per-epoch fresh shuffle RNG (not archived C0 RNG stream)",
+     "selection": "original_direction_weighted_f1，earliest"
+    },
+    "split": {
+     "folds": 5,
+     "fold_seed": 2027,
+     "inner_fraction": 0.1,
+     "holdout_fold": "0–4"
+    },
+    "method": "ce",
+    "method_params": "无",
+    "data_sha256": {
+     "fold_selection.csv": "6f289cbac76e",
+     "manifest.csv": "b380b4a6a836",
+     "split_manifest.json": "f9363290af28"
+    },
+    "train_data": "fit 每行重复五次（+4 的行数）",
+    "selection": "original_direction_weighted_f1",
+    "inference": "plain 和 sym（F / B 互换后平均）",
+    "lib": {
+     "transformers": "4.57.6"
+    }
+   },
+   "platform": {
+    "platform": "Kaggle",
+    "gpu": [
+     "Tesla T4"
+    ],
+    "dtype": [
+     "fp16"
+    ],
+    "torch": [
+     "2.11.0+cu128"
+    ]
+   },
+   "code": {
+    "version": "train_augb_v3.py（Claude）",
+    "code_sha256": [
+     "c8ff912cf3f5"
+    ]
+   },
+   "metrics_dir": "metrics/augment_b/train_c1",
+   "seeds": [
+    "42",
+    "43",
+    "44"
+   ],
+   "scores_sym_wf1_mean": {
+    "oof": 0.8055
+   }
+  },
+  {
+   "id": "AUGB-DUP-U4",
+   "desc": "实验 B Commit 1：Dup-U4，mDeBERTa 英语五折三种子（Kaggle）",
+   "track": 1,
+   "variables": {
+    "model": "microsoft/mdeberta-v3-base",
+    "model_revision": "a0484667b22365f84929a935b5e50a51f71f159d",
+    "prompt": "不适用",
+    "train": {
+     "max_epochs": 12,
+     "lr": 2e-05,
+     "batch_size": 32,
+     "max_length": 96,
+     "warmup_ratio": 0.1,
+     "weight_decay": 0.01,
+     "gradient_clip": 1.0,
+     "precision": "fp16",
+     "seed_policy": "init=seed*1000+fold; per-epoch fresh shuffle RNG (not archived C0 RNG stream)",
+     "selection": "original_direction_weighted_f1，earliest"
+    },
+    "split": {
+     "folds": 5,
+     "fold_seed": 2027,
+     "inner_fraction": 0.1,
+     "holdout_fold": "0–4"
+    },
+    "method": "ce",
+    "method_params": "无",
+    "data_sha256": {
+     "fold_selection.csv": "6f289cbac76e",
+     "manifest.csv": "b380b4a6a836",
+     "split_manifest.json": "f9363290af28"
+    },
+    "train_data": "fit + 按 mixquota-v1 的 U4 构成重复采样 fit（行数 = 2·fit）",
+    "selection": "original_direction_weighted_f1",
+    "inference": "plain 和 sym（F / B 互换后平均）",
+    "lib": {
+     "transformers": "4.57.6"
+    }
+   },
+   "platform": {
+    "platform": "Kaggle",
+    "gpu": [
+     "Tesla T4"
+    ],
+    "dtype": [
+     "fp16"
+    ],
+    "torch": [
+     "2.11.0+cu128"
+    ]
+   },
+   "code": {
+    "version": "train_augb_v3.py（Claude）",
+    "code_sha256": [
+     "c8ff912cf3f5"
+    ]
+   },
+   "metrics_dir": "metrics/augment_b/train_c1",
+   "seeds": [
+    "42",
+    "43",
+    "44"
+   ],
+   "scores_sym_wf1_mean": {
+    "oof": 0.7953
+   }
+  },
+  {
+   "id": "AUGB-DUP-BAL",
+   "desc": "实验 B Commit 1：Dup-BAL，mDeBERTa 英语五折三种子（Kaggle）",
+   "track": 1,
+   "variables": {
+    "model": "microsoft/mdeberta-v3-base",
+    "model_revision": "a0484667b22365f84929a935b5e50a51f71f159d",
+    "prompt": "不适用",
+    "train": {
+     "max_epochs": 12,
+     "lr": 2e-05,
+     "batch_size": 32,
+     "max_length": 96,
+     "warmup_ratio": 0.1,
+     "weight_decay": 0.01,
+     "gradient_clip": 1.0,
+     "precision": "fp16",
+     "seed_policy": "init=seed*1000+fold; per-epoch fresh shuffle RNG (not archived C0 RNG stream)",
+     "selection": "original_direction_weighted_f1，earliest"
+    },
+    "split": {
+     "folds": 5,
+     "fold_seed": 2027,
+     "inner_fraction": 0.1,
+     "holdout_fold": "0–4"
+    },
+    "method": "ce",
+    "method_params": "无",
+    "data_sha256": {
+     "fold_selection.csv": "6f289cbac76e",
+     "manifest.csv": "b380b4a6a836",
+     "split_manifest.json": "f9363290af28"
+    },
+    "train_data": "fit + 按 mixquota-v1 的 BAL 构成重复采样 fit（行数 = 2·fit）",
+    "selection": "original_direction_weighted_f1",
+    "inference": "plain 和 sym（F / B 互换后平均）",
+    "lib": {
+     "transformers": "4.57.6"
+    }
+   },
+   "platform": {
+    "platform": "Kaggle",
+    "gpu": [
+     "Tesla T4"
+    ],
+    "dtype": [
+     "fp16"
+    ],
+    "torch": [
+     "2.11.0+cu128"
+    ]
+   },
+   "code": {
+    "version": "train_augb_v3.py（Claude）",
+    "code_sha256": [
+     "c8ff912cf3f5"
+    ]
+   },
+   "metrics_dir": "metrics/augment_b/train_c1",
+   "seeds": [
+    "42",
+    "43",
+    "44"
+   ],
+   "scores_sym_wf1_mean": {
+    "oof": 0.8004
+   }
+  },
+  {
+   "id": "AUGB-DUP-E1",
+   "desc": "实验 B Commit 1：Dup-E1，mDeBERTa 英语五折三种子（Kaggle）",
+   "track": 1,
+   "variables": {
+    "model": "microsoft/mdeberta-v3-base",
+    "model_revision": "a0484667b22365f84929a935b5e50a51f71f159d",
+    "prompt": "不适用",
+    "train": {
+     "max_epochs": 12,
+     "lr": 2e-05,
+     "batch_size": 32,
+     "max_length": 96,
+     "warmup_ratio": 0.1,
+     "weight_decay": 0.01,
+     "gradient_clip": 1.0,
+     "precision": "fp16",
+     "seed_policy": "init=seed*1000+fold; per-epoch fresh shuffle RNG (not archived C0 RNG stream)",
+     "selection": "original_direction_weighted_f1，earliest"
+    },
+    "split": {
+     "folds": 5,
+     "fold_seed": 2027,
+     "inner_fraction": 0.1,
+     "holdout_fold": "0–4"
+    },
+    "method": "ce",
+    "method_params": "无",
+    "data_sha256": {
+     "fold_selection.csv": "6f289cbac76e",
+     "manifest.csv": "b380b4a6a836",
+     "split_manifest.json": "f9363290af28"
+    },
+    "train_data": "fit + 按 mixquota-v1 的 E1 构成重复采样 fit（行数 = 2·fit）",
+    "selection": "original_direction_weighted_f1",
+    "inference": "plain 和 sym（F / B 互换后平均）",
+    "lib": {
+     "transformers": "4.57.6"
+    }
+   },
+   "platform": {
+    "platform": "Kaggle",
+    "gpu": [
+     "Tesla T4"
+    ],
+    "dtype": [
+     "fp16"
+    ],
+    "torch": [
+     "2.11.0+cu128"
+    ]
+   },
+   "code": {
+    "version": "train_augb_v3.py（Claude）",
+    "code_sha256": [
+     "c8ff912cf3f5"
+    ]
+   },
+   "metrics_dir": "metrics/augment_b/train_c1",
+   "seeds": [
+    "42",
+    "43",
+    "44"
+   ],
+   "scores_sym_wf1_mean": {
+    "oof": 0.8098
+   }
+  },
+  {
+   "id": "AUGB-DUP-D1",
+   "desc": "实验 B Commit 1：Dup-D1，mDeBERTa 英语五折三种子（Kaggle）",
+   "track": 1,
+   "variables": {
+    "model": "microsoft/mdeberta-v3-base",
+    "model_revision": "a0484667b22365f84929a935b5e50a51f71f159d",
+    "prompt": "不适用",
+    "train": {
+     "max_epochs": 12,
+     "lr": 2e-05,
+     "batch_size": 32,
+     "max_length": 96,
+     "warmup_ratio": 0.1,
+     "weight_decay": 0.01,
+     "gradient_clip": 1.0,
+     "precision": "fp16",
+     "seed_policy": "init=seed*1000+fold; per-epoch fresh shuffle RNG (not archived C0 RNG stream)",
+     "selection": "original_direction_weighted_f1，earliest"
+    },
+    "split": {
+     "folds": 5,
+     "fold_seed": 2027,
+     "inner_fraction": 0.1,
+     "holdout_fold": "0–4"
+    },
+    "method": "ce",
+    "method_params": "无",
+    "data_sha256": {
+     "fold_selection.csv": "6f289cbac76e",
+     "manifest.csv": "b380b4a6a836",
+     "split_manifest.json": "f9363290af28"
+    },
+    "train_data": "fit + 按 mixquota-v1 的 D1 构成重复采样 fit（行数 = 2·fit）",
+    "selection": "original_direction_weighted_f1",
+    "inference": "plain 和 sym（F / B 互换后平均）",
+    "lib": {
+     "transformers": "4.57.6"
+    }
+   },
+   "platform": {
+    "platform": "Kaggle",
+    "gpu": [
+     "Tesla T4"
+    ],
+    "dtype": [
+     "fp16"
+    ],
+    "torch": [
+     "2.11.0+cu128"
+    ]
+   },
+   "code": {
+    "version": "train_augb_v3.py（Claude）",
+    "code_sha256": [
+     "c8ff912cf3f5"
+    ]
+   },
+   "metrics_dir": "metrics/augment_b/train_c1",
+   "seeds": [
+    "42",
+    "43",
+    "44"
+   ],
+   "scores_sym_wf1_mean": {
+    "oof": 0.8036
+   }
+  },
+  {
+   "id": "AUGB-DUP-O1",
+   "desc": "实验 B Commit 1：Dup-O1，mDeBERTa 英语五折三种子（Kaggle）",
+   "track": 1,
+   "variables": {
+    "model": "microsoft/mdeberta-v3-base",
+    "model_revision": "a0484667b22365f84929a935b5e50a51f71f159d",
+    "prompt": "不适用",
+    "train": {
+     "max_epochs": 12,
+     "lr": 2e-05,
+     "batch_size": 32,
+     "max_length": 96,
+     "warmup_ratio": 0.1,
+     "weight_decay": 0.01,
+     "gradient_clip": 1.0,
+     "precision": "fp16",
+     "seed_policy": "init=seed*1000+fold; per-epoch fresh shuffle RNG (not archived C0 RNG stream)",
+     "selection": "original_direction_weighted_f1，earliest"
+    },
+    "split": {
+     "folds": 5,
+     "fold_seed": 2027,
+     "inner_fraction": 0.1,
+     "holdout_fold": "0–4"
+    },
+    "method": "ce",
+    "method_params": "无",
+    "data_sha256": {
+     "fold_selection.csv": "6f289cbac76e",
+     "manifest.csv": "b380b4a6a836",
+     "split_manifest.json": "f9363290af28"
+    },
+    "train_data": "fit + 按 mixquota-v1 的 O1 构成重复采样 fit（行数 = 2·fit）",
+    "selection": "original_direction_weighted_f1",
+    "inference": "plain 和 sym（F / B 互换后平均）",
+    "lib": {
+     "transformers": "4.57.6"
+    }
+   },
+   "platform": {
+    "platform": "Kaggle",
+    "gpu": [
+     "Tesla T4"
+    ],
+    "dtype": [
+     "fp16"
+    ],
+    "torch": [
+     "2.11.0+cu128"
+    ]
+   },
+   "code": {
+    "version": "train_augb_v3.py（Claude）",
+    "code_sha256": [
+     "c8ff912cf3f5"
+    ]
+   },
+   "metrics_dir": "metrics/augment_b/train_c1",
+   "seeds": [
+    "42",
+    "43",
+    "44"
+   ],
+   "scores_sym_wf1_mean": {
+    "oof": 0.8001
+   }
+  },
+  {
    "id": "JOINT-QWEN",
    "desc": "Qwen CE SFT 英语五折三种子",
    "track": 1,
@@ -3940,6 +4756,502 @@
     "ci95": [
      -0.0169,
      -0.0
+    ]
+   }
+  },
+  {
+   "id": "AUGB-CMP-C1B0-B0",
+   "new": "AUGB-C1-B0",
+   "old": "AUGB-B0",
+   "eval": "oof",
+   "purpose": "Commit 1 的 B0（v3 代码）对 +1 的 B0（v2 代码）：代码路径对照",
+   "design": "单一计划改动",
+   "environment": "一致",
+   "unknown": [],
+   "note": "三个种子的对称化预测逐条 100% 相同（λ=1 走原 CE 分支），所以 v3 的训练路径在 B0 上和 v2 等价；Dup 组拿 +1 的 step+1 当 Dup_R 依赖这一点，但 v3 的重复采样路径本身没有和 v2 的 step+1 逐条对过。",
+   "changed": {
+    "train_data": [
+     "track1 按家族五折，每折只训练 fit",
+     "track1 按家族五折，每折只训练fit，内层验证选轮"
+    ]
+   },
+   "lib_diff": {},
+   "platform_diff": {},
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 3042,
+    "families": 1725,
+    "per_seed": {
+     "42": 0.0,
+     "43": 0.0,
+     "44": 0.0
+    },
+    "mean": 0.0,
+    "ci95": [
+     0.0,
+     0.0
+    ]
+   }
+  },
+  {
+   "id": "AUGB-CMP-W2-B0",
+   "new": "AUGB-W2",
+   "old": "AUGB-C1-B0",
+   "eval": "oof",
+   "purpose": "类别加权：O 权重 λ=2 对 λ=1（同数据、同步数）",
+   "design": "系统比较（多处不同，不能归因到单个变量）",
+   "environment": "一致",
+   "unknown": [],
+   "note": "按事先规则不算提升（种子 43 降）。",
+   "changed": {
+    "method": [
+     "weighted_ce",
+     "ce"
+    ],
+    "method_params": [
+     "lambda_O=2.0",
+     "无"
+    ],
+    "train_data": [
+     "同 B0；loss = mean_i w_{y_i}·CE_i，w_O = 2/Z、其余 1/Z、Z = 1 + p_O(fit)",
+     "track1 按家族五折，每折只训练 fit"
+    ]
+   },
+   "lib_diff": {},
+   "platform_diff": {},
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 3042,
+    "families": 1725,
+    "per_seed": {
+     "42": 0.0006,
+     "43": -0.0082,
+     "44": 0.0131
+    },
+    "mean": 0.0018,
+    "ci95": [
+     -0.0062,
+     0.0097
+    ]
+   }
+  },
+  {
+   "id": "AUGB-CMP-W4-B0",
+   "new": "AUGB-W4",
+   "old": "AUGB-C1-B0",
+   "eval": "oof",
+   "purpose": "类别加权：O 权重 λ=4 对 λ=1（同数据、同步数）",
+   "design": "系统比较（多处不同，不能归因到单个变量）",
+   "environment": "一致",
+   "unknown": [],
+   "note": "均值为正但区间含 0，按事先规则不算提升；O 的 F1 升约 2 个百分点。",
+   "changed": {
+    "method": [
+     "weighted_ce",
+     "ce"
+    ],
+    "method_params": [
+     "lambda_O=4.0",
+     "无"
+    ],
+    "train_data": [
+     "同 B0；loss = mean_i w_{y_i}·CE_i，w_O = 4/Z、其余 1/Z、Z = 1 + 3·p_O(fit)",
+     "track1 按家族五折，每折只训练 fit"
+    ]
+   },
+   "lib_diff": {},
+   "platform_diff": {},
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 3042,
+    "families": 1725,
+    "per_seed": {
+     "42": 0.0112,
+     "43": -0.0028,
+     "44": 0.015
+    },
+    "mean": 0.0078,
+    "ci95": [
+     -0.0011,
+     0.0164
+    ]
+   }
+  },
+  {
+   "id": "AUGB-CMP-W2BIAS-B0",
+   "new": "AUGB-W2-BIAS",
+   "old": "AUGB-C1-B0",
+   "eval": "oof",
+   "purpose": "类别加权 λ=2，推理时 O 的 logit 减 log 2（事先声明的解析偏置对照）对 λ=1",
+   "design": "系统比较（多处不同，不能归因到单个变量）",
+   "environment": "一致",
+   "unknown": [],
+   "note": "不需要选择的解析对照；不算提升。",
+   "changed": {
+    "inference": [
+     "plain 和 sym（F / B 互换后平均）；O 的 logit 减 log 2（两个方向都减，再对称化）",
+     "plain 和 sym（F / B 互换后平均）"
+    ],
+    "method": [
+     "weighted_ce",
+     "ce"
+    ],
+    "method_params": [
+     "lambda_O=2.0",
+     "无"
+    ],
+    "train_data": [
+     "同 B0；loss = mean_i w_{y_i}·CE_i，w_O = 2/Z、其余 1/Z、Z = 1 + p_O(fit)",
+     "track1 按家族五折，每折只训练 fit"
+    ]
+   },
+   "lib_diff": {},
+   "platform_diff": {},
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 3042,
+    "families": 1725,
+    "per_seed": {
+     "42": -0.0028,
+     "43": -0.0082,
+     "44": 0.0133
+    },
+    "mean": 0.0008,
+    "ci95": [
+     -0.0074,
+     0.0091
+    ]
+   }
+  },
+  {
+   "id": "AUGB-CMP-W4BIAS-B0",
+   "new": "AUGB-W4-BIAS",
+   "old": "AUGB-C1-B0",
+   "eval": "oof",
+   "purpose": "类别加权 λ=4，推理时 O 的 logit 减 log 4（事先声明的解析偏置对照）对 λ=1",
+   "design": "系统比较（多处不同，不能归因到单个变量）",
+   "environment": "一致",
+   "unknown": [],
+   "note": "区间下限 +0.02，刚过规则线；四个主比较没有做多重比较校正。撤销 log λ 的偏置后仍比 B0 高，说明增益不只是 O 的判定阈值移动，但不说明排序能力提高（GPT 的更正）。",
+   "changed": {
+    "inference": [
+     "plain 和 sym（F / B 互换后平均）；O 的 logit 减 log 4（两个方向都减，再对称化）",
+     "plain 和 sym（F / B 互换后平均）"
+    ],
+    "method": [
+     "weighted_ce",
+     "ce"
+    ],
+    "method_params": [
+     "lambda_O=4.0",
+     "无"
+    ],
+    "train_data": [
+     "同 B0；loss = mean_i w_{y_i}·CE_i，w_O = 4/Z、其余 1/Z、Z = 1 + 3·p_O(fit)",
+     "track1 按家族五折，每折只训练 fit"
+    ]
+   },
+   "lib_diff": {},
+   "platform_diff": {},
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 3042,
+    "families": 1725,
+    "per_seed": {
+     "42": 0.0111,
+     "43": 0.002,
+     "44": 0.0143
+    },
+    "mean": 0.0091,
+    "ci95": [
+     0.0002,
+     0.018
+    ]
+   }
+  },
+  {
+   "id": "AUGB-CMP-STEP2-B0",
+   "new": "AUGB-STEP2",
+   "old": "AUGB-C1-B0",
+   "eval": "oof",
+   "purpose": "原数据重复三遍（+2 的行数和步数）对 一遍（描述，B2 的对照）",
+   "design": "单一计划改动",
+   "environment": "一致",
+   "unknown": [],
+   "note": "原数据多重复几遍也有作用，+2 和 +1（AUGB-CMP-STEP1-B0）差不多、+4 不再升；B2 / B4 是否有效看它们对 step+2 / step+4。",
+   "changed": {
+    "train_data": [
+     "fit 每行重复三次（+2 的行数）",
+     "track1 按家族五折，每折只训练 fit"
+    ]
+   },
+   "lib_diff": {},
+   "platform_diff": {},
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 3042,
+    "families": 1725,
+    "per_seed": {
+     "42": 0.0149,
+     "43": 0.0114,
+     "44": 0.0141
+    },
+    "mean": 0.0134,
+    "ci95": [
+     0.0047,
+     0.0223
+    ]
+   }
+  },
+  {
+   "id": "AUGB-CMP-STEP4-B0",
+   "new": "AUGB-STEP4",
+   "old": "AUGB-C1-B0",
+   "eval": "oof",
+   "purpose": "原数据重复五遍（+4 的行数和步数）对 一遍（描述，B4 的对照）",
+   "design": "单一计划改动",
+   "environment": "一致",
+   "unknown": [],
+   "note": "见 AUGB-CMP-STEP2-B0。",
+   "changed": {
+    "train_data": [
+     "fit 每行重复五次（+4 的行数）",
+     "track1 按家族五折，每折只训练 fit"
+    ]
+   },
+   "lib_diff": {},
+   "platform_diff": {},
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 3042,
+    "families": 1725,
+    "per_seed": {
+     "42": 0.014,
+     "43": 0.0051,
+     "44": 0.0165
+    },
+    "mean": 0.0119,
+    "ci95": [
+     0.0028,
+     0.0205
+    ]
+   }
+  },
+  {
+   "id": "AUGB-CMP-DUPU4-STEP1",
+   "new": "AUGB-DUP-U4",
+   "old": "AUGB-STEP1",
+   "eval": "oof",
+   "purpose": "类别构成 U4 的重复采样 对 按原比例重复一遍（Dup_c − Dup_R，描述；跨 v3 / v2 代码）",
+   "design": "单一计划改动",
+   "environment": "一致",
+   "unknown": [],
+   "note": "两边代码版本不同（v3 对 v2），训练路径在 B0 上逐位相同（AUGB-CMP-C1B0-B0）；只作描述，不归因。",
+   "changed": {
+    "train_data": [
+     "fit + 按 mixquota-v1 的 U4 构成重复采样 fit（行数 = 2·fit）",
+     "track1 按家族五折，每折 fit 每行重复两次（行数和 B1-Haiku 相同），内层验证选轮"
+    ]
+   },
+   "lib_diff": {},
+   "platform_diff": {},
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 3042,
+    "families": 1725,
+    "per_seed": {
+     "42": -0.0203,
+     "43": 0.0011,
+     "44": -0.0127
+    },
+    "mean": -0.0106,
+    "ci95": [
+     -0.0193,
+     -0.0026
+    ]
+   }
+  },
+  {
+   "id": "AUGB-CMP-DUPBAL-STEP1",
+   "new": "AUGB-DUP-BAL",
+   "old": "AUGB-STEP1",
+   "eval": "oof",
+   "purpose": "类别构成 BAL 的重复采样 对 按原比例重复一遍（Dup_c − Dup_R，描述；跨 v3 / v2 代码）",
+   "design": "单一计划改动",
+   "environment": "一致",
+   "unknown": [],
+   "note": "同 AUGB-CMP-DUPU4-STEP1。",
+   "changed": {
+    "train_data": [
+     "fit + 按 mixquota-v1 的 BAL 构成重复采样 fit（行数 = 2·fit）",
+     "track1 按家族五折，每折 fit 每行重复两次（行数和 B1-Haiku 相同），内层验证选轮"
+    ]
+   },
+   "lib_diff": {},
+   "platform_diff": {},
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 3042,
+    "families": 1725,
+    "per_seed": {
+     "42": -0.0129,
+     "43": 0.0053,
+     "44": -0.0089
+    },
+    "mean": -0.0055,
+    "ci95": [
+     -0.0136,
+     0.0027
+    ]
+   }
+  },
+  {
+   "id": "AUGB-CMP-DUPE1-STEP1",
+   "new": "AUGB-DUP-E1",
+   "old": "AUGB-STEP1",
+   "eval": "oof",
+   "purpose": "类别构成 E1 的重复采样 对 按原比例重复一遍（Dup_c − Dup_R，描述；跨 v3 / v2 代码）",
+   "design": "单一计划改动",
+   "environment": "一致",
+   "unknown": [],
+   "note": "同 AUGB-CMP-DUPU4-STEP1。",
+   "changed": {
+    "train_data": [
+     "fit + 按 mixquota-v1 的 E1 构成重复采样 fit（行数 = 2·fit）",
+     "track1 按家族五折，每折 fit 每行重复两次（行数和 B1-Haiku 相同），内层验证选轮"
+    ]
+   },
+   "lib_diff": {},
+   "platform_diff": {},
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 3042,
+    "families": 1725,
+    "per_seed": {
+     "42": -0.0045,
+     "43": 0.0147,
+     "44": 0.0015
+    },
+    "mean": 0.0039,
+    "ci95": [
+     -0.0043,
+     0.0116
+    ]
+   }
+  },
+  {
+   "id": "AUGB-CMP-DUPD1-STEP1",
+   "new": "AUGB-DUP-D1",
+   "old": "AUGB-STEP1",
+   "eval": "oof",
+   "purpose": "类别构成 D1 的重复采样 对 按原比例重复一遍（Dup_c − Dup_R，描述；跨 v3 / v2 代码）",
+   "design": "单一计划改动",
+   "environment": "一致",
+   "unknown": [],
+   "note": "同 AUGB-CMP-DUPU4-STEP1。",
+   "changed": {
+    "train_data": [
+     "fit + 按 mixquota-v1 的 D1 构成重复采样 fit（行数 = 2·fit）",
+     "track1 按家族五折，每折 fit 每行重复两次（行数和 B1-Haiku 相同），内层验证选轮"
+    ]
+   },
+   "lib_diff": {},
+   "platform_diff": {},
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 3042,
+    "families": 1725,
+    "per_seed": {
+     "42": -0.0092,
+     "43": 0.0117,
+     "44": -0.0097
+    },
+    "mean": -0.0024,
+    "ci95": [
+     -0.01,
+     0.0053
+    ]
+   }
+  },
+  {
+   "id": "AUGB-CMP-DUPO1-STEP1",
+   "new": "AUGB-DUP-O1",
+   "old": "AUGB-STEP1",
+   "eval": "oof",
+   "purpose": "类别构成 O1 的重复采样 对 按原比例重复一遍（Dup_c − Dup_R，描述；跨 v3 / v2 代码）",
+   "design": "单一计划改动",
+   "environment": "一致",
+   "unknown": [],
+   "note": "同 AUGB-CMP-DUPU4-STEP1。",
+   "changed": {
+    "train_data": [
+     "fit + 按 mixquota-v1 的 O1 构成重复采样 fit（行数 = 2·fit）",
+     "track1 按家族五折，每折 fit 每行重复两次（行数和 B1-Haiku 相同），内层验证选轮"
+    ]
+   },
+   "lib_diff": {},
+   "platform_diff": {},
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 3042,
+    "families": 1725,
+    "per_seed": {
+     "42": -0.0151,
+     "43": -0.0012,
+     "44": -0.0013
+    },
+    "mean": -0.0059,
+    "ci95": [
+     -0.0151,
+     0.0027
     ]
    }
   },

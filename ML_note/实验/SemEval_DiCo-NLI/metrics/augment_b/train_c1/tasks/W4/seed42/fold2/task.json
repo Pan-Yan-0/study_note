@@ -1,0 +1,69 @@
+{
+  "class_weights": [
+    0.6730295567,
+    0.6730295567,
+    0.6730295567,
+    2.6921182266
+  ],
+  "code_sha256": "c8ff912cf3f587e4d7d5b06f658946aaa8c5e79659be2ce8e992441db4d7d36c",
+  "config": {
+    "augmentation": "plus_one_selected_rows",
+    "batch_size": 32,
+    "code_version": "v3 (Claude): v2 training core + new groups",
+    "data_source": "claude-haiku-5-5",
+    "eval_batch_size": 64,
+    "gradient_clip": 1.0,
+    "inner_family_fraction": 0.1,
+    "lr": 2e-05,
+    "max_epochs": 12,
+    "max_length": 96,
+    "model": "microsoft/mdeberta-v3-base",
+    "precision": "fp16",
+    "protocol": "AugB-Haiku-P1C-R",
+    "seed_list": [
+      42,
+      43,
+      44
+    ],
+    "seed_note": "init=seed*1000+fold; per-epoch fresh shuffle RNG (not archived C0 RNG stream)",
+    "selection_tie": "earliest",
+    "smoke": "fold0_seed42_two_steps_per_group",
+    "split_seed": 2027,
+    "step1_repeat_policy": "each_original_fit_record_twice_per_epoch",
+    "train_loss": "cross_entropy",
+    "train_order": "epoch_seeded_shuffle",
+    "validation": "original_direction_weighted_f1",
+    "warmup_ratio": 0.1,
+    "weight_decay": 0.01,
+    "weighted_loss": "lambda_O != 1 only: L = mean_i w_{y_i} CE_i, w_O = lambda/Z, w_other = 1/Z, Z = 1 + (lambda-1) p_O(fit)"
+  },
+  "data_sha256": {
+    "fold_selection.csv": "6f289cbac76e62143660cf849e61fe3e167b16b1e6dd1d18f635c7c1db0066a4",
+    "manifest.csv": "b380b4a6a836e7056b6f30405a48ed1d9ce66852b78f0be4f8ccf201769e0882",
+    "split_manifest.json": "f9363290af2854427c4b41127d2c305db435e99d8d5f1c84c5990e1672e77564"
+  },
+  "epochs": 12,
+  "fold": 2,
+  "group": "W4",
+  "group_spec": {
+    "kind": "orig",
+    "lambda_O": 4.0
+  },
+  "model": "microsoft/mdeberta-v3-base",
+  "official_data_sha256": "9ee5919874fd486764854a41157a7147c18e38519726e8ad95c97da38d6d1090",
+  "revision": "a0484667b22365f84929a935b5e50a51f71f159d",
+  "seed": 42,
+  "seed_policy": "init=seed*1000+fold; per-epoch fresh shuffle RNG (not archived C0 RNG stream)",
+  "smoke": false,
+  "stable_environment": {
+    "gpu": "Tesla T4",
+    "precision": "fp16"
+  },
+  "steps": 828,
+  "test_rows": 608,
+  "train_rows": 2186,
+  "v3_data_sha256": {
+    "mix_lists.json": "f4d39799025631505399e7fcf61ed1783b6c0619617693c085825dccebfe476f"
+  },
+  "val_rows": 248
+}

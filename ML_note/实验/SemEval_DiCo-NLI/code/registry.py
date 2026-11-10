@@ -262,6 +262,53 @@ def augb_run(rid, group):
             "evals": {"oof": {str(s): {m: preds(os.path.join(root, "oof", f"{d}_seed{s}_{m}.csv")) for m in ("plain", "sym")} for s in seeds}}}
 
 
+AUGB_C1 = {"B0": ("B0", "track1 按家族五折，每折只训练 fit"),
+           "W2": ("W2", "同 B0；loss = mean_i w_{y_i}·CE_i，w_O = 2/Z、其余 1/Z、Z = 1 + p_O(fit)"),
+           "W4": ("W4", "同 B0；loss = mean_i w_{y_i}·CE_i，w_O = 4/Z、其余 1/Z、Z = 1 + 3·p_O(fit)"),
+           "step+2": ("stepplus2", "fit 每行重复三次（+2 的行数）"),
+           "step+4": ("stepplus4", "fit 每行重复五次（+4 的行数）"),
+           "Dup-U4": ("Dup-U4", "fit + 按 mixquota-v1 的 U4 构成重复采样 fit（行数 = 2·fit）"),
+           "Dup-BAL": ("Dup-BAL", "fit + 按 mixquota-v1 的 BAL 构成重复采样 fit（行数 = 2·fit）"),
+           "Dup-E1": ("Dup-E1", "fit + 按 mixquota-v1 的 E1 构成重复采样 fit（行数 = 2·fit）"),
+           "Dup-D1": ("Dup-D1", "fit + 按 mixquota-v1 的 D1 构成重复采样 fit（行数 = 2·fit）"),
+           "Dup-O1": ("Dup-O1", "fit + 按 mixquota-v1 的 O1 构成重复采样 fit（行数 = 2·fit）")}
+
+
+def augb_c1_run(rid, group, bias=None):
+    """实验 B Commit 1：Claude 的 train_augb_v3.py（v2 的训练核心 + 新组），英语五折三种子（Kaggle T4 fp16）。
+    OOF 由 code/claude_recheck_augb_c1.py 从四类概率重建；bias=λ 时是 W 组在推理时把 O 的 logit 减 log λ。"""
+    root = os.path.join(M, "augment_b", "train_c1")
+    d, data = AUGB_C1[group]
+    seeds = [42, 43, 44]
+    tasks = [rj(os.path.join(root, "tasks", d, f"seed{s}", f"fold{k}", "task.json")) for s in seeds for k in range(5)]
+    done = [rj(os.path.join(root, "tasks", d, f"seed{s}", f"fold{k}", "done.json")) for s in seeds for k in range(5)]
+    t = tasks[0]
+    for task in tasks:
+        assert all(task[k] == t[k] for k in ["model", "revision", "config", "data_sha256", "code_sha256", "stable_environment"])
+        assert not task["smoke"] and task["group"] == group
+    env = done[0]["environment"]
+    assert all(x["environment"] == env for x in done)
+    c = t["config"]
+    lam = t["group_spec"].get("lambda_O", 1.0)
+    variables = {"model": t["model"], "model_revision": t["revision"], "prompt": "不适用",
+                 "train": {"max_epochs": c["max_epochs"], "lr": c["lr"], "batch_size": c["batch_size"], "max_length": c["max_length"],
+                           "warmup_ratio": c["warmup_ratio"], "weight_decay": c["weight_decay"], "gradient_clip": c["gradient_clip"],
+                           "precision": c["precision"], "seed_policy": c["seed_note"], "selection": c["validation"] + "，" + c["selection_tie"]},
+                 "split": {"folds": 5, "fold_seed": c["split_seed"], "inner_fraction": c["inner_family_fraction"], "holdout_fold": "0–4"},
+                 "method": "ce" if lam == 1.0 else "weighted_ce", "method_params": "无" if lam == 1.0 else f"lambda_O={lam}",
+                 "data_sha256": {k: v[:12] for k, v in t["data_sha256"].items()},
+                 "train_data": data, "selection": c["validation"],
+                 "inference": "plain 和 sym（F / B 互换后平均）" + (f"；O 的 logit 减 log {lam:g}（两个方向都减，再对称化）" if bias else ""),
+                 "lib": {"transformers": env["transformers"]}}
+    name = d if not bias else f"{group}-bias"
+    return {"id": rid, "desc": f"实验 B Commit 1：{group}{'（偏置对照）' if bias else ''}，mDeBERTa 英语五折三种子（Kaggle）", "track": 1,
+            "variables": variables,
+            "platform": {"platform": "Kaggle", "gpu": [env["gpu"]], "dtype": [env["precision"]], "torch": [env["torch"]]},
+            "code": {"version": "train_augb_v3.py（Claude）", "code_sha256": [t["code_sha256"][:12]]},
+            "metrics_dir": "metrics/augment_b/train_c1", "seeds": [str(s) for s in seeds],
+            "evals": {"oof": {str(s): {m: preds(os.path.join(root, "oof", f"{name}_seed{s}_{m}.csv")) for m in ("plain", "sym")} for s in seeds}}}
+
+
 def multilang_run(rid, track, fold0_only=False):
     """Kaggle T4 上 mDeBERTa CE（第五组 C0 配方）的西语 / 巴语 / 跨语言五折三种子；dev 只有 fold 0 的模型评过。"""
     root = os.path.join(M, "mdeberta_multilang_oof")
@@ -312,6 +359,18 @@ RUNS = [
     ("AUGB-B0", lambda: augb_run("AUGB-B0", "B0")),
     ("AUGB-B1-HAIKU", lambda: augb_run("AUGB-B1-HAIKU", "B1-Haiku")),
     ("AUGB-STEP1", lambda: augb_run("AUGB-STEP1", "step+1")),
+    ("AUGB-C1-B0", lambda: augb_c1_run("AUGB-C1-B0", "B0")),
+    ("AUGB-W2", lambda: augb_c1_run("AUGB-W2", "W2")),
+    ("AUGB-W4", lambda: augb_c1_run("AUGB-W4", "W4")),
+    ("AUGB-W2-BIAS", lambda: augb_c1_run("AUGB-W2-BIAS", "W2", bias=2)),
+    ("AUGB-W4-BIAS", lambda: augb_c1_run("AUGB-W4-BIAS", "W4", bias=4)),
+    ("AUGB-STEP2", lambda: augb_c1_run("AUGB-STEP2", "step+2")),
+    ("AUGB-STEP4", lambda: augb_c1_run("AUGB-STEP4", "step+4")),
+    ("AUGB-DUP-U4", lambda: augb_c1_run("AUGB-DUP-U4", "Dup-U4")),
+    ("AUGB-DUP-BAL", lambda: augb_c1_run("AUGB-DUP-BAL", "Dup-BAL")),
+    ("AUGB-DUP-E1", lambda: augb_c1_run("AUGB-DUP-E1", "Dup-E1")),
+    ("AUGB-DUP-D1", lambda: augb_c1_run("AUGB-DUP-D1", "Dup-D1")),
+    ("AUGB-DUP-O1", lambda: augb_c1_run("AUGB-DUP-O1", "Dup-O1")),
     ("JOINT-QWEN", lambda: joint_run("JOINT-QWEN", "qwen")),
     ("JOINT-KD", lambda: joint_run("JOINT-KD", "kd")),
     ("MDB-G5-T1-CE", lambda: mdeberta_methods_run("MDB-G5-T1-CE", 1, "ce", "第五组 track1 ce，fold 0 三种子")),
@@ -355,6 +414,18 @@ COMPARISONS = [
     ("AUGB-CMP-B1-STEP1", "AUGB-B1-HAIKU", "AUGB-STEP1", "oof", "实验 B +1：加 Haiku 生成数据 对 原数据重复到同样行数（同计划步数）"),
     ("AUGB-CMP-STEP1-B0", "AUGB-STEP1", "AUGB-B0", "oof", "实验 B +1：原数据重复两遍 对 一遍（只看步数加倍的作用，描述）"),
     ("AUGB-CMP-B0-JOINTCE", "AUGB-B0", "JOINT-CE", "oof", "实验 B 的 B0（Kaggle T4 fp16）对第五组 CE（A10 bf16），同划分同种子 42–44（执行环境迁移，描述）"),
+    ("AUGB-CMP-C1B0-B0", "AUGB-C1-B0", "AUGB-B0", "oof", "Commit 1 的 B0（v3 代码）对 +1 的 B0（v2 代码）：代码路径对照"),
+    ("AUGB-CMP-W2-B0", "AUGB-W2", "AUGB-C1-B0", "oof", "类别加权：O 权重 λ=2 对 λ=1（同数据、同步数）"),
+    ("AUGB-CMP-W4-B0", "AUGB-W4", "AUGB-C1-B0", "oof", "类别加权：O 权重 λ=4 对 λ=1（同数据、同步数）"),
+    ("AUGB-CMP-W2BIAS-B0", "AUGB-W2-BIAS", "AUGB-C1-B0", "oof", "类别加权 λ=2，推理时 O 的 logit 减 log 2（事先声明的解析偏置对照）对 λ=1"),
+    ("AUGB-CMP-W4BIAS-B0", "AUGB-W4-BIAS", "AUGB-C1-B0", "oof", "类别加权 λ=4，推理时 O 的 logit 减 log 4（事先声明的解析偏置对照）对 λ=1"),
+    ("AUGB-CMP-STEP2-B0", "AUGB-STEP2", "AUGB-C1-B0", "oof", "原数据重复三遍（+2 的行数和步数）对 一遍（描述，B2 的对照）"),
+    ("AUGB-CMP-STEP4-B0", "AUGB-STEP4", "AUGB-C1-B0", "oof", "原数据重复五遍（+4 的行数和步数）对 一遍（描述，B4 的对照）"),
+    ("AUGB-CMP-DUPU4-STEP1", "AUGB-DUP-U4", "AUGB-STEP1", "oof", "类别构成 U4 的重复采样 对 按原比例重复一遍（Dup_c − Dup_R，描述；跨 v3 / v2 代码）"),
+    ("AUGB-CMP-DUPBAL-STEP1", "AUGB-DUP-BAL", "AUGB-STEP1", "oof", "类别构成 BAL 的重复采样 对 按原比例重复一遍（Dup_c − Dup_R，描述；跨 v3 / v2 代码）"),
+    ("AUGB-CMP-DUPE1-STEP1", "AUGB-DUP-E1", "AUGB-STEP1", "oof", "类别构成 E1 的重复采样 对 按原比例重复一遍（Dup_c − Dup_R，描述；跨 v3 / v2 代码）"),
+    ("AUGB-CMP-DUPD1-STEP1", "AUGB-DUP-D1", "AUGB-STEP1", "oof", "类别构成 D1 的重复采样 对 按原比例重复一遍（Dup_c − Dup_R，描述；跨 v3 / v2 代码）"),
+    ("AUGB-CMP-DUPO1-STEP1", "AUGB-DUP-O1", "AUGB-STEP1", "oof", "类别构成 O1 的重复采样 对 按原比例重复一遍（Dup_c − Dup_R，描述；跨 v3 / v2 代码）"),
     ("A1-CMP-8B-4B", "A1-QWEN8B", "JOINT-QWEN", "oof", "实验 A：Qwen3-8B 对 Qwen3-4B-Instruct-2507（同划分、同种子、同配方；系统比较，模型不同）"),
     ("JOINT-CMP-QWEN", "JOINT-QWEN", "JOINT-CE", "oof", "英语五折配对比较：qwen 对 CE"),
     ("JOINT-CMP-KD", "JOINT-KD", "JOINT-CE", "oof", "英语五折配对比较：kd 对 CE"),
@@ -394,7 +465,19 @@ NOTES = {
     "AUGB-CMP-B1-B0": "按冻结计划第 1 节的规则算提升；三个种子都升。和 AUGB-CMP-B1-STEP1 一起都通过，才算扩充有效。审核不是独立双盲、E 的放行门槛在第一次 P1 后改定（见 metrics/augment_b/train_plus1/README.md）。区间不包含重新训练随机性。",
     "AUGB-CMP-B1-STEP1": "两边每折行数、计划步数、学习率日程相同，只差多出来的那一半是生成数据还是原数据的重复；三个种子都升，按规则算提升。实际更新次数因 fp16 跳步差 0–2 次，只报告。区间不包含重新训练随机性。",
     "AUGB-CMP-STEP1-B0": "步数加倍本身也有作用（seed 43 略降），所以 B1-Haiku 对 B0 的提升里有一部分来自更多更新；扩充是否有效看 AUGB-CMP-B1-STEP1。",
-    "AUGB-CMP-B0-JOINTCE": "训练变量的记录方式不同，自动列出的差别多是写法；实际差别是卡和精度（T4 fp16 对 A10 bf16）、库版本，以及初始化和打乱的随机数流（B0 用 seed×1000+fold、每轮独立生成器）。B0 不是 JOINT-CE 的复现，只作参照。",
+    "AUGB-CMP-C1B0-B0": "三个种子的对称化预测逐条 100% 相同（λ=1 走原 CE 分支），所以 v3 的训练路径在 B0 上和 v2 等价；Dup 组拿 +1 的 step+1 当 Dup_R 依赖这一点，但 v3 的重复采样路径本身没有和 v2 的 step+1 逐条对过。",
+    "AUGB-CMP-W2-B0": "按事先规则不算提升（种子 43 降）。",
+    "AUGB-CMP-W4-B0": "均值为正但区间含 0，按事先规则不算提升；O 的 F1 升约 2 个百分点。",
+    "AUGB-CMP-W2BIAS-B0": "不需要选择的解析对照；不算提升。",
+    "AUGB-CMP-W4BIAS-B0": "区间下限 +0.02，刚过规则线；四个主比较没有做多重比较校正。撤销 log λ 的偏置后仍比 B0 高，说明增益不只是 O 的判定阈值移动，但不说明排序能力提高（GPT 的更正）。",
+    "AUGB-CMP-STEP2-B0": "原数据多重复几遍也有作用，+2 和 +1（AUGB-CMP-STEP1-B0）差不多、+4 不再升；B2 / B4 是否有效看它们对 step+2 / step+4。",
+    "AUGB-CMP-STEP4-B0": "见 AUGB-CMP-STEP2-B0。",
+    "AUGB-CMP-DUPU4-STEP1": "两边代码版本不同（v3 对 v2），训练路径在 B0 上逐位相同（AUGB-CMP-C1B0-B0）；只作描述，不归因。",
+    "AUGB-CMP-DUPBAL-STEP1": "同 AUGB-CMP-DUPU4-STEP1。",
+    "AUGB-CMP-DUPE1-STEP1": "同 AUGB-CMP-DUPU4-STEP1。",
+    "AUGB-CMP-DUPD1-STEP1": "同 AUGB-CMP-DUPU4-STEP1。",
+    "AUGB-CMP-DUPO1-STEP1": "同 AUGB-CMP-DUPU4-STEP1。",
+    "AUGB-CMP-B0-JOINTCE":"训练变量的记录方式不同，自动列出的差别多是写法；实际差别是卡和精度（T4 fp16 对 A10 bf16）、库版本，以及初始化和打乱的随机数流（B0 用 seed×1000+fold、每轮独立生成器）。B0 不是 JOINT-CE 的复现，只作参照。",
     "A1-CMP-8B-4B": "登记的变量只差模型；未登记的分词器、聊天模板（8B 带空 think 块）和后训练方式也不同，所以是系统比较。按事先规则（均值 > 0 且区间下限 > 0）不算提升。区间不包含重新训练随机性。",
     "JOINT-CMP-QWEN": "使用共同种子；fold0已用于探索，五折并非独立隐藏测试。区间不包含重新训练随机性。",
     "JOINT-CMP-KD": "使用共同种子；fold0已用于探索，五折并非独立隐藏测试。区间不包含重新训练随机性。",
