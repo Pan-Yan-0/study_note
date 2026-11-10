@@ -2409,6 +2409,142 @@
    }
   },
   {
+   "id": "AUGB-FOCAL",
+   "desc": "实验 B Commit 3：Focal，mDeBERTa 英语五折三种子（Kaggle）",
+   "track": 1,
+   "variables": {
+    "model": "microsoft/mdeberta-v3-base",
+    "model_revision": "a0484667b22365f84929a935b5e50a51f71f159d",
+    "prompt": "不适用",
+    "train": {
+     "max_epochs": 12,
+     "lr": 2e-05,
+     "batch_size": 32,
+     "max_length": 96,
+     "warmup_ratio": 0.1,
+     "weight_decay": 0.01,
+     "gradient_clip": 1.0,
+     "precision": "fp16",
+     "seed_policy": "init=seed*1000+fold; per-epoch fresh shuffle RNG (not archived C0 RNG stream)",
+     "selection": "original_direction_weighted_f1，earliest"
+    },
+    "split": {
+     "folds": 5,
+     "fold_seed": 2027,
+     "inner_fraction": 0.1,
+     "holdout_fold": "0–4"
+    },
+    "method": "focal",
+    "method_params": "四分类 softmax focal，alpha=1，gamma=2，fp32、autocast 之外",
+    "data_sha256": {
+     "fold_selection.csv": "6f289cbac76e",
+     "manifest.csv": "b380b4a6a836",
+     "split_manifest.json": "f9363290af28"
+    },
+    "train_data": "track1 按家族五折，每折只训练 fit",
+    "selection": "original_direction_weighted_f1",
+    "inference": "plain 和 sym（F / B 互换后平均）",
+    "lib": {
+     "transformers": "4.57.6"
+    }
+   },
+   "platform": {
+    "platform": "Kaggle",
+    "gpu": [
+     "Tesla T4"
+    ],
+    "dtype": [
+     "fp16"
+    ],
+    "torch": [
+     "2.11.0+cu128"
+    ]
+   },
+   "code": {
+    "version": "train_augb_v4.py v4.1（Claude）",
+    "code_sha256": [
+     "d16e182e2955"
+    ]
+   },
+   "metrics_dir": "metrics/augment_b/train_c3",
+   "seeds": [
+    "42",
+    "43",
+    "44"
+   ],
+   "scores_sym_wf1_mean": {
+    "oof": 0.8004
+   }
+  },
+  {
+   "id": "AUGB-DICE",
+   "desc": "实验 B Commit 3：Dice，mDeBERTa 英语五折三种子（Kaggle）",
+   "track": 1,
+   "variables": {
+    "model": "microsoft/mdeberta-v3-base",
+    "model_revision": "a0484667b22365f84929a935b5e50a51f71f159d",
+    "prompt": "不适用",
+    "train": {
+     "max_epochs": 12,
+     "lr": 2e-05,
+     "batch_size": 32,
+     "max_length": 96,
+     "warmup_ratio": 0.1,
+     "weight_decay": 0.01,
+     "gradient_clip": 1.0,
+     "precision": "fp16",
+     "seed_policy": "init=seed*1000+fold; per-epoch fresh shuffle RNG (not archived C0 RNG stream)",
+     "selection": "original_direction_weighted_f1，earliest"
+    },
+    "split": {
+     "folds": 5,
+     "fold_seed": 2027,
+     "inner_fraction": 0.1,
+     "holdout_fold": "0–4"
+    },
+    "method": "soft_dice",
+    "method_params": "四类 macro soft Dice，batch 级、缺席类也平均，eps=1e-6，fp32、autocast 之外",
+    "data_sha256": {
+     "fold_selection.csv": "6f289cbac76e",
+     "manifest.csv": "b380b4a6a836",
+     "split_manifest.json": "f9363290af28"
+    },
+    "train_data": "track1 按家族五折，每折只训练 fit",
+    "selection": "original_direction_weighted_f1",
+    "inference": "plain 和 sym（F / B 互换后平均）",
+    "lib": {
+     "transformers": "4.57.6"
+    }
+   },
+   "platform": {
+    "platform": "Kaggle",
+    "gpu": [
+     "Tesla T4"
+    ],
+    "dtype": [
+     "fp16"
+    ],
+    "torch": [
+     "2.11.0+cu128"
+    ]
+   },
+   "code": {
+    "version": "train_augb_v4.py v4.1（Claude）",
+    "code_sha256": [
+     "d16e182e2955"
+    ]
+   },
+   "metrics_dir": "metrics/augment_b/train_c3",
+   "seeds": [
+    "42",
+    "43",
+    "44"
+   ],
+   "scores_sym_wf1_mean": {
+    "oof": 0.7807
+   }
+  },
+  {
    "id": "JOINT-QWEN",
    "desc": "Qwen CE SFT 英语五折三种子",
    "track": 1,
@@ -5778,7 +5914,7 @@
    "design": "单一计划改动",
    "environment": "一致",
    "unknown": [],
-   "note": "",
+   "note": "两边每折行数、计划步数相同，只差多出来的是生成数据还是原数据重复；和 AUGB-CMP-B2-B0 都通过，按冻结计划 3.5 节 +2 扩充有效。区间不包含重新训练随机性。",
    "changed": {
     "train_data": [
      "fit + 规模轮清单 24704e11 的第 1、2 层（+2，嵌套，第 1 层 = +1 的选用）",
@@ -5854,7 +5990,7 @@
    "design": "单一计划改动",
    "environment": "一致",
    "unknown": [],
-   "note": "",
+   "note": "同 AUGB-CMP-B2-STEP2；+4 扩充有效。B4 的第 4 层有 25.6% 来自 reasoning effort 为 high 的批次。",
    "changed": {
     "train_data": [
      "fit + 规模轮清单 24704e11 的第 1、2、4 层（+4，嵌套）",
@@ -5892,7 +6028,7 @@
    "design": "单一计划改动",
    "environment": "一致",
    "unknown": [],
-   "note": "",
+   "note": "+2 ⊂ +4，每轮步数也随行数增加；差约为 0，规模曲线在 +2 饱和。",
    "changed": {
     "train_data": [
      "fit + 规模轮清单 24704e11 的第 1、2、4 层（+4，嵌套）",
@@ -5922,6 +6058,136 @@
    }
   },
   {
+   "id": "AUGB-CMP-FOCAL-B0",
+   "new": "AUGB-FOCAL",
+   "old": "AUGB-C1-B0",
+   "eval": "oof",
+   "purpose": "loss 对照：Focal（γ=2）对 CE（同数据、同步数；B0 复用 Commit 1，SMOKE 逐字节相同）",
+   "design": "系统比较（多处不同，不能归因到单个变量）",
+   "environment": "一致",
+   "unknown": [],
+   "note": "设计上只改 loss（method 和 method_params 是同一处改动的两个字段，所以自动归为系统比较）；Bonferroni 97.5% 区间 [−0.19, +1.50] 含 0，按事先规则不算提升。区间不包含重新训练随机性。",
+   "changed": {
+    "method": [
+     "focal",
+     "ce"
+    ],
+    "method_params": [
+     "四分类 softmax focal，alpha=1，gamma=2，fp32、autocast 之外",
+     "无"
+    ]
+   },
+   "lib_diff": {},
+   "platform_diff": {},
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 3042,
+    "families": 1725,
+    "per_seed": {
+     "42": 0.007,
+     "43": 0.0058,
+     "44": 0.0073
+    },
+    "mean": 0.0067,
+    "ci95": [
+     -0.0008,
+     0.0139
+    ]
+   }
+  },
+  {
+   "id": "AUGB-CMP-DICE-B0",
+   "new": "AUGB-DICE",
+   "old": "AUGB-C1-B0",
+   "eval": "oof",
+   "purpose": "loss 对照：四类 macro soft Dice 对 CE（同数据、同步数；B0 复用 Commit 1）",
+   "design": "系统比较（多处不同，不能归因到单个变量）",
+   "environment": "一致",
+   "unknown": [],
+   "note": "同 AUGB-CMP-FOCAL-B0；Bonferroni 97.5% 区间 [−2.38, −0.25] 在 0 以下，Dice 显著更差（种子 43 的 fold 3 选在第 3 轮，留出 0.692）。两种 loss 都没过线，按冻结计划不做“增广 + 新 loss”的叠加。",
+   "changed": {
+    "method": [
+     "soft_dice",
+     "ce"
+    ],
+    "method_params": [
+     "四类 macro soft Dice，batch 级、缺席类也平均，eps=1e-6，fp32、autocast 之外",
+     "无"
+    ]
+   },
+   "lib_diff": {},
+   "platform_diff": {},
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 3042,
+    "families": 1725,
+    "per_seed": {
+     "42": 0.005,
+     "43": -0.0322,
+     "44": -0.0116
+    },
+    "mean": -0.0129,
+    "ci95": [
+     -0.0223,
+     -0.0037
+    ]
+   }
+  },
+  {
+   "id": "AUGB-CMP-FOCAL-W4",
+   "new": "AUGB-FOCAL",
+   "old": "AUGB-W4",
+   "eval": "oof",
+   "purpose": "Focal 对 O 类加权 λ=4（描述，两种处理类别不平衡的 loss）",
+   "design": "系统比较（多处不同，不能归因到单个变量）",
+   "environment": "一致",
+   "unknown": [],
+   "note": "",
+   "changed": {
+    "method": [
+     "focal",
+     "weighted_ce"
+    ],
+    "method_params": [
+     "四分类 softmax focal，alpha=1，gamma=2，fp32、autocast 之外",
+     "lambda_O=4.0"
+    ],
+    "train_data": [
+     "track1 按家族五折，每折只训练 fit",
+     "同 B0；loss = mean_i w_{y_i}·CE_i，w_O = 4/Z、其余 1/Z、Z = 1 + 3·p_O(fit)"
+    ]
+   },
+   "lib_diff": {},
+   "platform_diff": {},
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 3042,
+    "families": 1725,
+    "per_seed": {
+     "42": -0.0042,
+     "43": 0.0086,
+     "44": -0.0077
+    },
+    "mean": -0.0011,
+    "ci95": [
+     -0.0099,
+     0.0074
+    ]
+   }
+  },
+  {
    "id": "AUGB-CMP-B2-B1",
    "new": "AUGB-B2-HAIKU",
    "old": "AUGB-B1-HAIKU",
@@ -5930,7 +6196,7 @@
    "design": "单一计划改动",
    "environment": "一致",
    "unknown": [],
-   "note": "",
+   "note": "跨 v3 / v2 代码，只作描述。",
    "changed": {
     "train_data": [
      "fit + 规模轮清单 24704e11 的第 1、2 层（+2，嵌套，第 1 层 = +1 的选用）",
@@ -5968,7 +6234,7 @@
    "design": "单一计划改动",
    "environment": "一致",
    "unknown": [],
-   "note": "",
+   "note": "同代码、同行数、同步数、每类新增行数相同；五个构成都通过。构成 v2 第 4 节要求它和 G_c − G_R 都通过才说构成值得生成。",
    "changed": {
     "train_data": [
      "fit + 按 mixquota-v1 的 U4 构成取 Haiku 生成行（pool_order 7d373345，每类行数和 Dup-U4 相同）",
@@ -6006,7 +6272,7 @@
    "design": "单一计划改动",
    "environment": "一致",
    "unknown": [],
-   "note": "",
+   "note": "跨 v3 / v2 代码；五个构成都没通过，按构成 v2 没有构成值得生成，事先定的 +2 后续不触发。",
    "changed": {
     "train_data": [
      "fit + 按 mixquota-v1 的 U4 构成取 Haiku 生成行（pool_order 7d373345，每类行数和 Dup-U4 相同）",
@@ -6044,7 +6310,7 @@
    "design": "单一计划改动",
    "environment": "一致",
    "unknown": [],
-   "note": "",
+   "note": "同 AUGB-CMP-GU4-DUPU4。",
    "changed": {
     "train_data": [
      "fit + 按 mixquota-v1 的 BAL 构成取 Haiku 生成行（pool_order 7d373345，每类行数和 Dup-BAL 相同）",
@@ -6082,7 +6348,7 @@
    "design": "单一计划改动",
    "environment": "一致",
    "unknown": [],
-   "note": "",
+   "note": "同 AUGB-CMP-GU4-B1。",
    "changed": {
     "train_data": [
      "fit + 按 mixquota-v1 的 BAL 构成取 Haiku 生成行（pool_order 7d373345，每类行数和 Dup-BAL 相同）",
@@ -6120,7 +6386,7 @@
    "design": "单一计划改动",
    "environment": "一致",
    "unknown": [],
-   "note": "",
+   "note": "同 AUGB-CMP-GU4-DUPU4。",
    "changed": {
     "train_data": [
      "fit + 按 mixquota-v1 的 E1 构成取 Haiku 生成行（pool_order 7d373345，每类行数和 Dup-E1 相同）",
@@ -6158,7 +6424,7 @@
    "design": "单一计划改动",
    "environment": "一致",
    "unknown": [],
-   "note": "",
+   "note": "同 AUGB-CMP-GU4-B1。",
    "changed": {
     "train_data": [
      "fit + 按 mixquota-v1 的 E1 构成取 Haiku 生成行（pool_order 7d373345，每类行数和 Dup-E1 相同）",
@@ -6196,7 +6462,7 @@
    "design": "单一计划改动",
    "environment": "一致",
    "unknown": [],
-   "note": "",
+   "note": "同 AUGB-CMP-GU4-DUPU4。",
    "changed": {
     "train_data": [
      "fit + 按 mixquota-v1 的 D1 构成取 Haiku 生成行（pool_order 7d373345，每类行数和 Dup-D1 相同）",
@@ -6234,7 +6500,7 @@
    "design": "单一计划改动",
    "environment": "一致",
    "unknown": [],
-   "note": "",
+   "note": "同 AUGB-CMP-GU4-B1。",
    "changed": {
     "train_data": [
      "fit + 按 mixquota-v1 的 D1 构成取 Haiku 生成行（pool_order 7d373345，每类行数和 Dup-D1 相同）",
@@ -6272,7 +6538,7 @@
    "design": "单一计划改动",
    "environment": "一致",
    "unknown": [],
-   "note": "",
+   "note": "同 AUGB-CMP-GU4-DUPU4。",
    "changed": {
     "train_data": [
      "fit + 按 mixquota-v1 的 O1 构成取 Haiku 生成行（pool_order 7d373345，每类行数和 Dup-O1 相同）",
@@ -6310,7 +6576,7 @@
    "design": "单一计划改动",
    "environment": "一致",
    "unknown": [],
-   "note": "",
+   "note": "同 AUGB-CMP-GU4-B1。",
    "changed": {
     "train_data": [
      "fit + 按 mixquota-v1 的 O1 构成取 Haiku 生成行（pool_order 7d373345，每类行数和 Dup-O1 相同）",

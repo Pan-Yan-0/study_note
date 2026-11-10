@@ -1,5 +1,7 @@
 # Pan-Yan-0 的学习笔记（note 分支）
 
+[实验B Commit 3：Focal / Dice loss 对照](ML_note/实验/SemEval_DiCo-NLI/metrics/augment_b/train_c3/README.md)已完成：只换loss、其余和CE完全相同，Focal +0.67个百分点但区间含0、不算提升，Dice −1.29个百分点、显著更差。
+
 [实验B +2 / +4：Haiku生成数据的规模和类别构成](ML_note/实验/SemEval_DiCo-NLI/metrics/augment_b/train_c2/README.md)已完成：+2、+4的sym WF1为83.21% / 83.14%，对同行数同步数的原数据重复各高2.50 / 2.59个百分点、区间不含0，扩充有效，规模在+2饱和；5种类别构成都不比按原比例生成更好。
 
 [实验B +1：Haiku生成数据](ML_note/实验/SemEval_DiCo-NLI/metrics/augment_b/train_plus1/README.md)已完成：mDeBERTa英语五折sym WF1从79.37%升到82.27%，对只重复原数据的同步数对照也高1.68个百分点、区间不含0，按事先规则扩充有效。

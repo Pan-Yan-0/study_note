@@ -75,7 +75,7 @@ O 的 AP 用对称化后的 p_O 算 O 对其余三类的排序。
 
 ## 下一步计划
 
-1. Commit 3（Focal / Dice loss 对照，`AugB_v4_Commit3`）先跑 SMOKE，验收后跑正式 30 或 45 项。
+1. Commit 3 已完成（[结果](../train_c3/README.md)）：Focal 不算提升，Dice 显著更差，不做叠加。
 2. 规模在 +2 饱和，后续的叠加实验（增广 + 新 loss、增广 + 类别加权）用哪个规模由 Pan-Yan-0 定；冻结计划里 loss 叠加事先固定为 +1 的 B1-Haiku，不因这次结果改。
 3. 类别构成按事先规则不做后续；生成数据按原比例取即可。
 

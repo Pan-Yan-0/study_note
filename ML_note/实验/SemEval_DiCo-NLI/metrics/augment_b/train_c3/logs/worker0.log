@@ -1,0 +1,234 @@
+[PREFLIGHT GENERATED PASS] 1805 pairs 3119 rows; 5 folds checked
+[PREFLIGHT OFFICIAL PASS] 3042 original rows; no family leakage
+[PREFLIGHT V3 PASS] commit 3 data {'mix_lists.json': 'f4d397990256'}
+[PREFLIGHT V4 LOSS CHECKS PASS] cpu {"device": "cpu", "focal_gamma0_vs_ce_max_abs": [4.76837158203125e-07, 0.0], "focal_gamma2_hand": [0.4042811691761017, 0.40428117023164784], "dice_near_perfect": 0.0, "focal_absent_class": 1.7849855422973633, "dice_absent_class": 0.8136751651763916, "focal_mixed": 1.2932544946670532, "dice_mixed": 0.7524271011352539, "focal_extreme": 11875.4814453125, "dice_extreme": 0.8355289101600647, "status": "pass"}
+/usr/local/lib/python3.13/dist-packages/transformers/convert_slow_tokenizer.py:566: UserWarning: The sentencepiece tokenizer that you are converting to a fast tokenizer uses the byte fallback option which is not implemented in the fast tokenizers. In practice this means that the fast version of the tokenizer can produce unknown tokens whereas the sentencepiece version would have converted these unknown tokens into a sequence of byte tokens matching the original piece of text.
+  warnings.warn(
+[B0 REUSE] passed in SMOKE: Commit 1 B0 is reused; not rerun
+[QUEUE] worker 0 of 2 : 15 tasks, relative cost 15.0
+Some weights of DebertaV2ForSequenceClassification were not initialized from the model checkpoint at microsoft/mdeberta-v3-base and are newly initialized: ['classifier.bias', 'classifier.weight', 'pooler.dense.bias', 'pooler.dense.weight']
+You should probably TRAIN this model on a down-stream task to be able to use it for predictions and inference.
+[EPOCH] Focal 42 0 {'epoch': 1, 'val_original_wf1': 0.41681062960230547, 'train_loss': 0.768335914448516, 'updates_total': 69, 'skips_total': 0, 'scaler_scale': 65536.0}
+[EPOCH] Focal 42 0 {'epoch': 2, 'val_original_wf1': 0.6296996924987195, 'train_loss': 0.5576681433747348, 'updates_total': 137, 'skips_total': 1, 'scaler_scale': 32768.0}
+[EPOCH] Focal 42 0 {'epoch': 3, 'val_original_wf1': 0.7063385338013387, 'train_loss': 0.3044142071787081, 'updates_total': 206, 'skips_total': 1, 'scaler_scale': 32768.0}
+[EPOCH] Focal 42 0 {'epoch': 4, 'val_original_wf1': 0.723875840927059, 'train_loss': 0.15657174206215496, 'updates_total': 275, 'skips_total': 1, 'scaler_scale': 32768.0}
+[EPOCH] Focal 42 0 {'epoch': 5, 'val_original_wf1': 0.748712388762329, 'train_loss': 0.08646566629852062, 'updates_total': 344, 'skips_total': 1, 'scaler_scale': 32768.0}
+[EPOCH] Focal 42 0 {'epoch': 6, 'val_original_wf1': 0.7542406432925737, 'train_loss': 0.05275524464780337, 'updates_total': 413, 'skips_total': 1, 'scaler_scale': 32768.0}
+[EPOCH] Focal 42 0 {'epoch': 7, 'val_original_wf1': 0.7549800894958675, 'train_loss': 0.03466579829040728, 'updates_total': 482, 'skips_total': 1, 'scaler_scale': 32768.0}
+[EPOCH] Focal 42 0 {'epoch': 8, 'val_original_wf1': 0.7750345561212517, 'train_loss': 0.02176366422121247, 'updates_total': 551, 'skips_total': 1, 'scaler_scale': 32768.0}
+[EPOCH] Focal 42 0 {'epoch': 9, 'val_original_wf1': 0.780200941242407, 'train_loss': 0.013702770696897655, 'updates_total': 620, 'skips_total': 1, 'scaler_scale': 32768.0}
+[EPOCH] Focal 42 0 {'epoch': 10, 'val_original_wf1': 0.7676428103797045, 'train_loss': 0.009944610613649159, 'updates_total': 689, 'skips_total': 1, 'scaler_scale': 32768.0}
+[EPOCH] Focal 42 0 {'epoch': 11, 'val_original_wf1': 0.7621743247587028, 'train_loss': 0.00938094502238378, 'updates_total': 758, 'skips_total': 1, 'scaler_scale': 32768.0}
+[EPOCH] Focal 42 0 {'epoch': 12, 'val_original_wf1': 0.7613525474162179, 'train_loss': 0.005072213084964278, 'updates_total': 827, 'skips_total': 1, 'scaler_scale': 32768.0}
+[DONE] Focal 42 0 val= 0.7802 test_sym= 0.80221
+Some weights of DebertaV2ForSequenceClassification were not initialized from the model checkpoint at microsoft/mdeberta-v3-base and are newly initialized: ['classifier.bias', 'classifier.weight', 'pooler.dense.bias', 'pooler.dense.weight']
+You should probably TRAIN this model on a down-stream task to be able to use it for predictions and inference.
+[EPOCH] Focal 42 2 {'epoch': 1, 'val_original_wf1': 0.34458373592856895, 'train_loss': 0.7544656909068352, 'updates_total': 68, 'skips_total': 1, 'scaler_scale': 32768.0}
+[EPOCH] Focal 42 2 {'epoch': 2, 'val_original_wf1': 0.5953266056240087, 'train_loss': 0.5951910772295251, 'updates_total': 136, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Focal 42 2 {'epoch': 3, 'val_original_wf1': 0.6566566412113641, 'train_loss': 0.3414131659002121, 'updates_total': 205, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Focal 42 2 {'epoch': 4, 'val_original_wf1': 0.7257367834299837, 'train_loss': 0.2189060434058295, 'updates_total': 274, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Focal 42 2 {'epoch': 5, 'val_original_wf1': 0.7393371819313773, 'train_loss': 0.1374774360305, 'updates_total': 343, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Focal 42 2 {'epoch': 6, 'val_original_wf1': 0.7435483870967742, 'train_loss': 0.08266672924883521, 'updates_total': 412, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Focal 42 2 {'epoch': 7, 'val_original_wf1': 0.75532815088582, 'train_loss': 0.05303482099863115, 'updates_total': 480, 'skips_total': 3, 'scaler_scale': 8192.0}
+[EPOCH] Focal 42 2 {'epoch': 8, 'val_original_wf1': 0.7531878557874764, 'train_loss': 0.03617920719209823, 'updates_total': 549, 'skips_total': 3, 'scaler_scale': 8192.0}
+[EPOCH] Focal 42 2 {'epoch': 9, 'val_original_wf1': 0.7424727054896847, 'train_loss': 0.017423052791708846, 'updates_total': 618, 'skips_total': 3, 'scaler_scale': 8192.0}
+[EPOCH] Focal 42 2 {'epoch': 10, 'val_original_wf1': 0.7432646687448741, 'train_loss': 0.014593107483970906, 'updates_total': 687, 'skips_total': 3, 'scaler_scale': 8192.0}
+[EPOCH] Focal 42 2 {'epoch': 11, 'val_original_wf1': 0.7376926198050286, 'train_loss': 0.00934054769664212, 'updates_total': 756, 'skips_total': 3, 'scaler_scale': 8192.0}
+[EPOCH] Focal 42 2 {'epoch': 12, 'val_original_wf1': 0.7377312699211837, 'train_loss': 0.010194691802968918, 'updates_total': 825, 'skips_total': 3, 'scaler_scale': 8192.0}
+[DONE] Focal 42 2 val= 0.75533 test_sym= 0.82483
+Some weights of DebertaV2ForSequenceClassification were not initialized from the model checkpoint at microsoft/mdeberta-v3-base and are newly initialized: ['classifier.bias', 'classifier.weight', 'pooler.dense.bias', 'pooler.dense.weight']
+You should probably TRAIN this model on a down-stream task to be able to use it for predictions and inference.
+[EPOCH] Focal 42 4 {'epoch': 1, 'val_original_wf1': 0.3618416294496582, 'train_loss': 0.756032049222426, 'updates_total': 69, 'skips_total': 0, 'scaler_scale': 65536.0}
+[EPOCH] Focal 42 4 {'epoch': 2, 'val_original_wf1': 0.6058314394297583, 'train_loss': 0.5991238617897033, 'updates_total': 136, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Focal 42 4 {'epoch': 3, 'val_original_wf1': 0.64226095367001, 'train_loss': 0.34376822113990785, 'updates_total': 205, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Focal 42 4 {'epoch': 4, 'val_original_wf1': 0.6992046631756987, 'train_loss': 0.19420222401618958, 'updates_total': 274, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Focal 42 4 {'epoch': 5, 'val_original_wf1': 0.6770473501638075, 'train_loss': 0.12103995710611343, 'updates_total': 343, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Focal 42 4 {'epoch': 6, 'val_original_wf1': 0.7474796677826678, 'train_loss': 0.07518858427351172, 'updates_total': 412, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Focal 42 4 {'epoch': 7, 'val_original_wf1': 0.7584427380897969, 'train_loss': 0.040025238435376774, 'updates_total': 481, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Focal 42 4 {'epoch': 8, 'val_original_wf1': 0.7536417151903897, 'train_loss': 0.03077196255326271, 'updates_total': 550, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Focal 42 4 {'epoch': 9, 'val_original_wf1': 0.7729775059614482, 'train_loss': 0.017273855160244486, 'updates_total': 619, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Focal 42 4 {'epoch': 10, 'val_original_wf1': 0.7686315755176973, 'train_loss': 0.013521284469487992, 'updates_total': 688, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Focal 42 4 {'epoch': 11, 'val_original_wf1': 0.7742126266258612, 'train_loss': 0.007713363981721076, 'updates_total': 757, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Focal 42 4 {'epoch': 12, 'val_original_wf1': 0.7693813739730395, 'train_loss': 0.008371084549210287, 'updates_total': 826, 'skips_total': 2, 'scaler_scale': 16384.0}
+[DONE] Focal 42 4 val= 0.77421 test_sym= 0.81722
+Some weights of DebertaV2ForSequenceClassification were not initialized from the model checkpoint at microsoft/mdeberta-v3-base and are newly initialized: ['classifier.bias', 'classifier.weight', 'pooler.dense.bias', 'pooler.dense.weight']
+You should probably TRAIN this model on a down-stream task to be able to use it for predictions and inference.
+[EPOCH] Focal 43 1 {'epoch': 1, 'val_original_wf1': 0.3376464860658726, 'train_loss': 0.7575170541331716, 'updates_total': 69, 'skips_total': 0, 'scaler_scale': 65536.0}
+[EPOCH] Focal 43 1 {'epoch': 2, 'val_original_wf1': 0.6050577550005887, 'train_loss': 0.5585151155934717, 'updates_total': 137, 'skips_total': 1, 'scaler_scale': 32768.0}
+[EPOCH] Focal 43 1 {'epoch': 3, 'val_original_wf1': 0.6415196765071227, 'train_loss': 0.30107397374010436, 'updates_total': 206, 'skips_total': 1, 'scaler_scale': 32768.0}
+[EPOCH] Focal 43 1 {'epoch': 4, 'val_original_wf1': 0.6950902899443331, 'train_loss': 0.15859897619616375, 'updates_total': 275, 'skips_total': 1, 'scaler_scale': 32768.0}
+[EPOCH] Focal 43 1 {'epoch': 5, 'val_original_wf1': 0.7451472348040782, 'train_loss': 0.09025205669068072, 'updates_total': 343, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Focal 43 1 {'epoch': 6, 'val_original_wf1': 0.765116030276912, 'train_loss': 0.05435355410088588, 'updates_total': 412, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Focal 43 1 {'epoch': 7, 'val_original_wf1': 0.7848085668475024, 'train_loss': 0.03169606922765392, 'updates_total': 481, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Focal 43 1 {'epoch': 8, 'val_original_wf1': 0.7758136674512545, 'train_loss': 0.018969929369207283, 'updates_total': 550, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Focal 43 1 {'epoch': 9, 'val_original_wf1': 0.7719157102252847, 'train_loss': 0.012988901768477947, 'updates_total': 619, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Focal 43 1 {'epoch': 10, 'val_original_wf1': 0.7856179759069173, 'train_loss': 0.011743178504457982, 'updates_total': 688, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Focal 43 1 {'epoch': 11, 'val_original_wf1': 0.7811693898179812, 'train_loss': 0.008117433869361496, 'updates_total': 757, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Focal 43 1 {'epoch': 12, 'val_original_wf1': 0.7794953994115368, 'train_loss': 0.005422646334449196, 'updates_total': 826, 'skips_total': 2, 'scaler_scale': 16384.0}
+[DONE] Focal 43 1 val= 0.78562 test_sym= 0.81154
+Some weights of DebertaV2ForSequenceClassification were not initialized from the model checkpoint at microsoft/mdeberta-v3-base and are newly initialized: ['classifier.bias', 'classifier.weight', 'pooler.dense.bias', 'pooler.dense.weight']
+You should probably TRAIN this model on a down-stream task to be able to use it for predictions and inference.
+[EPOCH] Focal 43 3 {'epoch': 1, 'val_original_wf1': 0.4638952084603029, 'train_loss': 0.7759923250024969, 'updates_total': 69, 'skips_total': 0, 'scaler_scale': 65536.0}
+[EPOCH] Focal 43 3 {'epoch': 2, 'val_original_wf1': 0.6846870862545429, 'train_loss': 0.5444842035120184, 'updates_total': 137, 'skips_total': 1, 'scaler_scale': 32768.0}
+[EPOCH] Focal 43 3 {'epoch': 3, 'val_original_wf1': 0.784220346103937, 'train_loss': 0.27663943713361566, 'updates_total': 205, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Focal 43 3 {'epoch': 4, 'val_original_wf1': 0.7931604096599668, 'train_loss': 0.1466754131967371, 'updates_total': 274, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Focal 43 3 {'epoch': 5, 'val_original_wf1': 0.8061494161490711, 'train_loss': 0.08245338670232079, 'updates_total': 343, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Focal 43 3 {'epoch': 6, 'val_original_wf1': 0.8123686011071717, 'train_loss': 0.04453510352156379, 'updates_total': 412, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Focal 43 3 {'epoch': 7, 'val_original_wf1': 0.7891175978780118, 'train_loss': 0.022812295103953644, 'updates_total': 481, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Focal 43 3 {'epoch': 8, 'val_original_wf1': 0.7829334348641075, 'train_loss': 0.014567937513982708, 'updates_total': 550, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Focal 43 3 {'epoch': 9, 'val_original_wf1': 0.8056049091762535, 'train_loss': 0.010237564333629878, 'updates_total': 619, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Focal 43 3 {'epoch': 10, 'val_original_wf1': 0.8018216879718008, 'train_loss': 0.005712057084945792, 'updates_total': 688, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Focal 43 3 {'epoch': 11, 'val_original_wf1': 0.8063781858154045, 'train_loss': 0.004533999939025803, 'updates_total': 757, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Focal 43 3 {'epoch': 12, 'val_original_wf1': 0.8029406000208237, 'train_loss': 0.0028736912086606025, 'updates_total': 826, 'skips_total': 2, 'scaler_scale': 16384.0}
+[DONE] Focal 43 3 val= 0.81237 test_sym= 0.77762
+Some weights of DebertaV2ForSequenceClassification were not initialized from the model checkpoint at microsoft/mdeberta-v3-base and are newly initialized: ['classifier.bias', 'classifier.weight', 'pooler.dense.bias', 'pooler.dense.weight']
+You should probably TRAIN this model on a down-stream task to be able to use it for predictions and inference.
+[EPOCH] Focal 44 0 {'epoch': 1, 'val_original_wf1': 0.27587927247401695, 'train_loss': 0.7682715586331337, 'updates_total': 69, 'skips_total': 0, 'scaler_scale': 65536.0}
+[EPOCH] Focal 44 0 {'epoch': 2, 'val_original_wf1': 0.6716355164644014, 'train_loss': 0.5738548183550028, 'updates_total': 137, 'skips_total': 1, 'scaler_scale': 32768.0}
+[EPOCH] Focal 44 0 {'epoch': 3, 'val_original_wf1': 0.7282781274676602, 'train_loss': 0.2716476344626788, 'updates_total': 206, 'skips_total': 1, 'scaler_scale': 32768.0}
+[EPOCH] Focal 44 0 {'epoch': 4, 'val_original_wf1': 0.7236844722226367, 'train_loss': 0.1653065331450336, 'updates_total': 275, 'skips_total': 1, 'scaler_scale': 32768.0}
+[EPOCH] Focal 44 0 {'epoch': 5, 'val_original_wf1': 0.7399039129012062, 'train_loss': 0.10433424010396548, 'updates_total': 344, 'skips_total': 1, 'scaler_scale': 32768.0}
+[EPOCH] Focal 44 0 {'epoch': 6, 'val_original_wf1': 0.7463158002981307, 'train_loss': 0.06670414097096822, 'updates_total': 413, 'skips_total': 1, 'scaler_scale': 32768.0}
+[EPOCH] Focal 44 0 {'epoch': 7, 'val_original_wf1': 0.7420451751568362, 'train_loss': 0.04128446104855502, 'updates_total': 482, 'skips_total': 1, 'scaler_scale': 32768.0}
+[EPOCH] Focal 44 0 {'epoch': 8, 'val_original_wf1': 0.779645434452126, 'train_loss': 0.02831604911703361, 'updates_total': 551, 'skips_total': 1, 'scaler_scale': 32768.0}
+[EPOCH] Focal 44 0 {'epoch': 9, 'val_original_wf1': 0.7817243931335832, 'train_loss': 0.01920199196989814, 'updates_total': 620, 'skips_total': 1, 'scaler_scale': 32768.0}
+[EPOCH] Focal 44 0 {'epoch': 10, 'val_original_wf1': 0.7745221640608211, 'train_loss': 0.012796841360645616, 'updates_total': 689, 'skips_total': 1, 'scaler_scale': 32768.0}
+[EPOCH] Focal 44 0 {'epoch': 11, 'val_original_wf1': 0.7832149695993291, 'train_loss': 0.008895009429274833, 'updates_total': 758, 'skips_total': 1, 'scaler_scale': 32768.0}
+[EPOCH] Focal 44 0 {'epoch': 12, 'val_original_wf1': 0.7784768422727997, 'train_loss': 0.009709682620075195, 'updates_total': 827, 'skips_total': 1, 'scaler_scale': 32768.0}
+[DONE] Focal 44 0 val= 0.78321 test_sym= 0.79939
+Some weights of DebertaV2ForSequenceClassification were not initialized from the model checkpoint at microsoft/mdeberta-v3-base and are newly initialized: ['classifier.bias', 'classifier.weight', 'pooler.dense.bias', 'pooler.dense.weight']
+You should probably TRAIN this model on a down-stream task to be able to use it for predictions and inference.
+[EPOCH] Focal 44 2 {'epoch': 1, 'val_original_wf1': 0.4491916413030222, 'train_loss': 0.7554501226923385, 'updates_total': 67, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Focal 44 2 {'epoch': 2, 'val_original_wf1': 0.6435517500697007, 'train_loss': 0.5636729721562751, 'updates_total': 136, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Focal 44 2 {'epoch': 3, 'val_original_wf1': 0.7145174151435316, 'train_loss': 0.323257133596443, 'updates_total': 205, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Focal 44 2 {'epoch': 4, 'val_original_wf1': 0.73214489811264, 'train_loss': 0.2074306422379294, 'updates_total': 274, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Focal 44 2 {'epoch': 5, 'val_original_wf1': 0.7328013796491734, 'train_loss': 0.13888073676459198, 'updates_total': 343, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Focal 44 2 {'epoch': 6, 'val_original_wf1': 0.7610325912550535, 'train_loss': 0.09089425185052823, 'updates_total': 412, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Focal 44 2 {'epoch': 7, 'val_original_wf1': 0.7467522437819634, 'train_loss': 0.06827859742752697, 'updates_total': 481, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Focal 44 2 {'epoch': 8, 'val_original_wf1': 0.770786618852685, 'train_loss': 0.04165774493879568, 'updates_total': 550, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Focal 44 2 {'epoch': 9, 'val_original_wf1': 0.7498893564738142, 'train_loss': 0.02916765744965745, 'updates_total': 619, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Focal 44 2 {'epoch': 10, 'val_original_wf1': 0.754758511138398, 'train_loss': 0.02023900538718725, 'updates_total': 688, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Focal 44 2 {'epoch': 11, 'val_original_wf1': 0.7500348130388452, 'train_loss': 0.01698811615076792, 'updates_total': 757, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Focal 44 2 {'epoch': 12, 'val_original_wf1': 0.7540217846669459, 'train_loss': 0.012368390134689957, 'updates_total': 825, 'skips_total': 3, 'scaler_scale': 8192.0}
+[DONE] Focal 44 2 val= 0.77079 test_sym= 0.79284
+Some weights of DebertaV2ForSequenceClassification were not initialized from the model checkpoint at microsoft/mdeberta-v3-base and are newly initialized: ['classifier.bias', 'classifier.weight', 'pooler.dense.bias', 'pooler.dense.weight']
+You should probably TRAIN this model on a down-stream task to be able to use it for predictions and inference.
+[EPOCH] Focal 44 4 {'epoch': 1, 'val_original_wf1': 0.40493528100385795, 'train_loss': 0.7608888151428916, 'updates_total': 69, 'skips_total': 0, 'scaler_scale': 65536.0}
+[EPOCH] Focal 44 4 {'epoch': 2, 'val_original_wf1': 0.6727109264422698, 'train_loss': 0.5533771178939125, 'updates_total': 137, 'skips_total': 1, 'scaler_scale': 32768.0}
+[EPOCH] Focal 44 4 {'epoch': 3, 'val_original_wf1': 0.7249417358238601, 'train_loss': 0.31795308004726064, 'updates_total': 205, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Focal 44 4 {'epoch': 4, 'val_original_wf1': 0.7409984078569682, 'train_loss': 0.18004914137450131, 'updates_total': 273, 'skips_total': 3, 'scaler_scale': 8192.0}
+[EPOCH] Focal 44 4 {'epoch': 5, 'val_original_wf1': 0.7516549774074858, 'train_loss': 0.09945388567718592, 'updates_total': 342, 'skips_total': 3, 'scaler_scale': 8192.0}
+[EPOCH] Focal 44 4 {'epoch': 6, 'val_original_wf1': 0.7739312519782371, 'train_loss': 0.06449383121999827, 'updates_total': 411, 'skips_total': 3, 'scaler_scale': 8192.0}
+[EPOCH] Focal 44 4 {'epoch': 7, 'val_original_wf1': 0.7551390256572458, 'train_loss': 0.039242127991535446, 'updates_total': 480, 'skips_total': 3, 'scaler_scale': 8192.0}
+[EPOCH] Focal 44 4 {'epoch': 8, 'val_original_wf1': 0.7692120073513026, 'train_loss': 0.02367528300732374, 'updates_total': 549, 'skips_total': 3, 'scaler_scale': 8192.0}
+[EPOCH] Focal 44 4 {'epoch': 9, 'val_original_wf1': 0.7677411807910082, 'train_loss': 0.022410418994047426, 'updates_total': 618, 'skips_total': 3, 'scaler_scale': 8192.0}
+[EPOCH] Focal 44 4 {'epoch': 10, 'val_original_wf1': 0.7554126361344837, 'train_loss': 0.014453202806074511, 'updates_total': 687, 'skips_total': 3, 'scaler_scale': 8192.0}
+[EPOCH] Focal 44 4 {'epoch': 11, 'val_original_wf1': 0.7688300138791712, 'train_loss': 0.007222812263803048, 'updates_total': 756, 'skips_total': 3, 'scaler_scale': 8192.0}
+[EPOCH] Focal 44 4 {'epoch': 12, 'val_original_wf1': 0.7464487720524611, 'train_loss': 0.012175831913270733, 'updates_total': 825, 'skips_total': 3, 'scaler_scale': 8192.0}
+[DONE] Focal 44 4 val= 0.77393 test_sym= 0.84128
+Some weights of DebertaV2ForSequenceClassification were not initialized from the model checkpoint at microsoft/mdeberta-v3-base and are newly initialized: ['classifier.bias', 'classifier.weight', 'pooler.dense.bias', 'pooler.dense.weight']
+You should probably TRAIN this model on a down-stream task to be able to use it for predictions and inference.
+[EPOCH] Dice 42 1 {'epoch': 1, 'val_original_wf1': 0.4198828740839139, 'train_loss': 0.7564408448490784, 'updates_total': 69, 'skips_total': 0, 'scaler_scale': 65536.0}
+[EPOCH] Dice 42 1 {'epoch': 2, 'val_original_wf1': 0.6047947877178204, 'train_loss': 0.6001842187268891, 'updates_total': 138, 'skips_total': 0, 'scaler_scale': 65536.0}
+[EPOCH] Dice 42 1 {'epoch': 3, 'val_original_wf1': 0.7591095406945583, 'train_loss': 0.33409609846825145, 'updates_total': 207, 'skips_total': 0, 'scaler_scale': 65536.0}
+[EPOCH] Dice 42 1 {'epoch': 4, 'val_original_wf1': 0.7606172831414423, 'train_loss': 0.21641941140167906, 'updates_total': 275, 'skips_total': 1, 'scaler_scale': 32768.0}
+[EPOCH] Dice 42 1 {'epoch': 5, 'val_original_wf1': 0.7648377302653694, 'train_loss': 0.1615893466629251, 'updates_total': 344, 'skips_total': 1, 'scaler_scale': 32768.0}
+[EPOCH] Dice 42 1 {'epoch': 6, 'val_original_wf1': 0.7529432394600084, 'train_loss': 0.1368909338965033, 'updates_total': 412, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Dice 42 1 {'epoch': 7, 'val_original_wf1': 0.737548902398619, 'train_loss': 0.1115303744364829, 'updates_total': 481, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Dice 42 1 {'epoch': 8, 'val_original_wf1': 0.747353230348781, 'train_loss': 0.08853216153861833, 'updates_total': 550, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Dice 42 1 {'epoch': 9, 'val_original_wf1': 0.7494292585678027, 'train_loss': 0.0700921111733374, 'updates_total': 619, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Dice 42 1 {'epoch': 10, 'val_original_wf1': 0.7595647340978503, 'train_loss': 0.06312113782785235, 'updates_total': 688, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Dice 42 1 {'epoch': 11, 'val_original_wf1': 0.7712778471521804, 'train_loss': 0.05607854362821927, 'updates_total': 757, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Dice 42 1 {'epoch': 12, 'val_original_wf1': 0.755533851417675, 'train_loss': 0.054348579723469535, 'updates_total': 826, 'skips_total': 2, 'scaler_scale': 16384.0}
+[DONE] Dice 42 1 val= 0.77128 test_sym= 0.83399
+Some weights of DebertaV2ForSequenceClassification were not initialized from the model checkpoint at microsoft/mdeberta-v3-base and are newly initialized: ['classifier.bias', 'classifier.weight', 'pooler.dense.bias', 'pooler.dense.weight']
+You should probably TRAIN this model on a down-stream task to be able to use it for predictions and inference.
+[EPOCH] Dice 42 3 {'epoch': 1, 'val_original_wf1': 0.30260071272354827, 'train_loss': 0.7535249250585383, 'updates_total': 69, 'skips_total': 0, 'scaler_scale': 65536.0}
+[EPOCH] Dice 42 3 {'epoch': 2, 'val_original_wf1': 0.6039173756691043, 'train_loss': 0.6052973814444108, 'updates_total': 137, 'skips_total': 1, 'scaler_scale': 32768.0}
+[EPOCH] Dice 42 3 {'epoch': 3, 'val_original_wf1': 0.7233368649611029, 'train_loss': 0.39008816827427256, 'updates_total': 206, 'skips_total': 1, 'scaler_scale': 32768.0}
+[EPOCH] Dice 42 3 {'epoch': 4, 'val_original_wf1': 0.7667897020740791, 'train_loss': 0.2549549349871549, 'updates_total': 274, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Dice 42 3 {'epoch': 5, 'val_original_wf1': 0.7408252158039544, 'train_loss': 0.18897842277180066, 'updates_total': 341, 'skips_total': 4, 'scaler_scale': 4096.0}
+[EPOCH] Dice 42 3 {'epoch': 6, 'val_original_wf1': 0.755967016138512, 'train_loss': 0.14826336665586992, 'updates_total': 410, 'skips_total': 4, 'scaler_scale': 4096.0}
+[EPOCH] Dice 42 3 {'epoch': 7, 'val_original_wf1': 0.7290523203666767, 'train_loss': 0.12005557927218351, 'updates_total': 479, 'skips_total': 4, 'scaler_scale': 4096.0}
+[EPOCH] Dice 42 3 {'epoch': 8, 'val_original_wf1': 0.7581277032238323, 'train_loss': 0.10150303038683804, 'updates_total': 548, 'skips_total': 4, 'scaler_scale': 4096.0}
+[EPOCH] Dice 42 3 {'epoch': 9, 'val_original_wf1': 0.7515956214038935, 'train_loss': 0.08110236037861217, 'updates_total': 617, 'skips_total': 4, 'scaler_scale': 4096.0}
+[EPOCH] Dice 42 3 {'epoch': 10, 'val_original_wf1': 0.7501167812593947, 'train_loss': 0.07842716043645685, 'updates_total': 686, 'skips_total': 4, 'scaler_scale': 4096.0}
+[EPOCH] Dice 42 3 {'epoch': 11, 'val_original_wf1': 0.7673403461816519, 'train_loss': 0.06355711048299616, 'updates_total': 755, 'skips_total': 4, 'scaler_scale': 4096.0}
+[EPOCH] Dice 42 3 {'epoch': 12, 'val_original_wf1': 0.7646023790532249, 'train_loss': 0.05903486208482222, 'updates_total': 824, 'skips_total': 4, 'scaler_scale': 4096.0}
+[DONE] Dice 42 3 val= 0.76734 test_sym= 0.769
+Some weights of DebertaV2ForSequenceClassification were not initialized from the model checkpoint at microsoft/mdeberta-v3-base and are newly initialized: ['classifier.bias', 'classifier.weight', 'pooler.dense.bias', 'pooler.dense.weight']
+You should probably TRAIN this model on a down-stream task to be able to use it for predictions and inference.
+[EPOCH] Dice 43 0 {'epoch': 1, 'val_original_wf1': 0.3225896072375255, 'train_loss': 0.7480716304691959, 'updates_total': 69, 'skips_total': 0, 'scaler_scale': 65536.0}
+[EPOCH] Dice 43 0 {'epoch': 2, 'val_original_wf1': 0.6441387525976002, 'train_loss': 0.6024102334562502, 'updates_total': 137, 'skips_total': 1, 'scaler_scale': 32768.0}
+[EPOCH] Dice 43 0 {'epoch': 3, 'val_original_wf1': 0.6950611995647719, 'train_loss': 0.3549423697332269, 'updates_total': 205, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Dice 43 0 {'epoch': 4, 'val_original_wf1': 0.6697659888153669, 'train_loss': 0.2567610926824073, 'updates_total': 274, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Dice 43 0 {'epoch': 5, 'val_original_wf1': 0.68282642827931, 'train_loss': 0.2110336389715813, 'updates_total': 343, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Dice 43 0 {'epoch': 6, 'val_original_wf1': 0.7110282656682513, 'train_loss': 0.16557732009452228, 'updates_total': 412, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Dice 43 0 {'epoch': 7, 'val_original_wf1': 0.7078025855198808, 'train_loss': 0.13584175746734828, 'updates_total': 481, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Dice 43 0 {'epoch': 8, 'val_original_wf1': 0.7489267575994593, 'train_loss': 0.10944622444779906, 'updates_total': 549, 'skips_total': 3, 'scaler_scale': 8192.0}
+[EPOCH] Dice 43 0 {'epoch': 9, 'val_original_wf1': 0.7579239734114627, 'train_loss': 0.09849225663703326, 'updates_total': 618, 'skips_total': 3, 'scaler_scale': 8192.0}
+[EPOCH] Dice 43 0 {'epoch': 10, 'val_original_wf1': 0.7631122795812184, 'train_loss': 0.0904545284841703, 'updates_total': 687, 'skips_total': 3, 'scaler_scale': 8192.0}
+[EPOCH] Dice 43 0 {'epoch': 11, 'val_original_wf1': 0.7630716640585276, 'train_loss': 0.0803754434737985, 'updates_total': 756, 'skips_total': 3, 'scaler_scale': 8192.0}
+[EPOCH] Dice 43 0 {'epoch': 12, 'val_original_wf1': 0.7567163674469561, 'train_loss': 0.08353040708254461, 'updates_total': 825, 'skips_total': 3, 'scaler_scale': 8192.0}
+[DONE] Dice 43 0 val= 0.76311 test_sym= 0.76853
+Some weights of DebertaV2ForSequenceClassification were not initialized from the model checkpoint at microsoft/mdeberta-v3-base and are newly initialized: ['classifier.bias', 'classifier.weight', 'pooler.dense.bias', 'pooler.dense.weight']
+You should probably TRAIN this model on a down-stream task to be able to use it for predictions and inference.
+[EPOCH] Dice 43 2 {'epoch': 1, 'val_original_wf1': 0.5182932703210533, 'train_loss': 0.7526033704474991, 'updates_total': 69, 'skips_total': 0, 'scaler_scale': 65536.0}
+[EPOCH] Dice 43 2 {'epoch': 2, 'val_original_wf1': 0.6686480311416689, 'train_loss': 0.5899950374405207, 'updates_total': 138, 'skips_total': 0, 'scaler_scale': 65536.0}
+[EPOCH] Dice 43 2 {'epoch': 3, 'val_original_wf1': 0.7196845135370241, 'train_loss': 0.36726778069441185, 'updates_total': 206, 'skips_total': 1, 'scaler_scale': 32768.0}
+[EPOCH] Dice 43 2 {'epoch': 4, 'val_original_wf1': 0.7227573821046352, 'train_loss': 0.2747207519011223, 'updates_total': 274, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Dice 43 2 {'epoch': 5, 'val_original_wf1': 0.7257082471256834, 'train_loss': 0.21356144375683295, 'updates_total': 343, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Dice 43 2 {'epoch': 6, 'val_original_wf1': 0.7680395194190093, 'train_loss': 0.16763693208772987, 'updates_total': 411, 'skips_total': 3, 'scaler_scale': 8192.0}
+[EPOCH] Dice 43 2 {'epoch': 7, 'val_original_wf1': 0.7633879668616842, 'train_loss': 0.1328952548052342, 'updates_total': 480, 'skips_total': 3, 'scaler_scale': 8192.0}
+[EPOCH] Dice 43 2 {'epoch': 8, 'val_original_wf1': 0.7413379188909495, 'train_loss': 0.12107395662262367, 'updates_total': 549, 'skips_total': 3, 'scaler_scale': 8192.0}
+[EPOCH] Dice 43 2 {'epoch': 9, 'val_original_wf1': 0.7336172987860856, 'train_loss': 0.09536683504884655, 'updates_total': 618, 'skips_total': 3, 'scaler_scale': 8192.0}
+[EPOCH] Dice 43 2 {'epoch': 10, 'val_original_wf1': 0.7623021429420749, 'train_loss': 0.08890096931858883, 'updates_total': 687, 'skips_total': 3, 'scaler_scale': 8192.0}
+[EPOCH] Dice 43 2 {'epoch': 11, 'val_original_wf1': 0.7377415611774644, 'train_loss': 0.08259716714508251, 'updates_total': 756, 'skips_total': 3, 'scaler_scale': 8192.0}
+[EPOCH] Dice 43 2 {'epoch': 12, 'val_original_wf1': 0.7528264924242072, 'train_loss': 0.08006791444623132, 'updates_total': 825, 'skips_total': 3, 'scaler_scale': 8192.0}
+[DONE] Dice 43 2 val= 0.76804 test_sym= 0.78848
+Some weights of DebertaV2ForSequenceClassification were not initialized from the model checkpoint at microsoft/mdeberta-v3-base and are newly initialized: ['classifier.bias', 'classifier.weight', 'pooler.dense.bias', 'pooler.dense.weight']
+You should probably TRAIN this model on a down-stream task to be able to use it for predictions and inference.
+[EPOCH] Dice 43 4 {'epoch': 1, 'val_original_wf1': 0.39879207743915723, 'train_loss': 0.7504121134497903, 'updates_total': 69, 'skips_total': 0, 'scaler_scale': 65536.0}
+[EPOCH] Dice 43 4 {'epoch': 2, 'val_original_wf1': 0.5487523327815536, 'train_loss': 0.609911318692294, 'updates_total': 137, 'skips_total': 1, 'scaler_scale': 32768.0}
+[EPOCH] Dice 43 4 {'epoch': 3, 'val_original_wf1': 0.6749218621603111, 'train_loss': 0.4059165178645741, 'updates_total': 205, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Dice 43 4 {'epoch': 4, 'val_original_wf1': 0.6509433400703208, 'train_loss': 0.28464960835196756, 'updates_total': 274, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Dice 43 4 {'epoch': 5, 'val_original_wf1': 0.7155149460802387, 'train_loss': 0.21643095970153808, 'updates_total': 343, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Dice 43 4 {'epoch': 6, 'val_original_wf1': 0.7232227960751471, 'train_loss': 0.16386123852296308, 'updates_total': 412, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Dice 43 4 {'epoch': 7, 'val_original_wf1': 0.6868138616036625, 'train_loss': 0.13053992184725674, 'updates_total': 480, 'skips_total': 3, 'scaler_scale': 8192.0}
+[EPOCH] Dice 43 4 {'epoch': 8, 'val_original_wf1': 0.7031541849743522, 'train_loss': 0.10101383425972678, 'updates_total': 549, 'skips_total': 3, 'scaler_scale': 8192.0}
+[EPOCH] Dice 43 4 {'epoch': 9, 'val_original_wf1': 0.6996653054728158, 'train_loss': 0.09207742777737704, 'updates_total': 618, 'skips_total': 3, 'scaler_scale': 8192.0}
+[EPOCH] Dice 43 4 {'epoch': 10, 'val_original_wf1': 0.7092705024093019, 'train_loss': 0.07460259090770374, 'updates_total': 687, 'skips_total': 3, 'scaler_scale': 8192.0}
+[EPOCH] Dice 43 4 {'epoch': 11, 'val_original_wf1': 0.7052518356380144, 'train_loss': 0.07062923821535977, 'updates_total': 756, 'skips_total': 3, 'scaler_scale': 8192.0}
+[EPOCH] Dice 43 4 {'epoch': 12, 'val_original_wf1': 0.7099942391281194, 'train_loss': 0.06869753057306463, 'updates_total': 825, 'skips_total': 3, 'scaler_scale': 8192.0}
+[DONE] Dice 43 4 val= 0.72322 test_sym= 0.77046
+Some weights of DebertaV2ForSequenceClassification were not initialized from the model checkpoint at microsoft/mdeberta-v3-base and are newly initialized: ['classifier.bias', 'classifier.weight', 'pooler.dense.bias', 'pooler.dense.weight']
+You should probably TRAIN this model on a down-stream task to be able to use it for predictions and inference.
+[EPOCH] Dice 44 1 {'epoch': 1, 'val_original_wf1': 0.4073398097560596, 'train_loss': 0.7549653888618859, 'updates_total': 69, 'skips_total': 0, 'scaler_scale': 65536.0}
+[EPOCH] Dice 44 1 {'epoch': 2, 'val_original_wf1': 0.5708567644954776, 'train_loss': 0.6375497849318232, 'updates_total': 137, 'skips_total': 1, 'scaler_scale': 32768.0}
+[EPOCH] Dice 44 1 {'epoch': 3, 'val_original_wf1': 0.7007093191259818, 'train_loss': 0.3894896019984336, 'updates_total': 206, 'skips_total': 1, 'scaler_scale': 32768.0}
+[EPOCH] Dice 44 1 {'epoch': 4, 'val_original_wf1': 0.7082629663710431, 'train_loss': 0.259352017928214, 'updates_total': 275, 'skips_total': 1, 'scaler_scale': 32768.0}
+[EPOCH] Dice 44 1 {'epoch': 5, 'val_original_wf1': 0.7087461428364545, 'train_loss': 0.2011414152862382, 'updates_total': 343, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Dice 44 1 {'epoch': 6, 'val_original_wf1': 0.7152709134494142, 'train_loss': 0.16246933093036178, 'updates_total': 412, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Dice 44 1 {'epoch': 7, 'val_original_wf1': 0.723283011094435, 'train_loss': 0.13516415688243225, 'updates_total': 481, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Dice 44 1 {'epoch': 8, 'val_original_wf1': 0.7262286325619073, 'train_loss': 0.10843168732023588, 'updates_total': 550, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Dice 44 1 {'epoch': 9, 'val_original_wf1': 0.7424834998147682, 'train_loss': 0.09742512494108102, 'updates_total': 619, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Dice 44 1 {'epoch': 10, 'val_original_wf1': 0.7297244144777305, 'train_loss': 0.0857069196492216, 'updates_total': 687, 'skips_total': 3, 'scaler_scale': 8192.0}
+[EPOCH] Dice 44 1 {'epoch': 11, 'val_original_wf1': 0.7477871086115675, 'train_loss': 0.09111997941984748, 'updates_total': 756, 'skips_total': 3, 'scaler_scale': 8192.0}
+[EPOCH] Dice 44 1 {'epoch': 12, 'val_original_wf1': 0.7388899460701983, 'train_loss': 0.07360127938054774, 'updates_total': 825, 'skips_total': 3, 'scaler_scale': 8192.0}
+[DONE] Dice 44 1 val= 0.74779 test_sym= 0.77646
+Some weights of DebertaV2ForSequenceClassification were not initialized from the model checkpoint at microsoft/mdeberta-v3-base and are newly initialized: ['classifier.bias', 'classifier.weight', 'pooler.dense.bias', 'pooler.dense.weight']
+You should probably TRAIN this model on a down-stream task to be able to use it for predictions and inference.
+[EPOCH] Dice 44 3 {'epoch': 1, 'val_original_wf1': 0.4006618866914058, 'train_loss': 0.7525278895551508, 'updates_total': 69, 'skips_total': 0, 'scaler_scale': 65536.0}
+[EPOCH] Dice 44 3 {'epoch': 2, 'val_original_wf1': 0.6954849269112364, 'train_loss': 0.603819397796284, 'updates_total': 138, 'skips_total': 0, 'scaler_scale': 65536.0}
+[EPOCH] Dice 44 3 {'epoch': 3, 'val_original_wf1': 0.7185293542682982, 'train_loss': 0.32597219185395676, 'updates_total': 207, 'skips_total': 0, 'scaler_scale': 65536.0}
+[EPOCH] Dice 44 3 {'epoch': 4, 'val_original_wf1': 0.7428093099640689, 'train_loss': 0.20358285513791172, 'updates_total': 276, 'skips_total': 0, 'scaler_scale': 65536.0}
+[EPOCH] Dice 44 3 {'epoch': 5, 'val_original_wf1': 0.7470363917966832, 'train_loss': 0.14798663377761842, 'updates_total': 343, 'skips_total': 2, 'scaler_scale': 16384.0}
+[EPOCH] Dice 44 3 {'epoch': 6, 'val_original_wf1': 0.76126677134674, 'train_loss': 0.10888825503262607, 'updates_total': 411, 'skips_total': 3, 'scaler_scale': 8192.0}
+[EPOCH] Dice 44 3 {'epoch': 7, 'val_original_wf1': 0.7704296488990318, 'train_loss': 0.09512783787467263, 'updates_total': 480, 'skips_total': 3, 'scaler_scale': 8192.0}
+[EPOCH] Dice 44 3 {'epoch': 8, 'val_original_wf1': 0.7540751662092989, 'train_loss': 0.0773285081169822, 'updates_total': 549, 'skips_total': 3, 'scaler_scale': 8192.0}
+[EPOCH] Dice 44 3 {'epoch': 9, 'val_original_wf1': 0.7763561274213412, 'train_loss': 0.06387900764291937, 'updates_total': 618, 'skips_total': 3, 'scaler_scale': 8192.0}
+[EPOCH] Dice 44 3 {'epoch': 10, 'val_original_wf1': 0.7872359361529107, 'train_loss': 0.054180997068231755, 'updates_total': 687, 'skips_total': 3, 'scaler_scale': 8192.0}
+[EPOCH] Dice 44 3 {'epoch': 11, 'val_original_wf1': 0.7727987220113522, 'train_loss': 0.0519833027232777, 'updates_total': 756, 'skips_total': 3, 'scaler_scale': 8192.0}
+[EPOCH] Dice 44 3 {'epoch': 12, 'val_original_wf1': 0.7720464386612877, 'train_loss': 0.044770453626459296, 'updates_total': 825, 'skips_total': 3, 'scaler_scale': 8192.0}
+[DONE] Dice 44 3 val= 0.78724 test_sym= 0.73501
+[WORKER DONE] 0

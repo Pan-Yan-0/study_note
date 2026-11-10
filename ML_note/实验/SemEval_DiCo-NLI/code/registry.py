@@ -276,13 +276,17 @@ AUGB_C2 = {"B2-Haiku": ("B2-Haiku", "fit + 规模轮清单 24704e11 的第 1、2
            "B4-Haiku": ("B4-Haiku", "fit + 规模轮清单 24704e11 的第 1、2、4 层（+4，嵌套）"),
            **{f"G-{p}": (f"G-{p}", f"fit + 按 mixquota-v1 的 {p} 构成取 Haiku 生成行（pool_order 7d373345，每类行数和 Dup-{p} 相同）")
               for p in ("U4", "BAL", "E1", "D1", "O1")}}
+AUGB_C3 = {"Focal": ("Focal", "track1 按家族五折，每折只训练 fit"),
+           "Dice": ("Dice", "track1 按家族五折，每折只训练 fit")}
+LOSS_DESC = {"focal_softmax_a1_g2": ("focal", "四分类 softmax focal，alpha=1，gamma=2，fp32、autocast 之外"),
+             "soft_dice_macro4_batch": ("soft_dice", "四类 macro soft Dice，batch 级、缺席类也平均，eps=1e-6，fp32、autocast 之外")}
 
 
 def augb_c1_run(rid, group, bias=None, commit="1"):
     """实验 B Commit 1：Claude 的 train_augb_v3.py（v2 的训练核心 + 新组），英语五折三种子（Kaggle T4 fp16）。
     OOF 由 code/claude_recheck_augb_c1.py 从四类概率重建；bias=λ 时是 W 组在推理时把 O 的 logit 减 log λ。"""
     root = os.path.join(M, "augment_b", f"train_c{commit}")
-    d, data = (AUGB_C1 if commit == "1" else AUGB_C2)[group]
+    d, data = {"1": AUGB_C1, "2": AUGB_C2, "3": AUGB_C3}[commit][group]
     seeds = [42, 43, 44]
     tasks = [rj(os.path.join(root, "tasks", d, f"seed{s}", f"fold{k}", "task.json")) for s in seeds for k in range(5)]
     done = [rj(os.path.join(root, "tasks", d, f"seed{s}", f"fold{k}", "done.json")) for s in seeds for k in range(5)]
@@ -299,7 +303,8 @@ def augb_c1_run(rid, group, bias=None, commit="1"):
                            "warmup_ratio": c["warmup_ratio"], "weight_decay": c["weight_decay"], "gradient_clip": c["gradient_clip"],
                            "precision": c["precision"], "seed_policy": c["seed_note"], "selection": c["validation"] + "，" + c["selection_tie"]},
                  "split": {"folds": 5, "fold_seed": c["split_seed"], "inner_fraction": c["inner_family_fraction"], "holdout_fold": "0–4"},
-                 "method": "ce" if lam == 1.0 else "weighted_ce", "method_params": "无" if lam == 1.0 else f"lambda_O={lam}",
+                 "method": LOSS_DESC[t["loss"]][0] if t.get("loss") in LOSS_DESC else ("ce" if lam == 1.0 else "weighted_ce"),
+                 "method_params": LOSS_DESC[t["loss"]][1] if t.get("loss") in LOSS_DESC else ("无" if lam == 1.0 else f"lambda_O={lam}"),
                  "data_sha256": {k: v[:12] for k, v in t["data_sha256"].items()},
                  "train_data": data, "selection": c["validation"],
                  "inference": "plain 和 sym（F / B 互换后平均）" + (f"；O 的 logit 减 log {lam:g}（两个方向都减，再对称化）" if bias else ""),
@@ -308,7 +313,7 @@ def augb_c1_run(rid, group, bias=None, commit="1"):
     return {"id": rid, "desc": f"实验 B Commit {commit}：{group}{'（偏置对照）' if bias else ''}，mDeBERTa 英语五折三种子（Kaggle）", "track": 1,
             "variables": variables,
             "platform": {"platform": "Kaggle", "gpu": [env["gpu"]], "dtype": [env["precision"]], "torch": [env["torch"]]},
-            "code": {"version": "train_augb_v3.py（Claude）", "code_sha256": [t["code_sha256"][:12]]},
+            "code": {"version": "train_augb_v4.py v4.1（Claude）" if commit == "3" else "train_augb_v3.py（Claude）", "code_sha256": [t["code_sha256"][:12]]},
             "metrics_dir": f"metrics/augment_b/train_c{commit}", "seeds": [str(s) for s in seeds],
             "evals": {"oof": {str(s): {m: preds(os.path.join(root, "oof", f"{name}_seed{s}_{m}.csv")) for m in ("plain", "sym")} for s in seeds}}}
 
@@ -382,6 +387,8 @@ RUNS = [
     ("AUGB-G-E1", lambda: augb_c1_run("AUGB-G-E1", "G-E1", commit="2")),
     ("AUGB-G-D1", lambda: augb_c1_run("AUGB-G-D1", "G-D1", commit="2")),
     ("AUGB-G-O1", lambda: augb_c1_run("AUGB-G-O1", "G-O1", commit="2")),
+    ("AUGB-FOCAL", lambda: augb_c1_run("AUGB-FOCAL", "Focal", commit="3")),
+    ("AUGB-DICE", lambda: augb_c1_run("AUGB-DICE", "Dice", commit="3")),
     ("JOINT-QWEN", lambda: joint_run("JOINT-QWEN", "qwen")),
     ("JOINT-KD", lambda: joint_run("JOINT-KD", "kd")),
     ("MDB-G5-T1-CE", lambda: mdeberta_methods_run("MDB-G5-T1-CE", 1, "ce", "第五组 track1 ce，fold 0 三种子")),
@@ -442,6 +449,9 @@ COMPARISONS = [
     ("AUGB-CMP-B4-B0", "AUGB-B4-HAIKU", "AUGB-C1-B0", "oof", "实验 B +4：加 Haiku 生成数据 对 只用原数据"),
     ("AUGB-CMP-B4-STEP4", "AUGB-B4-HAIKU", "AUGB-STEP4", "oof", "实验 B +4：加 Haiku 生成数据 对 原数据重复到同样行数（同计划步数）"),
     ("AUGB-CMP-B4-B2", "AUGB-B4-HAIKU", "AUGB-B2-HAIKU", "oof", "实验 B 规模曲线：+4 对 +2（描述；+2 ⊂ +4，步数不同）"),
+    ("AUGB-CMP-FOCAL-B0", "AUGB-FOCAL", "AUGB-C1-B0", "oof", "loss 对照：Focal（γ=2）对 CE（同数据、同步数；B0 复用 Commit 1，SMOKE 逐字节相同）"),
+    ("AUGB-CMP-DICE-B0", "AUGB-DICE", "AUGB-C1-B0", "oof", "loss 对照：四类 macro soft Dice 对 CE（同数据、同步数；B0 复用 Commit 1）"),
+    ("AUGB-CMP-FOCAL-W4", "AUGB-FOCAL", "AUGB-W4", "oof", "Focal 对 O 类加权 λ=4（描述，两种处理类别不平衡的 loss）"),
     ("AUGB-CMP-B2-B1", "AUGB-B2-HAIKU", "AUGB-B1-HAIKU", "oof", "实验 B 规模曲线：+2 对 +1（描述；跨 v3 / v2 代码，步数不同）"),
     ("AUGB-CMP-GU4-DUPU4", "AUGB-G-U4", "AUGB-DUP-U4", "oof", "类别构成 U4：生成数据 对 同构成的原数据重复采样（G_c − Dup_c，同代码同步数）"),
     ("AUGB-CMP-GU4-B1", "AUGB-G-U4", "AUGB-B1-HAIKU", "oof", "类别构成 U4 的生成数据 对 按原比例的生成数据（G_c − G_R；跨 v3 / v2 代码）"),
@@ -504,6 +514,22 @@ NOTES = {
     "AUGB-CMP-DUPE1-STEP1": "同 AUGB-CMP-DUPU4-STEP1。",
     "AUGB-CMP-DUPD1-STEP1": "同 AUGB-CMP-DUPU4-STEP1。",
     "AUGB-CMP-DUPO1-STEP1": "同 AUGB-CMP-DUPU4-STEP1。",
+    "AUGB-CMP-B2-STEP2": "两边每折行数、计划步数相同，只差多出来的是生成数据还是原数据重复；和 AUGB-CMP-B2-B0 都通过，按冻结计划 3.5 节 +2 扩充有效。区间不包含重新训练随机性。",
+    "AUGB-CMP-B4-STEP4": "同 AUGB-CMP-B2-STEP2；+4 扩充有效。B4 的第 4 层有 25.6% 来自 reasoning effort 为 high 的批次。",
+    "AUGB-CMP-B4-B2": "+2 ⊂ +4，每轮步数也随行数增加；差约为 0，规模曲线在 +2 饱和。",
+    "AUGB-CMP-B2-B1": "跨 v3 / v2 代码，只作描述。",
+    "AUGB-CMP-GU4-DUPU4": "同代码、同行数、同步数、每类新增行数相同；五个构成都通过。构成 v2 第 4 节要求它和 G_c − G_R 都通过才说构成值得生成。",
+    "AUGB-CMP-GU4-B1": "跨 v3 / v2 代码；五个构成都没通过，按构成 v2 没有构成值得生成，事先定的 +2 后续不触发。",
+    "AUGB-CMP-GBAL-DUPBAL": "同 AUGB-CMP-GU4-DUPU4。",
+    "AUGB-CMP-GBAL-B1": "同 AUGB-CMP-GU4-B1。",
+    "AUGB-CMP-GE1-DUPE1": "同 AUGB-CMP-GU4-DUPU4。",
+    "AUGB-CMP-GE1-B1": "同 AUGB-CMP-GU4-B1。",
+    "AUGB-CMP-GD1-DUPD1": "同 AUGB-CMP-GU4-DUPU4。",
+    "AUGB-CMP-GD1-B1": "同 AUGB-CMP-GU4-B1。",
+    "AUGB-CMP-GO1-DUPO1": "同 AUGB-CMP-GU4-DUPU4。",
+    "AUGB-CMP-GO1-B1": "同 AUGB-CMP-GU4-B1。",
+    "AUGB-CMP-FOCAL-B0": "设计上只改 loss（method 和 method_params 是同一处改动的两个字段，所以自动归为系统比较）；Bonferroni 97.5% 区间 [−0.19, +1.50] 含 0，按事先规则不算提升。区间不包含重新训练随机性。",
+    "AUGB-CMP-DICE-B0": "同 AUGB-CMP-FOCAL-B0；Bonferroni 97.5% 区间 [−2.38, −0.25] 在 0 以下，Dice 显著更差（种子 43 的 fold 3 选在第 3 轮，留出 0.692）。两种 loss 都没过线，按冻结计划不做“增广 + 新 loss”的叠加。",
     "AUGB-CMP-B0-JOINTCE":"训练变量的记录方式不同，自动列出的差别多是写法；实际差别是卡和精度（T4 fp16 对 A10 bf16）、库版本，以及初始化和打乱的随机数流（B0 用 seed×1000+fold、每轮独立生成器）。B0 不是 JOINT-CE 的复现，只作参照。",
     "A1-CMP-8B-4B": "登记的变量只差模型；未登记的分词器、聊天模板（8B 带空 think 块）和后训练方式也不同，所以是系统比较。按事先规则（均值 > 0 且区间下限 > 0）不算提升。区间不包含重新训练随机性。",
     "JOINT-CMP-QWEN": "使用共同种子；fold0已用于探索，五折并非独立隐藏测试。区间不包含重新训练随机性。",
