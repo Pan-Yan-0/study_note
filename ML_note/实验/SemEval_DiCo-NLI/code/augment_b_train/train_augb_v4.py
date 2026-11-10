@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""DiCo-NLI AugB v4 (Claude, 11-10): v3 + two loss groups for Commit 3 (Focal, Dice). The CE line is unchanged;
+"""DiCo-NLI AugB v4.1 (Claude, 11-10): v3 + two loss groups for Commit 3 (Focal, Dice). The CE line is unchanged;
 new losses are computed in fp32 outside autocast. SMOKE checks that the v4 B0 SMOKE reproduces the archived
 Commit 1 B0 SMOKE (config and every saved probability); if not, B0 is rerun in the formal queue.
 
@@ -76,7 +76,7 @@ CONFIG = {"model": MODEL_ID, "max_epochs": 12, "lr": 2e-5,
           "train_loss": "cross_entropy", "augmentation": "plus_one_selected_rows",
           "smoke": "fold0_seed42_two_steps_per_group", "protocol": "AugB-Haiku-P1C-R",
           "seed_note": "init=seed*1000+fold; per-epoch fresh shuffle RNG (not archived C0 RNG stream)",
-          "code_version": "v4 (Claude): v3 + Focal / Dice loss branches",
+          "code_version": "v4.1 (Claude): v3 + Focal / Dice loss branches",
           "loss_variants": "ce (unchanged line, inside autocast); focal_softmax_a1_g2: mean(-(1-p_t)^2 log p_t); "
                            "soft_dice_macro4_batch: 1 - mean_c (2 sum p_c y_c + 1e-6) / (sum p_c + sum y_c + 1e-6), "
                            "batch-level, all four classes incl. absent; both fp32 outside autocast",
@@ -132,7 +132,7 @@ def loss_checks(device):
     b = F.cross_entropy(x, y); gb, = torch.autograd.grad(b, x)
     if not (close(a, b) and close(ga, gb)):
         die("Focal gamma=0 differs from CE")
-    rep["focal_gamma0_vs_ce_max_abs"] = [float((a - b).abs()), float((ga - gb).abs().max())]
+    rep["focal_gamma0_vs_ce_max_abs"] = [float((a - b).detach().abs()), float((ga - gb).abs().max())]
     # Focal gamma = 2 hand example
     xh = torch.tensor([[2.0, 0.0, -1.0, 0.5], [0.0, 0.0, 0.0, 0.0]], device=device)
     yh = torch.tensor([0, 3], device=device)
@@ -162,18 +162,20 @@ def loss_checks(device):
             val = fn(xc); grad, = torch.autograd.grad(val, xc)
             if not (bool(torch.isfinite(val)) and bool(torch.isfinite(grad).all())):
                 die("%s loss or gradient not finite on %s logits" % (lname, name))
-            if lname == "dice" and not (0.0 <= float(val) <= 1.0):
+            v = float(val.detach())
+            if lname == "dice" and not (0.0 <= v <= 1.0):
                 die("Dice out of [0, 1] on " + name)
-            rep["%s_%s" % (lname, name)] = float(val)
+            rep["%s_%s" % (lname, name)] = v
     rep["status"] = "pass"
     return rep
 
 
-B0_REUSE_IGNORE_TASK = ("code_sha256", "loss")
+B0_REUSE_IGNORE_TASK = ("code_sha256", "loss")  # loss is checked separately below (missing = ce; both must be ce)
+B0_REUSE_ENV = {"torch": "2.11.0+cu128", "cuda": "12.8", "transformers": "4.57.6"}  # archived Commit 1 values
 B0_REUSE_IGNORE_CONFIG = ("code_version", "loss_variants")
 
 
-def b0_reuse_check(bundle, out):
+def b0_reuse_check(bundle, out, write=True):
     """v4 B0 SMOKE (this run) against the archived Commit 1 B0 SMOKE: config, training record, every saved value."""
     ref, new = Path(bundle) / "data_v4" / "c1_smoke_B0", Path(out) / "smoke" / "B0"
     diffs = []
@@ -188,7 +190,13 @@ def b0_reuse_check(bundle, out):
                 diffs.append("task.config")
         elif rt.get(k) != nt.get(k):
             diffs.append("task." + k)
+    if rt.get("loss", "ce") != "ce" or nt.get("loss", "ce") != "ce":
+        diffs.append("task.loss")
     rd, nd = jload(ref / "done.json"), jload(new / "done.json")
+    for k, want in B0_REUSE_ENV.items():
+        r_env, n_env = (rd.get("environment") or {}).get(k), (nd.get("environment") or {}).get(k)
+        if r_env != want or n_env is None or n_env != r_env:
+            diffs.append("done.environment." + k)
     for k in ("best_epoch", "best_val_original_wf1", "planned_updates", "actual_optimizer_updates",
               "skipped_fp16_updates", "lr_schedule", "train_rows", "val_rows", "test_rows", "class_weights", "repeat_counts"):
         if rd.get(k) != nd.get(k):
@@ -214,9 +222,11 @@ def b0_reuse_check(bundle, out):
     report = {"status": "pass" if not diffs else "fail", "differences": diffs, "compared": compared,
               "reference_environment": rd.get("environment"), "new_environment": nd.get("environment"),
               "reference_code_sha256": rt.get("code_sha256"), "new_code_sha256": nt.get("code_sha256"),
-              "rule": "config (except code identity) + training record + every saved probability / logit (10 significant digits) equal; "
+              "rule": "config (except code identity; loss must be ce on both sides) + torch / cuda / transformers equal to the archive + "
+                      "training record + every saved probability / logit (10 significant digits) equal; "
                       "pass -> reuse Commit 1 B0 (15 tasks); fail -> B0 is rerun under v4 in the formal queue"}
-    jsave(Path(out) / "b0_reuse.json", report)
+    if write:
+        jsave(Path(out) / "b0_reuse.json", report)
     return report
 
 
@@ -892,6 +902,7 @@ def one_task(group, seed, fold, original, selected, splits, fam_of, out, tokeniz
     epoch_log = []
     best, best_epoch = -1.0, None
     updates, skips = 0, 0
+    grad_trace = []  # v4.1: per-step status and unscaled, pre-clip global grad norm (SMOKE only)
     checkpoint = dest / "best_state.pt"
     started = time.time()
     for ep in range(num_epochs):
@@ -919,6 +930,9 @@ def one_task(group, seed, fold, original, selected, splits, fam_of, out, tokeniz
             if not bool(torch.isfinite(loss)):
                 die("Nonfinite training loss: " + group)
             status, grad_norm = apply_update(loss, optimizer, sched, scaler, list(net.parameters()))
+            if smoke:
+                grad_trace.append({"epoch": ep + 1, "batch": step, "status": status, "grad_norm_unscaled_preclip": (grad_norm if math.isfinite(grad_norm) else None),
+                                   "loss": float(loss.detach())})
             if status == "skipped":
                 skips += 1
             elif status == "updated":
@@ -1029,7 +1043,7 @@ def one_task(group, seed, fold, original, selected, splits, fam_of, out, tokeniz
     jsave(done_file, done)
     print("[DONE]" if not smoke else "[SMOKE OUTPUT PATH OK]",group,seed,fold,"val=",round(best,5),"test_sym=",round(done["test_sym_wf1"],5),flush=True)
     if smoke:
-        jsave(dest/"smoke.json", {"group":group,"status":"pass","updates":updates,"skips":skips,
+        jsave(dest/"smoke.json", {"group":group,"status":"pass","updates":updates,"skips":skips,"grad_trace":grad_trace,
                                    "code_sha256": digest(Path(__file__)), "revision": revision,
                                    "stable_environment": stable_env_identity(envinfo()),
                                    "input_hashes": cfg["data_sha256"], "v3_data_sha256": V3.get("hashes"),
@@ -1291,10 +1305,14 @@ def main():
             die("SMOKE identity stale after code/model/data/GPU change; rerun --stage smoke")
     queue_groups = list(COMMITS[args.commit])
     if args.commit == "3":
+        # v4.1: recompute from the current archive and the SMOKE artifacts verified above (read-only); never trust a stale file
+        if not (out/"smoke"/"B0"/"done.json").exists():
+            die("B0 SMOKE missing: run --stage smoke --group all first")
+        br = b0_reuse_check(bundle, out, write=False)
         bp = out/"b0_reuse.json"
-        if not bp.exists():
-            die("b0_reuse.json missing: run --stage smoke --group all first")
-        if jload(bp)["status"] != "pass":
+        if bp.exists() and jload(bp).get("status") != br["status"]:
+            print("[B0 REUSE] note: stored b0_reuse.json disagrees with the recomputed decision; using the recomputed one", flush=True)
+        if br["status"] != "pass":
             queue_groups = ["B0"] + queue_groups
             print("[B0 REUSE] failed in SMOKE: B0 is rerun under v4 (15 extra tasks)", flush=True)
         else:
