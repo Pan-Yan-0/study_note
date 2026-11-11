@@ -70,7 +70,7 @@ bash qwen4b_augb/a10_session.sh stage2
 
 ## 文件
 
-`common.py`：身份、数据、按组构造训练集、隔离检查；`worker.py`：单任务（v5.5 的 worker 加 `--group`）；`queue_augb.py`：队列、两个阶段、回执、OOF、打包；`compat.py`：4B 一致性（v5.5 原样，只改注释）；`run_a10.sh`、`a10_session.sh`：A10 入口；`augb_data/`：实验 B 的 +1 清单、逐折选用、五折划分；`baseline/`：历史 4B 零样本缓存；`test_queue.py`：CPU 测试。
+`common.py`：身份、数据、按组构造训练集、隔离检查；`worker.py`：单任务（v5.5 的 worker 加 `--group`）；`queue_augb.py`：队列、两个阶段、回执、OOF、打包；`compat.py`：4B 一致性（来自 v5.5；v1.1 起 new 路径只检查覆盖值、不补写）；`run_a10.sh`、`a10_session.sh`：A10 入口；`augb_data/`：实验 B 的 +1 清单、逐折选用、五折划分；`baseline/`：历史 4B 零样本缓存；`test_queue.py`：CPU 测试。
 
 ## 来源
 
