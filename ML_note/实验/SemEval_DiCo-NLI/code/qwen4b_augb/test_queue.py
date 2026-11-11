@@ -107,6 +107,46 @@ class RealData(unittest.TestCase):
                     self.assertEqual(len(sp['fit']),2*len(s0['fit'])); self.assertEqual(sp['val'],full['val'])
                     pp,_,_=group_parts(q,0,'Q-B1','probe'); self.assertEqual(len(pp['fit']),2*n)
 
+@unittest.skipUnless(os.environ.get('DICO_TEST_DATA'),'需要 DICO_TEST_DATA=<官方仓库目录>')
+class ProbeReceipt(unittest.TestCase):
+    """回归（Codex 11-11 指出的 v1 阻断）：真实走 worker.run(probe) 到回执检查。模型、训练和打分用 CPU 替身，
+    数据、划分、按组构造、裁剪到最长 16 行、写文件、封存都是真实代码。"""
+    def run_probe(self,root,data):
+        import worker, argparse
+        class Fake:
+            bf16=True; target_ids=[1,2,3,4]
+            def __init__(self,rev): pass
+            def score(self,inputs): return [{'p':[.25]*4} for _ in inputs]
+            def chat(self,prompt): return ''
+            def encode(self,a,b): return list(range(len(a)+len(b)))
+            def train(self,out,fit,val,seed,interrupt_at=None):
+                p=Path(out)/'adapters'/'epoch1'; p.mkdir(parents=True,exist_ok=True); (p/'adapter_model.safetensors').write_bytes(b'fixture')
+                return [{'epoch':1}],{'best_epoch':1,'fit_rows':len(fit),'val_rows':len(val),'steps':1}
+            def release(self): pass
+        orig_load,orig_runtime=worker.load,worker.runtime
+        def load(*a,**k):
+            q=orig_load(*a,**k); q.PINS={}; q.QwenSFT=Fake; q.self_check_losses=lambda:None
+            q.score_and_evaluate=lambda b,d,track,parts:({'fold0':{}},{}); return q
+        mdir=root/'fake_model'; mdir.mkdir(parents=True); (mdir/'config.json').write_text('{}')
+        write(root/'model.json',{'path':str(mdir),'revision':REV,'source':'test','files':{'config.json':sha(mdir/'config.json')}})
+        worker.load=load; worker.runtime=lambda:{'gpu':'fake','packages':{}}
+        try:
+            worker.run(argparse.Namespace(kind='probe',root=str(root),data=str(data),group='Q-B1',fold=0,seed=42,batch=8))
+        finally: worker.load,worker.runtime=orig_load,orig_runtime
+        return task_dir(root,'probe','Q-B1',0,42)
+    def test_probe_receipt(self):
+        from queue_augb import probe_check
+        data=Path(os.environ['DICO_TEST_DATA']).resolve()
+        with tempfile.TemporaryDirectory() as t:
+            root=Path(t)/'root'; d=self.run_probe(root,data)
+            t_=read(d/'task.json'); ids=read(d/'actual_split.json')['fit']
+            self.assertEqual((t_['fit_rows'],len(ids),read(d/'done.json')['fit_rows']),(4380,16,16))   # v1 的检查读的是 4380，必然失败
+            probe_check(root)                                       # 修复后：按实际训练的 16 行判定
+            s=read(d/'actual_split.json'); s['fit']=s['fit'][:15]; write(d/'actual_split.json',s); seal(d,t_)
+            with self.assertRaises(ValueError): probe_check(root)   # 实际清单 15 行、重新封存后仍然拒绝
+            s['fit']=s['fit']+[s['fit'][0]]; write(d/'actual_split.json',s); seal(d,t_)
+            with self.assertRaises(ValueError): probe_check(root)   # 16 个但有重复 ID，也拒绝
+
 class Package(unittest.TestCase):
     def _official(self,t):
         z=Path(t)/'official.zip'

@@ -13,14 +13,24 @@ def child(a,kind,group='Q0',fold=0,seed=42):
             os.killpg(p.pid,signal.SIGTERM); p.wait(); raise RuntimeError('下载超过2小时，保留缓存并停止（重新运行会接着下载）')
 
 SMOKE_DIRS=(('probe','Q-B1',42),('smoke','Q-B1',42),('smoke','Q0',43))
+def actual_fit(d):
+    """实际训练的行：task.json 记的是裁剪 / 补行之前的候选（探测是该组完整训练集，SMOKE 之后还会补最长的原始行），
+    实际训练集以 actual_split.json 为准，并和 done.json 的 fit_rows 对上。"""
+    ids=read(d/'actual_split.json')['fit']; done=read(d/'done.json')
+    require(len(ids)==len(set(ids))==done['fit_rows'],'actual_split.json 的 fit 和 done.json 的 fit_rows 对不上：%s'%d)
+    return ids
+def probe_check(root):
+    probe=task_dir(root,'probe','Q-B1',0,42); verify(probe,read(probe/'task.json'))
+    require(len(actual_fit(probe))==16,'最长输入探测实际训练的不是 16 行')
 def smoke_check(root):
     identity=read(root/'identity.json'); require(identity['pipeline']==pipeline(),'旧代码回执')
-    probe=task_dir(root,'probe','Q-B1',0,42); verify(probe,read(probe/'task.json'))
-    require(read(probe/'task.json')['fit_rows']==16,'最长输入探测不是 16 行')
+    probe_check(root)
     ds=[]
     for name,group,seed in SMOKE_DIRS[1:]:
         d=task_dir(root,name,group,0,seed); t=read(d/'task.json'); verify(d,t); ds.append(read(d/'done.json'))
-        if group=='Q-B1': require(t['fit_sources']['claude-haiku-5-5']>0,'Q-B1 的 SMOKE 没有用到生成数据')
+        ids=actual_fit(d)
+        if group=='Q-B1': require(any(i.startswith('gen:') for i in ids),'Q-B1 的 SMOKE 没有用到生成数据')
+        else: require(not any(i.startswith('gen:') or '#dup' in i for i in ids),'Q0 的 SMOKE 混进了生成或复制的行')
     require(ds[0]['resumed_from_epoch']==1,'恢复验收缺失')
     require(any(x['checkpoint']=='checkpoint-999999' for x in ds[0]['resume']['skipped']),'坏检查点验收缺失')
     for d in ds:

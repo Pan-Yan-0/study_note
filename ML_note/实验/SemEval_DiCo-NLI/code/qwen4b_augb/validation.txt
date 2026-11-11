@@ -1,12 +1,22 @@
-qwen4b_augb v1 代码身份（common.pipeline，含 SOURCES 和 augb_data 三个文件的哈希）：30449eece7a8d7f4df4d0195b75f16ddf2b5e659ea0a1213553f7a6dc93bcc52
+qwen4b_augb v1.1 代码身份（common.pipeline，含 SOURCES 和 augb_data 三个文件的哈希）：adc19fa00971106514ee9c16e5901d76a78d9bac5fe68438aa4454a4e7748541
+（v1 是 30449eec…，Codex 11-11 审查发现 SMOKE 阻断，见下）
 上游 upstream_qwen.py：502e638814ba2b7a840f33aa3b481de1f1e0bf2887ff7d976dd86131d3b603b0（未改，和 qwen8b_v5.5、JOINT-QWEN、第六组相同）
-compat.py：和 qwen8b_v5.5 相比只改了注释
+compat.py：和 qwen8b_v5.5 相比，new 路径不再补写冻结值，改为检查 worker.load 覆盖后的值等于冻结值（old 路径同样检查上游默认）
 相对 qwen8b_v5.5 的改动：模型改回 4B（快照 cdbee75f…，同 JOINT-QWEN）；worker 加 --group（Q0 / Q-B1 / Q-step1），
 按组构造 fit；运行时核对上游五折 = 实验 B 的 split_manifest、生成行隔离；队列分两个阶段，阶段 2 要 --confirm-stage2 且阶段 1 全部完成；
 SMOKE 改为 Q-B1 的探测、Q-B1 的中断恢复、Q0 的第二种子；结果包名改为 qwen4b_augb_*；去掉 8B 空 think 模板的断言（4B-Instruct-2507 的模板由 compat 的零样本核对把关）。
 
+v1.1 的修订（Codex 11-11 审查）：
+  1. 阻断：探测的 task.json 在裁剪到最长 16 行之前写入（fold 0 记 4,380 行），v1 的 smoke_check 要求 task.json.fit_rows == 16，SMOKE 必然失败。
+     改为 actual_fit()：从 actual_split.json 读实际训练的 ID，要求互不重复且个数等于 done.json 的 fit_rows；探测要求 16 行。
+     task.json 的 split_ids / fit_rows / fit_sources 注明是候选集合（fit_note）。Q-B1 的 SMOKE 要求实际训练集含生成行，Q0 要求不含生成或复制的行。
+  2. compat.py 的 new 路径改为只检查、不补写（见上）。
+
 == DICO_TEST_DATA=<官方仓库> python3 -W error::ResourceWarning -m unittest test_queue（Claude 云端环境，无 torch）
-Ran 20 tests  OK
+Ran 21 tests  OK
+  新增 ProbeReceipt：真实走 worker.run(probe)（数据、划分、按组构造、裁剪、写文件、封存都是真实代码，模型、训练和打分用 CPU 替身），
+  得到 task.json / actual_split / done 的行数 4380 / 16 / 16，v1 的检查必然失败；修复后 probe_check 通过；
+  实际清单改成 15 行、或 16 行里有重复 ID，重新封存后都被拒绝。
   包括 RealData：用官方数据和未改动的上游 make_split，五折的 fit / val / test 和实验 B 的 split_manifest 逐折相同；
   三组的 fit 行数为 n / 2n / 2n（n = 2190 / 2192 / 2186 / 2200 / 2200）；SMOKE 和探测的构造也走通。
 == bash -n run_a10.sh a10_session.sh：通过

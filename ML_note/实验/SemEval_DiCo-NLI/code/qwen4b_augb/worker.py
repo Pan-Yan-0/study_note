@@ -84,6 +84,9 @@ def run(a):
           'fit_digest':fit_digest(parts['fit']),'fit_sources':{'original':sum(not r['instance_id'].startswith('gen:') and '#dup' not in r['instance_id'] for r in parts['fit']),
                                                             'original_repeat':sum('#dup' in r['instance_id'] for r in parts['fit']),
                                                             'claude-haiku-5-5':sum(r['instance_id'].startswith('gen:') for r in parts['fit'])}}
+    # task.json 的 split_ids / fit_rows / fit_sources 是裁剪或补行之前的候选：探测之后只取最长 16 行，SMOKE 之后还会补最长的原始行；
+    # 实际训练的行在 actual_split.json 里，行数也写进 done.json 的 fit_rows（队列按这两处核对）
+    task['fit_note']='候选集合；实际训练集见 actual_split.json'
     if a.kind=='probe': task['probe']='该组完整训练集里最长的 16 行'
     bind(d/'task.json',task)
     if (d/'COMPLETE.json').exists(): verify(d,task); print('已完成并校验，跳过',d); return

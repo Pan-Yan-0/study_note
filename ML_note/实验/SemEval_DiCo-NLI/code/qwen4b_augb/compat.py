@@ -1,4 +1,4 @@
-"""4B compatibility checks (unchanged from qwen8b_v5.5 except comments); independent subprocesses for deterministic short runs.
+"""4B compatibility checks (from qwen8b_v5.5; v1.1: new 路径改为检查覆盖值、不再补写); independent subprocesses for deterministic short runs.
 零样本核对：模型、模板和打分与历史 4B 缓存一致；old / new：本队列的覆盖入口和上游默认入口 3 次更新逐位相同。"""
 import argparse, os, shutil
 from common import *
@@ -26,10 +26,12 @@ def main():
         os.environ['CUBLAS_WORKSPACE_CONFIG']=':4096:8'
     from worker import load,runtime,fetch_verified
     # old：上游原样（联合验证 4B 用的就是这些默认值），不改任何全局设置，SMOKE=0 所以 MAX_EPOCHS 本来就是 3。
-    # new：走本队列 worker 的覆盖路径（再显式写一遍 4B 的值），检验覆盖机制和上游默认等价。
+    # new：走本队列 worker 的覆盖路径，不再补写任何值；覆盖后的设置必须等于冻结值（worker.load 的覆盖出了回归会在这里报错，
+    # 两条路径的完整设置还会在 compare 里按 settings.json 逐项比较）。
     q=load(a.root,a.data,0,False,8,overrides=(a.kind!='old'))
-    if a.kind!='old':
-        for k,v in {'MODEL':'Qwen/Qwen3-4B-Instruct-2507','MODEL_REVISION':R4,'TRAIN_BATCH':8,'GRAD_ACC':2,'MAX_EPOCHS':3,'LORA_DROPOUT':0.0,'HOLDOUT_FOLD':0}.items(): setattr(q,k,v)
+    frozen={'MODEL':'Qwen/Qwen3-4B-Instruct-2507','MODEL_REVISION':R4,'TRAIN_BATCH':8,'GRAD_ACC':2,'MAX_EPOCHS':3,'LORA_DROPOUT':0.0,'HOLDOUT_FOLD':0}
+    bad={k:getattr(q,k,None) for k,v in frozen.items() if getattr(q,k,None)!=v}
+    require(not bad,('上游默认' if a.kind=='old' else 'worker 覆盖后')+'的设置和冻结值不同：'+str(bad))
     require(q.MODEL=='Qwen/Qwen3-4B-Instruct-2507' and q.MODEL_REVISION==R4 and q.MAX_EPOCHS==3,'兼容性检查必须是 4B、3 轮')
     if a.kind=='download':
         path,rev,src=fetch_verified(q,R4); require(rev==R4,'4B版本不同'); base=Path(path)
