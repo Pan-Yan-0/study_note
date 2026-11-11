@@ -172,9 +172,10 @@ def score(out, pa, pb):
         for s in {k["stratum"], k["stratum"].split("-")[0]}: by[s][c] += 1
     share = lambda s, c: (by[s][c], sum(v for x, v in by[s].items() if x != "U"))
     a1, a3, c1 = share("S1", "一致但不等于金标"), share("S3", "一致但不等于金标"), share("S1", "一致且等于金标")
-    r = lambda t: t[0] / t[1] if t[1] else None
-    if r(a1) is not None and r(a3) is not None and r(a1) >= .5 and r(a1) - r(a3) >= .3: verdict = "顽固错误多是对照参考卡也复现不了的标法"
-    elif r(c1) is not None and r(c1) >= .5: verdict = "可学但没学到，作为后续改动的目标"
+    # 阈值用整数交叉相乘判断，避免 0.7 − 0.4 = 0.2999… 这类浮点误差（Codex 11-12 指出，阈值和分支顺序不变）
+    (A1, N1), (A3, N3), (C1, _) = a1, a3, c1
+    if N1 and N3 and 2 * A1 >= N1 and 10 * (A1 * N3 - A3 * N1) >= 3 * N1 * N3: verdict = "顽固错误多是对照参考卡也复现不了的标法"
+    elif N1 and 2 * C1 >= N1: verdict = "可学但没学到，作为后续改动的目标"
     else: verdict = "只报告"
     res = {"by_stratum": {s: dict(v) for s, v in sorted(by.items())},
            "R1": {"a1": a1, "a3": a3, "c1": c1, "读法": verdict}}
@@ -183,7 +184,7 @@ def score(out, pa, pb):
         if k["stratum"].startswith(("S1", "S2")):
             for t in A[rid]["ph"] & B[rid]["ph"]: tag[t].append(rid)
     res["R2"] = {t: {"families": len(v), "一致且等于金标": sum(cat[x] == "一致且等于金标" for x in v),
-                     "候选": len(v) >= 6 and sum(cat[x] == "一致且等于金标" for x in v) / len(v) >= .7} for t, v in sorted(tag.items())}
+                     "候选": len(v) >= 6 and 10 * sum(cat[x] == "一致且等于金标" for x in v) >= 7 * len(v)} for t, v in sorted(tag.items())}
     sub = defaultdict(Counter)
     for rid, k in key.items():
         if k["gold"] == O:
