@@ -309,8 +309,10 @@ AUGB_C2 = {"B2-Haiku": ("B2-Haiku", "fit + 规模轮清单 24704e11 的第 1、2
 AUGB_C3 = {"Focal": ("Focal", "track1 按家族五折，每折只训练 fit"),
            "Dice": ("Dice", "track1 按家族五折，每折只训练 fit")}
 AUGB_C4 = {g: (g, "track1 按家族五折，每折只训练 fit") for g in ("OLat4", "NLIinit", "BiBCE")}
+AUGB_C5 = {g: (g, AUGB_C2["B2-Haiku"][1]) for g in ("B2-Haiku", "B2-NLIinit")}
 ARM_DESC = {"OLat4": ("olat_head", "O 改为 4 个分量，z_O = logsumexp(z_O1..4) − log 4（fp32）；由 B0 的 O 行加 std 0.002、沿分量中心化的扰动初始化，偏置复制"),
             "NLIinit": ("nli_init", "照 B0 构造后，deberta.* 和 pooler.* 换成 MoritzLaurer/mDeBERTa-v3-base-xnli-multilingual-nli-2mil7 b5113eb3 的权重；4 类头、tokenizer、前向配置沿用 B0"),
+            "B2-NLIinit": ("nli_init", "照 B0 构造后，deberta.* 和 pooler.* 换成 MoritzLaurer/mDeBERTa-v3-base-xnli-multilingual-nli-2mil7 b5113eb3 的权重；4 类头、tokenizer、前向配置沿用 B0"),
             "BiBCE": ("ce+bibce", "CE + 0.25·½[BCE(m_AB, t_AB) + BCE(m_BA, t_BA)]，m 为两个方向的边际 logit，fp32、autocast 之外")}
 LOSS_DESC = {"focal_softmax_a1_g2": ("focal", "四分类 softmax focal，alpha=1，gamma=2，fp32、autocast 之外"),
              "soft_dice_macro4_batch": ("soft_dice", "四类 macro soft Dice，batch 级、缺席类也平均，eps=1e-6，fp32、autocast 之外")}
@@ -320,7 +322,7 @@ def augb_c1_run(rid, group, bias=None, commit="1"):
     """实验 B Commit 1：Claude 的 train_augb_v3.py（v2 的训练核心 + 新组），英语五折三种子（Kaggle T4 fp16）。
     OOF 由 code/claude_recheck_augb_c1.py 从四类概率重建；bias=λ 时是 W 组在推理时把 O 的 logit 减 log λ。"""
     root = os.path.join(M, "augment_b", f"train_c{commit}")
-    d, data = {"1": AUGB_C1, "2": AUGB_C2, "3": AUGB_C3, "4": AUGB_C4}[commit][group]
+    d, data = {"1": AUGB_C1, "2": AUGB_C2, "3": AUGB_C3, "4": AUGB_C4, "5": AUGB_C5}[commit][group]
     seeds = [42, 43, 44]
     tasks = [rj(os.path.join(root, "tasks", d, f"seed{s}", f"fold{k}", "task.json")) for s in seeds for k in range(5)]
     done = [rj(os.path.join(root, "tasks", d, f"seed{s}", f"fold{k}", "done.json")) for s in seeds for k in range(5)]
@@ -347,7 +349,7 @@ def augb_c1_run(rid, group, bias=None, commit="1"):
     return {"id": rid, "desc": f"实验 B Commit {commit}：{group}{'（偏置对照）' if bias else ''}，mDeBERTa 英语五折三种子（Kaggle）", "track": 1,
             "variables": variables,
             "platform": {"platform": "Kaggle", "gpu": [env["gpu"]], "dtype": [env["precision"]], "torch": [env["torch"]]},
-            "code": {"version": {"3": "train_augb_v4.py v4.1（Claude）", "4": "train_augb_v5.py v5.2（Claude）"}.get(commit, "train_augb_v3.py（Claude）"), "code_sha256": [t["code_sha256"][:12]]},
+            "code": {"version": {"3": "train_augb_v4.py v4.1（Claude）", "4": "train_augb_v5.py v5.2（Claude）", "5": "train_augb_v6.py v6.1（Claude）"}.get(commit, "train_augb_v3.py（Claude）"), "code_sha256": [t["code_sha256"][:12]]},
             "metrics_dir": f"metrics/augment_b/train_c{commit}", "seeds": [str(s) for s in seeds],
             "evals": {"oof": {str(s): {m: preds(os.path.join(root, "oof", f"{name}_seed{s}_{m}.csv")) for m in ("plain", "sym")} for s in seeds}}}
 
@@ -428,6 +430,8 @@ RUNS = [
     ("AUGB-OLAT4", lambda: augb_c1_run("AUGB-OLAT4", "OLat4", commit="4")),
     ("AUGB-NLIINIT", lambda: augb_c1_run("AUGB-NLIINIT", "NLIinit", commit="4")),
     ("AUGB-BIBCE", lambda: augb_c1_run("AUGB-BIBCE", "BiBCE", commit="4")),
+    ("AUGB-C5-B2", lambda: augb_c1_run("AUGB-C5-B2", "B2-Haiku", commit="5")),
+    ("AUGB-B2-NLIINIT", lambda: augb_c1_run("AUGB-B2-NLIINIT", "B2-NLIinit", commit="5")),
     ("JOINT-QWEN", lambda: joint_run("JOINT-QWEN", "qwen")),
     ("JOINT-KD", lambda: joint_run("JOINT-KD", "kd")),
     ("MDB-G5-T1-CE", lambda: mdeberta_methods_run("MDB-G5-T1-CE", 1, "ce", "第五组 track1 ce，fold 0 三种子")),
@@ -495,6 +499,9 @@ COMPARISONS = [
     ("AUGB-CMP-NLIINIT-B0", "AUGB-NLIINIT", "AUGB-C1-B0", "oof", "Commit 4 三臂之一：多语 NLI 检查点初始化对 B0"),
     ("AUGB-CMP-BIBCE-B0", "AUGB-BIBCE", "AUGB-C1-B0", "oof", "Commit 4 三臂之一：CE 加双向辅助 BCE 对 B0"),
     ("AUGB-CMP-NLIINIT-B2", "AUGB-NLIINIT", "AUGB-B2-HAIKU", "oof", "描述：原数据 + NLI 初始化对 +2 生成数据（不同改动，系统比较）"),
+    ("AUGB-CMP-B2NLI-B2", "AUGB-B2-NLIINIT", "AUGB-C5-B2", "oof", "Commit 5：+2 数据上加 NLI 检查点初始化 对 同队列重跑的 B2"),
+    ("AUGB-CMP-C5B2-C2B2", "AUGB-C5-B2", "AUGB-B2-HAIKU", "oof", "Commit 5 重跑的 B2 对 Commit 2 的 B2（复现性）"),
+    ("AUGB-CMP-B2NLI-NLIINIT", "AUGB-B2-NLIINIT", "AUGB-NLIINIT", "oof", "描述：NLI 初始化下 +2 数据 对 只用原数据（跨 Commit 4 / 5）"),
     ("AUGB-CMP-B2-B1", "AUGB-B2-HAIKU", "AUGB-B1-HAIKU", "oof", "实验 B 规模曲线：+2 对 +1（描述；跨 v3 / v2 代码，步数不同）"),
     ("AUGB-CMP-GU4-DUPU4", "AUGB-G-U4", "AUGB-DUP-U4", "oof", "类别构成 U4：生成数据 对 同构成的原数据重复采样（G_c − Dup_c，同代码同步数）"),
     ("AUGB-CMP-GU4-B1", "AUGB-G-U4", "AUGB-B1-HAIKU", "oof", "类别构成 U4 的生成数据 对 按原比例的生成数据（G_c − G_R；跨 v3 / v2 代码）"),
@@ -578,6 +585,9 @@ NOTES = {
     "AUGB-CMP-NLIINIT-B0": "只改编码器和池化层的初值（外部 NLI 数据，需在系统论文披露）；+3.22 个百分点，Bonferroni 98.33% [+1.56, +4.86]，三个种子都升，按事先规则算提升。四类 F1 都升，O 的误判（金标非 O 判成 O）减少约三成。区间不包含重新训练随机性。",
     "AUGB-CMP-BIBCE-B0": "只加辅助损失；Bonferroni 98.33% [−0.63, +1.16] 含 0，不算提升。",
     "AUGB-CMP-NLIINIT-B2": "两边改的是不同的东西（初始化对数据），只作描述。",
+    "AUGB-CMP-B2NLI-B2": "只改初值（同一批 +2 数据、同顺序、同计划步数、同一次运行）；+0.38 个百分点（+0.52 / +0.23 / +0.40），95% [−0.61, +1.36]，按事先规则不算提升：在 +2 数据上没有检测到 NLI 初始化的额外增益。O 的误判减少（531 / 508 / 491 → 484 / 491 / 463 行判成 O）。区间不包含重新训练随机性。",
+    "AUGB-CMP-C5B2-C2B2": "同代码路径、同环境的重跑；15 项的留出、内层验证预测和额外 logits 都和 Commit 2 逐字节相同。",
+    "AUGB-CMP-B2NLI-NLIINIT": "NLI 初始化下加 +2 数据 +1.00 [+0.12, +1.90]（描述，跨两次运行和两版代码，训练路径相同）。",
     "AUGB-CMP-DICE-B0": "同 AUGB-CMP-FOCAL-B0；Bonferroni 97.5% 区间 [−2.38, −0.25] 在 0 以下，Dice 显著更差（种子 43 的 fold 3 选在第 3 轮，留出 0.692）。两种 loss 都没过线，按冻结计划不做“增广 + 新 loss”的叠加。",
     "AUGB-CMP-B0-JOINTCE":"训练变量的记录方式不同，自动列出的差别多是写法；实际差别是卡和精度（T4 fp16 对 A10 bf16）、库版本，以及初始化和打乱的随机数流（B0 用 seed×1000+fold、每轮独立生成器）。B0 不是 JOINT-CE 的复现，只作参照。",
     "Q4B-CMP-QB1-Q0": "只改训练数据（加该折选用的 Haiku +1 生成行，每轮更新次数随之翻倍）。−0.53 个百分点（−1.27 / +0.30 / −0.62），95% [−1.32, +0.26]，按事先规则未证实 +1 优于 Q0，未运行阶段 2 的 Q-step1（Codex 已独立复算）。plain 方向 +0.30 [−0.44, +1.05]。区间不包含重新训练随机性。",

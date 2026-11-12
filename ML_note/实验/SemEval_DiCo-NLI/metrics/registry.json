@@ -2935,6 +2935,142 @@
    }
   },
   {
+   "id": "AUGB-C5-B2",
+   "desc": "实验 B Commit 5：B2-Haiku，mDeBERTa 英语五折三种子（Kaggle）",
+   "track": 1,
+   "variables": {
+    "model": "microsoft/mdeberta-v3-base",
+    "model_revision": "a0484667b22365f84929a935b5e50a51f71f159d",
+    "prompt": "不适用",
+    "train": {
+     "max_epochs": 12,
+     "lr": 2e-05,
+     "batch_size": 32,
+     "max_length": 96,
+     "warmup_ratio": 0.1,
+     "weight_decay": 0.01,
+     "gradient_clip": 1.0,
+     "precision": "fp16",
+     "seed_policy": "init=seed*1000+fold; per-epoch fresh shuffle RNG (not archived C0 RNG stream)",
+     "selection": "original_direction_weighted_f1，earliest"
+    },
+    "split": {
+     "folds": 5,
+     "fold_seed": 2027,
+     "inner_fraction": 0.1,
+     "holdout_fold": "0–4"
+    },
+    "method": "ce",
+    "method_params": "无",
+    "data_sha256": {
+     "fold_selection.csv": "6f289cbac76e",
+     "manifest.csv": "b380b4a6a836",
+     "split_manifest.json": "f9363290af28"
+    },
+    "train_data": "fit + 规模轮清单 24704e11 的第 1、2 层（+2，嵌套，第 1 层 = +1 的选用）",
+    "selection": "original_direction_weighted_f1",
+    "inference": "plain 和 sym（F / B 互换后平均）",
+    "lib": {
+     "transformers": "4.57.6"
+    }
+   },
+   "platform": {
+    "platform": "Kaggle",
+    "gpu": [
+     "Tesla T4"
+    ],
+    "dtype": [
+     "fp16"
+    ],
+    "torch": [
+     "2.11.0+cu128"
+    ]
+   },
+   "code": {
+    "version": "train_augb_v6.py v6.1（Claude）",
+    "code_sha256": [
+     "50c800620fbc"
+    ]
+   },
+   "metrics_dir": "metrics/augment_b/train_c5",
+   "seeds": [
+    "42",
+    "43",
+    "44"
+   ],
+   "scores_sym_wf1_mean": {
+    "oof": 0.8321
+   }
+  },
+  {
+   "id": "AUGB-B2-NLIINIT",
+   "desc": "实验 B Commit 5：B2-NLIinit，mDeBERTa 英语五折三种子（Kaggle）",
+   "track": 1,
+   "variables": {
+    "model": "microsoft/mdeberta-v3-base",
+    "model_revision": "a0484667b22365f84929a935b5e50a51f71f159d",
+    "prompt": "不适用",
+    "train": {
+     "max_epochs": 12,
+     "lr": 2e-05,
+     "batch_size": 32,
+     "max_length": 96,
+     "warmup_ratio": 0.1,
+     "weight_decay": 0.01,
+     "gradient_clip": 1.0,
+     "precision": "fp16",
+     "seed_policy": "init=seed*1000+fold; per-epoch fresh shuffle RNG (not archived C0 RNG stream)",
+     "selection": "original_direction_weighted_f1，earliest"
+    },
+    "split": {
+     "folds": 5,
+     "fold_seed": 2027,
+     "inner_fraction": 0.1,
+     "holdout_fold": "0–4"
+    },
+    "method": "nli_init",
+    "method_params": "照 B0 构造后，deberta.* 和 pooler.* 换成 MoritzLaurer/mDeBERTa-v3-base-xnli-multilingual-nli-2mil7 b5113eb3 的权重；4 类头、tokenizer、前向配置沿用 B0",
+    "data_sha256": {
+     "fold_selection.csv": "6f289cbac76e",
+     "manifest.csv": "b380b4a6a836",
+     "split_manifest.json": "f9363290af28"
+    },
+    "train_data": "fit + 规模轮清单 24704e11 的第 1、2 层（+2，嵌套，第 1 层 = +1 的选用）",
+    "selection": "original_direction_weighted_f1",
+    "inference": "plain 和 sym（F / B 互换后平均）",
+    "lib": {
+     "transformers": "4.57.6"
+    }
+   },
+   "platform": {
+    "platform": "Kaggle",
+    "gpu": [
+     "Tesla T4"
+    ],
+    "dtype": [
+     "fp16"
+    ],
+    "torch": [
+     "2.11.0+cu128"
+    ]
+   },
+   "code": {
+    "version": "train_augb_v6.py v6.1（Claude）",
+    "code_sha256": [
+     "50c800620fbc"
+    ]
+   },
+   "metrics_dir": "metrics/augment_b/train_c5",
+   "seeds": [
+    "42",
+    "43",
+    "44"
+   ],
+   "scores_sym_wf1_mean": {
+    "oof": 0.8359
+   }
+  },
+  {
    "id": "JOINT-QWEN",
    "desc": "Qwen CE SFT 英语五折三种子",
    "track": 1,
@@ -6746,6 +6882,119 @@
     "ci95": [
      -0.0182,
      0.0051
+    ]
+   }
+  },
+  {
+   "id": "AUGB-CMP-B2NLI-B2",
+   "new": "AUGB-B2-NLIINIT",
+   "old": "AUGB-C5-B2",
+   "eval": "oof",
+   "purpose": "Commit 5：+2 数据上加 NLI 检查点初始化 对 同队列重跑的 B2",
+   "design": "系统比较（多处不同，不能归因到单个变量）",
+   "environment": "一致",
+   "unknown": [],
+   "note": "只改初值（同一批 +2 数据、同顺序、同计划步数、同一次运行）；+0.38 个百分点（+0.52 / +0.23 / +0.40），95% [−0.61, +1.36]，按事先规则不算提升：在 +2 数据上没有检测到 NLI 初始化的额外增益。O 的误判减少（531 / 508 / 491 → 484 / 491 / 463 行判成 O）。区间不包含重新训练随机性。",
+   "changed": {
+    "method": [
+     "nli_init",
+     "ce"
+    ],
+    "method_params": [
+     "照 B0 构造后，deberta.* 和 pooler.* 换成 MoritzLaurer/mDeBERTa-v3-base-xnli-multilingual-nli-2mil7 b5113eb3 的权重；4 类头、tokenizer、前向配置沿用 B0",
+     "无"
+    ]
+   },
+   "lib_diff": {},
+   "platform_diff": {},
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 3042,
+    "families": 1725,
+    "per_seed": {
+     "42": 0.0052,
+     "43": 0.0023,
+     "44": 0.004
+    },
+    "mean": 0.0038,
+    "ci95": [
+     -0.0066,
+     0.0134
+    ]
+   }
+  },
+  {
+   "id": "AUGB-CMP-C5B2-C2B2",
+   "new": "AUGB-C5-B2",
+   "old": "AUGB-B2-HAIKU",
+   "eval": "oof",
+   "purpose": "Commit 5 重跑的 B2 对 Commit 2 的 B2（复现性）",
+   "design": "重复运行（训练变量相同）",
+   "environment": "一致",
+   "unknown": [],
+   "note": "同代码路径、同环境的重跑；15 项的留出、内层验证预测和额外 logits 都和 Commit 2 逐字节相同。",
+   "changed": {},
+   "lib_diff": {},
+   "platform_diff": {},
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 3042,
+    "families": 1725,
+    "per_seed": {
+     "42": 0.0,
+     "43": 0.0,
+     "44": 0.0
+    },
+    "mean": 0.0,
+    "ci95": [
+     0.0,
+     0.0
+    ]
+   }
+  },
+  {
+   "id": "AUGB-CMP-B2NLI-NLIINIT",
+   "new": "AUGB-B2-NLIINIT",
+   "old": "AUGB-NLIINIT",
+   "eval": "oof",
+   "purpose": "描述：NLI 初始化下 +2 数据 对 只用原数据（跨 Commit 4 / 5）",
+   "design": "单一计划改动",
+   "environment": "一致",
+   "unknown": [],
+   "note": "NLI 初始化下加 +2 数据 +1.00 [+0.12, +1.90]（描述，跨两次运行和两版代码，训练路径相同）。",
+   "changed": {
+    "train_data": [
+     "fit + 规模轮清单 24704e11 的第 1、2 层（+2，嵌套，第 1 层 = +1 的选用）",
+     "track1 按家族五折，每折只训练 fit"
+    ]
+   },
+   "lib_diff": {},
+   "platform_diff": {},
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 3042,
+    "families": 1725,
+    "per_seed": {
+     "42": 0.01,
+     "43": 0.0128,
+     "44": 0.0073
+    },
+    "mean": 0.01,
+    "ci95": [
+     0.0011,
+     0.0184
     ]
    }
   },

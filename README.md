@@ -1,5 +1,7 @@
 # Pan-Yan-0 的学习笔记（note 分支）
 
+[实验B Commit 5：+2 数据上加 NLI 初始化](ML_note/实验/SemEval_DiCo-NLI/metrics/augment_b/train_c5/README.md)已完成：比 B2 高 0.38 个百分点（95% 区间 [−0.61, +1.36]），按事先规则不算提升，英语工作配方仍是 B2。
+
 [Qwen 4B 上的 +1 扩充（阶段 1）](ML_note/实验/SemEval_DiCo-NLI/metrics/qwen4b_augb_s1/README.md)已完成：同一批 Haiku +1 数据在 Qwen 4B 上 −0.53 个百分点（95% 区间 [−1.32, +0.26]），按事先规则未证实优于只用原数据，不跑阶段 2。
 
 [实验B Commit 4：B0 数据上的三臂](ML_note/实验/SemEval_DiCo-NLI/metrics/augment_b/train_c4/README.md)已完成：多语NLI检查点初始化 +3.22个百分点（Bonferroni 98.33%区间[+1.56, +4.86]，三个种子都升），只用原数据就接近 +2 扩充的 B2；O潜在分量头（分量没有分化）和双向辅助BCE都不算提升。

@@ -1,0 +1,74 @@
+{
+  "actual_optimizer_updates": 2,
+  "arm_report": {
+    "global_rng_restored": true,
+    "nli_init": {
+      "forward_config_differences_kept_b0": {},
+      "kept_from_b0": [
+        "classifier.bias",
+        "classifier.weight"
+      ],
+      "model": "MoritzLaurer/mDeBERTa-v3-base-xnli-multilingual-nli-2mil7",
+      "parameters_loaded": 278809344,
+      "revision": "b5113eb38ab63efdd7f280f8c144ea8b13f978ce",
+      "source_config_torch_dtype": "None",
+      "source_keys_not_used": [
+        "classifier.bias",
+        "classifier.weight"
+      ],
+      "tensors_loaded": 200
+    }
+  },
+  "best_epoch": 1,
+  "best_val_original_wf1": 0.21819856502382476,
+  "class_weights": null,
+  "environment": {
+    "cuda": "12.8",
+    "gpu": "Tesla T4",
+    "platform": "Linux-6.18.55+-x86_64-with-glibc2.39",
+    "precision": "fp16",
+    "python": "3.13.15",
+    "sklearn": "1.6.1",
+    "torch": "2.11.0+cu128",
+    "transformers": "4.57.6"
+  },
+  "epochs": [
+    {
+      "epoch": 1,
+      "scaler_scale": 65536.0,
+      "skips_total": 0,
+      "train_loss": 1.398216724395752,
+      "updates_total": 2,
+      "val_original_wf1": 0.21819856502382476
+    }
+  ],
+  "extra_logits_sha256": "c0928e33ad261aaa06f7c57dd9eb1496aaa776acb66ce3291ca5057239ab6737",
+  "fold": 0,
+  "group": "B2-NLIinit",
+  "inference_precision": "fp32_no_autocast",
+  "lr_schedule": {
+    "scheduler": "linear_decay_after_warmup",
+    "total_scheduled_steps": 2,
+    "warmup_updates": 0
+  },
+  "planned_updates": 2,
+  "predictions_sha256": "6d8ae60489940610e876c74362f91d6a07ff897887b35277398b3d4b57fb9833",
+  "repeat_counts": {},
+  "repeated_original_row_ids": [],
+  "runtime_sec": 10.475,
+  "seed": 42,
+  "seed_policy": "init=seed*1000+fold; per-epoch fresh shuffle RNG (not archived C0 RNG stream)",
+  "skipped_fp16_updates": 0,
+  "source_count": {
+    "claude-haiku-5-5": 4380,
+    "original": 2190
+  },
+  "status": "pass",
+  "task_fingerprint": "cc8fdebaf181383759899f1519c5e5536b64eb01443ca8bbab4915f8c1b70930",
+  "test_original_wf1": 0.27230957954179186,
+  "test_rows": 608,
+  "test_sym_wf1": 0.29495775647363326,
+  "train_rows": 6570,
+  "val_predictions_sha256": "ef50e1e21f1425f7074a270973ce6dd3f5c3092f779812d4b56d9d1224c8b548",
+  "val_rows": 244
+}
