@@ -913,6 +913,192 @@
    }
   },
   {
+   "id": "Q4B-Q0",
+   "desc": "Qwen3-4B CE SFT 英语五折三种子，原数据（Qwen 4B +1 扩充的 Q0）",
+   "track": 1,
+   "variables": {
+    "model": "Qwen/Qwen3-4B-Instruct-2507",
+    "model_revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+    "prompt": "f12296445e22",
+    "split": {
+     "folds": 5,
+     "fold_seed": 2027,
+     "inner_fraction": 0.1,
+     "holdout_fold": "0–4"
+    },
+    "train_data": "track1 按家族五折，每折只训练fit，内层验证选轮",
+    "method": "LoRA SFT，只算答案字母的交叉熵",
+    "inference": "plain 和 sym（F / B 互换后平均）",
+    "lora": {
+     "r": 16,
+     "alpha": 32,
+     "dropout": 0,
+     "targets": [
+      "q_proj",
+      "k_proj",
+      "v_proj",
+      "o_proj",
+      "gate_proj",
+      "up_proj",
+      "down_proj"
+     ]
+    },
+    "train": {
+     "max_epochs": 3,
+     "batch": 8,
+     "grad_acc": 2,
+     "lr": 0.0001,
+     "warmup": 0.05,
+     "weight_decay": 0.01
+    },
+    "selection": "内层验证原方向 WF1，同分取早的",
+    "lib": {
+     "transformers": "5.19.0",
+     "peft": "0.21.2",
+     "accelerate": "1.15.0",
+     "datasets": "5.1.0"
+    },
+    "data_sha256": {
+     "final_data/dev/dico_nli_dev_track1_participant_labeled.csv": "80b7152f7ccf0d349d42ad2f098988106689b918b36337e5756b121d17513511",
+     "final_data/dev/dico_nli_dev_track1_reference.csv": "8d5cd11c1c60df3c9b59254d12a60fb2cf43e91dde01b46c8a8f296b806134bc",
+     "final_data/dev/dico_nli_dev_track2_participant_labeled.csv": "09a08a2ffdbb438ead917457f05d977233436431939d7859abd4bf6fe5ee446b",
+     "final_data/dev/dico_nli_dev_track2_reference.csv": "d962e90cbf221cbc5cd6fc197edcb423be3b5ba5f08acd80b8b0a70d27a50171",
+     "final_data/dev/dico_nli_dev_track3_participant_labeled.csv": "c42f051c8f5908cceab4c8f80b003c2314d0c13a487be8586011a7ae3b67493c",
+     "final_data/dev/dico_nli_dev_track3_reference.csv": "3ea3643a5c6e0b2ca4606e3935cd7b368b0fd8f157691c80a5c8d5a3745cfebe",
+     "final_data/dev/dico_nli_dev_track4_participant_labeled.csv": "62fd2b4180c03ab0389bd9348d5c81b04b13b936b325a4a785d0c4c8d6c03baf",
+     "final_data/dev/dico_nli_dev_track4_reference.csv": "1d2769d1e757eb2171272c8e56e4cb7593f7f05de826c4b22c2efb6d3e2fc9ae",
+     "final_data/train/dico_nli_train_track1_participant_labeled.csv": "5e8dd9f3a7e000933fec3c9e64d064f9a25586f141f58d6e6afb47c4fc797211",
+     "final_data/train/dico_nli_train_track1_reference.csv": "c8f4d8587711e0beaefc115606e5c29c3e78dc6660e074967428af0fed069ee4",
+     "final_data/train/dico_nli_train_track2_participant_labeled.csv": "68bfbcdd12bffc93fdc84a6526fbb217846d657faf9dbce766a9297cccade163",
+     "final_data/train/dico_nli_train_track2_reference.csv": "9850c08f3027961df47a2635a961902e4d5f99a6c57e8a04049e69b52b571e01",
+     "final_data/train/dico_nli_train_track3_participant_labeled.csv": "5d085cdd555800285c2c6f35865713d142034b804dbf2e8c349a37bad90d4cfa",
+     "final_data/train/dico_nli_train_track3_reference.csv": "32f03eb1ec0fa079b8fcec8e269e9aade5cd04c735d1873da88fe0f403dfeef3",
+     "final_data/train/dico_nli_train_track4_participant_labeled.csv": "f60ad9359c69b52fb3683170c198e781c83e26c06e6a8078c1e3d033b8a9c948",
+     "final_data/train/dico_nli_train_track4_reference.csv": "3626a1d3d47b983ea8a0fe4cdeecfca6c9b537c31e4b5131c354c1a592544ce9"
+    }
+   },
+   "platform": {
+    "platform": "阿里云 PAI-DSW",
+    "gpu": [
+     "NVIDIA A10"
+    ],
+    "dtype": [
+     "torch.bfloat16"
+    ],
+    "torch": [
+     "2.6.0+cu124"
+    ]
+   },
+   "code": {
+    "version": "qwen4b_augb-v1.1（代码身份 adc19fa00971）",
+    "code_sha256": [
+     "502e638814ba"
+    ]
+   },
+   "metrics_dir": "metrics/qwen4b_augb_s1",
+   "seeds": [
+    "42",
+    "43",
+    "44"
+   ],
+   "scores_sym_wf1_mean": {
+    "oof": 0.8502
+   }
+  },
+  {
+   "id": "Q4B-QB1",
+   "desc": "Qwen3-4B CE SFT 英语五折三种子，原数据 + Haiku +1 生成数据（Q-B1）",
+   "track": 1,
+   "variables": {
+    "model": "Qwen/Qwen3-4B-Instruct-2507",
+    "model_revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+    "prompt": "f12296445e22",
+    "split": {
+     "folds": 5,
+     "fold_seed": 2027,
+     "inner_fraction": 0.1,
+     "holdout_fold": "0–4"
+    },
+    "train_data": "track1 按家族五折，每折训练fit + 该折选用的 Haiku +1 生成行（清单 b380b4a6…，逐折选用 6f289cba…），内层验证选轮",
+    "method": "LoRA SFT，只算答案字母的交叉熵",
+    "inference": "plain 和 sym（F / B 互换后平均）",
+    "lora": {
+     "r": 16,
+     "alpha": 32,
+     "dropout": 0,
+     "targets": [
+      "q_proj",
+      "k_proj",
+      "v_proj",
+      "o_proj",
+      "gate_proj",
+      "up_proj",
+      "down_proj"
+     ]
+    },
+    "train": {
+     "max_epochs": 3,
+     "batch": 8,
+     "grad_acc": 2,
+     "lr": 0.0001,
+     "warmup": 0.05,
+     "weight_decay": 0.01
+    },
+    "selection": "内层验证原方向 WF1，同分取早的",
+    "lib": {
+     "transformers": "5.19.0",
+     "peft": "0.21.2",
+     "accelerate": "1.15.0",
+     "datasets": "5.1.0"
+    },
+    "data_sha256": {
+     "final_data/dev/dico_nli_dev_track1_participant_labeled.csv": "80b7152f7ccf0d349d42ad2f098988106689b918b36337e5756b121d17513511",
+     "final_data/dev/dico_nli_dev_track1_reference.csv": "8d5cd11c1c60df3c9b59254d12a60fb2cf43e91dde01b46c8a8f296b806134bc",
+     "final_data/dev/dico_nli_dev_track2_participant_labeled.csv": "09a08a2ffdbb438ead917457f05d977233436431939d7859abd4bf6fe5ee446b",
+     "final_data/dev/dico_nli_dev_track2_reference.csv": "d962e90cbf221cbc5cd6fc197edcb423be3b5ba5f08acd80b8b0a70d27a50171",
+     "final_data/dev/dico_nli_dev_track3_participant_labeled.csv": "c42f051c8f5908cceab4c8f80b003c2314d0c13a487be8586011a7ae3b67493c",
+     "final_data/dev/dico_nli_dev_track3_reference.csv": "3ea3643a5c6e0b2ca4606e3935cd7b368b0fd8f157691c80a5c8d5a3745cfebe",
+     "final_data/dev/dico_nli_dev_track4_participant_labeled.csv": "62fd2b4180c03ab0389bd9348d5c81b04b13b936b325a4a785d0c4c8d6c03baf",
+     "final_data/dev/dico_nli_dev_track4_reference.csv": "1d2769d1e757eb2171272c8e56e4cb7593f7f05de826c4b22c2efb6d3e2fc9ae",
+     "final_data/train/dico_nli_train_track1_participant_labeled.csv": "5e8dd9f3a7e000933fec3c9e64d064f9a25586f141f58d6e6afb47c4fc797211",
+     "final_data/train/dico_nli_train_track1_reference.csv": "c8f4d8587711e0beaefc115606e5c29c3e78dc6660e074967428af0fed069ee4",
+     "final_data/train/dico_nli_train_track2_participant_labeled.csv": "68bfbcdd12bffc93fdc84a6526fbb217846d657faf9dbce766a9297cccade163",
+     "final_data/train/dico_nli_train_track2_reference.csv": "9850c08f3027961df47a2635a961902e4d5f99a6c57e8a04049e69b52b571e01",
+     "final_data/train/dico_nli_train_track3_participant_labeled.csv": "5d085cdd555800285c2c6f35865713d142034b804dbf2e8c349a37bad90d4cfa",
+     "final_data/train/dico_nli_train_track3_reference.csv": "32f03eb1ec0fa079b8fcec8e269e9aade5cd04c735d1873da88fe0f403dfeef3",
+     "final_data/train/dico_nli_train_track4_participant_labeled.csv": "f60ad9359c69b52fb3683170c198e781c83e26c06e6a8078c1e3d033b8a9c948",
+     "final_data/train/dico_nli_train_track4_reference.csv": "3626a1d3d47b983ea8a0fe4cdeecfca6c9b537c31e4b5131c354c1a592544ce9"
+    }
+   },
+   "platform": {
+    "platform": "阿里云 PAI-DSW",
+    "gpu": [
+     "NVIDIA A10"
+    ],
+    "dtype": [
+     "torch.bfloat16"
+    ],
+    "torch": [
+     "2.6.0+cu124"
+    ]
+   },
+   "code": {
+    "version": "qwen4b_augb-v1.1（代码身份 adc19fa00971）",
+    "code_sha256": [
+     "502e638814ba"
+    ]
+   },
+   "metrics_dir": "metrics/qwen4b_augb_s1",
+   "seeds": [
+    "42",
+    "43",
+    "44"
+   ],
+   "scores_sym_wf1_mean": {
+    "oof": 0.8449
+   }
+  },
+  {
    "id": "AUGB-B0",
    "desc": "实验 B +1：B0，mDeBERTa CE 英语五折三种子（Kaggle）",
    "track": 1,
@@ -6978,6 +7164,77 @@
     "ci95": [
      -0.0126,
      0.0046
+    ]
+   }
+  },
+  {
+   "id": "Q4B-CMP-QB1-Q0",
+   "new": "Q4B-QB1",
+   "old": "Q4B-Q0",
+   "eval": "oof",
+   "purpose": "Qwen 4B +1 扩充阶段 1：fit + Haiku +1 生成行 对 只用 fit（同代码、同环境、同种子）",
+   "design": "单一计划改动",
+   "environment": "一致",
+   "unknown": [],
+   "note": "只改训练数据（加该折选用的 Haiku +1 生成行，每轮更新次数随之翻倍）。−0.53 个百分点（−1.27 / +0.30 / −0.62），95% [−1.32, +0.26]，按事先规则未证实 +1 优于 Q0，未运行阶段 2 的 Q-step1。plain 方向 +0.30 [−0.44, +1.05]。区间不包含重新训练随机性。",
+   "changed": {
+    "train_data": [
+     "track1 按家族五折，每折训练fit + 该折选用的 Haiku +1 生成行（清单 b380b4a6…，逐折选用 6f289cba…），内层验证选轮",
+     "track1 按家族五折，每折只训练fit，内层验证选轮"
+    ]
+   },
+   "lib_diff": {},
+   "platform_diff": {},
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 3042,
+    "families": 1725,
+    "per_seed": {
+     "42": -0.0127,
+     "43": 0.003,
+     "44": -0.0062
+    },
+    "mean": -0.0053,
+    "ci95": [
+     -0.0132,
+     0.0026
+    ]
+   }
+  },
+  {
+   "id": "Q4B-CMP-Q0-JOINT",
+   "new": "Q4B-Q0",
+   "old": "JOINT-QWEN",
+   "eval": "oof",
+   "purpose": "Qwen 4B：本队列重跑的 Q0 对 JOINT-QWEN（同配方，不同入口）",
+   "design": "重复运行（训练变量相同）",
+   "environment": "一致",
+   "unknown": [],
+   "note": "同配方重跑，入口不同（JOINT-QWEN 的 fold 0 来自第六组上游主入口、fold 1–4 来自联合驱动），只作描述；+0.65 [+0.23, +1.06]，说明重跑差和阶段 1 的效应同量级。",
+   "changed": {},
+   "lib_diff": {},
+   "platform_diff": {},
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 3042,
+    "families": 1725,
+    "per_seed": {
+     "42": 0.0073,
+     "43": 0.0073,
+     "44": 0.0049
+    },
+    "mean": 0.0065,
+    "ci95": [
+     0.0023,
+     0.0106
     ]
    }
   },

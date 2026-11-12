@@ -229,6 +229,36 @@ def qwen8b_run(rid):
             "evals": {"oof": {str(s): {m: preds(os.path.join(root, "oof", f"seed{s}_{m}.csv")) for m in ("plain", "sym")} for s in seeds}}}
 
 
+def qwen4b_augb_run(rid, group):
+    """Qwen 4B +1 扩充阶段 1：Q0 = fit、Q-B1 = fit + 该折选用的 Haiku +1 生成行（A10 bf16，qwen4b_augb v1.1 队列）。
+    OOF 由 code/claude_recheck_qwen4b_augb.py 从 cache.jsonl 重建并和队列写的 OOF 逐条比对。"""
+    root = os.path.join(M, "qwen4b_augb_s1")
+    seeds = [42, 43, 44]
+    tasks = [rj(os.path.join(root, "formal", group, f"seed{s}", f"fold{k}", "task.json")) for s in seeds for k in range(5)]
+    t = tasks[0]
+    for task in tasks:
+        assert not task["smoke"] and task["group"] == group and task["pipeline"] == t["pipeline"]
+        assert task["settings"]["lora"] == t["settings"]["lora"] and task["settings"]["train"] == t["settings"]["train"] and task["runtime"] == t["runtime"]
+    st, env = t["settings"], t["runtime"]
+    aug = t["augb_data"]
+    data = {"Q0": "track1 按家族五折，每折只训练fit，内层验证选轮",  # 和 JOINT-QWEN 的写法相同
+            "Q-B1": "track1 按家族五折，每折训练fit + 该折选用的 Haiku +1 生成行（清单 %s…，逐折选用 %s…），内层验证选轮"
+                    % (aug["augb_data/manifest.csv"][:8], aug["augb_data/fold_selection.csv"][:8])}[group]
+    variables = {"model": t["model"], "model_revision": t["revision"], "prompt": short(st["prompt_text"]),
+                 "split": dict(st["split"], holdout_fold="0–4"), "train_data": data,
+                 "method": "LoRA SFT，只算答案字母的交叉熵", "inference": "plain 和 sym（F / B 互换后平均）",
+                 "lora": st["lora"], "train": st["train"], "selection": "内层验证原方向 WF1，同分取早的",
+                 "lib": st["pins"], "data_sha256": t["data"]}
+    return {"id": rid, "desc": {"Q0": "Qwen3-4B CE SFT 英语五折三种子，原数据（Qwen 4B +1 扩充的 Q0）",
+                                "Q-B1": "Qwen3-4B CE SFT 英语五折三种子，原数据 + Haiku +1 生成数据（Q-B1）"}[group],
+            "track": 1, "variables": variables,
+            "platform": {"platform": "阿里云 PAI-DSW", "gpu": [env["gpu"]], "dtype": ["torch.bfloat16"], "torch": [env["torch"]]},
+            "code": {"version": t["version"] + "（代码身份 " + t["pipeline"][:12] + "）",
+                     "code_sha256": [rj(os.path.join(root, "MANIFEST.json"))["files"]["source/upstream_qwen.py"][:12]]},
+            "metrics_dir": "metrics/qwen4b_augb_s1", "seeds": [str(s) for s in seeds],
+            "evals": {"oof": {str(s): {m: preds(os.path.join(root, "oof", group, f"seed{s}_{m}.csv")) for m in ("plain", "sym")} for s in seeds}}}
+
+
 def augb_run(rid, group):
     """实验 B +1：B0 / B1-Haiku / step+1，英语五折三种子（Kaggle T4 fp16，GPT 的 train_augb.py v2）。
     OOF 由 code/claude_recheck_augb.py 从每个任务的四类概率重建。"""
@@ -369,6 +399,8 @@ RUNS = [
     ("JOINT-SCL", lambda: joint_run("JOINT-SCL", "scl")),
     ("JOINT-MOCO_M0.999", lambda: joint_run("JOINT-MOCO_M0.999", "moco_m0.999")),
     ("A1-QWEN8B", lambda: qwen8b_run("A1-QWEN8B")),
+    ("Q4B-Q0", lambda: qwen4b_augb_run("Q4B-Q0", "Q0")),
+    ("Q4B-QB1", lambda: qwen4b_augb_run("Q4B-QB1", "Q-B1")),
     ("AUGB-B0", lambda: augb_run("AUGB-B0", "B0")),
     ("AUGB-B1-HAIKU", lambda: augb_run("AUGB-B1-HAIKU", "B1-Haiku")),
     ("AUGB-STEP1", lambda: augb_run("AUGB-STEP1", "step+1")),
@@ -474,6 +506,8 @@ COMPARISONS = [
     ("AUGB-CMP-GD1-B1", "AUGB-G-D1", "AUGB-B1-HAIKU", "oof", "类别构成 D1 的生成数据 对 按原比例的生成数据（G_c − G_R；跨 v3 / v2 代码）"),
     ("AUGB-CMP-GO1-DUPO1", "AUGB-G-O1", "AUGB-DUP-O1", "oof", "类别构成 O1：生成数据 对 同构成的原数据重复采样（G_c − Dup_c，同代码同步数）"),
     ("AUGB-CMP-GO1-B1", "AUGB-G-O1", "AUGB-B1-HAIKU", "oof", "类别构成 O1 的生成数据 对 按原比例的生成数据（G_c − G_R；跨 v3 / v2 代码）"),
+    ("Q4B-CMP-QB1-Q0", "Q4B-QB1", "Q4B-Q0", "oof", "Qwen 4B +1 扩充阶段 1：fit + Haiku +1 生成行 对 只用 fit（同代码、同环境、同种子）"),
+    ("Q4B-CMP-Q0-JOINT", "Q4B-Q0", "JOINT-QWEN", "oof", "Qwen 4B：本队列重跑的 Q0 对 JOINT-QWEN（同配方，不同入口）"),
     ("A1-CMP-8B-4B", "A1-QWEN8B", "JOINT-QWEN", "oof", "实验 A：Qwen3-8B 对 Qwen3-4B-Instruct-2507（同划分、同种子、同配方；系统比较，模型不同）"),
     ("JOINT-CMP-QWEN", "JOINT-QWEN", "JOINT-CE", "oof", "英语五折配对比较：qwen 对 CE"),
     ("JOINT-CMP-KD", "JOINT-KD", "JOINT-CE", "oof", "英语五折配对比较：kd 对 CE"),
@@ -546,6 +580,8 @@ NOTES = {
     "AUGB-CMP-NLIINIT-B2": "两边改的是不同的东西（初始化对数据），只作描述。",
     "AUGB-CMP-DICE-B0": "同 AUGB-CMP-FOCAL-B0；Bonferroni 97.5% 区间 [−2.38, −0.25] 在 0 以下，Dice 显著更差（种子 43 的 fold 3 选在第 3 轮，留出 0.692）。两种 loss 都没过线，按冻结计划不做“增广 + 新 loss”的叠加。",
     "AUGB-CMP-B0-JOINTCE":"训练变量的记录方式不同，自动列出的差别多是写法；实际差别是卡和精度（T4 fp16 对 A10 bf16）、库版本，以及初始化和打乱的随机数流（B0 用 seed×1000+fold、每轮独立生成器）。B0 不是 JOINT-CE 的复现，只作参照。",
+    "Q4B-CMP-QB1-Q0": "只改训练数据（加该折选用的 Haiku +1 生成行，每轮更新次数随之翻倍）。−0.53 个百分点（−1.27 / +0.30 / −0.62），95% [−1.32, +0.26]，按事先规则未证实 +1 优于 Q0，未运行阶段 2 的 Q-step1。plain 方向 +0.30 [−0.44, +1.05]。区间不包含重新训练随机性。",
+    "Q4B-CMP-Q0-JOINT": "同配方重跑，入口不同（JOINT-QWEN 的 fold 0 来自第六组上游主入口、fold 1–4 来自联合驱动），只作描述；+0.65 [+0.23, +1.06]，说明重跑差和阶段 1 的效应同量级。",
     "A1-CMP-8B-4B": "登记的变量只差模型；未登记的分词器、聊天模板（8B 带空 think 块）和后训练方式也不同，所以是系统比较。按事先规则（均值 > 0 且区间下限 > 0）不算提升。区间不包含重新训练随机性。",
     "JOINT-CMP-QWEN": "使用共同种子；fold0已用于探索，五折并非独立隐藏测试。区间不包含重新训练随机性。",
     "JOINT-CMP-KD": "使用共同种子；fold0已用于探索，五折并非独立隐藏测试。区间不包含重新训练随机性。",

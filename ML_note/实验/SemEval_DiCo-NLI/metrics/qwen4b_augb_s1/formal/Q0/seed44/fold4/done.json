@@ -1,0 +1,112 @@
+{
+  "scores": {
+    "dev": {
+      "plain": {
+        "weighted_f1": 0.8211434373005402,
+        "soft_cons": 0.8339350180505415,
+        "hard_cons": 0.8050541516245487
+      },
+      "sym": {
+        "weighted_f1": 0.8518053247083711,
+        "soft_cons": 0.9422382671480144,
+        "hard_cons": 0.8916967509025271
+      }
+    },
+    "holdout": {
+      "plain": {
+        "weighted_f1": 0.8476353729781191,
+        "soft_cons": 0.8837209302325582,
+        "hard_cons": 0.8449612403100775
+      },
+      "sym": {
+        "weighted_f1": 0.8684208658676158,
+        "soft_cons": 0.9651162790697675,
+        "hard_cons": 0.9069767441860465
+      }
+    }
+  },
+  "stats": {
+    "inputs": 1446,
+    "scored_this_session": 1446,
+    "score_seconds_this_session": 61.9,
+    "mean_answer_mass": 0.9999,
+    "answer_mass_p05": 0.9996,
+    "answer_mass_below_0.5": 0,
+    "top_is_letter": 1.0
+  },
+  "history": [
+    {
+      "epoch": 1,
+      "train_loss": 1.21634164590102,
+      "val_weighted_f1": 0.7577913419078832,
+      "minutes": 5.6
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.37869585071291245,
+      "val_weighted_f1": 0.8142735331695989,
+      "minutes": 5.5
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.19059053446565355,
+      "val_weighted_f1": 0.8155352839782684,
+      "minutes": 5.6
+    }
+  ],
+  "best_epoch": 3,
+  "forward_check": {
+    "autocast_ce_path": [
+      true,
+      "torch.bfloat16"
+    ],
+    "autocast_hidden_path": [
+      true,
+      "torch.bfloat16"
+    ],
+    "max_letter_logprob_diff": 0.0,
+    "argmax_agreement": 1.0,
+    "rows": 8
+  },
+  "trainable_params": 33030144,
+  "steps": 414,
+  "steps_per_epoch": 138,
+  "train_minutes_last_session": 16.9,
+  "seconds_per_step": 2.39,
+  "resumed_from_epoch": 0,
+  "resume": {
+    "checkpoint": null,
+    "epoch": 0,
+    "files": [],
+    "skipped": []
+  },
+  "adapter_checks": [
+    {
+      "epoch": 3,
+      "tensors": 504,
+      "has_proj": false,
+      "val_argmax_agreement": 1.0,
+      "val_max_prob_diff": 0.0,
+      "val_weighted_f1": 0.8155352839782684,
+      "recorded_val_weighted_f1": 0.8155352839782684
+    }
+  ],
+  "load_memory": {
+    "before_load": {
+      "allocated_gib": 0.0,
+      "reserved_gib": 0.0
+    },
+    "after_load": {
+      "allocated_gib": 7.49,
+      "reserved_gib": 7.5
+    }
+  },
+  "peak_memory_gib": 8.79,
+  "fit_rows": 2200,
+  "val_rows": 234,
+  "fit_tokens": 435221,
+  "group": "Q0",
+  "fold": 4,
+  "seed": 44,
+  "seconds": 1077.642840385437
+}

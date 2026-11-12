@@ -1,0 +1,17 @@
+运行平台： PAI-DSW ；结果目录： /mnt/workspace/dico_qwen4b_augb
+模型下载地址： https://hf-mirror.com ；模型缓存： /mnt/workspace/dico_qwen4b_augb/hf_cache
+方法： ce {'lora_dropout': 0.0, 'loss': 'CE'} ；SMOKE： True
+模型快照： cdbee75f17c01a7cc42f958dc650907174af0554 ；读概率的字母 token： {'A': [32, 362], 'B': [33, 425], 'C': [34, 356], 'D': [35, 422]} ；训练目标 token： {'A': 362, 'B': 425, 'C': 356, 'D': 422}
+损失自检通过：监督对比、对称 KL 和逐条参考实现一致；autocast 里仍是 fp32；队列的环形写入正确
+Loading weights:   0%|          | 0/398 [00:00<?, ?it/s]Loading weights:   5%|▌         | 20/398 [00:00<00:01, 195.82it/s]Loading weights:  16%|█▌        | 64/398 [00:00<00:01, 331.93it/s]Loading weights:  28%|██▊       | 113/398 [00:00<00:00, 391.94it/s]Loading weights:  40%|███▉      | 158/398 [00:00<00:00, 405.21it/s]Loading weights:  51%|█████     | 202/398 [00:00<00:00, 416.70it/s]Loading weights:  62%|██████▏   | 247/398 [00:00<00:00, 420.09it/s]Loading weights:  73%|███████▎  | 291/398 [00:00<00:00, 424.63it/s]Loading weights:  84%|████████▍ | 335/398 [00:00<00:00, 424.76it/s]Loading weights:  95%|█████████▌| 379/398 [00:00<00:00, 428.58it/s]Loading weights: 100%|██████████| 398/398 [00:00<00:00, 414.26it/s]
+    加载模型：加载前已分配显存 0.01 GiB，加载后 7.5 GiB
+    从头训练
+[transformers] The tokenizer has new PAD/BOS/EOS tokens that differ from the model config and generation config. The model config and generation config were aligned accordingly, being updated with the tokenizer's values. Updated tokens: {'pad_token_id': 151643}.
+    前向核对：交叉熵路径 autocast (True, 'torch.bfloat16')，隐状态路径 (True, 'torch.bfloat16')；8 行的四类 log 概率最大差 0，argmax 一致 100%
+  0%|          | 0/2 [00:00<?, ?it/s] 50%|█████     | 1/2 [00:02<00:02,  2.68s/it]    第 1 轮：训练损失 -  内层验证 WF1 0.4737（目前最好是第 1 轮）
+    step 2/2  13.3 秒/步  这一组的训练预计还要 0 分钟
+100%|██████████| 2/2 [00:15<00:00,  8.91s/it]    第 2 轮：训练损失 -  内层验证 WF1 0.5283（目前最好是第 2 轮）
+                                             100%|██████████| 2/2 [00:26<00:00,  8.91s/it]100%|██████████| 2/2 [00:26<00:00, 13.37s/it]
+{'train_runtime': '27.65', 'train_samples_per_second': '1.157', 'train_steps_per_second': '0.072', 'train_loss': '9.289', 'epoch': '2'}
+    载入第 1 轮的权重：504 个张量和文件逐位相同；内层验证逐条预测和训练时一致 100.0%，概率最大差 0，WF1 0.4737（训练时 0.4737）
+    载入第 2 轮的权重：504 个张量和文件逐位相同；内层验证逐条预测和训练时一致 100.0%，概率最大差 0，WF1 0.5283（训练时 0.5283）
