@@ -7,7 +7,7 @@ code = lambda s: cells.append({"cell_type": "code", "metadata": {}, "execution_c
 
 md("""# A0：Q0 教师在 B2 生成行上的推理（Kaggle T4×2，fp16）
 
-研究对齐 v4 / v4.1。只做推理，不训练。
+研究对齐 v4 / v4.1，代码 v1.2（复现门槛修订）。只做推理，不训练。
 
 **准备**
 - 加两个数据集：A0 代码包 `a0_teacher_bundle`；Qwen 4B +1 阶段 1 的权重包，里面有 `formal/Q0/seed*/fold*/adapters/`。
@@ -25,6 +25,8 @@ from pathlib import Path
 # 1. 找代码包（含 teacher_a0.py 和 data/b2_inputs.json 的目录）
 cands = [Path(p).parent for p in glob.glob('/kaggle/input/**/teacher_a0.py', recursive=True) if (Path(p).parent / 'data/b2_inputs.json').is_file()]
 assert len(cands) >= 1, '没找到 A0 代码包：请把 a0_teacher_bundle 加为数据集'
+assert len(cands) == 1, f'找到 {len(cands)} 个 A0 代码包，只保留最新版那一个：{cands}'
+assert 'a0-teacher-v1.2' in (cands[0] / 'teacher_a0.py').read_text(encoding='utf-8'), '代码包不是 v1.2，请换成 a0_teacher_bundle_v1.2'
 src = cands[0]; BUNDLE = Path(WORK) / 'a0'
 if BUNDLE.exists(): shutil.rmtree(BUNDLE)
 shutil.copytree(src, BUNDLE)
@@ -65,11 +67,18 @@ print(f'装依赖和下模型用时 {(time.time() - t0) / 60:.1f} 分钟')""")
 code("""# SMOKE：fold 0 seed 42 的身份、内层验证重评、逐折复现门槛、前 128 条教师推理；脚本自己打包 a0_smoke.zip
 from IPython.display import FileLink, display
 t0 = time.time()
-sh(PY + ['smoke', '--root', ROOT, '--weights', *WEIGHTS], env={'A0_GPU': '0'}, log=ROOT + '/logs/smoke.log')
-shutil.copy2(ROOT + '/download/a0_smoke.zip', WORK + '/a0_smoke.zip')
-display(FileLink('a0_smoke.zip'))
+r = subprocess.run(PY + ['smoke', '--root', ROOT, '--weights', *WEIGHTS], env=dict(os.environ, A0_GPU='0'), text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+print(r.stdout[-6000:]); Path(ROOT, 'logs').mkdir(parents=True, exist_ok=True); Path(ROOT, 'logs', 'smoke.log').write_text(r.stdout)
 print(f'SMOKE 用时 {(time.time() - t0) / 60:.1f} 分钟')
-print('已完成：SMOKE。请把 a0_smoke.zip 发给 Claude；核对后把 RUN_FULL 改成 True，用 Save & Run All (Commit) 跑全量。')""")
+if r.returncode == 0:
+    shutil.copy2(ROOT + '/download/a0_smoke.zip', WORK + '/a0_smoke.zip'); display(FileLink('a0_smoke.zip'))
+    print('已完成：SMOKE。请把 a0_smoke.zip 发给 Claude；核对后把 RUN_FULL 改成 True，用 Save & Run All (Commit) 跑全量。')
+else:
+    f = Path(ROOT, 'download', 'a0_smoke_failed.zip')
+    if f.exists():
+        with zipfile.ZipFile(f, 'a') as z: z.write(Path(ROOT, 'logs', 'smoke.log'), 'logs/smoke.log')
+        shutil.copy2(f, WORK + '/a0_smoke_failed.zip'); display(FileLink('a0_smoke_failed.zip'))
+    raise SystemExit(f'SMOKE 没通过（退出码 {r.returncode}）：把 a0_smoke_failed.zip 发给 Claude，不要在这个会话里重跑')""")
 code("""# 全量：脚本起两个 worker（GPU0：fold 0、2、4；GPU1：fold 1、3），每折先 seed 42（含复现门槛）；两个都返回 0 才打结果包
 if RUN_FULL:
     t0 = time.time()

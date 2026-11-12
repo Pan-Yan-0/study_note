@@ -1,0 +1,194 @@
+{
+ "version": "a0-teacher-v1.1",
+ "fold": 0,
+ "seed": 42,
+ "smoke": true,
+ "best_epoch": 3,
+ "adapter_sha256": {
+  "adapter_model.safetensors": "e07c957b9ca4cd42a745d2d72da541f838ceb33fe50e5327d287665d6c8ba865",
+  "adapter_config.json": "319b7b74fcf2543e4f8e5b4d41bbd2e8b31e6afcf111cc4b8b12008b39e89631"
+ },
+ "load": {
+  "tensors": 504,
+  "dtype": "torch.float16"
+ },
+ "run_identity": {
+  "version": "a0-teacher-v1.1",
+  "code": {
+   "teacher_a0.py": "d6076b8100f8d3f97aa5297dd0df61a309d2f8164e82c14bab40507fe5e4fb47",
+   "q4b/upstream_qwen.py": "502e638814ba2b7a840f33aa3b481de1f1e0bf2887ff7d976dd86131d3b603b0",
+   "q4b/common.py": "4393c394f3c231df4f3b09ad59d4336526c3ef0f452e8a37f19222b55ef96df8",
+   "q4b/worker.py": "06e3f2a4d3aad0b49864abd772d6f32a95269632377d11d47688e2b66f563de7",
+   "q4b/expected_data.json": "414df842384464d895e25f6cb43d2a0baa81feedec78e5622c694383dabc4431"
+  },
+  "data": {
+   "b2_inputs.json": "5de72daf4b58c940eddd80f277693b7bee326882f299af55b4f0d170cb387297"
+  },
+  "bundle": "c029d4ccc97d5aabb89d4a4e0494960fdc207ae8447bbc1562a6309026b43f80",
+  "model": {
+   "revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+   "files_digest": "81321c57999e184fbeec540978e891721a35099f684756938ff6d79737c0fe3c"
+  },
+  "env": {
+   "gpu": "Tesla T4",
+   "torch": "2.11.0+cu128",
+   "cuda": "12.8",
+   "dtype": "torch.float16",
+   "model_revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+   "transformers": "5.19.0",
+   "peft": "0.21.2",
+   "accelerate": "1.15.0",
+   "datasets": "5.1.0"
+  },
+  "gate": {
+   "holdout_sym_agree": 0.99,
+   "max_abs_diff": 0.1,
+   "val_argmax_agree": 0.98
+  }
+ },
+ "device": {
+  "A0_GPU": "0",
+  "model_path": "/root/.cache/huggingface/hub/models--Qwen--Qwen3-4B-Instruct-2507/snapshots/cdbee75f17c01a7cc42f958dc650907174af0554"
+ },
+ "val_recheck": {
+  "rows": 244,
+  "returned": 244,
+  "argmax_agree": 0.9959016393442623,
+  "max_abs_diff": 0.09476098418235779,
+  "pass": true
+ },
+ "reproduction": {
+  "inputs": 1448,
+  "max_abs_diff": 0.18364493548870087,
+  "mean_abs_diff": 0.0023272657278716365,
+  "abs_diff_quantiles": {
+   "0.5": 8.64863395690918e-05,
+   "0.9": 0.004230320453643799,
+   "0.99": 0.04437023401260376,
+   "max": 0.18364493548870087
+  },
+  "argmax_flips": 4,
+  "holdout_rows": 608,
+  "holdout_sym_agree": 1.0,
+  "holdout_sym_disagree": 0,
+  "worst": {
+   "a": "Robber in Cannes",
+   "b": "Cannes thief",
+   "old_p": [
+    0.42941567301750183,
+    0.5513806343078613,
+    0.002553399186581373,
+    0.016650252044200897
+   ],
+   "new_p": [
+    0.24577073752880096,
+    0.7337359189987183,
+    0.0024094514083117247,
+    0.018083937466144562
+   ]
+  },
+  "flipped": [
+   {
+    "a": "radical cleric Abu Qatada",
+    "b": "of Abu Qatada",
+    "old_top2_gap": 0.0,
+    "new_top2_gap": 0.023214250802993774,
+    "old_p": [
+     0.0015761442482471466,
+     0.008004320785403252,
+     0.49520978331565857,
+     0.49520978331565857
+    ],
+    "new_p": [
+     0.0014018018264323473,
+     0.007941748946905136,
+     0.4837211072444916,
+     0.5069353580474854
+    ]
+   },
+   {
+    "a": "with Mandela family",
+    "b": "to Mandela",
+    "old_top2_gap": 0.0,
+    "new_top2_gap": 0.015428781509399414,
+    "old_p": [
+     0.0017791524296626449,
+     0.4933096468448639,
+     0.011601530946791172,
+     0.4933096468448639
+    ],
+    "new_p": [
+     0.0015713402535766363,
+     0.48604631423950195,
+     0.010907262563705444,
+     0.5014750957489014
+    ]
+   },
+   {
+    "a": "on a track",
+    "b": "the tracks",
+    "old_top2_gap": 0.0,
+    "new_top2_gap": 0.0767560601234436,
+    "old_p": [
+     0.0012215850874781609,
+     0.013133276253938675,
+     0.4928225576877594,
+     0.4928225576877594
+    ],
+    "new_p": [
+     0.001160718034952879,
+     0.014363120310008526,
+     0.4538600444793701,
+     0.5306161046028137
+    ]
+   },
+   {
+    "a": "Two people",
+    "b": "Couple",
+    "old_top2_gap": 0.17554065585136414,
+    "new_top2_gap": 0.014903068542480469,
+    "old_p": [
+     0.0358860082924366,
+     0.01695135235786438,
+     0.3858110010623932,
+     0.5613516569137573
+    ],
+    "new_p": [
+     0.03194888308644295,
+     0.014177230186760426,
+     0.48438844084739685,
+     0.4694853723049164
+    ]
+   }
+  ],
+  "low_mass_rows": 0,
+  "answer_tokens": {
+   "option_ids": [
+    [
+     32,
+     362
+    ],
+    [
+     33,
+     425
+    ],
+    [
+     34,
+     356
+    ],
+    [
+     35,
+     422
+    ]
+   ],
+   "target_ids": [
+    362,
+    425,
+    356,
+    422
+   ]
+  },
+  "pass": false
+ },
+ "status": "fail"
+}

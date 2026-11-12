@@ -35,14 +35,15 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE / "q4b"))
 SEEDS = (42, 43, 44)
-GATE = {"holdout_sym_agree": 0.99, "max_abs_diff": 0.10, "val_argmax_agree": 0.98}
+# 复现门槛（v1.2 修订，冻结计划 11-12 条目）：单条最大差只报告；改为 99% 的概率分量差 ≤ 0.10、单方向 argmax 翻转 ≤ 1%
+GATE = {"holdout_sym_agree": 0.99, "diff_q99": 0.10, "flip_rate": 0.01, "val_argmax_agree": 0.98}
 CHUNK = 64
 SMOKE_N = 128
 REV = "cdbee75f17c01a7cc42f958dc650907174af0554"
 MODEL = "Qwen/Qwen3-4B-Instruct-2507"
 LABELS = ["EQUIVALENCE", "FORWARD_ENTAILMENT", "BACKWARD_ENTAILMENT", "NEGATIVE_OTHER"]
 SWAP = [0, 2, 1, 3]
-VERSION = "a0-teacher-v1.1"
+VERSION = "a0-teacher-v1.2"
 PLAN = (("0", "0,2,4"), ("1", "1,3"))
 ENV_KEYS = ("gpu", "torch", "cuda", "dtype", "model_revision", "transformers", "peft", "accelerate", "datasets")
 
@@ -262,7 +263,7 @@ def top2_gap(p):
 
 def quantiles(xs):
     s = sorted(xs); n = len(s)
-    return {q: s[min(n - 1, int(q * n))] for q in (0.5, 0.9, 0.99)} | {"max": s[-1]}
+    return {str(q): s[min(n - 1, int(q * n))] for q in (0.5, 0.9, 0.99)} | {"max": s[-1]}
 
 
 def reproduce(teacher, fold, byid):
@@ -287,8 +288,17 @@ def reproduce(teacher, fold, byid):
            "flipped": [{"a": lines[i]["a"], "b": lines[i]["b"], "old_top2_gap": top2_gap(lines[i]["p"]), "new_top2_gap": top2_gap(new[i]["p"]),
                         "old_p": lines[i]["p"], "new_p": new[i]["p"]} for i in flips[:30]],
            "low_mass_rows": sum(r["mass"] < 0.9 for r in new), "answer_tokens": getattr(teacher, "answer_tokens", None)}
-    out["pass"] = agree >= GATE["holdout_sym_agree"] and out["max_abs_diff"] <= GATE["max_abs_diff"]
+    out["flip_rate"] = len(flips) / len(pairs)
+    out["pass"] = repro_ok(out)
     return out
+
+
+def repro_ok(rp):
+    """复现门槛：留出 sym 一致率、99% 分位的概率分量差、单方向 argmax 翻转率。单条最大差只报告（v1.2）。"""
+    q = (rp.get("abs_diff_quantiles") or {}).get("0.99")
+    return (isinstance(q, (int, float)) and math.isfinite(q) and rp.get("holdout_sym_agree", 0) >= GATE["holdout_sym_agree"]
+            and q <= GATE["diff_q99"] and isinstance(rp.get("flip_rate"), (int, float)) and rp["flip_rate"] <= GATE["flip_rate"]
+            and rp.get("argmax_flips") == round(rp["flip_rate"] * rp.get("inputs", 0)))
 
 
 def official_rows():
@@ -313,8 +323,7 @@ def accept(r, out, fold, seed, smoke, best, adapter_sha, n_inputs, n_val, rid):
     if seed == 42:
         rp = r.get("reproduction") or {}
         n_cache = sum(1 for l in open(archive(fold, 42) / "cache.jsonl", encoding="utf-8") if l.strip())
-        if not (rp.get("pass") is True and rp.get("inputs") == n_cache and rp.get("holdout_sym_agree", 0) >= GATE["holdout_sym_agree"]
-                and rp.get("max_abs_diff", 1) <= GATE["max_abs_diff"]):
+        if not (rp.get("pass") is True and rp.get("inputs") == n_cache and repro_ok(rp)):
             p.append("逐折复现未通过或输入数不对")
     elif "reproduction" in r:
         p.append("非 seed 42 的回执不应有复现")
@@ -362,7 +371,8 @@ def run_task(teacher, root, weights, fold, seed, byid, b2, smoke, rid):
     if bad: die("新写的回执没通过验收：" + "；".join(bad))
     wj(rec, receipt)
     print(f"完成：fold{fold} seed{seed}  内层验证一致 {receipt['val_recheck']['argmax_agree']:.3f}  "
-          + (f"复现 sym 一致 {receipt['reproduction']['holdout_sym_agree']:.3f} 最大差 {receipt['reproduction']['max_abs_diff']:.3g}  " if seed == 42 else "")
+          + (f"复现 sym 一致 {receipt['reproduction']['holdout_sym_agree']:.3f} 99% 分位差 {receipt['reproduction']['abs_diff_quantiles']['0.99']:.3g} "
+             f"翻转 {receipt['reproduction']['argmax_flips']} 最大差 {receipt['reproduction']['max_abs_diff']:.3g}  " if seed == 42 else "")
           + f"教师 {len(pairs)} 条  用时 {(time.time() - t0) / 60:.1f} 分钟", flush=True)
 
 
@@ -419,6 +429,11 @@ def finalize(root, weights):
 def full(root, weights, spawn=subprocess.Popen, poll_seconds=120):
     """两个 worker 并行；都返回 0 才 finalize。有非零的写 A0_FAILED.json 并只打诊断包。"""
     root = Path(root); (root / "logs").mkdir(parents=True, exist_ok=True)
+    old = root / "A0_FAILED.json"
+    if old.exists():  # 上一轮失败的记录移到 logs/，结果包里只留本轮的状态
+        k = 1
+        while (root / "logs" / f"A0_FAILED_previous_{k}.json").exists(): k += 1
+        os.replace(old, root / "logs" / f"A0_FAILED_previous_{k}.json")
     py = [sys.executable, "-I", str(HERE / "teacher_a0.py")]
     procs = []
     for gpu, folds in PLAN:
@@ -438,9 +453,12 @@ def full(root, weights, spawn=subprocess.Popen, poll_seconds=120):
     return finalize(root, weights)
 
 
-def smoke(root, weights):
+def smoke(root, weights, teacher_cls=Teacher):
     os.environ.setdefault("A0_GPU", "0")
-    run(root, weights, [0], True)
+    try:
+        run(root, weights, [0], True, teacher_cls)
+    except SystemExit:
+        pack(root, "a0_smoke_failed.zip", ("smoke", "logs")); raise
     r = rj(Path(root) / "smoke" / "fold0" / "seed42.json")
     print(json.dumps({k: r[k] for k in ("status", "val_recheck", "load", "seconds")} |
                      {"reproduction": {k: v for k, v in r["reproduction"].items() if k not in ("flipped",)}}, ensure_ascii=False, indent=1))

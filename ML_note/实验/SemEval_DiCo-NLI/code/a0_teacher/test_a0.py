@@ -24,6 +24,7 @@ class Fake:
     perturb = 0.0     # 复现时把这么多比例的输入改成另一类
     nan = False       # 教师推理时注入 NaN
     short_val = False  # 内层验证少返回一行
+    modify = None      # 复现输入的概率改写函数 (a, b, p) -> p，模拟精度差异
     env = dict(ENV)
 
     def __init__(self, root):
@@ -36,9 +37,10 @@ class Fake:
         byid = T.official_rows()
         self.val = T.val_inputs(fold, seed, byid)
         self.known = dict(zip(self.val, T.rj(a / "val_probs" / f"epoch{best}.json")))
+        self.cache = set()
         if seed == 42:
             for l in open(a / "cache.jsonl", encoding="utf-8"):
-                x = json.loads(l); self.known[(x["a"], x["b"])] = x["p"]
+                x = json.loads(l); self.known[(x["a"], x["b"])] = x["p"]; self.cache.add((x["a"], x["b"]))
         return {"tensors": 504, "dtype": "torch.float16"}
 
     def score(self, pairs):
@@ -50,6 +52,8 @@ class Fake:
                 if Fake.nan: p = [math.nan, 0.5, 0.25, 0.25]
             elif Fake.perturb and h(a + b) % 1000 < 1000 * Fake.perturb:
                 k = T.argmax(p); p = [0.0] * 4; p[(k + 1) % 4] = 1.0
+            elif Fake.modify and (a, b) in self.cache:
+                p = Fake.modify(a, b, list(p))
             out.append({"p": list(p), "mass": 0.999, "top_is_letter": True})
         if Fake.short_val and pairs == self.val: out = out[:-1]
         return out
@@ -75,7 +79,7 @@ def with_fake(fn):
         old = T.identity; T.identity = fake_identity
         try: fn()
         finally:
-            T.identity = old; Fake.perturb = 0.0; Fake.nan = False; Fake.short_val = False; Fake.env = dict(ENV); ADAPTER.clear()
+            T.identity = old; Fake.perturb = 0.0; Fake.nan = False; Fake.short_val = False; Fake.modify = None; Fake.env = dict(ENV); ADAPTER.clear()
     return run
 
 
@@ -151,6 +155,80 @@ def reproduction_gate_stops_fold_with_diagnostics():
     assert not (root / "teacher/fold3/seed42.jsonl").exists() and not (root / "teacher/fold3/seed43.json").exists()
     Fake.perturb = 0.0
     stopped(lambda: T.run(root, [], [3], False, Fake), 2)  # 失败回执阻止自动重跑
+    shutil.rmtree(root)
+
+
+def move(p, amount):
+    """把 amount 的概率从最大类挪到第二大类（不翻转时 amount 要小于间距的一半）。"""
+    s = sorted(range(4), key=lambda k: -p[k]); a = min(amount, p[s[0]]); p[s[0]] -= a; p[s[1]] += a; return p
+
+
+@case
+@with_fake
+def single_tail_row_passes_but_reports_max():
+    """v1.2：只有一条差得多、argmax 不变时通过，最大差照常记录。"""
+    root = new_root()
+    lines = [json.loads(l) for l in open(T.archive(0, 42) / "cache.jsonl", encoding="utf-8")]
+    gaps = sorted(((T.top2_gap(x["p"]), (x["a"], x["b"])) for x in lines), reverse=True)
+    target = gaps[0][1]  # 间距最大的一条，挪 0.3 也不翻转
+    Fake.modify = lambda a, b, p: move(p, 0.3) if (a, b) == target else p
+    T.run(root, [], [0], True, Fake)
+    rp = T.rj(root / "smoke/fold0/seed42.json")["reproduction"]
+    assert rp["pass"] and abs(rp["max_abs_diff"] - 0.3) < 1e-9 and rp["argmax_flips"] == 0 and rp["abs_diff_quantiles"]["0.99"] == 0
+    shutil.rmtree(root)
+
+
+@case
+@with_fake
+def broad_shift_or_many_flips_stop():
+    """v1.2：2% 的输入差 0.2（不翻转）→ 99% 分位超过 0.10，停；只在非留出输入上翻转 1.5% → 留出一致但翻转率超过 1%，停。"""
+    a = T.archive(1, 42)
+    byid = T.official_rows()
+    hold = {x for i in T.rj(a / "actual_split.json")["test"] for x in ((byid[i]["text1"], byid[i]["text2"]), (byid[i]["text2"], byid[i]["text1"]))}
+    lines = [json.loads(l) for l in open(a / "cache.jsonl", encoding="utf-8")]
+    wide = [(x["a"], x["b"]) for x in lines if T.top2_gap(x["p"]) > 0.5]
+    shift = set(wide[:int(0.02 * len(lines)) + 1])
+    root = new_root()
+    Fake.modify = lambda x, y, p: move(p, 0.2) if (x, y) in shift else p
+    stopped(lambda: T.run(root, [], [1], False, Fake), 3)
+    rp = T.rj(root / "teacher/fold1/seed42.json")["reproduction"]
+    assert not rp["pass"] and rp["argmax_flips"] == 0 and rp["abs_diff_quantiles"]["0.99"] > 0.10
+    shutil.rmtree(root)
+    other = [(x["a"], x["b"]) for x in lines if (x["a"], x["b"]) not in hold]
+    flip = set(other[:int(0.015 * len(lines)) + 1])
+    root = new_root()
+    Fake.modify = lambda x, y, p: move(p, 1.0) if (x, y) in flip else p
+    stopped(lambda: T.run(root, [], [1], False, Fake), 3)
+    rp = T.rj(root / "teacher/fold1/seed42.json")["reproduction"]
+    assert not rp["pass"] and rp["holdout_sym_agree"] == 1.0 and rp["flip_rate"] > 0.01
+    shutil.rmtree(root)
+
+
+@case
+@with_fake
+def receipt_with_old_gate_fields_is_rejected():
+    """篡改回执：删掉 flip_rate 或 99% 分位，验收不通过。"""
+    root = new_root()
+    T.run(root, [], [0], True, Fake)
+    rec = root / "smoke/fold0/seed42.json"
+    for drop in ("flip_rate", "abs_diff_quantiles"):
+        r = T.rj(rec); del r["reproduction"][drop]
+        out, _ = T.task_paths(root, 0, 42, True)
+        _, best, hashes = fake_identity([], 0, 42)
+        bad = T.accept(r, out, 0, 42, True, best, hashes, T.SMOKE_N, len(T.val_inputs(0, 42, T.official_rows())), r["run_identity"])
+        assert any("复现" in b for b in bad), drop
+    shutil.rmtree(root)
+
+
+@case
+@with_fake
+def smoke_failure_packs_diagnostics():
+    root = new_root()
+    Fake.perturb = 0.05
+    stopped(lambda: T.smoke(root, [], Fake), 3)
+    names = zipfile.ZipFile(root / "download/a0_smoke_failed.zip").namelist()
+    assert "smoke/fold0/seed42.json" in names and "source/teacher_a0.py" in names
+    assert not (root / "download/a0_smoke.zip").exists()
     shutil.rmtree(root)
 
 
@@ -251,6 +329,9 @@ def full_only_finalizes_when_both_workers_succeed():
     T.run(root, [], [0, 1, 2, 3, 4], False, Fake)
     T.full(root, [], spawn=lambda *a, **k: Proc(0), poll_seconds=0)
     assert (root / "download/a0_results.zip").exists()
+    assert not (root / "A0_FAILED.json").exists() and (root / "logs/A0_FAILED_previous_1.json").exists()
+    names = zipfile.ZipFile(root / "download/a0_results.zip").namelist()
+    assert "A0_FAILED.json" not in names and "logs/A0_FAILED_previous_1.json" in names
     shutil.rmtree(root)
 
 
