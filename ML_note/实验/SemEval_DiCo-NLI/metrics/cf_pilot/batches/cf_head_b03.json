@@ -1,0 +1,78 @@
+{
+ "batch_id": "cf_head_b03",
+ "op": "HEAD",
+ "prompt": "You are editing short English phrases for a phrase-level natural language inference dataset. The phrases are chunks like those in image captions or news headlines.\n\nEach item below gives two phrases, P1 and P2, that mean the same thing, and says which one to edit.\n\nWHAT TO DO\nIn the phrase you are told to edit, replace its head word (the main thing the phrase is about; for a verb phrase, the main verb) with a different word of the same kind, so that afterwards neither phrase follows from the other. Examples of good replacements: dog -> cat, guitar -> violin, running -> swimming.\n\nRULES\n1. Replace exactly one word. Keep every other word unchanged and in the same order; you may only switch \"a\" and \"an\" if the new word needs it.\n2. The new word must be of the same kind as the old one, but it must NOT be a synonym, a broader term (\"animal\" for \"dog\"), a narrower term (\"poodle\" for \"dog\"), a part or a whole of it, or just another form of the same word.\n3. The new word must not appear in the other phrase, and must not be a number.\n4. Keep the grammar correct (same singular or plural, same verb form).\n5. If no such edit is possible for an item, skip it and give a short reason instead of forcing an edit.\n6. Use only the information in this message. Do not open files, search the web or look at any other material.\n\nITEMS\n1. P1: \"a bird with blue plumage\" | P2: \"Blue bird\" | edit: P1\n2. P1: \"within the scene's background\" | P2: \"in the background\" | edit: P2\n3. P1: \"Ukrainian protesters\" | P2: \"Ukraine protesters\" | edit: P1\n4. P1: \"Brazilian leader\" | P2: \"Brazil leader\" | edit: P2\n5. P1: \"equities from China\" | P2: \"China 's stocks\" | edit: P1\n6. P1: \"Nobel Prize winning author Doris Lessing\" | P2: \"Nobel laureate Doris Lessing\" | edit: P2\n7. P1: \"Pussy Riot member Alyokhina\" | P2: \"Pussy Riot participant Maria Alyokhina\" | edit: P1\n8. P1: \"at Boston Marathon\" | P2: \"at the Boston Marathon event\" | edit: P2\n9. P1: \"Nelson Mandela himself\" | P2: \"Mandela\" | edit: P1\n10. P1: \"using its hood\" | P2: \"with its hood\" | edit: P2\n\nOUTPUT\nReturn only one JSON object and nothing else, with no Markdown code fence:\n{\"batch_id\": \"cf_head_b03\", \"edits\": [{\"k\": 1, \"new_phrase\": \"...\"}, {\"k\": 2, \"skip\": \"reason\"}, ...]}\nGive exactly one entry for each k from 1 to 10, in order. \"new_phrase\" is the whole edited phrase.\n",
+ "prompt_sha256": "e898614b7a62dc6eebcfbd17d9a3345a491e117214b0042e03eae77167490179",
+ "items": [
+  {
+   "k": 1,
+   "parent": "dico_phrasis_0001157__en-en__original",
+   "edit_side": "text1",
+   "orig": "a bird with blue plumage",
+   "other": "Blue bird"
+  },
+  {
+   "k": 2,
+   "parent": "dico_phrasis_0001220__en-en__original",
+   "edit_side": "text2",
+   "orig": "in the background",
+   "other": "within the scene's background"
+  },
+  {
+   "k": 3,
+   "parent": "dico_phrasis_0000642__en-en__original",
+   "edit_side": "text1",
+   "orig": "Ukrainian protesters",
+   "other": "Ukraine protesters"
+  },
+  {
+   "k": 4,
+   "parent": "dico_phrasis_0000976__en-en__original",
+   "edit_side": "text2",
+   "orig": "Brazil leader",
+   "other": "Brazilian leader"
+  },
+  {
+   "k": 5,
+   "parent": "dico_phrasis_0000719__en-en__original",
+   "edit_side": "text1",
+   "orig": "equities from China",
+   "other": "China 's stocks"
+  },
+  {
+   "k": 6,
+   "parent": "dico_phrasis_0000961__en-en__original",
+   "edit_side": "text2",
+   "orig": "Nobel laureate Doris Lessing",
+   "other": "Nobel Prize winning author Doris Lessing"
+  },
+  {
+   "k": 7,
+   "parent": "dico_phrasis_0000993__en-en__original",
+   "edit_side": "text1",
+   "orig": "Pussy Riot member Alyokhina",
+   "other": "Pussy Riot participant Maria Alyokhina"
+  },
+  {
+   "k": 8,
+   "parent": "dico_phrasis_0000955__en-en__original",
+   "edit_side": "text2",
+   "orig": "at the Boston Marathon event",
+   "other": "at Boston Marathon"
+  },
+  {
+   "k": 9,
+   "parent": "dico_phrasis_0000981__en-en__original",
+   "edit_side": "text1",
+   "orig": "Nelson Mandela himself",
+   "other": "Mandela"
+  },
+  {
+   "k": 10,
+   "parent": "dico_phrasis_0001294__en-en__original",
+   "edit_side": "text2",
+   "orig": "with its hood",
+   "other": "using its hood"
+  }
+ ]
+}

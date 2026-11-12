@@ -1,0 +1,78 @@
+{
+ "batch_id": "cf_spec_b03",
+ "op": "SPEC",
+ "prompt": "You are editing short English phrases for a phrase-level natural language inference dataset. The phrases are chunks like those in image captions or news headlines.\n\nEach item below gives two phrases, P1 and P2, that mean the same thing, and says which one to edit.\n\nWHAT TO DO\nInsert ONE restrictive modifier into the phrase you are told to edit, so that the edited phrase becomes strictly more specific than before: it still talks about the same thing, but now covers only some of the situations the original covered.\n\nRULES\n1. Insert 1 to 3 consecutive words: an adjective, a short adjective phrase, or a short prepositional phrase. Do not change, remove or reorder any existing word.\n2. Keep the head word, its meaning and the roles of the people or things in the scene.\n3. The modifier must really narrow the meaning. Do not add something redundant (\"wet water\"), a pure intensifier (\"very\"), or a detail that the other phrase already states or implies.\n4. Do not change time or truth: no \"former\", \"ex-\", \"future\", \"fake\", \"alleged\" and the like. Do not add numbers or quantities.\n5. Keep the style of the phrase: same use of capital letters and articles.\n6. If no such edit is possible for an item, skip it and give a short reason instead of forcing an edit.\n7. Use only the information in this message. Do not open files, search the web or look at any other material.\n\nITEMS\n1. P1: \"in Bethlehem\" | P2: \"within the city of Bethlehem\" | edit: P1\n2. P1: \"A large jet\" | P2: \"A large airplane\" | edit: P2\n3. P1: \"Red double decker bus\" | P2: \"A red two story bus\" | edit: P1\n4. P1: \"down the tracks\" | P2: \"along the railway tracks\" | edit: P2\n5. P1: \"Building collapses in India\" | P2: \"India building collapse\" | edit: P1\n6. P1: \"child sex abuse\" | P2: \"Sex Assaults On Children\" | edit: P2\n7. P1: \"After Florida Apartment Shooting\" | P2: \"after Fla. apartment shootout\" | edit: P1\n8. P1: \"from a tree\" | P2: \"originating from a tree\" | edit: P2\n9. P1: \"Iran , atomic agency\" | P2: \"IAEA , Iran\" | edit: P1\n10. P1: \"within the open field\" | P2: \"in the field\" | edit: P2\n\nOUTPUT\nReturn only one JSON object and nothing else, with no Markdown code fence:\n{\"batch_id\": \"cf_spec_b03\", \"edits\": [{\"k\": 1, \"new_phrase\": \"...\"}, {\"k\": 2, \"skip\": \"reason\"}, ...]}\nGive exactly one entry for each k from 1 to 10, in order. \"new_phrase\" is the whole edited phrase.\n",
+ "prompt_sha256": "dc9a3be72ba24be612e2d356a4c851f36e667a3180e04474908afe63e75b655e",
+ "items": [
+  {
+   "k": 1,
+   "parent": "dico_phrasis_0001074__en-en__original",
+   "edit_side": "text1",
+   "orig": "in Bethlehem",
+   "other": "within the city of Bethlehem"
+  },
+  {
+   "k": 2,
+   "parent": "dico_phrasis_0001301__en-en__original",
+   "edit_side": "text2",
+   "orig": "A large airplane",
+   "other": "A large jet"
+  },
+  {
+   "k": 3,
+   "parent": "dico_phrasis_0001213__en-en__original",
+   "edit_side": "text1",
+   "orig": "Red double decker bus",
+   "other": "A red two story bus"
+  },
+  {
+   "k": 4,
+   "parent": "dico_phrasis_0001228__en-en__original",
+   "edit_side": "text2",
+   "orig": "along the railway tracks",
+   "other": "down the tracks"
+  },
+  {
+   "k": 5,
+   "parent": "dico_phrasis_0001075__en-en__original",
+   "edit_side": "text1",
+   "orig": "Building collapses in India",
+   "other": "India building collapse"
+  },
+  {
+   "k": 6,
+   "parent": "dico_phrasis_0001018__en-en__original",
+   "edit_side": "text2",
+   "orig": "Sex Assaults On Children",
+   "other": "child sex abuse"
+  },
+  {
+   "k": 7,
+   "parent": "dico_phrasis_0000884__en-en__original",
+   "edit_side": "text1",
+   "orig": "After Florida Apartment Shooting",
+   "other": "after Fla. apartment shootout"
+  },
+  {
+   "k": 8,
+   "parent": "dico_phrasis_0001246__en-en__original",
+   "edit_side": "text2",
+   "orig": "originating from a tree",
+   "other": "from a tree"
+  },
+  {
+   "k": 9,
+   "parent": "dico_phrasis_0001061__en-en__original",
+   "edit_side": "text1",
+   "orig": "Iran , atomic agency",
+   "other": "IAEA , Iran"
+  },
+  {
+   "k": 10,
+   "parent": "dico_phrasis_0001254__en-en__original",
+   "edit_side": "text2",
+   "orig": "in the field",
+   "other": "within the open field"
+  }
+ ]
+}

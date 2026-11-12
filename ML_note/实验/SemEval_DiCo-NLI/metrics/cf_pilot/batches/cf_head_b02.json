@@ -1,0 +1,78 @@
+{
+ "batch_id": "cf_head_b02",
+ "op": "HEAD",
+ "prompt": "You are editing short English phrases for a phrase-level natural language inference dataset. The phrases are chunks like those in image captions or news headlines.\n\nEach item below gives two phrases, P1 and P2, that mean the same thing, and says which one to edit.\n\nWHAT TO DO\nIn the phrase you are told to edit, replace its head word (the main thing the phrase is about; for a verb phrase, the main verb) with a different word of the same kind, so that afterwards neither phrase follows from the other. Examples of good replacements: dog -> cat, guitar -> violin, running -> swimming.\n\nRULES\n1. Replace exactly one word. Keep every other word unchanged and in the same order; you may only switch \"a\" and \"an\" if the new word needs it.\n2. The new word must be of the same kind as the old one, but it must NOT be a synonym, a broader term (\"animal\" for \"dog\"), a narrower term (\"poodle\" for \"dog\"), a part or a whole of it, or just another form of the same word.\n3. The new word must not appear in the other phrase, and must not be a number.\n4. Keep the grammar correct (same singular or plural, same verb form).\n5. If no such edit is possible for an item, skip it and give a short reason instead of forcing an edit.\n6. Use only the information in this message. Do not open files, search the web or look at any other material.\n\nITEMS\n1. P1: \"five accused\" | P2: \"All five accused\" | edit: P1\n2. P1: \"directed at the camera\" | P2: \"at the camera\" | edit: P2\n3. P1: \"in Singapore hospital\" | P2: \"inside a medical facility in Singapore\" | edit: P1\n4. P1: \"with warning\" | P2: \"given warning\" | edit: P2\n5. P1: \"within a grass-covered field\" | P2: \"in a grassy field\" | edit: P1\n6. P1: \"seated on a chair\" | P2: \"on chair\" | edit: P2\n7. P1: \"to another man\" | P2: \"toward a second man\" | edit: P1\n8. P1: \"with a ferris wheel behind it\" | P2: \"in front of a ferris wheel\" | edit: P2\n9. P1: \"multi-colored blocks\" | P2: \"colored boxes\" | edit: P1\n10. P1: \"a train painted black\" | P2: \"Black train\" | edit: P2\n\nOUTPUT\nReturn only one JSON object and nothing else, with no Markdown code fence:\n{\"batch_id\": \"cf_head_b02\", \"edits\": [{\"k\": 1, \"new_phrase\": \"...\"}, {\"k\": 2, \"skip\": \"reason\"}, ...]}\nGive exactly one entry for each k from 1 to 10, in order. \"new_phrase\" is the whole edited phrase.\n",
+ "prompt_sha256": "bb706b4a4700435ab1b81e296136c13d80e63a97cb638a58f14f85a689673770",
+ "items": [
+  {
+   "k": 1,
+   "parent": "dico_phrasis_0000937__en-en__original",
+   "edit_side": "text1",
+   "orig": "five accused",
+   "other": "All five accused"
+  },
+  {
+   "k": 2,
+   "parent": "dico_phrasis_0001198__en-en__original",
+   "edit_side": "text2",
+   "orig": "at the camera",
+   "other": "directed at the camera"
+  },
+  {
+   "k": 3,
+   "parent": "dico_phrasis_0001039__en-en__original",
+   "edit_side": "text1",
+   "orig": "in Singapore hospital",
+   "other": "inside a medical facility in Singapore"
+  },
+  {
+   "k": 4,
+   "parent": "dico_phrasis_0000997__en-en__original",
+   "edit_side": "text2",
+   "orig": "given warning",
+   "other": "with warning"
+  },
+  {
+   "k": 5,
+   "parent": "dico_phrasis_0001319__en-en__original",
+   "edit_side": "text1",
+   "orig": "within a grass-covered field",
+   "other": "in a grassy field"
+  },
+  {
+   "k": 6,
+   "parent": "dico_phrasis_0001108__en-en__original",
+   "edit_side": "text2",
+   "orig": "on chair",
+   "other": "seated on a chair"
+  },
+  {
+   "k": 7,
+   "parent": "dico_phrasis_0000841__en-en__original",
+   "edit_side": "text1",
+   "orig": "to another man",
+   "other": "toward a second man"
+  },
+  {
+   "k": 8,
+   "parent": "dico_phrasis_0001292__en-en__original",
+   "edit_side": "text2",
+   "orig": "in front of a ferris wheel",
+   "other": "with a ferris wheel behind it"
+  },
+  {
+   "k": 9,
+   "parent": "dico_phrasis_0000755__en-en__original",
+   "edit_side": "text1",
+   "orig": "multi-colored blocks",
+   "other": "colored boxes"
+  },
+  {
+   "k": 10,
+   "parent": "dico_phrasis_0001227__en-en__original",
+   "edit_side": "text2",
+   "orig": "Black train",
+   "other": "a train painted black"
+  }
+ ]
+}

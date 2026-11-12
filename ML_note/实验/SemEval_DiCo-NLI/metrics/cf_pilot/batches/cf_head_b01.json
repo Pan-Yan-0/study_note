@@ -1,0 +1,78 @@
+{
+ "batch_id": "cf_head_b01",
+ "op": "HEAD",
+ "prompt": "You are editing short English phrases for a phrase-level natural language inference dataset. The phrases are chunks like those in image captions or news headlines.\n\nEach item below gives two phrases, P1 and P2, that mean the same thing, and says which one to edit.\n\nWHAT TO DO\nIn the phrase you are told to edit, replace its head word (the main thing the phrase is about; for a verb phrase, the main verb) with a different word of the same kind, so that afterwards neither phrase follows from the other. Examples of good replacements: dog -> cat, guitar -> violin, running -> swimming.\n\nRULES\n1. Replace exactly one word. Keep every other word unchanged and in the same order; you may only switch \"a\" and \"an\" if the new word needs it.\n2. The new word must be of the same kind as the old one, but it must NOT be a synonym, a broader term (\"animal\" for \"dog\"), a narrower term (\"poodle\" for \"dog\"), a part or a whole of it, or just another form of the same word.\n3. The new word must not appear in the other phrase, and must not be a number.\n4. Keep the grammar correct (same singular or plural, same verb form).\n5. If no such edit is possible for an item, skip it and give a short reason instead of forcing an edit.\n6. Use only the information in this message. Do not open files, search the web or look at any other material.\n\nITEMS\n1. P1: \"5 Palestinians\" | P2: \"Five Palestinians\" | edit: P1\n2. P1: \"in Canada train disaster\" | P2: \"in Canadian train wreck\" | edit: P2\n3. P1: \"a canine with black fur\" | P2: \"Black dog\" | edit: P1\n4. P1: \"A brown dog\" | P2: \"A tan dog\" | edit: P2\n5. P1: \"Nobel author Doris Lessing\" | P2: \"Nobel laureate Doris Lessing\" | edit: P1\n6. P1: \"at reporters ' dinner\" | P2: \"during press dinner\" | edit: P2\n7. P1: \"Top judge Mansour\" | P2: \"Justice Adly Mansour\" | edit: P1\n8. P1: \"on the brown horse\" | P2: \"mounted upon the brown-colored horse\" | edit: P2\n9. P1: \"of JFK 's death\" | P2: \"concerning the death of JFK\" | edit: P1\n10. P1: \"an aircraft painted red and white\" | P2: \"Red and white plane\" | edit: P2\n\nOUTPUT\nReturn only one JSON object and nothing else, with no Markdown code fence:\n{\"batch_id\": \"cf_head_b01\", \"edits\": [{\"k\": 1, \"new_phrase\": \"...\"}, {\"k\": 2, \"skip\": \"reason\"}, ...]}\nGive exactly one entry for each k from 1 to 10, in order. \"new_phrase\" is the whole edited phrase.\n",
+ "prompt_sha256": "218daf77c1ee1be1f2bc242fe9f2f67bb89f808d10bc37b4f10583029edd5913",
+ "items": [
+  {
+   "k": 1,
+   "parent": "dico_phrasis_0000945__en-en__original",
+   "edit_side": "text1",
+   "orig": "5 Palestinians",
+   "other": "Five Palestinians"
+  },
+  {
+   "k": 2,
+   "parent": "dico_phrasis_0000909__en-en__original",
+   "edit_side": "text2",
+   "orig": "in Canadian train wreck",
+   "other": "in Canada train disaster"
+  },
+  {
+   "k": 3,
+   "parent": "dico_phrasis_0000750__en-en__original",
+   "edit_side": "text1",
+   "orig": "a canine with black fur",
+   "other": "Black dog"
+  },
+  {
+   "k": 4,
+   "parent": "dico_phrasis_0000763__en-en__original",
+   "edit_side": "text2",
+   "orig": "A tan dog",
+   "other": "A brown dog"
+  },
+  {
+   "k": 5,
+   "parent": "dico_phrasis_0000691__en-en__original",
+   "edit_side": "text1",
+   "orig": "Nobel author Doris Lessing",
+   "other": "Nobel laureate Doris Lessing"
+  },
+  {
+   "k": 6,
+   "parent": "dico_phrasis_0000971__en-en__original",
+   "edit_side": "text2",
+   "orig": "during press dinner",
+   "other": "at reporters ' dinner"
+  },
+  {
+   "k": 7,
+   "parent": "dico_phrasis_0001059__en-en__original",
+   "edit_side": "text1",
+   "orig": "Top judge Mansour",
+   "other": "Justice Adly Mansour"
+  },
+  {
+   "k": 8,
+   "parent": "dico_phrasis_0001178__en-en__original",
+   "edit_side": "text2",
+   "orig": "mounted upon the brown-colored horse",
+   "other": "on the brown horse"
+  },
+  {
+   "k": 9,
+   "parent": "dico_phrasis_0000899__en-en__original",
+   "edit_side": "text1",
+   "orig": "of JFK 's death",
+   "other": "concerning the death of JFK"
+  },
+  {
+   "k": 10,
+   "parent": "dico_phrasis_0001110__en-en__original",
+   "edit_side": "text2",
+   "orig": "Red and white plane",
+   "other": "an aircraft painted red and white"
+  }
+ ]
+}
