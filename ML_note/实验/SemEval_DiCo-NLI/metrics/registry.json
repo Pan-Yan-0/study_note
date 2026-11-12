@@ -2545,6 +2545,210 @@
    }
   },
   {
+   "id": "AUGB-OLAT4",
+   "desc": "实验 B Commit 4：OLat4，mDeBERTa 英语五折三种子（Kaggle）",
+   "track": 1,
+   "variables": {
+    "model": "microsoft/mdeberta-v3-base",
+    "model_revision": "a0484667b22365f84929a935b5e50a51f71f159d",
+    "prompt": "不适用",
+    "train": {
+     "max_epochs": 12,
+     "lr": 2e-05,
+     "batch_size": 32,
+     "max_length": 96,
+     "warmup_ratio": 0.1,
+     "weight_decay": 0.01,
+     "gradient_clip": 1.0,
+     "precision": "fp16",
+     "seed_policy": "init=seed*1000+fold; per-epoch fresh shuffle RNG (not archived C0 RNG stream)",
+     "selection": "original_direction_weighted_f1，earliest"
+    },
+    "split": {
+     "folds": 5,
+     "fold_seed": 2027,
+     "inner_fraction": 0.1,
+     "holdout_fold": "0–4"
+    },
+    "method": "olat_head",
+    "method_params": "O 改为 4 个分量，z_O = logsumexp(z_O1..4) − log 4（fp32）；由 B0 的 O 行加 std 0.002、沿分量中心化的扰动初始化，偏置复制",
+    "data_sha256": {
+     "fold_selection.csv": "6f289cbac76e",
+     "manifest.csv": "b380b4a6a836",
+     "split_manifest.json": "f9363290af28"
+    },
+    "train_data": "track1 按家族五折，每折只训练 fit",
+    "selection": "original_direction_weighted_f1",
+    "inference": "plain 和 sym（F / B 互换后平均）",
+    "lib": {
+     "transformers": "4.57.6"
+    }
+   },
+   "platform": {
+    "platform": "Kaggle",
+    "gpu": [
+     "Tesla T4"
+    ],
+    "dtype": [
+     "fp16"
+    ],
+    "torch": [
+     "2.11.0+cu128"
+    ]
+   },
+   "code": {
+    "version": "train_augb_v5.py v5.2（Claude）",
+    "code_sha256": [
+     "7f3e01b36b8b"
+    ]
+   },
+   "metrics_dir": "metrics/augment_b/train_c4",
+   "seeds": [
+    "42",
+    "43",
+    "44"
+   ],
+   "scores_sym_wf1_mean": {
+    "oof": 0.7915
+   }
+  },
+  {
+   "id": "AUGB-NLIINIT",
+   "desc": "实验 B Commit 4：NLIinit，mDeBERTa 英语五折三种子（Kaggle）",
+   "track": 1,
+   "variables": {
+    "model": "microsoft/mdeberta-v3-base",
+    "model_revision": "a0484667b22365f84929a935b5e50a51f71f159d",
+    "prompt": "不适用",
+    "train": {
+     "max_epochs": 12,
+     "lr": 2e-05,
+     "batch_size": 32,
+     "max_length": 96,
+     "warmup_ratio": 0.1,
+     "weight_decay": 0.01,
+     "gradient_clip": 1.0,
+     "precision": "fp16",
+     "seed_policy": "init=seed*1000+fold; per-epoch fresh shuffle RNG (not archived C0 RNG stream)",
+     "selection": "original_direction_weighted_f1，earliest"
+    },
+    "split": {
+     "folds": 5,
+     "fold_seed": 2027,
+     "inner_fraction": 0.1,
+     "holdout_fold": "0–4"
+    },
+    "method": "nli_init",
+    "method_params": "照 B0 构造后，deberta.* 和 pooler.* 换成 MoritzLaurer/mDeBERTa-v3-base-xnli-multilingual-nli-2mil7 b5113eb3 的权重；4 类头、tokenizer、前向配置沿用 B0",
+    "data_sha256": {
+     "fold_selection.csv": "6f289cbac76e",
+     "manifest.csv": "b380b4a6a836",
+     "split_manifest.json": "f9363290af28"
+    },
+    "train_data": "track1 按家族五折，每折只训练 fit",
+    "selection": "original_direction_weighted_f1",
+    "inference": "plain 和 sym（F / B 互换后平均）",
+    "lib": {
+     "transformers": "4.57.6"
+    }
+   },
+   "platform": {
+    "platform": "Kaggle",
+    "gpu": [
+     "Tesla T4"
+    ],
+    "dtype": [
+     "fp16"
+    ],
+    "torch": [
+     "2.11.0+cu128"
+    ]
+   },
+   "code": {
+    "version": "train_augb_v5.py v5.2（Claude）",
+    "code_sha256": [
+     "7f3e01b36b8b"
+    ]
+   },
+   "metrics_dir": "metrics/augment_b/train_c4",
+   "seeds": [
+    "42",
+    "43",
+    "44"
+   ],
+   "scores_sym_wf1_mean": {
+    "oof": 0.8259
+   }
+  },
+  {
+   "id": "AUGB-BIBCE",
+   "desc": "实验 B Commit 4：BiBCE，mDeBERTa 英语五折三种子（Kaggle）",
+   "track": 1,
+   "variables": {
+    "model": "microsoft/mdeberta-v3-base",
+    "model_revision": "a0484667b22365f84929a935b5e50a51f71f159d",
+    "prompt": "不适用",
+    "train": {
+     "max_epochs": 12,
+     "lr": 2e-05,
+     "batch_size": 32,
+     "max_length": 96,
+     "warmup_ratio": 0.1,
+     "weight_decay": 0.01,
+     "gradient_clip": 1.0,
+     "precision": "fp16",
+     "seed_policy": "init=seed*1000+fold; per-epoch fresh shuffle RNG (not archived C0 RNG stream)",
+     "selection": "original_direction_weighted_f1，earliest"
+    },
+    "split": {
+     "folds": 5,
+     "fold_seed": 2027,
+     "inner_fraction": 0.1,
+     "holdout_fold": "0–4"
+    },
+    "method": "ce+bibce",
+    "method_params": "CE + 0.25·½[BCE(m_AB, t_AB) + BCE(m_BA, t_BA)]，m 为两个方向的边际 logit，fp32、autocast 之外",
+    "data_sha256": {
+     "fold_selection.csv": "6f289cbac76e",
+     "manifest.csv": "b380b4a6a836",
+     "split_manifest.json": "f9363290af28"
+    },
+    "train_data": "track1 按家族五折，每折只训练 fit",
+    "selection": "original_direction_weighted_f1",
+    "inference": "plain 和 sym（F / B 互换后平均）",
+    "lib": {
+     "transformers": "4.57.6"
+    }
+   },
+   "platform": {
+    "platform": "Kaggle",
+    "gpu": [
+     "Tesla T4"
+    ],
+    "dtype": [
+     "fp16"
+    ],
+    "torch": [
+     "2.11.0+cu128"
+    ]
+   },
+   "code": {
+    "version": "train_augb_v5.py v5.2（Claude）",
+    "code_sha256": [
+     "7f3e01b36b8b"
+    ]
+   },
+   "metrics_dir": "metrics/augment_b/train_c4",
+   "seeds": [
+    "42",
+    "43",
+    "44"
+   ],
+   "scores_sym_wf1_mean": {
+    "oof": 0.7963
+   }
+  },
+  {
    "id": "JOINT-QWEN",
    "desc": "Qwen CE SFT 英语五折三种子",
    "track": 1,
@@ -6184,6 +6388,178 @@
     "ci95": [
      -0.0099,
      0.0074
+    ]
+   }
+  },
+  {
+   "id": "AUGB-CMP-OLAT4-B0",
+   "new": "AUGB-OLAT4",
+   "old": "AUGB-C1-B0",
+   "eval": "oof",
+   "purpose": "Commit 4 三臂之一：O 潜在分量头对 B0（同数据、同步数、同随机数流；B0 复用 Commit 1，SMOKE 逐字节相同）",
+   "design": "系统比较（多处不同，不能归因到单个变量）",
+   "environment": "一致",
+   "unknown": [],
+   "note": "只改分类头；Bonferroni 98.33% 区间 [−1.06, +0.63] 含 0，不算提升。训练后 4 个分量的责任度仍是 0.25 左右、熵约等于 log 4，分量没有分化，所以这次只说明“这种初始化的潜在头没有用”，不能推出 Other 子类本身没有用。",
+   "changed": {
+    "method": [
+     "olat_head",
+     "ce"
+    ],
+    "method_params": [
+     "O 改为 4 个分量，z_O = logsumexp(z_O1..4) − log 4（fp32）；由 B0 的 O 行加 std 0.002、沿分量中心化的扰动初始化，偏置复制",
+     "无"
+    ]
+   },
+   "lib_diff": {},
+   "platform_diff": {},
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 3042,
+    "families": 1725,
+    "per_seed": {
+     "42": 0.0046,
+     "43": -0.0119,
+     "44": 0.0008
+    },
+    "mean": -0.0022,
+    "ci95": [
+     -0.0093,
+     0.0044
+    ]
+   }
+  },
+  {
+   "id": "AUGB-CMP-NLIINIT-B0",
+   "new": "AUGB-NLIINIT",
+   "old": "AUGB-C1-B0",
+   "eval": "oof",
+   "purpose": "Commit 4 三臂之一：多语 NLI 检查点初始化对 B0",
+   "design": "系统比较（多处不同，不能归因到单个变量）",
+   "environment": "一致",
+   "unknown": [],
+   "note": "只改编码器和池化层的初值（外部 NLI 数据，需在系统论文披露）；+3.22 个百分点，Bonferroni 98.33% [+1.56, +4.86]，三个种子都升，按事先规则算提升。四类 F1 都升，O 的误判（金标非 O 判成 O）减少约三成。区间不包含重新训练随机性。",
+   "changed": {
+    "method": [
+     "nli_init",
+     "ce"
+    ],
+    "method_params": [
+     "照 B0 构造后，deberta.* 和 pooler.* 换成 MoritzLaurer/mDeBERTa-v3-base-xnli-multilingual-nli-2mil7 b5113eb3 的权重；4 类头、tokenizer、前向配置沿用 B0",
+     "无"
+    ]
+   },
+   "lib_diff": {},
+   "platform_diff": {},
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 3042,
+    "families": 1725,
+    "per_seed": {
+     "42": 0.0351,
+     "43": 0.0272,
+     "44": 0.0344
+    },
+    "mean": 0.0322,
+    "ci95": [
+     0.0187,
+     0.0456
+    ]
+   }
+  },
+  {
+   "id": "AUGB-CMP-BIBCE-B0",
+   "new": "AUGB-BIBCE",
+   "old": "AUGB-C1-B0",
+   "eval": "oof",
+   "purpose": "Commit 4 三臂之一：CE 加双向辅助 BCE 对 B0",
+   "design": "系统比较（多处不同，不能归因到单个变量）",
+   "environment": "一致",
+   "unknown": [],
+   "note": "只加辅助损失；Bonferroni 98.33% [−0.63, +1.16] 含 0，不算提升。",
+   "changed": {
+    "method": [
+     "ce+bibce",
+     "ce"
+    ],
+    "method_params": [
+     "CE + 0.25·½[BCE(m_AB, t_AB) + BCE(m_BA, t_BA)]，m 为两个方向的边际 logit，fp32、autocast 之外",
+     "无"
+    ]
+   },
+   "lib_diff": {},
+   "platform_diff": {},
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 3042,
+    "families": 1725,
+    "per_seed": {
+     "42": 0.0104,
+     "43": -0.0071,
+     "44": 0.0048
+    },
+    "mean": 0.0027,
+    "ci95": [
+     -0.0045,
+     0.0101
+    ]
+   }
+  },
+  {
+   "id": "AUGB-CMP-NLIINIT-B2",
+   "new": "AUGB-NLIINIT",
+   "old": "AUGB-B2-HAIKU",
+   "eval": "oof",
+   "purpose": "描述：原数据 + NLI 初始化对 +2 生成数据（不同改动，系统比较）",
+   "design": "系统比较（多处不同，不能归因到单个变量）",
+   "environment": "一致",
+   "unknown": [],
+   "note": "两边改的是不同的东西（初始化对数据），只作描述。",
+   "changed": {
+    "method": [
+     "nli_init",
+     "ce"
+    ],
+    "method_params": [
+     "照 B0 构造后，deberta.* 和 pooler.* 换成 MoritzLaurer/mDeBERTa-v3-base-xnli-multilingual-nli-2mil7 b5113eb3 的权重；4 类头、tokenizer、前向配置沿用 B0",
+     "无"
+    ],
+    "train_data": [
+     "track1 按家族五折，每折只训练 fit",
+     "fit + 规模轮清单 24704e11 的第 1、2 层（+2，嵌套，第 1 层 = +1 的选用）"
+    ]
+   },
+   "lib_diff": {},
+   "platform_diff": {},
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 3042,
+    "families": 1725,
+    "per_seed": {
+     "42": -0.0048,
+     "43": -0.0105,
+     "44": -0.0033
+    },
+    "mean": -0.0062,
+    "ci95": [
+     -0.0182,
+     0.0051
     ]
    }
   },
