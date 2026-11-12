@@ -14,7 +14,7 @@ def rep(old, new):
 
 # ---------------------------------------------------------------- docstring, groups, queues, config
 rep('''"""DiCo-NLI AugB v6.1 (Claude, 11-12;''',
-    '''"""DiCo-NLI AugB v7 (Claude, 11-12): v6.1 + Commit 6 = DirEnt on B0 data with the NLI-checkpoint encoder. The four labels are
+    '''"""DiCo-NLI AugB v7.1 (Claude, 11-12): v6.1 + Commit 6 = DirEnt on B0 data with the NLI-checkpoint encoder. The four labels are
 recombined from one shared directional entailment score s(x, y) ("x entails y"): with a = sigmoid(s(A, B)), b = sigmoid(s(B, A)),
 P(E) = ab, P(F) = a(1 - b), P(B) = (1 - a)b, P(O) = (1 - a)(1 - b). Each training row supervises only its own order with
 BCE(s(A, B), t), t = 1 iff the label is E or F (fp32, outside autocast), so the training rows and forward passes equal B0's.
@@ -25,6 +25,10 @@ follow from the two decisions, so the swapped pair is the F <-> B mirror by cons
 Selection uses each model's native four-class inner-validation WF1 (DEC: the two-order recombination). NLIinit (Commit 4) is
 reused when its SMOKE equals the archived Commit 4 NLIinit SMOKE cell by cell (same mechanism as the B0 reuse); otherwise
 NLIinit is rerun in the same queue. Other groups take exactly the v6.1 path.
+v7.1 (after Codex's v7 review): with --stage full --workers > 1 a worker writes nothing outside its own tasks (preflight reports go to
+workers/w<k>/; input_data, official_reference.sha256 and model_revision.json must already exist from the single-process SMOKE and
+match); jsave uses a per-process temporary file; the formal entry checks every value of dec_checks.json against dec_checks' own
+pass conditions.
 
 v6.1 docstring follows.
 DiCo-NLI AugB v6.1 (Claude, 11-12;''')
@@ -48,7 +52,7 @@ rep('''"4": ["B0", "OLat1", "OLat4", "NLIinit", "BiBCE"], "5": ["B2-Haiku", "B2-
     '''"4": ["B0", "OLat1", "OLat4", "NLIinit", "BiBCE"], "5": ["B2-Haiku", "B2-NLIinit"],
                 "6": ["NLIinit", "DEC", "DEC-H"]}''')
 rep('''"code_version": "v6.1 (Claude): v5.2 + Commit 5 (B2-NLIinit against B2-Haiku); v6.1 = Commit 5 SMOKE gate after Codex's review",''',
-    '''"code_version": "v7 (Claude): v6.1 + Commit 6 (DirEnt: DEC / DEC-H against NLIinit)",''')
+    '''"code_version": "v7.1 (Claude): v6.1 + Commit 6 (DirEnt: DEC / DEC-H against NLIinit); v7.1 = parallel workers write no shared file, receipt values checked",''')
 rep('''"fp32 outside autocast; all arm changes inside torch.random.fork_rng",''',
     '''"fp32 outside autocast; all arm changes inside torch.random.fork_rng; "
                           "dec / dec_h (v7): one directional score s(x, y), P(E)=ab, P(F)=a(1-b), P(B)=(1-a)b, P(O)=(1-a)(1-b) with "
@@ -227,7 +231,8 @@ def dec_checks(device):
     _NLI_HEAD[:] = []
     feats = torch.randn(8, 16, generator=g).to(device)
     zz = feats @ W.to(device).T + bb.to(device)
-    diff = float((torch.sigmoid(st.classifier(feats)[:, 0]) - torch.softmax(zz, -1)[:, 0]).abs().max())
+    with torch.no_grad():  # v7.1: no float() of a tensor that requires grad (python -W error)
+        diff = float((torch.sigmoid(st.classifier(feats)[:, 0]) - torch.softmax(zz, -1)[:, 0]).abs().max())
     if not (info_h["head_equal_to_checkpoint"] and diff < 1e-6):
         die("DEC-H head install does not reproduce the given 3-way head")
     rep["install"] = {"dec_deterministic": True, "dec_rng_untouched": True, "dech_copy_exact": True, "dech_prob_max_abs": diff}
@@ -236,6 +241,49 @@ def dec_checks(device):
 
 
 DEC_NUMERIC_KEYS = ("bce_targets_EFBO", "bce_extreme", "recombination", "decision_rule", "dech_logodds_max_abs", "install")
+DEC_RULE_TABLE = {"zero_zero": 3, "pos_zero": 1, "zero_pos": 2, "swap_mirror": True}
+
+
+def _dec_numeric_ok(n):
+    """v7.1: the receipt's numeric values satisfy the same pass conditions dec_checks() applies (not just the keys)."""
+    if not isinstance(n, dict) or n.get("status") != "pass" or any(k not in n for k in DEC_NUMERIC_KEYS):
+        return False
+    t = n["bce_targets_EFBO"]
+    if not (isinstance(t, list) and len(t) == 2 and _fin(t[0], 0.0) and _fin(t[1], 0.0) and abs(t[0] - t[1]) <= 1e-6):
+        return False
+    if not _fin(n["bce_extreme"], 0.0):
+        return False
+    rc = n["recombination"]
+    if not (isinstance(rc, dict) and _fin(rc.get("max_abs_log_norm"), 0.0, 1e-9) and _fin(rc.get("max_abs_log_identity"), 0.0, 1e-6)
+            and rc.get("swap_mirror_exact") is True and rc.get("cells") == 81 and not isinstance(rc.get("cells"), bool)):
+        return False
+    dr = n["decision_rule"]
+    if not (isinstance(dr, dict) and dr == DEC_RULE_TABLE and all(isinstance(dr[k], int) and not isinstance(dr[k], bool)
+                                                                 for k in ("zero_zero", "pos_zero", "zero_pos")) and dr["swap_mirror"] is True):
+        return False
+    if not _fin(n["dech_logodds_max_abs"], 0.0, 1e-6):
+        return False
+    ins = n["install"]
+    return (isinstance(ins, dict) and ins.get("dec_deterministic") is True and ins.get("dec_rng_untouched") is True
+            and ins.get("dech_copy_exact") is True and _fin(ins.get("dech_prob_max_abs"), 0.0, 1e-6))
+
+
+def _dec_init_ok(it):
+    """v7.1: real-model init receipt values (DEC-H against the checkpoint's own entailment probability; DEC finite)."""
+    if not isinstance(it, dict) or it.get("status") != "pass":
+        return False
+    h, d = it.get("DEC-H"), it.get("DEC")
+    if not (isinstance(h, dict) and isinstance(d, dict)):
+        return False
+    hi, di = h.get("dec_init") or {}, d.get("dec_init") or {}
+    id2 = h.get("id2label") or {}
+    ent = h.get("ent_index")
+    return (_fin(h.get("max_abs_entail_prob_diff"), 0.0, 1e-5) and h.get("global_rng_restored") is True
+            and sorted(id2.values()) == ["contradiction", "entailment", "neutral"] and isinstance(ent, int) and not isinstance(ent, bool)
+            and id2.get(str(ent)) == "entailment" and hi.get("mode") == "nli_head" and hi.get("n_out") == 3
+            and hi.get("head_equal_to_checkpoint") is True and hi.get("ent_index") == ent
+            and d.get("finite") is True and _fin(d.get("score_abs_max"), 0.0) and d.get("global_rng_restored") is True
+            and di.get("mode") == "linear" and di.get("n_out") == 1)
 
 
 def dec_init_checks(model, revision, tokenizer, original, splits):
@@ -351,14 +399,13 @@ def commit6_smoke_problems(out, rev, info):
     sb = smoke_binding(out, "6")
     if None in sb.values() or a.get("smoke_binding") != sb:
         probs.append("dec_checks smoke_binding")
-    nm = a.get("numeric") or {}
-    if nm.get("status") != "pass" or any(k not in nm for k in DEC_NUMERIC_KEYS) or nm.get("decision_rule") != {
-            "zero_zero": 3, "pos_zero": 1, "zero_pos": 2, "swap_mirror": True} or not _fin(nm.get("dech_logodds_max_abs"), 0.0, 1e-6):
-        probs.append("dec_checks numeric")
-    it = a.get("init") or {}
-    if it.get("status") != "pass" or not _fin((it.get("DEC-H") or {}).get("max_abs_entail_prob_diff"), 0.0, 1e-5) \\
-            or (it.get("DEC") or {}).get("finite") is not True:
-        probs.append("dec_checks init")
+    for key, ok in (("numeric", _dec_numeric_ok), ("init", _dec_init_ok)):  # v7.1: values, not only keys
+        try:
+            good = ok(a.get(key))
+        except (AttributeError, KeyError, TypeError, ValueError, IndexError):
+            good = False
+        if not good:
+            probs.append("dec_checks " + key)
     z = a.get("zeroshot") or {}
     zp = Path(out) / "zeroshot_dech.csv"
     if z.get("rows") != 3042 or not zp.exists() or digest(zp) != z.get("sha256"):
@@ -620,9 +667,37 @@ rep('''        if nr["status"] != "pass":
             print("[NLIINIT REUSE] SMOKE %s, control identity %s: NLIinit is rerun under this code (15 extra tasks)"
                   % (nr["status"], "pass" if not cp else cp[:5]), flush=True)''')
 rep('''    zp = Path(out) / "zeroshot_dech.csv"''', '''    ci = a.get("control_identity") or {}
-    if ci.get("status") not in ("pass", "fail") or ci.get("tasks") != len(SEEDS) * len(FOLDS):
+    if (ci.get("status") not in ("pass", "fail") or ci.get("tasks") != len(SEEDS) * len(FOLDS) or not isinstance(ci.get("problems"), list)
+            or (ci.get("status") == "pass") != (ci.get("problems") == [])):
         probs.append("dec_checks control_identity")
     zp = Path(out) / "zeroshot_dech.csv"''')
+
+# ---------------------------------------------------------------- v7.1: concurrent formal workers never write shared files
+rep('''    temp = path.with_suffix(path.suffix + ".tmp")''', '''    temp = path.with_name(path.name + ".%d.tmp" % os.getpid())  # v7.1: per process''')
+rep('''    out=Path(args.out).resolve()
+    out.mkdir(parents=True,exist_ok=True)
+''', '''    out=Path(args.out).resolve()
+    out.mkdir(parents=True,exist_ok=True)
+    parallel = args.stage == "full" and args.workers > 1  # v7.1: such a worker writes only its own tasks and workers/w<k>/
+    rdir = out / "workers" / ("w%d" % args.worker) if parallel else out
+''')
+rep('''    gen, selected, splits, r = preflight_generated(bundle,out)''', '''    gen, selected, splits, r = preflight_generated(bundle,rdir)''')
+rep('''    jsave(out/"paired_plan_check.json",''', '''    jsave(rdir/"paired_plan_check.json",''')
+rep('''    original,fam_of,ro=preflight_official(bundle,root,selected,splits,out)''', '''    original,fam_of,ro=preflight_official(bundle,root,selected,splits,rdir)''')
+rep('''        if not target.exists():shutil.copy2(source,target)''', '''        if not target.exists():
+            if parallel:
+                die("Parallel worker: input_data/%s is missing; run --stage smoke in one process first" % file)
+            shutil.copy2(source,target)''')
+rep('''    shafile.write_text(reference_hash)''', '''    if parallel:
+        if not shafile.exists():
+            die("Parallel worker: official_reference.sha256 is missing; run --stage smoke in one process first")
+    else:
+        tmp_sha = shafile.with_name(shafile.name + ".%d.tmp" % os.getpid())
+        tmp_sha.write_text(reference_hash)
+        os.replace(tmp_sha, shafile)''')
+rep('''    rev=pin_model(args.model,out,args.model_revision)''', '''    if parallel and not (out/"model_revision.json").exists():
+        die("Parallel worker: model_revision.json is missing; run --stage smoke in one process first")
+    rev=pin_model(args.model,out,args.model_revision)''')
 
 open(dst, "w", encoding="utf-8").write(s)
 print("ok", dst)

@@ -1,4 +1,4 @@
-"""v7（Commit 6：DEC / DEC-H 对 NLIinit）的 CPU 测试，不需要 torch。
+"""v7.1（Commit 6：DEC / DEC-H 对 NLIinit）的 CPU 测试，不需要 torch。
 
 用真实训练包和官方数据跑 main()：torch / transformers 换成只报版本的假模块，pin_model 和 one_task 换成记录调用的桩，
 dec_checks（要真 torch）换成桩，所以只检查到"每个 worker 会按什么顺序跑哪些任务"为止，不训练。
@@ -6,7 +6,7 @@ dec_checks（要真 torch）换成桩，所以只检查到"每个 worker 会按�
 
   python3 -I test_v7.py <训练包目录> <官方仓库目录>
 """
-import hashlib, importlib.util, json, shutil, subprocess, sys, tempfile, types, unittest
+import hashlib, importlib.util, json, os, shutil, subprocess, sys, tempfile, types, unittest
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -23,7 +23,47 @@ NUMERIC = {"status": "pass", "bce_targets_EFBO": [0.7, 0.7], "bce_extreme": 2500
            "recombination": {"max_abs_log_norm": 0.0, "max_abs_log_identity": 0.0, "swap_mirror_exact": True, "cells": 81},
            "decision_rule": {"zero_zero": 3, "pos_zero": 1, "zero_pos": 2, "swap_mirror": True}, "dech_logodds_max_abs": 6e-8,
            "install": {"dec_deterministic": True, "dec_rng_untouched": True, "dech_copy_exact": True, "dech_prob_max_abs": 6e-8}}
-INIT = {"status": "pass", "DEC-H": {"max_abs_entail_prob_diff": 3e-7}, "DEC": {"finite": True}}
+ID2 = {"0": "entailment", "1": "neutral", "2": "contradiction"}
+INIT = {"status": "pass",  # as dec_init_checks() writes it
+        "DEC-H": {"max_abs_entail_prob_diff": 1.19e-7, "id2label": ID2, "ent_index": 0, "global_rng_restored": True,
+                  "dec_init": {"mode": "nli_head", "n_out": 3, "id2label": ID2, "ent_index": 0, "rest_index": [1, 2], "head_equal_to_checkpoint": True}},
+        "DEC": {"finite": True, "score_abs_max": 0.4, "global_rng_restored": True,
+                "dec_init": {"mode": "linear", "n_out": 1, "init_std": 0.02, "init_seed": 72000, "weight_abs_sum": 12.3}}}
+DRIVER = r'''
+import importlib.util, json, sys, time, types
+script, args = sys.argv[1], json.loads(sys.argv[2])
+spec = importlib.util.spec_from_file_location("tv7w", script)
+tv = importlib.util.module_from_spec(spec); spec.loader.exec_module(tv)
+info = args["info"]
+torch = types.ModuleType("torch"); torch.__version__ = info["torch"]
+torch.version = types.SimpleNamespace(cuda=info["cuda"])
+torch.cuda = types.SimpleNamespace(is_available=lambda: True, get_device_name=lambda i=0: info["gpu"])
+tr = types.ModuleType("transformers"); tr.__version__ = info["transformers"]
+tr.AutoTokenizer = types.SimpleNamespace(from_pretrained=lambda *a, **k: "tokenizer")
+sys.modules.update({"torch": torch, "transformers": tr})
+tv.dec_checks = lambda device: dict(args["numeric"], device=device)
+tv.pin_model = lambda *a, **k: args["rev"]
+tv.envinfo = lambda: dict(info)
+calls = []
+tv.one_task = lambda g, s, f, *a, smoke=False, **k: calls.append([g, s, f, smoke])
+real = tv.jsave
+def slow(path, data):  # widen any write window so overlapping workers would collide on a shared file
+    time.sleep(0.3); real(path, data); time.sleep(0.3)
+tv.jsave = slow
+sys.argv = ["train_augb_v7.py"] + args["argv"]
+tv.main()
+json.dump(calls, open(args["calls"], "w"))
+'''
+
+
+def tree(root, skip):
+    """sha256 and mtime of every file under root except the given top-level subtrees."""
+    res = {}
+    for p in sorted(Path(root).rglob("*")):
+        rel = p.relative_to(root)
+        if p.is_file() and not any(rel.parts[:len(k)] == k for k in skip):
+            res[str(rel)] = (sha(p), p.stat().st_mtime_ns)
+    return res
 
 
 def fake_modules(info):
@@ -99,6 +139,7 @@ class Commit6(unittest.TestCase):
         hashes = {n: sha(out / "input_data" / n) for n in tv.INPUT_NAMES}
         stable = {"gpu": info["gpu"], "precision": info["precision"]}
         tv.jsave(out / "environment.json", {"stable": stable, "model_revision": REV})
+        tv.jsave(out / "model_revision.json", {"model": tv.MODEL_ID, "revision": REV})
         shutil.copytree(bundle / "data_v7" / "c4_smoke_NLIinit", out / "smoke" / "NLIinit")
         p = out / "smoke" / "NLIinit" / "smoke.json"
         r = tv.jload(p); r["code_sha256"] = sha(SCRIPT); tv.jsave(p, r)
@@ -280,6 +321,20 @@ class Commit6(unittest.TestCase):
             "no_control": upd("dec_checks.json", lambda r: r.pop("control_identity")),
             "zeroshot": lambda tv, out: (out / "zeroshot_dech.csv").write_text("instance_id,s_ab,s_ba\n"),
             "other_code": upd("dec_checks.json", lambda r: r.update(code_sha256="0" * 64)),
+            # Codex v7 review: the formal entry accepted these three because it only checked that the keys exist
+            "mirror_false": upd("dec_checks.json", lambda r: r["numeric"]["recombination"].update(swap_mirror_exact=False)),
+            "rng_false": upd("dec_checks.json", lambda r: r["numeric"]["install"].update(dec_rng_untouched=False)),
+            "bce_negative": upd("dec_checks.json", lambda r: r["numeric"].update(bce_extreme=-1)),
+            "bce_hand_formula": upd("dec_checks.json", lambda r: r["numeric"].update(bce_targets_EFBO=[0.7, 0.71])),
+            "norm_error": upd("dec_checks.json", lambda r: r["numeric"]["recombination"].update(max_abs_log_norm=1e-6)),
+            "cells_bool": upd("dec_checks.json", lambda r: r["numeric"]["recombination"].update(cells=True)),
+            "rule_bool": upd("dec_checks.json", lambda r: r["numeric"]["decision_rule"].update(pos_zero=True)),
+            "copy_false": upd("dec_checks.json", lambda r: r["numeric"]["install"].update(dech_copy_exact=False)),
+            "prob_diff": upd("dec_checks.json", lambda r: r["numeric"]["install"].update(dech_prob_max_abs=1e-3)),
+            "init_rng": upd("dec_checks.json", lambda r: r["init"]["DEC"].update(global_rng_restored=False)),
+            "init_labels": upd("dec_checks.json", lambda r: r["init"]["DEC-H"].update(id2label={"0": "entailment", "1": "neutral", "2": "neutral"})),
+            "init_mode": upd("dec_checks.json", lambda r: r["init"]["DEC"]["dec_init"].update(mode="nli_head")),
+            "control_inconsistent": upd("dec_checks.json", lambda r: r["control_identity"].update(problems=["seed42/fold0 done"])),
         }
         for name, edit in cases.items():
             self.check_blocks(name, edit)
@@ -296,6 +351,64 @@ class Commit6(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "restored task"):
             self.run_main(out, "full")
         self.assertEqual(self.calls, [])
+
+    # ------------------------------------------------------------------ v7.1: parallel workers
+    def test_parallel_workers_write_no_shared_file(self):
+        """Codex v7 review: in --stage full with two workers, nothing outside workers/w<k>/ may be written (shared preflight reports,
+        official_reference.sha256 and input_data race otherwise). Covers a fresh queue and a resumed one."""
+        out = self.tmp / "run"
+        self.fake_smoke(out)
+        d = out / "tasks" / "DEC" / "seed43" / "fold1"  # a restored task from the same software
+        d.mkdir(parents=True)
+        (d / "done.json").write_text(json.dumps({"environment": INFO}))
+        before = tree(out, [("workers",)])
+        got = self.formal(out)
+        self.assertEqual(len(got), 30)
+        self.assertEqual(tree(out, [("workers",)]), before)
+        self.assertEqual(sorted(p.name for p in (out / "workers").iterdir()), ["w0", "w1"])
+        for w in ("w0", "w1"):
+            self.assertEqual(sorted(p.name for p in (out / "workers" / w).iterdir()),
+                             ["paired_plan_check.json", "preflight_generated.json", "preflight_official.json"])
+        self.assertFalse(list(out.rglob("*.tmp")))
+
+    def test_parallel_workers_need_smoke_shared_files(self):
+        for name in ("official_reference.sha256", "model_revision.json", "input_data/split_manifest.json"):
+            out = self.tmp / ("run_" + name.replace("/", "_"))
+            self.fake_smoke(out)
+            (out / name).unlink()
+            with self.assertRaisesRegex(RuntimeError, "Parallel worker: .*missing"):
+                self.run_main(out, "full", worker=1, workers=2)
+            self.assertEqual(self.calls, [], name)
+
+    def test_two_overlapping_worker_processes(self):
+        """Both workers start at once in separate processes (as in the notebook), each jsave slowed so that any write to a shared
+        file would overlap; both must exit 0, run 15 tasks each and leave the shared files untouched, also when resuming."""
+        out = self.tmp / "run"
+        self.fake_smoke(out)
+        drv = self.tmp / "driver" / "drive.py"
+        drv.parent.mkdir()
+        drv.write_text(DRIVER)
+        for rnd in ("fresh", "resume"):
+            before = tree(out, [("workers",)])
+            procs = []
+            for w in (0, 1):
+                a = {"info": INFO, "numeric": NUMERIC, "rev": REV, "calls": str(self.tmp / ("calls_%s_%d.json" % (rnd, w))),
+                     "argv": ["--stage", "full", "--bundle", str(BUNDLE), "--official", str(OFFICIAL), "--out", str(out),
+                              "--model-revision", REV, "--worker", str(w), "--workers", "2", "--commit", "6"]}
+                procs.append(subprocess.Popen([sys.executable, "-I", str(drv), str(SCRIPT), json.dumps(a)],
+                                              stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True))
+            outs = [p.communicate(timeout=600)[0] for p in procs]
+            self.assertEqual([p.returncode for p in procs], [0, 0], "\n".join(o[-2000:] for o in outs))
+            calls = [json.loads((self.tmp / ("calls_%s_%d.json" % (rnd, w))).read_text()) for w in (0, 1)]
+            self.assertEqual([len(c) for c in calls], [15, 15], rnd)
+            self.assertEqual(len({tuple(x) for c in calls for x in c}), 30, rnd)
+            self.assertEqual(tree(out, [("workers",)]), before, rnd)
+            self.assertFalse(list(out.rglob("*.tmp")), rnd)
+            if rnd == "fresh":  # the resume round starts with restored tasks of the same software
+                for g, s_, f in (("DEC", 42, 0), ("DEC-H", 44, 4)):
+                    d = out / "tasks" / g / ("seed%d" % s_) / ("fold%d" % f)
+                    d.mkdir(parents=True)
+                    (d / "done.json").write_text(json.dumps({"environment": INFO}))
 
     def test_preflight_needs_archived_nliinit_smoke(self):
         copy = self.tmp / "bundle_copy"

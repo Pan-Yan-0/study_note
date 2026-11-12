@@ -1,4 +1,4 @@
-"""Claude 对实验 B Commit 6（DirEnt：把四分类拆成两个方向的蕴含打分；DEC / DEC-H 对 Commit 4 的 NLIinit，英语五折三种子，
+"""Claude 对实验 B Commit 6（v7.1）（DirEnt：把四分类拆成两个方向的蕴含打分；DEC / DEC-H 对 Commit 4 的 NLIinit，英语五折三种子，
 Kaggle T4 fp16）的独立复核。运行前写定（11-12，冻结计划变更记录 Commit 6 条目），看结果后不改。
 
 有问题时仍写出诊断，但以非零状态退出，主比较只在 0 个问题时才能引用。
@@ -22,7 +22,7 @@ Kaggle T4 fp16）的独立复核。运行前写定（11-12，冻结计划变更�
    两条都过时，只把对 NLIinit 点估计增益更大的那一臂带进 +2 叠加（同分取 DEC）。
 8. 另报（描述，不作判定）：逐种子差、95% 区间；plain 方向的同样比较；SoftCons、HardCons；换序映射违例数（一对可逆行的两个预测
    不是 F ↔ B 镜像）；金标可逆、两个方向都预测成 O 的对数；O → F/B、E → F/B 的行数；逐类 F1；O 的漏判、误判、预测为 O 的行数；
-   sym 概率的 ECE（top-label，15 个等宽箱）；零样本 DEC-H（训练前的 NLI 检查点，3,042 行）的分数；DEC-H − DEC；
+   sym 概率的 ECE（top-label，15 个等宽箱；命中按实际评分的标签，置信度取该标签的概率）；零样本 DEC-H（训练前的 NLI 检查点，3,042 行）的分数；DEC-H − DEC；
    训练、逐轮验证、末轮 logits、最终预测的耗时；和 Commit 1 B0 的差（不同运行，只作参照）。
 
 用法：
@@ -47,7 +47,7 @@ L2I = {l: i for i, l in enumerate(LABELS)}
 SWAP = [0, 2, 1, 3]
 SEEDS, FOLDS = [42, 43, 44], [0, 1, 2, 3, 4]
 B, BOOT_SEED, M = 20000, 20261021, 2
-CODE_SHA = "8027e60d9c225b977effa563c705b2e8a2c54fce271d663b2dbb6757c7eee64f"  # train_augb_v7.py v7
+CODE_SHA = "d7cf722ef7b80584732f9f4eb1919c6f2d2d241e269bf87c39ed135be8b4c5fd"  # train_augb_v7.py v7.1
 NLI_SPEC = {"kind": "orig", "init": "nli", "init_model": "MoritzLaurer/mDeBERTa-v3-base-xnli-multilingual-nli-2mil7",
             "init_revision": "b5113eb38ab63efdd7f280f8c144ea8b13f978ce", "init_prefixes": ["deberta.", "pooler."]}
 NEW = {"DEC": {**NLI_SPEC, "head": "dec", "head_seed_offset": 30000, "loss": "dec_bce"},
@@ -118,11 +118,13 @@ def ap(y, s):
     return out
 
 
-def ece(gold_l, probs, bins=15):
+def ece(gold_l, probs, preds, bins=15):
+    """Top-label ECE: the hit is the label actually scored (for DEC the s > 0 rule, which differs from the four-class argmax at
+    ties), the confidence is that label's probability (Codex v7 review)."""
     tot, n = 0.0, len(gold_l)
     edges = [i / bins for i in range(bins + 1)]
-    conf = [max(p) for p in probs]
-    hit = [argmax(p) == g for p, g in zip(probs, gold_l)]
+    conf = [p[L2I[q]] for p, q in zip(probs, preds)]
+    hit = [q == g for q, g in zip(preds, gold_l)]
     for lo, hi in zip(edges[:-1], edges[1:]):
         idx = [i for i, c in enumerate(conf) if (lo < c <= hi) or (lo == 0 and c == 0)]
         if idx:
@@ -384,7 +386,7 @@ for g in GROUPS:
         scores[g][str(s)]["O_missed"] = sum(gold[i] == "NEGATIVE_OTHER" and sym[i] != "NEGATIVE_OTHER" for i in ids)
         scores[g][str(s)]["O_false_alarm"] = sum(gold[i] != "NEGATIVE_OTHER" and sym[i] == "NEGATIVE_OTHER" for i in ids)
         scores[g][str(s)]["pred_O"] = sum(sym[i] == "NEGATIVE_OTHER" for i in ids)
-        scores[g][str(s)]["ECE_sym"] = ece([gold[i] for i in ids], [pr[i] for i in ids])
+        scores[g][str(s)]["ECE_sym"] = ece([gold[i] for i in ids], [pr[i] for i in ids], [sym[i] for i in ids])
 if not rerun:  # the reused control's OOF must equal the Commit 4 archive
     for s in SEEDS:
         for mode in ("plain", "sym"):
@@ -396,7 +398,7 @@ zs = {r["instance_id"]: (float(r["s_ab"]), float(r["s_ba"])) for r in rcsv(f"{R}
 check(sorted(zs) == ids, "zeroshot_dech.csv 不是 3,042 行")
 zm = {i: dec_label(*zs[i]) for i in ids}
 zero = official(zm)
-zero.update(structure=structure(zm), pred_dist=dict(Counter(zm.values())), ECE=ece([gold[i] for i in ids], [dec_probs(*zs[i]) for i in ids]))
+zero.update(structure=structure(zm), pred_dist=dict(Counter(zm.values())), ECE=ece([gold[i] for i in ids], [dec_probs(*zs[i]) for i in ids], [zm[i] for i in ids]))
 zero_gap = max(abs(zs[rev_inst[i]][0] - zs[i][1]) for i in ids if rev_inst[i])
 
 # ---------- 比较 ----------

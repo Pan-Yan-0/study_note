@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""DiCo-NLI AugB v7 (Claude, 11-12): v6.1 + Commit 6 = DirEnt on B0 data with the NLI-checkpoint encoder. The four labels are
+"""DiCo-NLI AugB v7.1 (Claude, 11-12): v6.1 + Commit 6 = DirEnt on B0 data with the NLI-checkpoint encoder. The four labels are
 recombined from one shared directional entailment score s(x, y) ("x entails y"): with a = sigmoid(s(A, B)), b = sigmoid(s(B, A)),
 P(E) = ab, P(F) = a(1 - b), P(B) = (1 - a)b, P(O) = (1 - a)(1 - b). Each training row supervises only its own order with
 BCE(s(A, B), t), t = 1 iff the label is E or F (fp32, outside autocast), so the training rows and forward passes equal B0's.
@@ -11,6 +11,10 @@ follow from the two decisions, so the swapped pair is the F <-> B mirror by cons
 Selection uses each model's native four-class inner-validation WF1 (DEC: the two-order recombination). NLIinit (Commit 4) is
 reused when its SMOKE equals the archived Commit 4 NLIinit SMOKE cell by cell (same mechanism as the B0 reuse); otherwise
 NLIinit is rerun in the same queue. Other groups take exactly the v6.1 path.
+v7.1 (after Codex's v7 review): with --stage full --workers > 1 a worker writes nothing outside its own tasks (preflight reports go to
+workers/w<k>/; input_data, official_reference.sha256 and model_revision.json must already exist from the single-process SMOKE and
+match); jsave uses a per-process temporary file; the formal entry checks every value of dec_checks.json against dec_checks' own
+pass conditions.
 
 v6.1 docstring follows.
 DiCo-NLI AugB v6.1 (Claude, 11-12; v6.1 = Codex's v6 review: two actual SMOKE updates and current scale data required): v5.2 + Commit 5 = B2-NLIinit (the +2 data of B2-Haiku, NLI-checkpoint initialisation)
@@ -130,7 +134,7 @@ CONFIG = {"model": MODEL_ID, "max_epochs": 12, "lr": 2e-5,
           "train_loss": "cross_entropy", "augmentation": "plus_one_selected_rows",
           "smoke": "fold0_seed42_two_steps_per_group", "protocol": "AugB-Haiku-P1C-R",
           "seed_note": "init=seed*1000+fold; per-epoch fresh shuffle RNG (not archived C0 RNG stream)",
-          "code_version": "v7 (Claude): v6.1 + Commit 6 (DirEnt: DEC / DEC-H against NLIinit)",
+          "code_version": "v7.1 (Claude): v6.1 + Commit 6 (DirEnt: DEC / DEC-H against NLIinit); v7.1 = parallel workers write no shared file, receipt values checked",
           "arm_variants": "olat: classifier -> Linear(H, 3+K); z_O = logsumexp(z_O1..K) - log K in fp32; init = B0 head, O rows = B0 O row + "
                           "N(0, std^2) perturbation centred over components (own Generator, seed init_seed+20000), biases copied; "
                           "nli: after the B0 construction, deberta.* and pooler.* are overwritten from the pinned NLI checkpoint "
@@ -415,7 +419,8 @@ def dec_checks(device):
     _NLI_HEAD[:] = []
     feats = torch.randn(8, 16, generator=g).to(device)
     zz = feats @ W.to(device).T + bb.to(device)
-    diff = float((torch.sigmoid(st.classifier(feats)[:, 0]) - torch.softmax(zz, -1)[:, 0]).abs().max())
+    with torch.no_grad():  # v7.1: no float() of a tensor that requires grad (python -W error)
+        diff = float((torch.sigmoid(st.classifier(feats)[:, 0]) - torch.softmax(zz, -1)[:, 0]).abs().max())
     if not (info_h["head_equal_to_checkpoint"] and diff < 1e-6):
         die("DEC-H head install does not reproduce the given 3-way head")
     rep["install"] = {"dec_deterministic": True, "dec_rng_untouched": True, "dech_copy_exact": True, "dech_prob_max_abs": diff}
@@ -424,6 +429,49 @@ def dec_checks(device):
 
 
 DEC_NUMERIC_KEYS = ("bce_targets_EFBO", "bce_extreme", "recombination", "decision_rule", "dech_logodds_max_abs", "install")
+DEC_RULE_TABLE = {"zero_zero": 3, "pos_zero": 1, "zero_pos": 2, "swap_mirror": True}
+
+
+def _dec_numeric_ok(n):
+    """v7.1: the receipt's numeric values satisfy the same pass conditions dec_checks() applies (not just the keys)."""
+    if not isinstance(n, dict) or n.get("status") != "pass" or any(k not in n for k in DEC_NUMERIC_KEYS):
+        return False
+    t = n["bce_targets_EFBO"]
+    if not (isinstance(t, list) and len(t) == 2 and _fin(t[0], 0.0) and _fin(t[1], 0.0) and abs(t[0] - t[1]) <= 1e-6):
+        return False
+    if not _fin(n["bce_extreme"], 0.0):
+        return False
+    rc = n["recombination"]
+    if not (isinstance(rc, dict) and _fin(rc.get("max_abs_log_norm"), 0.0, 1e-9) and _fin(rc.get("max_abs_log_identity"), 0.0, 1e-6)
+            and rc.get("swap_mirror_exact") is True and rc.get("cells") == 81 and not isinstance(rc.get("cells"), bool)):
+        return False
+    dr = n["decision_rule"]
+    if not (isinstance(dr, dict) and dr == DEC_RULE_TABLE and all(isinstance(dr[k], int) and not isinstance(dr[k], bool)
+                                                                 for k in ("zero_zero", "pos_zero", "zero_pos")) and dr["swap_mirror"] is True):
+        return False
+    if not _fin(n["dech_logodds_max_abs"], 0.0, 1e-6):
+        return False
+    ins = n["install"]
+    return (isinstance(ins, dict) and ins.get("dec_deterministic") is True and ins.get("dec_rng_untouched") is True
+            and ins.get("dech_copy_exact") is True and _fin(ins.get("dech_prob_max_abs"), 0.0, 1e-6))
+
+
+def _dec_init_ok(it):
+    """v7.1: real-model init receipt values (DEC-H against the checkpoint's own entailment probability; DEC finite)."""
+    if not isinstance(it, dict) or it.get("status") != "pass":
+        return False
+    h, d = it.get("DEC-H"), it.get("DEC")
+    if not (isinstance(h, dict) and isinstance(d, dict)):
+        return False
+    hi, di = h.get("dec_init") or {}, d.get("dec_init") or {}
+    id2 = h.get("id2label") or {}
+    ent = h.get("ent_index")
+    return (_fin(h.get("max_abs_entail_prob_diff"), 0.0, 1e-5) and h.get("global_rng_restored") is True
+            and sorted(id2.values()) == ["contradiction", "entailment", "neutral"] and isinstance(ent, int) and not isinstance(ent, bool)
+            and id2.get(str(ent)) == "entailment" and hi.get("mode") == "nli_head" and hi.get("n_out") == 3
+            and hi.get("head_equal_to_checkpoint") is True and hi.get("ent_index") == ent
+            and d.get("finite") is True and _fin(d.get("score_abs_max"), 0.0) and d.get("global_rng_restored") is True
+            and di.get("mode") == "linear" and di.get("n_out") == 1)
 
 
 def dec_init_checks(model, revision, tokenizer, original, splits):
@@ -587,17 +635,17 @@ def commit6_smoke_problems(out, rev, info):
     sb = smoke_binding(out, "6")
     if None in sb.values() or a.get("smoke_binding") != sb:
         probs.append("dec_checks smoke_binding")
-    nm = a.get("numeric") or {}
-    if nm.get("status") != "pass" or any(k not in nm for k in DEC_NUMERIC_KEYS) or nm.get("decision_rule") != {
-            "zero_zero": 3, "pos_zero": 1, "zero_pos": 2, "swap_mirror": True} or not _fin(nm.get("dech_logodds_max_abs"), 0.0, 1e-6):
-        probs.append("dec_checks numeric")
-    it = a.get("init") or {}
-    if it.get("status") != "pass" or not _fin((it.get("DEC-H") or {}).get("max_abs_entail_prob_diff"), 0.0, 1e-5) \
-            or (it.get("DEC") or {}).get("finite") is not True:
-        probs.append("dec_checks init")
+    for key, ok in (("numeric", _dec_numeric_ok), ("init", _dec_init_ok)):  # v7.1: values, not only keys
+        try:
+            good = ok(a.get(key))
+        except (AttributeError, KeyError, TypeError, ValueError, IndexError):
+            good = False
+        if not good:
+            probs.append("dec_checks " + key)
     z = a.get("zeroshot") or {}
     ci = a.get("control_identity") or {}
-    if ci.get("status") not in ("pass", "fail") or ci.get("tasks") != len(SEEDS) * len(FOLDS):
+    if (ci.get("status") not in ("pass", "fail") or ci.get("tasks") != len(SEEDS) * len(FOLDS) or not isinstance(ci.get("problems"), list)
+            or (ci.get("status") == "pass") != (ci.get("problems") == [])):
         probs.append("dec_checks control_identity")
     zp = Path(out) / "zeroshot_dech.csv"
     if z.get("rows") != 3042 or not zp.exists() or digest(zp) != z.get("sha256"):
@@ -1105,7 +1153,7 @@ def jload(path):
 def jsave(path, data):
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    temp = path.with_suffix(path.suffix + ".tmp")
+    temp = path.with_name(path.name + ".%d.tmp" % os.getpid())  # v7.1: per process
     with open(temp, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2, sort_keys=True)
     os.replace(temp, path)
@@ -2127,9 +2175,11 @@ def main():
     bundle=locate_bundle(args.bundle)
     out=Path(args.out).resolve()
     out.mkdir(parents=True,exist_ok=True)
-    gen, selected, splits, r = preflight_generated(bundle,out)
+    parallel = args.stage == "full" and args.workers > 1  # v7.1: such a worker writes only its own tasks and workers/w<k>/
+    rdir = out / "workers" / ("w%d" % args.worker) if parallel else out
+    gen, selected, splits, r = preflight_generated(bundle,rdir)
     comparison_plans = [plan_for_fold(f, None, selected, splits) for f in FOLDS]
-    jsave(out/"paired_plan_check.json", {"status": "pass", "folds": comparison_plans})
+    jsave(rdir/"paired_plan_check.json", {"status": "pass", "folds": comparison_plans})
     print("[PREFLIGHT GENERATED PASS]",r["generated_pairs"],"pairs",r["generated_rows"],"rows; 5 folds checked",flush=True)
     if args.stage=="preflight" and not args.official:
         print("[PREFLIGHT PARTIAL] Original official dataset not provided, original split-family and label checks deferred.")
@@ -2137,7 +2187,7 @@ def main():
     if not args.official:
         die("--official is required for smoke/full/summary; add official repo as Kaggle input")
     root=official_root(args.official)
-    original,fam_of,ro=preflight_official(bundle,root,selected,splits,out)
+    original,fam_of,ro=preflight_official(bundle,root,selected,splits,rdir)
     print("[PREFLIGHT OFFICIAL PASS]",ro["original_rows"],"original rows; no family leakage",flush=True)
     load_v3_data(bundle, args.commit or "1", splits)
     print("[PREFLIGHT V3 PASS] commit", args.commit or "1", "data", {k: v[:12] for k, v in V3["hashes"].items()}, flush=True)
@@ -2169,12 +2219,21 @@ def main():
         source=bundle/"data"/file
         if target.exists() and digest(target)!=digest(source):
             die("Existing formal run uses another input: " + file)
-        if not target.exists():shutil.copy2(source,target)
+        if not target.exists():
+            if parallel:
+                die("Parallel worker: input_data/%s is missing; run --stage smoke in one process first" % file)
+            shutil.copy2(source,target)
     shafile=out/"official_reference.sha256"
     reference_hash=digest(root/"final_data/train/dico_nli_train_track1_reference.csv")
     if shafile.exists() and shafile.read_text().strip()!=reference_hash:
         die("Official dataset changed under same result folder")
-    shafile.write_text(reference_hash)
+    if parallel:
+        if not shafile.exists():
+            die("Parallel worker: official_reference.sha256 is missing; run --stage smoke in one process first")
+    else:
+        tmp_sha = shafile.with_name(shafile.name + ".%d.tmp" % os.getpid())
+        tmp_sha.write_text(reference_hash)
+        os.replace(tmp_sha, shafile)
     if args.stage=="summary":
         die("v3 does not summarise in the training script; results are rebuilt offline by code/claude_recheck_augb.py")
     import torch
@@ -2182,6 +2241,8 @@ def main():
         die("No GPU. Upload/run on Kaggle with GPU T4 selected")
     if "T4" not in torch.cuda.get_device_name(0).upper():
         die("Frozen AugB training environment requires Kaggle Tesla T4; got " + torch.cuda.get_device_name(0))
+    if parallel and not (out/"model_revision.json").exists():
+        die("Parallel worker: model_revision.json is missing; run --stage smoke in one process first")
     rev=pin_model(args.model,out,args.model_revision)
     info=envinfo()
     if args.workers == 1 or args.stage == "smoke":
