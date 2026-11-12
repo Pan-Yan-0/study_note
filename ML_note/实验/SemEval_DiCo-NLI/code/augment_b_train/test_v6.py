@@ -44,6 +44,23 @@ def sha(p):
     return hashlib.sha256(Path(p).read_bytes()).hexdigest()
 
 
+_V3 = {}
+
+
+def v3_hashes():
+    """V3 data hashes as a Commit 5 SMOKE on this bundle records them (smoke.json v3_data_sha256)."""
+    if not _V3:
+        tv = load("tv6_hashes")
+        tmp = Path(tempfile.mkdtemp())
+        try:
+            _, _, splits, _ = tv.preflight_generated(BUNDLE, tmp)
+            tv.load_v3_data(BUNDLE, "5", splits)
+            _V3.update(tv.V3["hashes"])
+        finally:
+            shutil.rmtree(tmp)
+    return dict(_V3)
+
+
 class Commit5(unittest.TestCase):
     def setUp(self):
         self.tmp = Path(tempfile.mkdtemp())
@@ -58,7 +75,7 @@ class Commit5(unittest.TestCase):
                 sys.modules[k] = v
         shutil.rmtree(self.tmp)
 
-    def run_main(self, out, stage, commit, worker=0, workers=1, info=INFO, extra=(), patch=None):
+    def run_main(self, out, stage, commit, worker=0, workers=1, info=INFO, extra=(), patch=None, bundle=BUNDLE):
         tv = load()
         if patch:
             patch(tv)
@@ -66,7 +83,7 @@ class Commit5(unittest.TestCase):
         tv.pin_model = lambda *a, **k: REV
         tv.envinfo = lambda: dict(info)
         tv.one_task = lambda g, s, f, *a, smoke=False, **k: self.calls.append((g, s, f, smoke))
-        argv = ["train_augb_v6.py", "--stage", stage, "--bundle", str(BUNDLE), "--official", str(OFFICIAL), "--out", str(out),
+        argv = ["train_augb_v6.py", "--stage", stage, "--bundle", str(bundle), "--official", str(OFFICIAL), "--out", str(out),
                 "--model-revision", REV, "--worker", str(worker), "--workers", str(workers)] + (["--commit", commit] if commit else []) + list(extra)
         old = sys.argv
         sys.argv = argv
@@ -89,11 +106,15 @@ class Commit5(unittest.TestCase):
             d.mkdir(parents=True, exist_ok=True)
             tv.jsave(d / "smoke.json", {"status": "pass", "code_sha256": sha(SCRIPT), "revision": REV, "input_hashes": hashes,
                                         "stable_environment": {"gpu": info["gpu"], "precision": info["precision"]}})
+            done = {"group": g, "environment": info}
             if commit == "5":
                 rec = tv.jload(d / "smoke.json")
-                rec["arm_report"] = None if g == "B2-Haiku" else dict(NLI_REPORT, nli_init=dict(NLI_REPORT["nli_init"]))
+                rec.update(updates=2, skips=0, output_path_checked=True, v3_data_sha256=v3_hashes(),
+                           grad_trace=[{"epoch": 1, "batch": b, "status": "updated", "grad_norm_unscaled_preclip": 4.0, "loss": 1.3} for b in (0, 1)],
+                           arm_report=None if g == "B2-Haiku" else dict(NLI_REPORT, nli_init=dict(NLI_REPORT["nli_init"])))
                 tv.jsave(d / "smoke.json", rec)
-            tv.jsave(d / "done.json", {"group": g, "environment": info})
+                done.update(actual_optimizer_updates=2, skipped_fp16_updates=0)
+            tv.jsave(d / "done.json", done)
         self.calls.clear()
 
     def test_rebuild_chain_is_byte_exact(self):
@@ -188,7 +209,7 @@ class Commit5(unittest.TestCase):
             tv = load()
             p = out / "smoke" / "B2-NLIinit" / "smoke.json"
             r = tv.jload(p); edit(r); tv.jsave(p, r)
-            with self.assertRaisesRegex(RuntimeError, "init record does not validate"):
+            with self.assertRaisesRegex(RuntimeError, "SMOKE records do not validate"):
                 self.run_main(out, "full", "5")
             self.assertEqual(self.calls, [], name)
         out = self.tmp / "run_haiku_arm"
@@ -197,6 +218,57 @@ class Commit5(unittest.TestCase):
         r = load().jload(p); r["arm_report"] = NLI_REPORT; load().jsave(p, r)
         with self.assertRaisesRegex(RuntimeError, "B2-Haiku arm_report"):
             self.run_main(out, "full", "5")
+
+    def edit_smoke(self, out, g, f):
+        tv = load()
+        for n in ("smoke.json", "done.json"):
+            p = out / "smoke" / g / n
+            r = tv.jload(p); f(n, r); tv.jsave(p, r)
+
+    def test_smoke_with_one_update_blocks(self):
+        """Codex v6 review: a CE control SMOKE with updates=1, skips=1 (trace and done.json consistent) must not open the queue."""
+        def one_skip(n, r):
+            if n == "smoke.json":
+                r.update(updates=1, skips=1)
+                r["grad_trace"][1]["status"] = "skipped_nonfinite_grad_norm"
+            else:
+                r.update(actual_optimizer_updates=1, skipped_fp16_updates=1)
+        for g in ("B2-Haiku", "B2-NLIinit"):
+            out = self.tmp / ("run_skip_" + g)
+            self.fake_smoke(out, "5")
+            self.edit_smoke(out, g, one_skip)
+            with self.assertRaisesRegex(RuntimeError, g + " two actual updates"):
+                self.run_main(out, "full", "5")
+            self.assertEqual(self.calls, [], g)
+        out = self.tmp / "run_nopath"
+        self.fake_smoke(out, "5")
+        self.edit_smoke(out, "B2-Haiku", lambda n, r: r.pop("output_path_checked", None))
+        with self.assertRaisesRegex(RuntimeError, "B2-Haiku two actual updates"):
+            self.run_main(out, "full", "5")
+
+    def test_changed_scale_data_after_smoke_blocks(self):
+        """Codex v6 review: change one selected +2 row in a bundle copy, rebind scale/gate.json; the old SMOKE must not be reused."""
+        tv = load()
+        copy = self.tmp / "bundle_copy"
+        shutil.copytree(BUNDLE, copy)
+        sd = copy / "data_v3" / "scale"
+        sel = tv.csvrows(sd / "fold_selection_scale.csv")
+        rows = tv.csvrows(sd / "manifest.csv")
+        chosen = {r["sample_id"] for r in sel if r["tier"] == "2"}  # a row selected for the +2 tier
+        hit = next(r for r in rows if r["sample_id"] in chosen)
+        hit["text1"] = hit["text1"] + " x"
+        with open(sd / "manifest.csv", "w", newline="", encoding="utf-8") as f:
+            import csv
+            w = csv.DictWriter(f, fieldnames=list(rows[0])); w.writeheader(); w.writerows(rows)
+        gate = tv.jload(sd / "gate.json"); gate["bound_to"]["manifest.csv"] = sha(sd / "manifest.csv"); tv.jsave(sd / "gate.json", gate)
+        out = self.tmp / "run"
+        self.fake_smoke(out, "5")  # SMOKE recorded on the original bundle
+        self.run_main(out, "preflight", "5", bundle=copy)  # the edited copy still passes preflight
+        with self.assertRaisesRegex(RuntimeError, "v3_data_sha256"):
+            self.run_main(out, "full", "5", bundle=copy)
+        self.assertEqual(self.calls, [])
+        self.run_main(out, "full", "5", worker=0, workers=2)  # unchanged bundle: the same SMOKE still opens the queue
+        self.assertEqual(len(self.calls), 15)
 
     def test_commit4_still_requires_arm_receipt(self):
         if not (BUNDLE / "data_v4" / "c1_smoke_B0").exists():

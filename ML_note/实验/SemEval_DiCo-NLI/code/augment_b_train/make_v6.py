@@ -12,11 +12,13 @@ def rep(old, new):
 
 
 rep('''"""DiCo-NLI AugB v5.2 (Claude, 11-12;''',
-    '''"""DiCo-NLI AugB v6 (Claude, 11-12): v5.2 + Commit 5 = B2-NLIinit (the +2 data of B2-Haiku, NLI-checkpoint initialisation)
+    '''"""DiCo-NLI AugB v6.1 (Claude, 11-12; v6.1 = Codex's v6 review: two actual SMOKE updates and current scale data required): v5.2 + Commit 5 = B2-NLIinit (the +2 data of B2-Haiku, NLI-checkpoint initialisation)
 against B2-Haiku rerun in the same queue (no B2 SMOKE was archived in Commit 2, so B2 is not reused). B2-NLIinit has the same
 rows, order and update schedule as B2-Haiku; the only change is the NLIinit arm of Commit 4. Commit 5 keeps the v5.1 software
 checks (workers and restored tasks must match the SMOKE run's torch / cuda / transformers), and its formal queue also requires
-the SMOKE B2-NLIinit to have loaded the pinned NLI encoder exactly as in Commit 4 (nli_smoke_problems).
+(commit5_smoke_problems) both SMOKE groups to have made exactly 2 actual updates on the current scale data and the SMOKE
+B2-NLIinit to have loaded the pinned NLI encoder exactly as in Commit 4; the Commit 5 SMOKE itself fails unless both
+groups make 2 actual updates.
 
 v5.2 docstring follows.
 DiCo-NLI AugB v5.2 (Claude, 11-12;''')
@@ -40,7 +42,7 @@ rep('''                "4": ["B0", "OLat1", "OLat4", "NLIinit", "BiBCE"]}''',
     '''                "4": ["B0", "OLat1", "OLat4", "NLIinit", "BiBCE"], "5": ["B2-Haiku", "B2-NLIinit"]}''')
 
 rep('''          "code_version": "v5.2 (Claude): v4.1 + OLat / NLIinit / BiBCE arms; Commit 4 software identity, receipt binding and complete receipt values",''',
-    '''          "code_version": "v6 (Claude): v5.2 + Commit 5 (B2-NLIinit against B2-Haiku)",''')
+    '''          "code_version": "v6.1 (Claude): v5.2 + Commit 5 (B2-NLIinit against B2-Haiku); v6.1 = Commit 5 SMOKE gate after Codex's review",''')
 
 rep('''    if commit == "2":
         sd = d / "scale"''', '''    if commit in ("2", "5"):  # v6: Commit 5 needs the +2 data too
@@ -79,15 +81,27 @@ rep('''    if args.commit == "4":
             if olat1_equivalence(out, write=False)["status"] != "pass":
                 die("OLat1 = B0 check fails on the SMOKE artifacts: formal queue blocked")
         if args.commit == "5":
-            probs = nli_smoke_problems(out)
+            probs = commit5_smoke_problems(out)
             if probs:
-                die("Commit 5 SMOKE init record does not validate %s: rerun --stage smoke --group all" % probs)
-        stale =env_mismatched_tasks(out, (["B0"] if args.commit == "4" else []) + COMMITS[args.commit], soft_env(info))''')
+                die("Commit 5 SMOKE records do not validate %s: rerun --stage smoke --group all" % probs)
+        stale = env_mismatched_tasks(out, (["B0"] if args.commit == "4" else []) + COMMITS[args.commit], soft_env(info))''')
 
-rep('''B0_REUSE_IGNORE_TASK = (''', '''def nli_smoke_problems(out):
-    """v6, Commit 5: the SMOKE B2-NLIinit must have loaded the pinned NLI encoder (200 tensors, 278,809,344 parameters,
-    only the B0 classifier kept, no forward-config difference, global RNG restored); B2-Haiku must have no arm."""
+rep('''B0_REUSE_IGNORE_TASK = (''', '''def commit5_smoke_problems(out):
+    """v6, Commit 5 formal entry (after Codex's v6 review): for both SMOKE groups, exactly 2 actual updates and 0 skips in
+    smoke.json, its grad_trace and done.json, the output path ran, and the scale data hashes equal the current V3 data;
+    the SMOKE B2-NLIinit must have loaded the pinned NLI encoder (200 tensors, 278,809,344 parameters, only the B0
+    classifier kept, no forward-config difference, global RNG restored); B2-Haiku must have no arm."""
     probs = []
+    for g in SMOKE_GROUPS["5"]:
+        sm = jload(Path(out) / "smoke" / g / "smoke.json")
+        dn = jload(Path(out) / "smoke" / g / "done.json")
+        tr = sm.get("grad_trace") or []
+        if not (sm.get("status") == "pass" and sm.get("updates") == 2 and sm.get("skips") == 0 and len(tr) == 2
+                and all(x.get("status") == "updated" for x in tr) and sm.get("output_path_checked") is True
+                and dn.get("actual_optimizer_updates") == 2 and dn.get("skipped_fp16_updates") == 0):
+            probs.append(g + " two actual updates")
+        if sm.get("v3_data_sha256") != V3.get("hashes") or not V3.get("hashes", {}).get("pool_order.json"):
+            probs.append(g + " v3_data_sha256")
     a = jload(Path(out) / "smoke" / "B2-Haiku" / "smoke.json").get("arm_report")
     if a is not None:
         probs.append("B2-Haiku arm_report")
@@ -101,6 +115,9 @@ rep('''B0_REUSE_IGNORE_TASK = (''', '''def nli_smoke_problems(out):
 
 
 B0_REUSE_IGNORE_TASK = (''')
+
+rep('''    if smoke and (loss_kind != "ce" or arm) and updates != 2:''',
+    '''    if smoke and (loss_kind != "ce" or arm or (RUN_COMMIT and RUN_COMMIT[0] == "5")) and updates != 2:  # v6: both Commit 5 groups''')
 
 open(dst, "w", encoding="utf-8").write(s)
 print("ok", dst)

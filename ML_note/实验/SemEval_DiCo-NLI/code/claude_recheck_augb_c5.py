@@ -9,6 +9,7 @@
    loss_variants、arm_variants）；训练行数、计划步数、v3 数据哈希、输入数据哈希都相同。
 3. B2-NLIinit 和本次 B2-Haiku（同种子同折）：task.json 只差 group 和 group_spec，group_spec = B2 的加上 Commit 4 NLIinit
    的四个 init 字段；GPU、精度、torch、cuda、transformers 相同；NLI 载入 200 个张量、278,809,344 个参数，只保留 classifier。
+   两组计划更新次数相同；实际更新和 fp16 跳步逐 fold / seed 报告两组的差（描述，跳步时 scheduler 也不前进）。
 4. 训练记录：实际更新 + fp16 跳步 = 计划步数；选中轮 = 内层验证原方向 WF1 最高、同分取早；内层验证预测重算等于记录。
 5. 分数：拼成 3,042 行折外预测，用官方评分模块算原方向和对称化的 WF1 / SoftCons / HardCons。
 6. 主比较（只有一条）：B2-NLIinit − B2-Haiku（本次重跑），sym WF1。每次重抽样从 1,725 个家族有放回地抽
@@ -41,7 +42,7 @@ L2I = {l: i for i, l in enumerate(LABELS)}
 SWAP = [0, 2, 1, 3]
 SEEDS, FOLDS = [42, 43, 44], [0, 1, 2, 3, 4]
 B, BOOT_SEED, M = 20000, 20261021, 1
-CODE_SHA = "bdf1d2a6870d8c7d5186dde3368e734664096c2d7d9c3689655820073128e103"  # train_augb_v6.py v6
+CODE_SHA = "50c800620fbc9d5f53dcad5dffba3c8821b83aee28f7d567554dd887488e60ad"  # train_augb_v6.py v6.1
 B2_SPEC = {"kind": "gen", "k": 2}
 NLI_INIT = {"init": "nli", "init_model": "MoritzLaurer/mDeBERTa-v3-base-xnli-multilingual-nli-2mil7",
             "init_revision": "b5113eb38ab63efdd7f280f8c144ea8b13f978ce", "init_prefixes": ["deberta.", "pooler."]}
@@ -311,9 +312,17 @@ mean_scores = {g: {mode: {m: sum(scores[g][str(s)][mode][m] for s in SEEDS) / 3 
 o_desc = {g: {k: {str(s): scores[g][str(s)][k] for s in SEEDS} for k in ("O_AP_sym", "O_missed", "O_false_alarm", "pred_O")} for g in NEW}
 per_class = {g: {l: sum(scores[g][str(s)]["sym"]["per_class_f1"][l] for s in SEEDS) / 3 for l in LABELS} for g in NEW}
 check(len(updates) == 30, f"任务数 {len(updates)} 不对")
+by = {(u["group"], u["seed"], u["fold"]): u for u in updates}
+update_diff = [{"seed": s, "fold": k, "planned": by[("B2-Haiku", s, k)]["planned"],
+                "actual_B2-Haiku": by[("B2-Haiku", s, k)]["actual"], "actual_B2-NLIinit": by[("B2-NLIinit", s, k)]["actual"],
+                "actual_diff": by[("B2-NLIinit", s, k)]["actual"] - by[("B2-Haiku", s, k)]["actual"],
+                "skipped_B2-Haiku": by[("B2-Haiku", s, k)]["skipped"], "skipped_B2-NLIinit": by[("B2-NLIinit", s, k)]["skipped"]}
+               for s in SEEDS for k in FOLDS if ("B2-Haiku", s, k) in by and ("B2-NLIinit", s, k) in by]
+for u in update_diff:
+    check(by[("B2-NLIinit", u["seed"], u["fold"])]["planned"] == u["planned"], f"seed{u['seed']} fold{u['fold']} 两组计划更新次数不同")
 out = {"problems": problems, "tasks": len(updates), "scores_by_seed": scores, "scores_mean": mean_scores, "per_class_f1_sym_mean": per_class,
        "O_descriptive": o_desc, "main_comparison": main, "plain": res["plain"], "descriptive_sym": res["sym"]["descriptive"],
-       "point_sym": res["sym"]["point"], "b2_reproduction_vs_c2": repro, "nli_init": nli_rec, "updates": updates,
+       "point_sym": res["sym"]["point"], "b2_reproduction_vs_c2": repro, "update_diff": update_diff, "nli_init": nli_rec, "updates": updates,
        "rule": "B2-NLIinit − B2-Haiku（本次重跑，sym WF1）：均值 > 0 且双侧 95% 区间下限 > 0；20,000 次家族重抽样，各组三种子共用；区间不含重新训练的随机性"}
 json.dump(out, open(f"{R}/claude_recheck.json", "w", encoding="utf-8"), ensure_ascii=False, indent=1)
 print("问题：", problems[:20] if problems else "无", len(problems), "| 核对的任务", len(updates), "（应为 30）")
@@ -325,5 +334,7 @@ print("主比较 B2-NLIinit − B2-Haiku", {s: round(x * 100, 2) for s, x in mai
 for k, v in res["sym"]["descriptive"].items():
     print("  描述", k, round(v["mean"] * 100, 2), [round(x * 100, 2) for x in v["ci95"]])
 print("B2 重跑和 Commit 2 逐字节相同的预测文件：", sum(r["predictions.csv"] for r in repro), "/ 15")
+print("实际更新差（B2-NLIinit − B2-Haiku）逐 seed / fold：", [u["actual_diff"] for u in update_diff],
+      "| 跳步 B2-Haiku", [u["skipped_B2-Haiku"] for u in update_diff], "B2-NLIinit", [u["skipped_B2-NLIinit"] for u in update_diff])
 if problems:
     sys.exit(2)
