@@ -29,6 +29,7 @@
 | 实验B +1 | mDeBERTa CE：B0 / B1-Haiku / step+1（Kaggle T4） | 英语五折三种子，45项、9套OOF | [实验B +1结果](metrics/augment_b/train_plus1/README.md) |
 | 实验B Commit 1 | mDeBERTa CE：B0 / W2 / W4 / step+2 / step+4 / Dup×5（Kaggle T4） | 英语五折三种子，150项；类别加权按规则不算提升，原数据重复在+1之后饱和 | [Commit 1结果](metrics/augment_b/train_c1/README.md) |
 | 实验B Commit 2 | mDeBERTa CE：B2-Haiku / B4-Haiku / G×5（Kaggle T4） | 英语五折三种子，105项；+2 / +4对同步数的原数据重复都显著更好，规模在+2饱和；类别构成都不比按原比例生成更好 | [Commit 2结果](metrics/augment_b/train_c2/README.md) |
+| 实验B Commit 6 | mDeBERTa：DirEnt 方向分解 DEC / DEC-H 对 NLIinit（Kaggle T4，NLIinit 复用 Commit 4） | 英语五折三种子，30项；DEC −1.69、DEC-H −2.07，区间都不含0，显著更差 | [Commit 6结果](metrics/augment_b/train_c6/README.md) |
 | 实验B Commit 5 | mDeBERTa：B2 / B2-NLIinit（Kaggle T4） | 英语五折三种子，30项；B2-NLIinit − B2 +0.38、区间含0，不算提升 | [Commit 5结果](metrics/augment_b/train_c5/README.md) |
 | Qwen 4B +1 扩充（阶段 1） | Qwen3-4B LoRA SFT：Q0 / Q-B1（A10） | 英语五折三种子，30项；Q-B1 − Q0 −0.53、区间含0，不跑阶段2 | [阶段1结果](metrics/qwen4b_augb_s1/README.md) |
 | 实验B Commit 4 | mDeBERTa：O潜在分量头 / NLI检查点初始化 / 双向辅助BCE 对 CE（Kaggle T4，B0 复用 Commit 1） | 英语五折三种子，45项；NLI初始化 +3.22、区间不含0，另两臂不算提升 | [Commit 4结果](metrics/augment_b/train_c4/README.md) |

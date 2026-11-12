@@ -310,9 +310,12 @@ AUGB_C3 = {"Focal": ("Focal", "track1 按家族五折，每折只训练 fit"),
            "Dice": ("Dice", "track1 按家族五折，每折只训练 fit")}
 AUGB_C4 = {g: (g, "track1 按家族五折，每折只训练 fit") for g in ("OLat4", "NLIinit", "BiBCE")}
 AUGB_C5 = {g: (g, AUGB_C2["B2-Haiku"][1]) for g in ("B2-Haiku", "B2-NLIinit")}
+AUGB_C6 = {g: (g, "track1 按家族五折，每折只训练 fit") for g in ("DEC", "DEC-H")}
 ARM_DESC = {"OLat4": ("olat_head", "O 改为 4 个分量，z_O = logsumexp(z_O1..4) − log 4（fp32）；由 B0 的 O 行加 std 0.002、沿分量中心化的扰动初始化，偏置复制"),
             "NLIinit": ("nli_init", "照 B0 构造后，deberta.* 和 pooler.* 换成 MoritzLaurer/mDeBERTa-v3-base-xnli-multilingual-nli-2mil7 b5113eb3 的权重；4 类头、tokenizer、前向配置沿用 B0"),
             "B2-NLIinit": ("nli_init", "照 B0 构造后，deberta.* 和 pooler.* 换成 MoritzLaurer/mDeBERTa-v3-base-xnli-multilingual-nli-2mil7 b5113eb3 的权重；4 类头、tokenizer、前向配置沿用 B0"),
+            "DEC": ("dirent_dec", "NLIinit 的编码器初值 + 新建 1 维方向蕴含头（独立生成器 init_seed+30000，N(0, 0.02²)、偏置 0）；P(E)=ab、P(F)=a(1−b)、P(B)=(1−a)b、P(O)=(1−a)(1−b)，a=σ(s_ab)、b=σ(s_ba)；损失为本行方向的 BCE（E/F 为 1），fp32、autocast 之外；s > 0 才算蕴含"),
+            "DEC-H": ("dirent_dech", "同 DEC，但打分用 NLI 检查点自带的三类头：s = z_ent − logsumexp(z_neu, z_con)"),
             "BiBCE": ("ce+bibce", "CE + 0.25·½[BCE(m_AB, t_AB) + BCE(m_BA, t_BA)]，m 为两个方向的边际 logit，fp32、autocast 之外")}
 LOSS_DESC = {"focal_softmax_a1_g2": ("focal", "四分类 softmax focal，alpha=1，gamma=2，fp32、autocast 之外"),
              "soft_dice_macro4_batch": ("soft_dice", "四类 macro soft Dice，batch 级、缺席类也平均，eps=1e-6，fp32、autocast 之外")}
@@ -322,7 +325,7 @@ def augb_c1_run(rid, group, bias=None, commit="1"):
     """实验 B Commit 1：Claude 的 train_augb_v3.py（v2 的训练核心 + 新组），英语五折三种子（Kaggle T4 fp16）。
     OOF 由 code/claude_recheck_augb_c1.py 从四类概率重建；bias=λ 时是 W 组在推理时把 O 的 logit 减 log λ。"""
     root = os.path.join(M, "augment_b", f"train_c{commit}")
-    d, data = {"1": AUGB_C1, "2": AUGB_C2, "3": AUGB_C3, "4": AUGB_C4, "5": AUGB_C5}[commit][group]
+    d, data = {"1": AUGB_C1, "2": AUGB_C2, "3": AUGB_C3, "4": AUGB_C4, "5": AUGB_C5, "6": AUGB_C6}[commit][group]
     seeds = [42, 43, 44]
     tasks = [rj(os.path.join(root, "tasks", d, f"seed{s}", f"fold{k}", "task.json")) for s in seeds for k in range(5)]
     done = [rj(os.path.join(root, "tasks", d, f"seed{s}", f"fold{k}", "done.json")) for s in seeds for k in range(5)]
@@ -349,7 +352,7 @@ def augb_c1_run(rid, group, bias=None, commit="1"):
     return {"id": rid, "desc": f"实验 B Commit {commit}：{group}{'（偏置对照）' if bias else ''}，mDeBERTa 英语五折三种子（Kaggle）", "track": 1,
             "variables": variables,
             "platform": {"platform": "Kaggle", "gpu": [env["gpu"]], "dtype": [env["precision"]], "torch": [env["torch"]]},
-            "code": {"version": {"3": "train_augb_v4.py v4.1（Claude）", "4": "train_augb_v5.py v5.2（Claude）", "5": "train_augb_v6.py v6.1（Claude）"}.get(commit, "train_augb_v3.py（Claude）"), "code_sha256": [t["code_sha256"][:12]]},
+            "code": {"version": {"3": "train_augb_v4.py v4.1（Claude）", "4": "train_augb_v5.py v5.2（Claude）", "5": "train_augb_v6.py v6.1（Claude）", "6": "train_augb_v7.py v7.2（Claude）"}.get(commit, "train_augb_v3.py（Claude）"), "code_sha256": [t["code_sha256"][:12]]},
             "metrics_dir": f"metrics/augment_b/train_c{commit}", "seeds": [str(s) for s in seeds],
             "evals": {"oof": {str(s): {m: preds(os.path.join(root, "oof", f"{name}_seed{s}_{m}.csv")) for m in ("plain", "sym")} for s in seeds}}}
 
@@ -432,6 +435,8 @@ RUNS = [
     ("AUGB-BIBCE", lambda: augb_c1_run("AUGB-BIBCE", "BiBCE", commit="4")),
     ("AUGB-C5-B2", lambda: augb_c1_run("AUGB-C5-B2", "B2-Haiku", commit="5")),
     ("AUGB-B2-NLIINIT", lambda: augb_c1_run("AUGB-B2-NLIINIT", "B2-NLIinit", commit="5")),
+    ("AUGB-DEC", lambda: augb_c1_run("AUGB-DEC", "DEC", commit="6")),
+    ("AUGB-DEC-H", lambda: augb_c1_run("AUGB-DEC-H", "DEC-H", commit="6")),
     ("JOINT-QWEN", lambda: joint_run("JOINT-QWEN", "qwen")),
     ("JOINT-KD", lambda: joint_run("JOINT-KD", "kd")),
     ("MDB-G5-T1-CE", lambda: mdeberta_methods_run("MDB-G5-T1-CE", 1, "ce", "第五组 track1 ce，fold 0 三种子")),
@@ -502,6 +507,9 @@ COMPARISONS = [
     ("AUGB-CMP-B2NLI-B2", "AUGB-B2-NLIINIT", "AUGB-C5-B2", "oof", "Commit 5：+2 数据上加 NLI 检查点初始化 对 同队列重跑的 B2"),
     ("AUGB-CMP-C5B2-C2B2", "AUGB-C5-B2", "AUGB-B2-HAIKU", "oof", "Commit 5 重跑的 B2 对 Commit 2 的 B2（复现性）"),
     ("AUGB-CMP-B2NLI-NLIINIT", "AUGB-B2-NLIINIT", "AUGB-NLIINIT", "oof", "描述：NLI 初始化下 +2 数据 对 只用原数据（跨 Commit 4 / 5）"),
+    ("AUGB-CMP-DEC-NLIINIT", "AUGB-DEC", "AUGB-NLIINIT", "oof", "Commit 6：DirEnt 新建方向头 对 NLIinit（复用 Commit 4）"),
+    ("AUGB-CMP-DECH-NLIINIT", "AUGB-DEC-H", "AUGB-NLIINIT", "oof", "Commit 6：DirEnt 用 NLI 检查点三类头 对 NLIinit（复用 Commit 4）"),
+    ("AUGB-CMP-DECH-DEC", "AUGB-DEC-H", "AUGB-DEC", "oof", "描述：DirEnt 两种头之间"),
     ("AUGB-CMP-B2-B1", "AUGB-B2-HAIKU", "AUGB-B1-HAIKU", "oof", "实验 B 规模曲线：+2 对 +1（描述；跨 v3 / v2 代码，步数不同）"),
     ("AUGB-CMP-GU4-DUPU4", "AUGB-G-U4", "AUGB-DUP-U4", "oof", "类别构成 U4：生成数据 对 同构成的原数据重复采样（G_c − Dup_c，同代码同步数）"),
     ("AUGB-CMP-GU4-B1", "AUGB-G-U4", "AUGB-B1-HAIKU", "oof", "类别构成 U4 的生成数据 对 按原比例的生成数据（G_c − G_R；跨 v3 / v2 代码）"),

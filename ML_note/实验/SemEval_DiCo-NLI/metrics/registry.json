@@ -3071,6 +3071,142 @@
    }
   },
   {
+   "id": "AUGB-DEC",
+   "desc": "实验 B Commit 6：DEC，mDeBERTa 英语五折三种子（Kaggle）",
+   "track": 1,
+   "variables": {
+    "model": "microsoft/mdeberta-v3-base",
+    "model_revision": "a0484667b22365f84929a935b5e50a51f71f159d",
+    "prompt": "不适用",
+    "train": {
+     "max_epochs": 12,
+     "lr": 2e-05,
+     "batch_size": 32,
+     "max_length": 96,
+     "warmup_ratio": 0.1,
+     "weight_decay": 0.01,
+     "gradient_clip": 1.0,
+     "precision": "fp16",
+     "seed_policy": "init=seed*1000+fold; per-epoch fresh shuffle RNG (not archived C0 RNG stream)",
+     "selection": "original_direction_weighted_f1，earliest"
+    },
+    "split": {
+     "folds": 5,
+     "fold_seed": 2027,
+     "inner_fraction": 0.1,
+     "holdout_fold": "0–4"
+    },
+    "method": "dirent_dec",
+    "method_params": "NLIinit 的编码器初值 + 新建 1 维方向蕴含头（独立生成器 init_seed+30000，N(0, 0.02²)、偏置 0）；P(E)=ab、P(F)=a(1−b)、P(B)=(1−a)b、P(O)=(1−a)(1−b)，a=σ(s_ab)、b=σ(s_ba)；损失为本行方向的 BCE（E/F 为 1），fp32、autocast 之外；s > 0 才算蕴含",
+    "data_sha256": {
+     "fold_selection.csv": "6f289cbac76e",
+     "manifest.csv": "b380b4a6a836",
+     "split_manifest.json": "f9363290af28"
+    },
+    "train_data": "track1 按家族五折，每折只训练 fit",
+    "selection": "original_direction_weighted_f1",
+    "inference": "plain 和 sym（F / B 互换后平均）",
+    "lib": {
+     "transformers": "4.57.6"
+    }
+   },
+   "platform": {
+    "platform": "Kaggle",
+    "gpu": [
+     "Tesla T4"
+    ],
+    "dtype": [
+     "fp16"
+    ],
+    "torch": [
+     "2.11.0+cu128"
+    ]
+   },
+   "code": {
+    "version": "train_augb_v7.py v7.2（Claude）",
+    "code_sha256": [
+     "80396fd93f2a"
+    ]
+   },
+   "metrics_dir": "metrics/augment_b/train_c6",
+   "seeds": [
+    "42",
+    "43",
+    "44"
+   ],
+   "scores_sym_wf1_mean": {
+    "oof": 0.809
+   }
+  },
+  {
+   "id": "AUGB-DEC-H",
+   "desc": "实验 B Commit 6：DEC-H，mDeBERTa 英语五折三种子（Kaggle）",
+   "track": 1,
+   "variables": {
+    "model": "microsoft/mdeberta-v3-base",
+    "model_revision": "a0484667b22365f84929a935b5e50a51f71f159d",
+    "prompt": "不适用",
+    "train": {
+     "max_epochs": 12,
+     "lr": 2e-05,
+     "batch_size": 32,
+     "max_length": 96,
+     "warmup_ratio": 0.1,
+     "weight_decay": 0.01,
+     "gradient_clip": 1.0,
+     "precision": "fp16",
+     "seed_policy": "init=seed*1000+fold; per-epoch fresh shuffle RNG (not archived C0 RNG stream)",
+     "selection": "original_direction_weighted_f1，earliest"
+    },
+    "split": {
+     "folds": 5,
+     "fold_seed": 2027,
+     "inner_fraction": 0.1,
+     "holdout_fold": "0–4"
+    },
+    "method": "dirent_dech",
+    "method_params": "同 DEC，但打分用 NLI 检查点自带的三类头：s = z_ent − logsumexp(z_neu, z_con)",
+    "data_sha256": {
+     "fold_selection.csv": "6f289cbac76e",
+     "manifest.csv": "b380b4a6a836",
+     "split_manifest.json": "f9363290af28"
+    },
+    "train_data": "track1 按家族五折，每折只训练 fit",
+    "selection": "original_direction_weighted_f1",
+    "inference": "plain 和 sym（F / B 互换后平均）",
+    "lib": {
+     "transformers": "4.57.6"
+    }
+   },
+   "platform": {
+    "platform": "Kaggle",
+    "gpu": [
+     "Tesla T4"
+    ],
+    "dtype": [
+     "fp16"
+    ],
+    "torch": [
+     "2.11.0+cu128"
+    ]
+   },
+   "code": {
+    "version": "train_augb_v7.py v7.2（Claude）",
+    "code_sha256": [
+     "80396fd93f2a"
+    ]
+   },
+   "metrics_dir": "metrics/augment_b/train_c6",
+   "seeds": [
+    "42",
+    "43",
+    "44"
+   ],
+   "scores_sym_wf1_mean": {
+    "oof": 0.8052
+   }
+  },
+  {
    "id": "JOINT-QWEN",
    "desc": "Qwen CE SFT 英语五折三种子",
    "track": 1,
@@ -6995,6 +7131,132 @@
     "ci95": [
      0.0011,
      0.0184
+    ]
+   }
+  },
+  {
+   "id": "AUGB-CMP-DEC-NLIINIT",
+   "new": "AUGB-DEC",
+   "old": "AUGB-NLIINIT",
+   "eval": "oof",
+   "purpose": "Commit 6：DirEnt 新建方向头 对 NLIinit（复用 Commit 4）",
+   "design": "系统比较（多处不同，不能归因到单个变量）",
+   "environment": "一致",
+   "unknown": [],
+   "note": "",
+   "changed": {
+    "method": [
+     "dirent_dec",
+     "nli_init"
+    ],
+    "method_params": [
+     "NLIinit 的编码器初值 + 新建 1 维方向蕴含头（独立生成器 init_seed+30000，N(0, 0.02²)、偏置 0）；P(E)=ab、P(F)=a(1−b)、P(B)=(1−a)b、P(O)=(1−a)(1−b)，a=σ(s_ab)、b=σ(s_ba)；损失为本行方向的 BCE（E/F 为 1），fp32、autocast 之外；s > 0 才算蕴含",
+     "照 B0 构造后，deberta.* 和 pooler.* 换成 MoritzLaurer/mDeBERTa-v3-base-xnli-multilingual-nli-2mil7 b5113eb3 的权重；4 类头、tokenizer、前向配置沿用 B0"
+    ]
+   },
+   "lib_diff": {},
+   "platform_diff": {},
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 3042,
+    "families": 1725,
+    "per_seed": {
+     "42": -0.0225,
+     "43": -0.0161,
+     "44": -0.0122
+    },
+    "mean": -0.0169,
+    "ci95": [
+     -0.0268,
+     -0.007
+    ]
+   }
+  },
+  {
+   "id": "AUGB-CMP-DECH-NLIINIT",
+   "new": "AUGB-DEC-H",
+   "old": "AUGB-NLIINIT",
+   "eval": "oof",
+   "purpose": "Commit 6：DirEnt 用 NLI 检查点三类头 对 NLIinit（复用 Commit 4）",
+   "design": "系统比较（多处不同，不能归因到单个变量）",
+   "environment": "一致",
+   "unknown": [],
+   "note": "",
+   "changed": {
+    "method": [
+     "dirent_dech",
+     "nli_init"
+    ],
+    "method_params": [
+     "同 DEC，但打分用 NLI 检查点自带的三类头：s = z_ent − logsumexp(z_neu, z_con)",
+     "照 B0 构造后，deberta.* 和 pooler.* 换成 MoritzLaurer/mDeBERTa-v3-base-xnli-multilingual-nli-2mil7 b5113eb3 的权重；4 类头、tokenizer、前向配置沿用 B0"
+    ]
+   },
+   "lib_diff": {},
+   "platform_diff": {},
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 3042,
+    "families": 1725,
+    "per_seed": {
+     "42": -0.0283,
+     "43": -0.0149,
+     "44": -0.0188
+    },
+    "mean": -0.0207,
+    "ci95": [
+     -0.0305,
+     -0.0103
+    ]
+   }
+  },
+  {
+   "id": "AUGB-CMP-DECH-DEC",
+   "new": "AUGB-DEC-H",
+   "old": "AUGB-DEC",
+   "eval": "oof",
+   "purpose": "描述：DirEnt 两种头之间",
+   "design": "系统比较（多处不同，不能归因到单个变量）",
+   "environment": "一致",
+   "unknown": [],
+   "note": "",
+   "changed": {
+    "method": [
+     "dirent_dech",
+     "dirent_dec"
+    ],
+    "method_params": [
+     "同 DEC，但打分用 NLI 检查点自带的三类头：s = z_ent − logsumexp(z_neu, z_con)",
+     "NLIinit 的编码器初值 + 新建 1 维方向蕴含头（独立生成器 init_seed+30000，N(0, 0.02²)、偏置 0）；P(E)=ab、P(F)=a(1−b)、P(B)=(1−a)b、P(O)=(1−a)(1−b)，a=σ(s_ab)、b=σ(s_ba)；损失为本行方向的 BCE（E/F 为 1），fp32、autocast 之外；s > 0 才算蕴含"
+    ]
+   },
+   "lib_diff": {},
+   "platform_diff": {},
+   "result": {
+    "seeds": [
+     "42",
+     "43",
+     "44"
+    ],
+    "rows": 3042,
+    "families": 1725,
+    "per_seed": {
+     "42": -0.0058,
+     "43": 0.0011,
+     "44": -0.0067
+    },
+    "mean": -0.0038,
+    "ci95": [
+     -0.0114,
+     0.0039
     ]
    }
   },

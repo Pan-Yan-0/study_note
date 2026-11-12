@@ -1,0 +1,101 @@
+{
+  "code_sha256": "80396fd93f2a910a19407e3e3dd4fd7703c86abe97de8499e5f52fce36659e71",
+  "control_identity": {
+    "problems": [],
+    "status": "pass",
+    "tasks": 15
+  },
+  "init": {
+    "DEC": {
+      "dec_init": {
+        "init_seed": 72000,
+        "init_std": 0.02,
+        "mode": "linear",
+        "n_out": 1,
+        "weight_abs_sum": 11.57002067565918
+      },
+      "finite": true,
+      "global_rng_restored": true,
+      "score_abs_max": 0.6589605808258057
+    },
+    "DEC-H": {
+      "dec_init": {
+        "ent_index": 0,
+        "head_equal_to_checkpoint": true,
+        "id2label": {
+          "0": "entailment",
+          "1": "neutral",
+          "2": "contradiction"
+        },
+        "mode": "nli_head",
+        "n_out": 3,
+        "rest_index": [
+          1,
+          2
+        ]
+      },
+      "ent_index": 0,
+      "global_rng_restored": true,
+      "id2label": {
+        "0": "entailment",
+        "1": "neutral",
+        "2": "contradiction"
+      },
+      "max_abs_entail_prob_diff": 1.9786232319241037e-08
+    },
+    "status": "pass"
+  },
+  "input_hashes": {
+    "fold_selection.csv": "6f289cbac76e62143660cf849e61fe3e167b16b1e6dd1d18f635c7c1db0066a4",
+    "manifest.csv": "b380b4a6a836e7056b6f30405a48ed1d9ce66852b78f0be4f8ccf201769e0882",
+    "split_manifest.json": "f9363290af2854427c4b41127d2c305db435e99d8d5f1c84c5990e1672e77564"
+  },
+  "numeric": {
+    "bce_extreme": 6562.5,
+    "bce_targets_EFBO": [
+      0.7167922854423523,
+      0.7167922698377734
+    ],
+    "dech_logodds_max_abs": 1.1920928955078125e-07,
+    "decision_rule": {
+      "pos_zero": 1,
+      "swap_mirror": true,
+      "zero_pos": 2,
+      "zero_zero": 3
+    },
+    "device": "cuda",
+    "install": {
+      "dec_deterministic": true,
+      "dec_rng_untouched": true,
+      "dech_copy_exact": true,
+      "dech_prob_max_abs": 5.960464477539063e-08
+    },
+    "recombination": {
+      "cells": 81,
+      "max_abs_log_identity": 7.105427357601002e-15,
+      "max_abs_log_norm": 1.249000902703301e-16,
+      "swap_mirror_exact": true
+    },
+    "status": "pass"
+  },
+  "revision": "a0484667b22365f84929a935b5e50a51f71f159d",
+  "smoke_binding": {
+    "DEC": "152315738e1871083360a8fc0ed664299c980435946b3945cc59ec38b3feefa2",
+    "DEC-H": "b58af1aedc2d7545719656e0c44ce097cae6ca69d06b7258b8ec999339d332ad",
+    "NLIinit": "c4a64ab4f7d98835bb582f3443a1793bcc5914c2f3726855ad57c17cca8a4245"
+  },
+  "software_environment": {
+    "cuda": "12.8",
+    "torch": "2.11.0+cu128",
+    "transformers": "4.57.6"
+  },
+  "stable_environment": {
+    "gpu": "Tesla T4",
+    "precision": "fp16"
+  },
+  "status": "pass",
+  "zeroshot": {
+    "rows": 3042,
+    "sha256": "c0d3fc6aee63d81b63e4bb0ec342ceead35759a4b453ab90ed1246633c6c72d6"
+  }
+}

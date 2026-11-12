@@ -1,0 +1,79 @@
+{
+  "actual_optimizer_updates": 2,
+  "arm_report": {
+    "global_rng_restored": true,
+    "nli_init": {
+      "forward_config_differences_kept_b0": {},
+      "kept_from_b0": [
+        "classifier.bias",
+        "classifier.weight"
+      ],
+      "model": "MoritzLaurer/mDeBERTa-v3-base-xnli-multilingual-nli-2mil7",
+      "parameters_loaded": 278809344,
+      "revision": "b5113eb38ab63efdd7f280f8c144ea8b13f978ce",
+      "source_config_torch_dtype": "None",
+      "source_keys_not_used": [
+        "classifier.bias",
+        "classifier.weight"
+      ],
+      "tensors_loaded": 200
+    }
+  },
+  "best_epoch": 1,
+  "best_val_original_wf1": 0.20461869350716558,
+  "class_weights": null,
+  "environment": {
+    "cuda": "12.8",
+    "gpu": "Tesla T4",
+    "platform": "Linux-6.18.55+-x86_64-with-glibc2.39",
+    "precision": "fp16",
+    "python": "3.13.15",
+    "sklearn": "1.6.1",
+    "torch": "2.11.0+cu128",
+    "transformers": "4.57.6"
+  },
+  "epochs": [
+    {
+      "epoch": 1,
+      "scaler_scale": 65536.0,
+      "skips_total": 0,
+      "train_loss": 1.3478059768676758,
+      "updates_total": 2,
+      "val_original_wf1": 0.20461869350716558
+    }
+  ],
+  "extra_logits_sha256": "f0ea586f9a93a8cd668d033dea5e13113689b45471b36a4a74db9a1712b874c5",
+  "fold": 0,
+  "group": "NLIinit",
+  "inference_precision": "fp32_no_autocast",
+  "lr_schedule": {
+    "scheduler": "linear_decay_after_warmup",
+    "total_scheduled_steps": 2,
+    "warmup_updates": 0
+  },
+  "planned_updates": 2,
+  "predictions_sha256": "0ef319c3b13c9b20c5f6b4fa4a0032f023ae0f2561d20089ac6cde9bd3edcb86",
+  "repeat_counts": {},
+  "repeated_original_row_ids": [],
+  "runtime_sec": 11.813,
+  "seed": 42,
+  "seed_policy": "init=seed*1000+fold; per-epoch fresh shuffle RNG (not archived C0 RNG stream)",
+  "skipped_fp16_updates": 0,
+  "source_count": {
+    "original": 2190
+  },
+  "status": "pass",
+  "task_fingerprint": "52f795c6cf99e03cc22ee52b0e319d8427224d364fe4a165f877be61bfa623f4",
+  "test_original_wf1": 0.26385518395217045,
+  "test_rows": 608,
+  "test_sym_wf1": 0.2832564628443626,
+  "timing": {
+    "epoch_validation_sec": 0.696,
+    "final_prediction_sec": 3.315,
+    "last_epoch_logits_sec": 3.568,
+    "train_sec": 1.748
+  },
+  "train_rows": 2190,
+  "val_predictions_sha256": "4fac2d1622e60b58356ceb0c0a84d7113839c79990d347ff282f45953ef07dc3",
+  "val_rows": 244
+}
