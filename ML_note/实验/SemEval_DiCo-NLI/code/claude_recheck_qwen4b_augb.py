@@ -7,6 +7,12 @@
 核对：结果包 MANIFEST 哈希；任务身份和代码身份；留出 = 家族划分第 k 折、训练和留出不共享家族；Q-B1 的 fit = Q0 的 fit
 加上该折 fold_selection 的生成行（顺序也相同）；从 cache.jsonl 重建留出和 dev 的预测，和保存的逐折预测、OOF CSV 逐条比对，
 OOF 分数和保存的分数一致。
+另按 Codex 11-12 复核的建议补三块（写法独立于队列代码）：
+A. COMPATIBLE / SMOKE 回执：身份、runtime、产物哈希；零样本核对（1,448 个输入、最大差 0、最大类翻转 0）；新旧入口的输入、
+   首批和 3 次更新逐一相同；探测实际训练 16 个不重复 ID；Q-B1 SMOKE 从第 1 轮检查点恢复并跳过写坏的检查点；两组权重重载门槛。
+B. 逐任务：COMPLETE.identity 等于 task.json 的对应字段；COMPLETE 列出的文件凡在结果包里都核哈希，缺的只能是 adapters/；
+   两组同种子同折的 val 有序相同、训练设置相同。
+C. 用每轮 val_probs 重算内层验证原方向 WF1，等于 history；选中轮 = 最高分、同分取早；权重重载核对的是选中轮。
 用法：python3 -I code/claude_recheck_qwen4b_augb.py <官方仓库目录>；有问题时写出诊断并以状态 2 退出。
 """
 import csv, hashlib, json, os, random, subprocess, sys, tempfile
@@ -127,6 +133,34 @@ def ap(y, s):
     return out
 
 
+# ---------- A. COMPATIBLE / SMOKE 回执 ----------
+runtime = rj(f"{R}/runtime.json")
+comp = rj(f"{R}/COMPATIBLE.json")
+check(comp["passed"] is True and comp["identity"]["pipeline"] == PIPELINE and comp["runtime"] == runtime, "COMPATIBLE 身份或 runtime 不对")
+check(all(os.path.exists(f"{R}/{n}") and sha(f"{R}/{n}") == h for n, h in comp["files"].items()), "COMPATIBLE 产物哈希不符")
+z = rj(f"{R}/zero4b.json")
+check(z["passed"] is True and z["inputs"] == 1448 and z["max_diff"] == 0 and z["argmax_flips"] == 0, "零样本核对回执不对")
+for n in ("inputs.json", "first_batch.json"):
+    check(sha(f"{R}/compat-old/{n}") == sha(f"{R}/compat-new/{n}"), f"新旧入口的 {n} 不同")
+pc = rj(f"{R}/parameter_comparison.json")
+check(pc["passed"] is True and pc["steps"] == 3 and all(pc["updates"][f"compat-old/update{i}.safetensors"] == pc["updates"][f"compat-new/update{i}.safetensors"] for i in (1, 2, 3)),
+      "新旧入口 3 次更新的参数不同")
+sm = rj(f"{R}/SMOKE.json")
+check(sm["smoke_passed"] is True and sm["runtime"] == runtime and rj(f"{R}/identity.json")["pipeline"] == PIPELINE, "SMOKE 回执身份不对")
+probe = rj(f"{R}/probe/Q-B1/seed42/fold0/actual_split.json")["fit"]
+check(len(probe) == len(set(probe)) == 16, f"探测实际训练 {len(probe)} 行，应为 16 个不重复 ID")
+for g, s_, gen_ok in (("Q-B1", 42, True), ("Q0", 43, False)):
+    d = f"{R}/smoke/{g}/seed{s_}/fold0"
+    tr, hist, fit = rj(f"{d}/trained.json"), rj(f"{d}/history.json"), rj(f"{d}/actual_split.json")["fit"]
+    check(any(i.startswith("gen:") for i in fit) == gen_ok and not any("#dup" in i for i in fit), f"SMOKE {g} 的训练行来源不对")
+    check(tr["load_memory"]["before_load"]["allocated_gib"] < 0.5, f"SMOKE {g} 新进程显存未释放")
+    check({c["epoch"] for c in tr["adapter_checks"]} == {h["epoch"] for h in hist} and all(c["val_argmax_agreement"] >= 0.98 for c in tr["adapter_checks"]),
+          f"SMOKE {g} 权重重载不达标")
+    if g == "Q-B1":
+        check(tr["resumed_from_epoch"] == 1 and tr["resume"]["checkpoint"] == f"checkpoint-{tr['steps_per_epoch']}"
+              and [x["checkpoint"] for x in tr["resume"]["skipped"]] == ["checkpoint-999999"], "SMOKE 没有从第 1 轮恢复或没跳过坏检查点")
+ref_identity = None
+
 # ---------- 逐任务 ----------
 oof, oof_p, stats, fits = {}, {}, [], {}
 for g in GROUPS:
@@ -135,6 +169,34 @@ for g in GROUPS:
         for k in FOLDS:
             d = f"{R}/formal/{g}/seed{s}/fold{k}"
             t, done, act = rj(f"{d}/task.json"), rj(f"{d}/done.json"), rj(f"{d}/actual_split.json")
+            # B. COMPLETE.identity、封存文件、成对设置
+            cp = rj(f"{d}/COMPLETE.json")
+            check(cp["identity"] == {k: t.get(k) for k in cp["identity"]}, f"{d} COMPLETE.identity 和 task.json 不一致")
+            missing = [f for f in cp["files"] if not os.path.exists(f"{d}/{f}")]
+            check(all(f.startswith("adapters/") for f in missing), f"{d} 结果包缺 COMPLETE 列出的非权重文件 {missing[:3]}")
+            check(all(sha(f"{d}/{f}") == h for f, h in cp["files"].items() if f not in missing), f"{d} COMPLETE 文件哈希不符")
+            check(t["runtime"] == runtime and t["revision"] == sm["identity"]["revision"] and t["model"] == sm["identity"]["model"], f"{d} runtime 或模型不同")
+            same = {k: t[k] for k in ("version", "data", "augb_data", "batch", "grad_acc")}
+            same["settings"] = dict(t["settings"], split={x: v for x, v in t["settings"]["split"].items() if x != "holdout_fold"})
+            check(t["settings"]["split"]["holdout_fold"] == k, f"{d} settings 里的留出折不对")
+            if ref_identity is None:
+                ref_identity = same
+            check(same == ref_identity, f"{d} 训练设置和其他任务不同（除留出折外）")
+            # C. 每轮内层验证 WF1 和选轮
+            hist, tr = rj(f"{d}/history.json"), rj(f"{d}/trained.json")
+            vals = []
+            keys = list(dict.fromkeys((byid[i]["text1"], byid[i]["text2"]) for i in act["val"]))  # val_probs 按不重复的有序输入存
+            for h in hist:
+                pr = rj(f"{d}/val_probs/epoch{h['epoch']}.json")
+                check(len(pr) == len(keys), f"{d} 第 {h['epoch']} 轮 val_probs 条数 {len(pr)} ≠ 不重复输入 {len(keys)}")
+                by = dict(zip(keys, pr))
+                vp = {i: LABELS[max(range(4), key=lambda c: by[(byid[i]["text1"], byid[i]["text2"])][c])] for i in act["val"]}
+                v = wf1(act["val"], vp)
+                check(abs(v - h["val_weighted_f1"]) < 1e-12, f"{d} 第 {h['epoch']} 轮内层验证 WF1 重算不一致")
+                vals.append(v)
+            check(done["best_epoch"] == tr["best_epoch"] == vals.index(max(vals)) + 1, f"{d} 选中轮不是最高分里最早的一轮")
+            check([c["epoch"] for c in tr["adapter_checks"]] == [done["best_epoch"]] and tr["adapter_checks"][0]["val_argmax_agreement"] >= 0.98,
+                  f"{d} 选中轮的权重重载核对不对")
             check(t["pipeline"] == PIPELINE and t["group"] == g and t["seed"] == s and t["fold"] == k and not t["smoke"], f"{d} 任务身份不对")
             check(done["group"] == g and done["seed"] == s and done["fold"] == k, f"{d} done 身份不对")
             check(sorted(act["test"]) == sorted(i for i in ids_all if fold_of[i] == k), f"{d} 留出和家族划分不符")
@@ -145,9 +207,10 @@ for g in GROUPS:
             check(len(act["fit"]) == done["fit_rows"] and len(act["val"]) == done["val_rows"], f"{d} 行数和 done 不符")
             if g == "Q0":
                 check(not gen, f"{d} Q0 含生成行")
-                fits[(s, k)] = act["fit"]
+                fits[(s, k)] = (act["fit"], act["val"])
             else:
-                check(orig == fits[(s, k)] and gen == sel[k], f"{d} Q-B1 的 fit 不是 Q0 fit + 本折选用的生成行")
+                check(orig == fits[(s, k)][0] and gen == sel[k], f"{d} Q-B1 的 fit 不是 Q0 fit + 本折选用的生成行")
+                check(act["val"] == fits[(s, k)][1], f"{d} 两组的 val 不同")
                 check(len(gen) == len(orig), f"{d} 生成行数 ≠ fit 行数")
             prob = {}
             for line in open(f"{d}/cache.jsonl", encoding="utf-8"):
