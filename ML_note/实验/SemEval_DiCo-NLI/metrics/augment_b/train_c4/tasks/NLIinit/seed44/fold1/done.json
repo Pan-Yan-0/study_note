@@ -1,0 +1,161 @@
+{
+  "actual_optimizer_updates": 826,
+  "arm_report": {
+    "global_rng_restored": true,
+    "nli_init": {
+      "forward_config_differences_kept_b0": {},
+      "kept_from_b0": [
+        "classifier.bias",
+        "classifier.weight"
+      ],
+      "model": "MoritzLaurer/mDeBERTa-v3-base-xnli-multilingual-nli-2mil7",
+      "parameters_loaded": 278809344,
+      "revision": "b5113eb38ab63efdd7f280f8c144ea8b13f978ce",
+      "source_config_torch_dtype": "None",
+      "source_keys_not_used": [
+        "classifier.bias",
+        "classifier.weight"
+      ],
+      "tensors_loaded": 200
+    }
+  },
+  "best_epoch": 9,
+  "best_val_original_wf1": 0.8393190846834626,
+  "class_weights": null,
+  "environment": {
+    "cuda": "12.8",
+    "gpu": "Tesla T4",
+    "platform": "Linux-6.18.55+-x86_64-with-glibc2.39",
+    "precision": "fp16",
+    "python": "3.13.15",
+    "sklearn": "1.6.1",
+    "torch": "2.11.0+cu128",
+    "transformers": "4.57.6"
+  },
+  "epochs": [
+    {
+      "epoch": 1,
+      "scaler_scale": 65536.0,
+      "skips_total": 0,
+      "train_loss": 1.2885490725510311,
+      "updates_total": 69,
+      "val_original_wf1": 0.5925328975136887
+    },
+    {
+      "epoch": 2,
+      "scaler_scale": 32768.0,
+      "skips_total": 1,
+      "train_loss": 0.8042987093438198,
+      "updates_total": 137,
+      "val_original_wf1": 0.7627183559662144
+    },
+    {
+      "epoch": 3,
+      "scaler_scale": 16384.0,
+      "skips_total": 2,
+      "train_loss": 0.4489528256176162,
+      "updates_total": 205,
+      "val_original_wf1": 0.8092779252105352
+    },
+    {
+      "epoch": 4,
+      "scaler_scale": 16384.0,
+      "skips_total": 2,
+      "train_loss": 0.2772393520296055,
+      "updates_total": 274,
+      "val_original_wf1": 0.8126461739961012
+    },
+    {
+      "epoch": 5,
+      "scaler_scale": 16384.0,
+      "skips_total": 2,
+      "train_loss": 0.17864449126441984,
+      "updates_total": 343,
+      "val_original_wf1": 0.8264048955906599
+    },
+    {
+      "epoch": 6,
+      "scaler_scale": 16384.0,
+      "skips_total": 2,
+      "train_loss": 0.11989917059558151,
+      "updates_total": 412,
+      "val_original_wf1": 0.8145550003623283
+    },
+    {
+      "epoch": 7,
+      "scaler_scale": 16384.0,
+      "skips_total": 2,
+      "train_loss": 0.07918291585180011,
+      "updates_total": 481,
+      "val_original_wf1": 0.8305334605290013
+    },
+    {
+      "epoch": 8,
+      "scaler_scale": 16384.0,
+      "skips_total": 2,
+      "train_loss": 0.04744793427768197,
+      "updates_total": 550,
+      "val_original_wf1": 0.8384473234969368
+    },
+    {
+      "epoch": 9,
+      "scaler_scale": 16384.0,
+      "skips_total": 2,
+      "train_loss": 0.03977422620149425,
+      "updates_total": 619,
+      "val_original_wf1": 0.8393190846834626
+    },
+    {
+      "epoch": 10,
+      "scaler_scale": 16384.0,
+      "skips_total": 2,
+      "train_loss": 0.03821034271977026,
+      "updates_total": 688,
+      "val_original_wf1": 0.8278218578746316
+    },
+    {
+      "epoch": 11,
+      "scaler_scale": 16384.0,
+      "skips_total": 2,
+      "train_loss": 0.025327089120273608,
+      "updates_total": 757,
+      "val_original_wf1": 0.8278218578746316
+    },
+    {
+      "epoch": 12,
+      "scaler_scale": 16384.0,
+      "skips_total": 2,
+      "train_loss": 0.020938854912690222,
+      "updates_total": 826,
+      "val_original_wf1": 0.8308641883119682
+    }
+  ],
+  "extra_logits_sha256": "b6830084a237a7e524d4e43dc7c38a648170bd7b2ff0be32f4f236dc7a9c8c3d",
+  "fold": 1,
+  "group": "NLIinit",
+  "inference_precision": "fp32_no_autocast",
+  "lr_schedule": {
+    "scheduler": "linear_decay_after_warmup",
+    "total_scheduled_steps": 828,
+    "warmup_updates": 82
+  },
+  "planned_updates": 828,
+  "predictions_sha256": "114eea95e596b2dfa8954e4ccefa8464d240c79223fda102ffb70120dee0b863",
+  "repeat_counts": {},
+  "repeated_original_row_ids": [],
+  "runtime_sec": 228.888,
+  "seed": 44,
+  "seed_policy": "init=seed*1000+fold; per-epoch fresh shuffle RNG (not archived C0 RNG stream)",
+  "skipped_fp16_updates": 2,
+  "source_count": {
+    "original": 2192
+  },
+  "status": "pass",
+  "task_fingerprint": "33057bc509611f5009b93992775f967b12227192ac4a4495aa3417f86d935efb",
+  "test_original_wf1": 0.7821921288223573,
+  "test_rows": 609,
+  "test_sym_wf1": 0.7839591825455837,
+  "train_rows": 2192,
+  "val_predictions_sha256": "3ac817b3b7501d09287904e99b9bbf403f42e06c9fe045cae0b6428ad148e07c",
+  "val_rows": 241
+}

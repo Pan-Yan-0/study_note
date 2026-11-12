@@ -1,0 +1,41 @@
+{
+  "compared": {
+    "extra_logits.csv": {
+      "cells_differing": 0,
+      "rows": 852
+    },
+    "predictions.csv": {
+      "cells_differing": 0,
+      "rows": 608
+    },
+    "val_predictions.csv": {
+      "cells_differing": 0,
+      "rows": 244
+    }
+  },
+  "differences": [],
+  "new_code_sha256": "7f3e01b36b8bfe1c92e22f1ef460117b7f359bf6d029df5cd8bbf638094fa4f1",
+  "new_environment": {
+    "cuda": "12.8",
+    "gpu": "Tesla T4",
+    "platform": "Linux-6.18.55+-x86_64-with-glibc2.39",
+    "precision": "fp16",
+    "python": "3.13.15",
+    "sklearn": "1.6.1",
+    "torch": "2.11.0+cu128",
+    "transformers": "4.57.6"
+  },
+  "reference_code_sha256": "c8ff912cf3f587e4d7d5b06f658946aaa8c5e79659be2ce8e992441db4d7d36c",
+  "reference_environment": {
+    "cuda": "12.8",
+    "gpu": "Tesla T4",
+    "platform": "Linux-6.18.55+-x86_64-with-glibc2.39",
+    "precision": "fp16",
+    "python": "3.13.15",
+    "sklearn": "1.6.1",
+    "torch": "2.11.0+cu128",
+    "transformers": "4.57.6"
+  },
+  "rule": "config (except code identity; loss must be ce on both sides) + torch / cuda / transformers equal to the archive + training record + every saved probability / logit (10 significant digits) equal; pass -> reuse Commit 1 B0 (15 tasks); fail -> B0 is rerun under v4 in the formal queue",
+  "status": "pass"
+}

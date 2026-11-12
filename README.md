@@ -1,5 +1,7 @@
 # Pan-Yan-0 的学习笔记（note 分支）
 
+[实验B Commit 4：B0 数据上的三臂](ML_note/实验/SemEval_DiCo-NLI/metrics/augment_b/train_c4/README.md)已完成：多语NLI检查点初始化 +3.22个百分点（Bonferroni 98.33%区间[+1.56, +4.86]，三个种子都升），只用原数据就接近 +2 扩充的 B2；O潜在分量头（分量没有分化）和双向辅助BCE都不算提升。
+
 [实验B Commit 3：Focal / Dice loss 对照](ML_note/实验/SemEval_DiCo-NLI/metrics/augment_b/train_c3/README.md)已完成：只换loss、其余和CE完全相同，Focal +0.67个百分点但区间含0、不算提升，Dice −1.29个百分点、显著更差。
 
 [实验B +2 / +4：Haiku生成数据的规模和类别构成](ML_note/实验/SemEval_DiCo-NLI/metrics/augment_b/train_c2/README.md)已完成：+2、+4的sym WF1为83.21% / 83.14%，对同行数同步数的原数据重复各高2.50 / 2.59个百分点、区间不含0，扩充有效，规模在+2饱和；5种类别构成都不比按原比例生成更好。

@@ -29,6 +29,7 @@
 | 实验B +1 | mDeBERTa CE：B0 / B1-Haiku / step+1（Kaggle T4） | 英语五折三种子，45项、9套OOF | [实验B +1结果](metrics/augment_b/train_plus1/README.md) |
 | 实验B Commit 1 | mDeBERTa CE：B0 / W2 / W4 / step+2 / step+4 / Dup×5（Kaggle T4） | 英语五折三种子，150项；类别加权按规则不算提升，原数据重复在+1之后饱和 | [Commit 1结果](metrics/augment_b/train_c1/README.md) |
 | 实验B Commit 2 | mDeBERTa CE：B2-Haiku / B4-Haiku / G×5（Kaggle T4） | 英语五折三种子，105项；+2 / +4对同步数的原数据重复都显著更好，规模在+2饱和；类别构成都不比按原比例生成更好 | [Commit 2结果](metrics/augment_b/train_c2/README.md) |
+| 实验B Commit 4 | mDeBERTa：O潜在分量头 / NLI检查点初始化 / 双向辅助BCE 对 CE（Kaggle T4，B0 复用 Commit 1） | 英语五折三种子，45项；NLI初始化 +3.22、区间不含0，另两臂不算提升 | [Commit 4结果](metrics/augment_b/train_c4/README.md) |
 | 实验B Commit 3 | mDeBERTa：Focal / Dice 对 CE（Kaggle T4，B0 复用 Commit 1） | 英语五折三种子，30项；Focal不算提升，Dice显著更差 | [Commit 3结果](metrics/augment_b/train_c3/README.md) |
 | 实验B +2 / +4 数据 | Haiku 5.5 生成规模轮（r2 / s2a / r3 / r4 / s4a / s4b） | 512次派发，自动检查全过；复审（P1C-R）通过、已放行，Commit 2 已完成 | [规模轮数据](metrics/augment_b/haiku_scale/README.md) |
 

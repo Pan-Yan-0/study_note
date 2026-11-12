@@ -1,0 +1,115 @@
+{
+  "actual_optimizer_updates": 2,
+  "arm_report": {
+    "global_rng_restored": true,
+    "olat_init": {
+      "K": 1,
+      "b0_O_row_norm": 0.5289397835731506,
+      "delta_abs_max": 0.0,
+      "delta_sum_over_components_abs_max": 0.0,
+      "perturb_seed": 62000,
+      "perturb_std": 0.0
+    }
+  },
+  "best_epoch": 1,
+  "best_val_original_wf1": 0.0942302064454519,
+  "class_weights": null,
+  "environment": {
+    "cuda": "12.8",
+    "gpu": "Tesla T4",
+    "platform": "Linux-6.18.55+-x86_64-with-glibc2.39",
+    "precision": "fp16",
+    "python": "3.13.15",
+    "sklearn": "1.6.1",
+    "torch": "2.11.0+cu128",
+    "transformers": "4.57.6"
+  },
+  "epochs": [
+    {
+      "epoch": 1,
+      "scaler_scale": 65536.0,
+      "skips_total": 0,
+      "train_loss": 1.3907400965690613,
+      "updates_total": 2,
+      "val_original_wf1": 0.0942302064454519
+    }
+  ],
+  "extra_logits_sha256": "76aa8ae751b0e1be4a13ea3a6d0a1fa26bba5f965682855c58d6ce2d163738b1",
+  "fold": 0,
+  "group": "OLat1",
+  "inference_precision": "fp32_no_autocast",
+  "lr_schedule": {
+    "scheduler": "linear_decay_after_warmup",
+    "total_scheduled_steps": 2,
+    "warmup_updates": 0
+  },
+  "olat_components": {
+    "test": {
+      "all": {
+        "argmax_counts": [
+          608
+        ],
+        "mean_entropy": 0.0,
+        "mean_responsibility": [
+          1.0
+        ],
+        "rows": 608,
+        "uniform_entropy": 0.0
+      },
+      "gold_O": {
+        "argmax_counts": [
+          90
+        ],
+        "mean_entropy": 0.0,
+        "mean_responsibility": [
+          1.0
+        ],
+        "rows": 90,
+        "uniform_entropy": 0.0
+      }
+    },
+    "val": {
+      "all": {
+        "argmax_counts": [
+          244
+        ],
+        "mean_entropy": 0.0,
+        "mean_responsibility": [
+          1.0
+        ],
+        "rows": 244,
+        "uniform_entropy": 0.0
+      },
+      "gold_O": {
+        "argmax_counts": [
+          34
+        ],
+        "mean_entropy": 0.0,
+        "mean_responsibility": [
+          1.0
+        ],
+        "rows": 34,
+        "uniform_entropy": 0.0
+      }
+    }
+  },
+  "planned_updates": 2,
+  "predictions_sha256": "929510a7dbcc9177397c3b8db1830d414ecb1dead4cf68a6d88170a116db9459",
+  "repeat_counts": {},
+  "repeated_original_row_ids": [],
+  "runtime_sec": 10.009,
+  "seed": 42,
+  "seed_policy": "init=seed*1000+fold; per-epoch fresh shuffle RNG (not archived C0 RNG stream)",
+  "skipped_fp16_updates": 0,
+  "source_count": {
+    "original": 2190
+  },
+  "status": "pass",
+  "task_fingerprint": "4d4ce4ee0066742f521bb77e219548dd777c8614c69b550a7deddef829ca8174",
+  "test_original_wf1": 0.12330006529902278,
+  "test_rows": 608,
+  "test_sym_wf1": 0.11716111161964533,
+  "train_rows": 2190,
+  "val_predictions_sha256": "6744fe2ec60183d0dfcc3ebee277f85e237ad9b8e18ce0104e9b7d22e5f4dbe0",
+  "val_rows": 244
+}
