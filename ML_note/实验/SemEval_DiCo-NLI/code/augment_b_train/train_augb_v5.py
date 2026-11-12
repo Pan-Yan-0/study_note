@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""DiCo-NLI AugB v5.1 (Claude, 11-12): v4.1 + three arms on B0 data for Commit 4 (OLat4, NLIinit, BiBCE).
+"""DiCo-NLI AugB v5.2 (Claude, 11-12; v5.2 = the receipt's numeric details are each required and range-checked): v4.1 + three arms on B0 data for Commit 4 (OLat4, NLIinit, BiBCE).
 v5.1 (after Codex's review): for Commit 4 the formal queue also requires torch / cuda / transformers of the worker to equal
 the SMOKE run's (else rerun SMOKE in this environment first), refuses restored done.json trained under other versions, and
 accepts arm_checks.json only when both sub-receipts are complete and it is bound to this SMOKE run (code, model revision,
@@ -95,7 +95,7 @@ CONFIG = {"model": MODEL_ID, "max_epochs": 12, "lr": 2e-5,
           "train_loss": "cross_entropy", "augmentation": "plus_one_selected_rows",
           "smoke": "fold0_seed42_two_steps_per_group", "protocol": "AugB-Haiku-P1C-R",
           "seed_note": "init=seed*1000+fold; per-epoch fresh shuffle RNG (not archived C0 RNG stream)",
-          "code_version": "v5.1 (Claude): v4.1 + OLat / NLIinit / BiBCE arms; Commit 4 software identity and receipt binding",
+          "code_version": "v5.2 (Claude): v4.1 + OLat / NLIinit / BiBCE arms; Commit 4 software identity, receipt binding and complete receipt values",
           "arm_variants": "olat: classifier -> Linear(H, 3+K); z_O = logsumexp(z_O1..K) - log K in fp32; init = B0 head, O rows = B0 O row + "
                           "N(0, std^2) perturbation centred over components (own Generator, seed init_seed+20000), biases copied; "
                           "nli: after the B0 construction, deberta.* and pooler.* are overwritten from the pinned NLI checkpoint "
@@ -532,19 +532,68 @@ def arm_receipt_problems(out, rev, info):
     sb = smoke_binding(out, "4")
     if None in sb.values() or a.get("smoke_binding") != sb:
         probs.append("smoke_binding")
-    n, i = a.get("numeric"), a.get("init")
-    if (not isinstance(n, dict) or n.get("status") != "pass" or any(k not in n for k in ARM_NUMERIC_KEYS)
-            or n.get("bibce_lambda0_equal") is not True or len(n.get("bibce_four_targets") or []) != 4
-            or not all(isinstance(n.get(k), dict) for k in ("olat_K1_zero", "olat_K4_zero", "olat_K4_0.002"))
-            or n["olat_K1_zero"].get("max_abs_logit_diff") != 0.0):
+    try:
+        numeric_ok = _numeric_receipt_ok(a.get("numeric"))
+    except (AttributeError, KeyError, TypeError, ValueError, IndexError):
+        numeric_ok = False
+    if not numeric_ok:
         probs.append("numeric")
-    if (not isinstance(i, dict) or i.get("status") != "pass" or any(k not in i for k in ARM_INIT_KEYS)
-            or not isinstance(i.get("spm_sha256"), dict) or not i["spm_sha256"].get("b0")
-            or i["spm_sha256"].get("b0") != i["spm_sha256"].get("nli")
-            or not all(isinstance(i.get(k), dict) and i[k].get("global_rng_restored") is True for k in ("K4_zero", "K4_0.002"))
-            or not (isinstance(i["K4_zero"].get("max_abs_prob_diff"), (int, float)) and i["K4_zero"]["max_abs_prob_diff"] <= 1e-5)):
+    try:
+        init_ok = _init_receipt_ok(a.get("init"))
+    except (AttributeError, KeyError, TypeError, ValueError, IndexError):
+        init_ok = False
+    if not init_ok:
         probs.append("init")
     return probs
+
+
+def _fin(x, lo=None, hi=None):
+    """A finite real number (not bool) within [lo, hi]."""
+    if isinstance(x, bool) or not isinstance(x, (int, float)) or not math.isfinite(x):
+        return False
+    return (lo is None or x >= lo) and (hi is None or x <= hi)
+
+
+def _numeric_receipt_ok(n):
+    if not isinstance(n, dict) or n.get("status") != "pass" or any(k not in n for k in ARM_NUMERIC_KEYS):
+        return False
+    if n["bibce_lambda0_equal"] is not True or not _fin(n["bibce_extreme"], 0.0):
+        return False
+    t = n["bibce_four_targets"]
+    if not isinstance(t, list) or len(t) != 4:
+        return False
+    for pair in t:
+        if not (isinstance(pair, list) and len(pair) == 2 and _fin(pair[0], 0.0) and _fin(pair[1], 0.0)
+                and abs(pair[0] - pair[1]) <= 1e-6 * max(1.0, abs(pair[1]))):
+            return False
+    for k, K, std, tol in (("olat_K1_zero", 1, 0.0, 0.0), ("olat_K4_zero", 4, 0.0, 1e-5), ("olat_K4_0.002", 4, 0.002, None)):
+        o = n[k]
+        if not isinstance(o, dict) or o.get("K") != K or o.get("perturb_std") != std:
+            return False
+        if not _fin(o.get("max_abs_logit_diff"), 0.0, tol) or not _fin(o.get("delta_sum_over_components_abs_max"), 0.0, 1e-6):
+            return False
+        if not _fin(o.get("delta_abs_max"), 0.0) or not _fin(o.get("b0_O_row_norm"), 0.0):
+            return False
+    return n["olat_K1_zero"]["max_abs_logit_diff"] == 0.0 and n["olat_K4_zero"]["delta_abs_max"] == 0.0
+
+
+def _init_receipt_ok(i):
+    if not isinstance(i, dict) or i.get("status") != "pass" or any(k not in i for k in ARM_INIT_KEYS):
+        return False
+    keys = i["b0_newly_initialised_keys"]
+    if not (isinstance(keys, list) and keys and all(isinstance(x, str) for x in keys)):
+        return False
+    sp = i["spm_sha256"]
+    hexok = lambda h: isinstance(h, str) and len(h) == 64 and all(c in "0123456789abcdef" for c in h)
+    if not (isinstance(sp, dict) and hexok(sp.get("b0")) and sp.get("b0") == sp.get("nli")):
+        return False
+    for k, tol in (("K4_zero", 1e-5), ("K4_0.002", None)):
+        o = i[k]
+        if not isinstance(o, dict) or o.get("global_rng_restored") is not True:
+            return False
+        if not (_fin(o.get("max_abs_prob_diff"), 0.0, tol) and _fin(o.get("max_abs_pO_diff"), 0.0, tol) and _fin(o.get("mean_pO_diff"))):
+            return False
+    return True
 
 
 def env_mismatched_tasks(out, groups, soft_now):

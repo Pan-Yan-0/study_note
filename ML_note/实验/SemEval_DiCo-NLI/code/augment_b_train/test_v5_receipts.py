@@ -12,13 +12,18 @@ spec.loader.exec_module(tv5)
 
 INFO = {"gpu": "Tesla T4", "precision": "fp16", "torch": "2.11.0+cu128", "cuda": "12.8", "transformers": "4.57.6",
         "python": "3.12", "sklearn": "1.6", "platform": "linux"}
-NUMERIC = {"status": "pass", "bibce_lambda0_equal": True, "bibce_four_targets": [[0.1, 0.1]] * 4, "bibce_extreme": 3.0,
-           "olat_K1_zero": {"max_abs_logit_diff": 0.0}, "olat_K4_zero": {"max_abs_logit_diff": 1e-7},
-           "olat_K4_0.002": {"max_abs_logit_diff": 1e-3}}
+def _olat(K, std, diff, dmax):
+    return {"max_abs_logit_diff": diff, "K": K, "perturb_std": std, "perturb_seed": 62000, "delta_abs_max": dmax,
+            "delta_sum_over_components_abs_max": 0.0 if dmax == 0 else 3e-10, "b0_O_row_norm": 0.55}
+
+
+NUMERIC = {"status": "pass", "bibce_lambda0_equal": True, "bibce_four_targets": [[0.31, 0.31], [1.2, 1.2], [0.9, 0.9], [2.1, 2.1]],
+           "bibce_extreme": 3.0, "olat_K1_zero": _olat(1, 0.0, 0.0, 0.0), "olat_K4_zero": _olat(4, 0.0, 1e-7, 0.0),
+           "olat_K4_0.002": _olat(4, 0.002, 1e-3, 0.006)}
 INIT = {"status": "pass", "b0_newly_initialised_keys": ["classifier.bias", "classifier.weight", "pooler.dense.bias", "pooler.dense.weight"],
         "spm_sha256": {"b0": "ab" * 32, "nli": "ab" * 32},
-        "K4_zero": {"max_abs_prob_diff": 1.2e-8, "global_rng_restored": True},
-        "K4_0.002": {"max_abs_prob_diff": 4e-5, "global_rng_restored": True}}
+        "K4_zero": {"max_abs_prob_diff": 1.2e-8, "max_abs_pO_diff": 1e-8, "mean_pO_diff": 2e-9, "global_rng_restored": True},
+        "K4_0.002": {"max_abs_prob_diff": 4e-5, "max_abs_pO_diff": 3.9e-5, "mean_pO_diff": 1e-6, "global_rng_restored": True}}
 
 
 def make_run(root, tag, info=INFO):
@@ -94,6 +99,33 @@ class Receipt(unittest.TestCase):
         self.setUp()
         self.edit(lambda a: a.update(status="fail"))
         self.assertEqual(self.probs(), ["status"])
+
+    def test_every_numeric_detail_is_required(self):
+        # Codex 11-12：numeric.olat_K4_zero = {} 曾能通过；现在每个用于验收的数值都必填、有限、在阈值内
+        cases = [
+            ("numeric", lambda a: a["numeric"].update({"olat_K4_zero": {}})),
+            ("numeric", lambda a: a["numeric"].update({"olat_K4_0.002": {}})),
+            ("numeric", lambda a: a["numeric"]["olat_K4_zero"].pop("max_abs_logit_diff")),
+            ("numeric", lambda a: a["numeric"]["olat_K4_zero"].update(max_abs_logit_diff=2e-5)),
+            ("numeric", lambda a: a["numeric"]["olat_K4_zero"].update(max_abs_logit_diff=-1e-9)),
+            ("numeric", lambda a: a["numeric"]["olat_K4_0.002"].update(max_abs_logit_diff=float("nan"))),
+            ("numeric", lambda a: a["numeric"]["olat_K4_0.002"].update(delta_sum_over_components_abs_max=1e-3)),
+            ("numeric", lambda a: a["numeric"]["olat_K4_0.002"].update(K=1)),
+            ("numeric", lambda a: a["numeric"]["olat_K4_zero"].update(delta_abs_max=1e-4)),
+            ("numeric", lambda a: a["numeric"].update(bibce_four_targets=[[0.3, 0.3]] * 3)),
+            ("numeric", lambda a: a["numeric"].update(bibce_four_targets=[[0.3, 0.4]] * 4)),
+            ("numeric", lambda a: a["numeric"].update(bibce_extreme=True)),
+            ("numeric", lambda a: a["numeric"].update(bibce_extreme=float("inf"))),
+            ("init", lambda a: a["init"].update({"K4_zero": {}})),
+            ("init", lambda a: a["init"].update({"K4_0.002": {"global_rng_restored": True}})),
+            ("init", lambda a: a["init"]["K4_0.002"].pop("mean_pO_diff")),
+            ("init", lambda a: a["init"].update(b0_newly_initialised_keys=[])),
+            ("init", lambda a: a["init"].update(spm_sha256={"b0": "x", "nli": "x"})),
+        ]
+        for want, f in cases:
+            self.setUp()
+            self.edit(f)
+            self.assertEqual(self.probs(), [want], f)
 
     def test_missing_receipt(self):
         (self.out / "arm_checks.json").unlink()

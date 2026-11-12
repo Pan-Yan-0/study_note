@@ -1,10 +1,12 @@
 """Claude 对实验 B Commit 4（B0 数据上的三臂：OLat4 / NLIinit / BiBCE，英语五折三种子，Kaggle T4 fp16）的独立复核。
 运行前写定（11-12，冻结计划变更记录 Commit 4 条目和 Codex 11-12 复核），看结果后不改。
 
+有问题时仍写出诊断，但以非零状态退出，主比较只在 0 个问题时才能引用。
 不复用训练脚本的代码，只读每个任务保存的文件：
 1. 回执：arm_checks.json、olat1_check.json 都是 pass；b0_reuse.json 决定 B0 的来源——pass 时用 Commit 1 归档的 15 项，
    并核对 v5.1 的 B0 SMOKE 三个预测文件和归档逐字节相同；不 pass 时用本次结果包里重跑的 B0（同样逐项核对）。
-2. 完整性：45 个臂任务（以及重跑时的 15 个 B0）状态 pass、代码哈希是 v5.1；预测和额外 logits 的哈希和 done.json 一致；
+2. 完整性：45 个臂任务（以及重跑时的 15 个 B0，对照 Commit 1 归档的同种子同折 B0）状态 pass、代码哈希是 v5.2；
+   有效损失两边都是 CE（缺 loss 字段按 CE）；预测和额外 logits 的哈希和 done.json 一致；
    task.json 和 B0 只差代码身份、group、group_spec（config 只差 code_version、loss_variants、arm_variants）；
    训练行数 = fit，计划步数 = 同种子同折的 B0；GPU、精度、torch、cuda、transformers 和 B0 的任务相同。
 3. 训练记录：实际更新 + fp16 跳步 = 计划步数；选中轮 = 内层验证原方向 WF1 最高、同分取早；内层验证预测重算等于记录。
@@ -38,12 +40,13 @@ L2I = {l: i for i, l in enumerate(LABELS)}
 SWAP = [0, 2, 1, 3]
 SEEDS, FOLDS = [42, 43, 44], [0, 1, 2, 3, 4]
 B, BOOT_SEED, M = 20000, 20261021, 3
-CODE_SHA = "e62f75e138b179b13401270c5ad97e969245044ad6d284fa6234167a4e91f962"  # train_augb_v5.py v5.1
+CODE_SHA = "7f3e01b36b8bfe1c92e22f1ef460117b7f359bf6d029df5cd8bbf638094fa4f1"  # train_augb_v5.py v5.2
 NEW = {"OLat4": {"kind": "orig", "head": "olat", "K": 4, "perturb_std": 0.002, "perturb_seed_offset": 20000},
        "NLIinit": {"kind": "orig", "init": "nli", "init_model": "MoritzLaurer/mDeBERTa-v3-base-xnli-multilingual-nli-2mil7",
                    "init_revision": "b5113eb38ab63efdd7f280f8c144ea8b13f978ce", "init_prefixes": ["deberta.", "pooler."]},
        "BiBCE": {"kind": "orig", "aux": "bibce_mean_of_two_directions", "bibce_lambda": 0.25}}
-VARY = ("code_sha256", "group", "group_spec", "seed", "fold", "steps", "train_rows", "val_rows", "test_rows", "config")
+VARY = ("code_sha256", "group", "group_spec", "seed", "fold", "steps", "train_rows", "val_rows", "test_rows", "config", "loss")
+eff_loss = lambda t: t.get("loss", "ce")  # 归档的 Commit 1 task.json 没有 loss 字段，按训练入口的口径视为 CE；显式非 CE 拒绝
 CFG_VARY = ("code_version", "loss_variants", "arm_variants")
 ENV_KEYS = ("gpu", "precision", "torch", "cuda", "transformers")
 problems = []
@@ -200,13 +203,15 @@ def load(g, root, verify, spec):
             rows = rcsv(f"{td}/predictions.csv")
             byid = {r["instance_id"]: r for r in rows}
             if verify:
-                b0t, b0d = tasks[("B0", s, k)]
+                b0t, b0d = arch[(s, k)] if g == "B0" else tasks[("B0", s, k)]
                 check({x: v for x, v in t.items() if x not in VARY} == {x: v for x, v in b0t.items() if x not in VARY}, f"{td} task.json 和 B0 不只差代码身份和组")
                 check({x: v for x, v in t["config"].items() if x not in CFG_VARY} == {x: v for x, v in b0t["config"].items() if x not in CFG_VARY}, f"{td} config 和 B0 不只差代码说明")
                 check(t["code_sha256"] == CODE_SHA, f"{td} 代码哈希不对")
-                check(t["group"] == g and t["group_spec"] == spec and t["loss"] == "ce", f"{td} 组或 group_spec 不对")
+                check(t["group"] == g and t["group_spec"] == spec, f"{td} 组或 group_spec 不对")
+                check(eff_loss(t) == "ce" and eff_loss(b0t) == "ce", f"{td} 有效损失不是 CE")
                 check(t["seed"] == s and t["fold"] == k and not t["smoke"], f"{td} 身份不对")
-                check(all(done["environment"].get(e) == b0d["environment"].get(e) for e in ENV_KEYS), f"{td} 环境和 B0 不同")
+                if g != "B0":  # 重跑的 B0 本来就和归档环境不同；三臂必须和所用的 B0 同环境
+                    check(all(done["environment"].get(e) == b0d["environment"].get(e) for e in ENV_KEYS), f"{td} 环境和 B0 不同")
                 check(done.get("status") == "pass", f"{td} 状态 {done.get('status')}")
                 for f_, key in (("predictions.csv", "predictions_sha256"), ("val_predictions.csv", "val_predictions_sha256"),
                                 ("extra_logits.csv", "extra_logits_sha256")):
@@ -254,12 +259,8 @@ def load(g, root, verify, spec):
         oof_prob[(g, s)] = prob
 
 
-load("B0", B0_ROOT, False, {"kind": "orig"})
-if not reuse:  # 重跑的 B0 至少核对代码、哈希和选轮（和臂同样的检查，不比 group_spec 以外的差别）
-    for (g, s, k), (t, done) in list(tasks.items()):
-        td = f"{B0_ROOT}/seed{s}/fold{k}"
-        check(t["code_sha256"] == CODE_SHA and done.get("status") == "pass" and t["group_spec"] == {"kind": "orig"}, f"{td} 重跑的 B0 身份不对")
-        check(sha(f"{td}/predictions.csv") == done["predictions_sha256"], f"{td} 预测哈希不对")
+arch = {(s, k): (rj(f"{C1}/tasks/B0/seed{s}/fold{k}/task.json"), rj(f"{C1}/tasks/B0/seed{s}/fold{k}/done.json")) for s in SEEDS for k in FOLDS}
+load("B0", B0_ROOT, not reuse, {"kind": "orig"})  # 重跑的 B0 走和三臂相同的逐任务核对（对照归档的 B0）
 for g, spec in NEW.items():
     load(g, f"{R}/tasks/{g}", True, spec)
 
@@ -320,11 +321,14 @@ out = {"problems": problems, "b0_source": "Commit 1 归档（B0 复用通过）"
        "main_comparisons": main, "descriptive_plain": res["plain"], "olat_components": extras["OLat4"], "nli_init": extras["NLIinit"],
        "updates": updates,
        "rule": "臂 − B0（sym WF1）：均值 > 0 且双侧 Bonferroni 98.33% 区间下限 > 0；20,000 次家族重抽样，四组三种子共用；区间不含重新训练的随机性"}
+check(len(updates) == (45 if reuse else 60), f"新任务数 {len(updates)} 不对")
 json.dump(out, open(f"{R}/claude_recheck.json", "w", encoding="utf-8"), ensure_ascii=False, indent=1)
-print("问题：", problems[:20] if problems else "无", len(problems))
+print("问题：", problems[:20] if problems else "无", len(problems), "| 核对的新任务", len(updates), "（复用 B0 应为 45，重跑应为 60）")
 for g in ALL:
     print(f"{g:8s}", {mode: {m: round(v * 100, 2) for m, v in mean_scores[g][mode].items()} for mode in ("plain", "sym")},
           "O-AP", {s: round(v * 100, 2) for s, v in o_desc[g]["O_AP_sym"].items()}, "漏判", o_desc[g]["O_missed"], "误判", o_desc[g]["O_false_alarm"])
 for k, v in main.items():
     print(k, {s: round(x * 100, 2) for s, x in v["per_seed"].items()}, round(v["mean"] * 100, 3),
           "98.33%", [round(x * 100, 2) for x in v["ci_bonferroni"]], "提升" if v["improvement"] else "-")
+if problems:
+    sys.exit(2)
