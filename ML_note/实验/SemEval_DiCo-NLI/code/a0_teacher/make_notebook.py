@@ -15,7 +15,7 @@ md("""# A0：Q0 教师在 B2 生成行上的推理（Kaggle T4×2，fp16）
 
 **流程**
 1. `RUN_FULL = False`，从头运行：装依赖 → 下模型 → SMOKE（fold 0 seed 42：身份、内层验证、逐折复现、128 条教师推理）。把下载链接里的 `a0_smoke.zip` 发给 Claude。
-2. Claude 核对后，把 `RUN_FULL` 改成 `True`，用 Save & Run All (Commit) 后台跑。两张卡并行，预计 1.3–1.5 小时。
+2. Claude 核对、Codex 同意后，把 `RUN_FULL` 改成 `True`，用 Save & Run All (Commit) 后台跑。两张卡并行，预计 1.3–1.5 小时。
 3. 跑完把 `a0_results.zip` 发给 Claude。中途停了的话，把上次的 Output 加成数据集再跑一次，已完成的任务核对哈希后跳过。""")
 code("""RUN_FULL = False          # SMOKE 发给 Claude 核对后改成 True，再用 Save & Run All (Commit)
 WORK = '/kaggle/working'
@@ -62,37 +62,30 @@ t0 = time.time()
 sh(PY + ['setup'], log=ROOT + '/logs/setup.log')
 sh(PY + ['download', '--root', ROOT], log=ROOT + '/logs/download.log')
 print(f'装依赖和下模型用时 {(time.time() - t0) / 60:.1f} 分钟')""")
-code("""# SMOKE：fold 0 seed 42 的身份、内层验证重评、逐折复现门槛、前 128 条教师推理
+code("""# SMOKE：fold 0 seed 42 的身份、内层验证重评、逐折复现门槛、前 128 条教师推理；脚本自己打包 a0_smoke.zip
 from IPython.display import FileLink, display
 t0 = time.time()
-sh(PY + ['run', '--root', ROOT, '--weights', *WEIGHTS, '--folds', '0', '--smoke'], env={'A0_GPU': '0'}, log=ROOT + '/logs/smoke.log')
-r = json.loads(Path(ROOT, 'smoke/fold0/seed42.json').read_text())
-print(json.dumps({k: r[k] for k in ('status', 'val_recheck', 'reproduction', 'load', 'env', 'seconds')}, ensure_ascii=False, indent=1))
-print(f'SMOKE 用时 {(time.time() - t0) / 60:.1f} 分钟')
-with zipfile.ZipFile(WORK + '/a0_smoke.zip', 'w', zipfile.ZIP_DEFLATED) as z:
-    for p in Path(ROOT).rglob('*'):
-        if p.is_file() and (p.parts[len(Path(ROOT).parts)] in ('smoke', 'logs') or p.name == 'model.json'): z.write(p, str(p.relative_to(ROOT)))
+sh(PY + ['smoke', '--root', ROOT, '--weights', *WEIGHTS], env={'A0_GPU': '0'}, log=ROOT + '/logs/smoke.log')
+shutil.copy2(ROOT + '/download/a0_smoke.zip', WORK + '/a0_smoke.zip')
 display(FileLink('a0_smoke.zip'))
+print(f'SMOKE 用时 {(time.time() - t0) / 60:.1f} 分钟')
 print('已完成：SMOKE。请把 a0_smoke.zip 发给 Claude；核对后把 RUN_FULL 改成 True，用 Save & Run All (Commit) 跑全量。')""")
-code("""# 全量：两张 T4 各一个进程（GPU0：fold 0、2、4；GPU1：fold 1、3），每折先 seed 42（含复现门槛）
+code("""# 全量：脚本起两个 worker（GPU0：fold 0、2、4；GPU1：fold 1、3），每折先 seed 42（含复现门槛）；两个都返回 0 才打结果包
 if RUN_FULL:
-    t0 = time.time(); procs = []
-    for gpu, folds in (('0', '0,2,4'), ('1', '1,3')):
-        log = open(f'{ROOT}/logs/worker{gpu}.log', 'a')
-        procs.append((gpu, subprocess.Popen(PY + ['run', '--root', ROOT, '--weights', *WEIGHTS, '--folds', folds],
-                                            env=dict(os.environ, A0_GPU=gpu), stdout=log, stderr=subprocess.STDOUT, text=True), log))
-    while any(p.poll() is None for _, p, _ in procs):
-        time.sleep(120)
-        done = len(glob.glob(ROOT + '/teacher/fold*/seed*.jsonl'))
-        print(f'{(time.time() - t0) / 60:.0f} 分钟：已完成 {done} / 15 个教师文件', flush=True)
-    for gpu, p, log in procs:
-        log.close()
-        print(f'--- worker{gpu} 退出码 {p.returncode}，日志末尾 ---'); print(Path(f'{ROOT}/logs/worker{gpu}.log').read_text()[-3000:])
+    t0 = time.time()
+    p = subprocess.run(PY + ['full', '--root', ROOT, '--weights', *WEIGHTS], text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    print(p.stdout[-8000:])
+    for g in ('0', '1'):
+        f = Path(ROOT, 'logs', f'worker{g}.log')
+        if f.exists(): print(f'--- worker{g} 日志末尾 ---'); print(f.read_text()[-3000:])
     print(f'全量用时 {(time.time() - t0) / 60:.1f} 分钟')
-    sh(PY + ['finalize', '--root', ROOT])
-    shutil.copy2(ROOT + '/download/a0_results.zip', WORK + '/a0_results.zip')
-    display(FileLink('a0_results.zip'))
-    print('已完成：全量。请把 a0_results.zip 发给 Claude。')
+    if p.returncode == 0:
+        shutil.copy2(ROOT + '/download/a0_results.zip', WORK + '/a0_results.zip'); display(FileLink('a0_results.zip'))
+        print('已完成：全量。请把 a0_results.zip 发给 Claude。')
+    else:
+        for n in ('a0_failed_diagnostics.zip',):
+            if Path(ROOT, 'download', n).exists(): shutil.copy2(Path(ROOT, 'download', n), Path(WORK, n)); display(FileLink(n))
+        print(f'没有完成（退出码 {p.returncode}）：不出结果包。请把上面的输出和诊断包发给 Claude。')
 else:
     print('RUN_FULL = False：只跑了 SMOKE。')""")
 nb = {"cells": cells, "metadata": {"kernelspec": {"display_name": "Python 3", "language": "python", "name": "python3"},
