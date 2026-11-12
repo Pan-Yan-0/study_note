@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""DiCo-NLI AugB v7.1 (Claude, 11-12): v6.1 + Commit 6 = DirEnt on B0 data with the NLI-checkpoint encoder. The four labels are
+"""DiCo-NLI AugB v7.2 (Claude, 11-12): v6.1 + Commit 6 = DirEnt on B0 data with the NLI-checkpoint encoder. The four labels are
 recombined from one shared directional entailment score s(x, y) ("x entails y"): with a = sigmoid(s(A, B)), b = sigmoid(s(B, A)),
 P(E) = ab, P(F) = a(1 - b), P(B) = (1 - a)b, P(O) = (1 - a)(1 - b). Each training row supervises only its own order with
 BCE(s(A, B), t), t = 1 iff the label is E or F (fp32, outside autocast), so the training rows and forward passes equal B0's.
@@ -15,6 +15,9 @@ v7.1 (after Codex's v7 review): with --stage full --workers > 1 a worker writes 
 workers/w<k>/; input_data, official_reference.sha256 and model_revision.json must already exist from the single-process SMOKE and
 match); jsave uses a per-process temporary file; the formal entry checks every value of dec_checks.json against dec_checks' own
 pass conditions.
+v7.2 (after the first Kaggle SMOKE): DEC-H's first fp16 step overflowed at the initial GradScaler scale 65536 and was skipped
+(normal back-off; every formal B0 and NLIinit task also skipped 2-4 steps). DEC / DEC-H SMOKE now draws from 4 batches and stops
+at 2 actual updates (at most 2 skips, recorded); NLIinit and every other group keep exactly the old 2-batch SMOKE.
 
 v6.1 docstring follows.
 DiCo-NLI AugB v6.1 (Claude, 11-12; v6.1 = Codex's v6 review: two actual SMOKE updates and current scale data required): v5.2 + Commit 5 = B2-NLIinit (the +2 data of B2-Haiku, NLI-checkpoint initialisation)
@@ -134,7 +137,7 @@ CONFIG = {"model": MODEL_ID, "max_epochs": 12, "lr": 2e-5,
           "train_loss": "cross_entropy", "augmentation": "plus_one_selected_rows",
           "smoke": "fold0_seed42_two_steps_per_group", "protocol": "AugB-Haiku-P1C-R",
           "seed_note": "init=seed*1000+fold; per-epoch fresh shuffle RNG (not archived C0 RNG stream)",
-          "code_version": "v7.1 (Claude): v6.1 + Commit 6 (DirEnt: DEC / DEC-H against NLIinit); v7.1 = parallel workers write no shared file, receipt values checked",
+          "code_version": "v7.2 (Claude): v6.1 + Commit 6 (DirEnt: DEC / DEC-H against NLIinit); v7.1 = parallel workers write no shared file, receipt values checked; v7.2 = DEC SMOKE continues to 2 actual updates",
           "arm_variants": "olat: classifier -> Linear(H, 3+K); z_O = logsumexp(z_O1..K) - log K in fp32; init = B0 head, O rows = B0 O row + "
                           "N(0, std^2) perturbation centred over components (own Generator, seed init_seed+20000), biases copied; "
                           "nli: after the B0 construction, deberta.* and pooler.* are overwritten from the pinned NLI checkpoint "
@@ -428,6 +431,7 @@ def dec_checks(device):
     return rep
 
 
+SMOKE_DEC_MAX_SKIPS = 2  # v7.2: DEC / DEC-H SMOKE uses up to 4 batches to reach 2 actual updates
 DEC_NUMERIC_KEYS = ("bce_targets_EFBO", "bce_extreme", "recombination", "decision_rule", "dech_logodds_max_abs", "install")
 DEC_RULE_TABLE = {"zero_zero": 3, "pos_zero": 1, "zero_pos": 2, "swap_mirror": True}
 
@@ -602,9 +606,15 @@ def commit6_smoke_problems(out, rev, info):
             probs.append(g + " SMOKE files")
             continue
         tr = sm.get("grad_trace") or []
-        if not (sm.get("status") == "pass" and sm.get("updates") == 2 and sm.get("skips") == 0 and len(tr) == 2
-                and all(x.get("status") == "updated" for x in tr) and sm.get("output_path_checked") is True
-                and dn.get("actual_optimizer_updates") == 2 and dn.get("skipped_fp16_updates") == 0):
+        sk = sm.get("skips")
+        # v7.2: NLIinit (compared with Commit 4) needs exactly 2 updates in its 2 batches; DEC / DEC-H take batches until 2 actual
+        # updates, so fp16 GradScaler back-off skips at the start (at most 2) are allowed and must be recorded consistently
+        max_skips = 0 if g == "NLIinit" else SMOKE_DEC_MAX_SKIPS
+        if not (sm.get("status") == "pass" and sm.get("updates") == 2 and isinstance(sk, int) and not isinstance(sk, bool)
+                and 0 <= sk <= max_skips and len(tr) == 2 + sk
+                and sum(x.get("status") == "updated" for x in tr) == 2 and sum(x.get("status") == "skipped" for x in tr) == sk
+                and (sk == 0 or tr[-1].get("status") == "updated") and sm.get("output_path_checked") is True
+                and dn.get("actual_optimizer_updates") == 2 and dn.get("skipped_fp16_updates") == sk):
             probs.append(g + " two actual updates")
         if sm.get("v3_data_sha256") != V3.get("hashes"):
             probs.append(g + " v3_data_sha256")
@@ -1797,7 +1807,8 @@ def one_task(group, seed, fold, original, selected, splits, fam_of, out, tokeniz
             if match is not None and match not in chosen:
                 chosen.append(match)
         chosen.extend(i for i in ranked if i not in chosen)
-        train_ds = torch.utils.data.Subset(train_ds, chosen[:min(2*CONFIG["batch_size"], len(train_ds))])
+        n_smoke_batches = 2 + SMOKE_DEC_MAX_SKIPS if is_dec else 2  # v7.2: other groups unchanged
+        train_ds = torch.utils.data.Subset(train_ds, chosen[:min(n_smoke_batches*CONFIG["batch_size"], len(train_ds))])
         total_steps = 2
     init_seed = int(seed*1000 + fold)
     set_seed(init_seed)
@@ -1830,7 +1841,7 @@ def one_task(group, seed, fold, original, selected, splits, fam_of, out, tokeniz
         total_loss, seen = 0.0, 0
         t_ep0 = time.time()  # v7
         for step, batch in enumerate(loader):
-            if smoke and step >= 2:
+            if smoke and (updates >= 2 if is_dec else step >= 2):
                 break
             y = batch.pop("labels").to("cuda")
             batch = {k: v.to("cuda") for k,v in batch.items()}

@@ -1,10 +1,10 @@
-"""Claude 对实验 B Commit 6（v7.1）（DirEnt：把四分类拆成两个方向的蕴含打分；DEC / DEC-H 对 Commit 4 的 NLIinit，英语五折三种子，
+"""Claude 对实验 B Commit 6（v7.2）（DirEnt：把四分类拆成两个方向的蕴含打分；DEC / DEC-H 对 Commit 4 的 NLIinit，英语五折三种子，
 Kaggle T4 fp16）的独立复核。运行前写定（11-12，冻结计划变更记录 Commit 6 条目），看结果后不改。
 
 有问题时仍写出诊断，但以非零状态退出，主比较只在 0 个问题时才能引用。
 不复用训练脚本的代码，只读每个任务保存的文件：
 1. 完整性：DEC、DEC-H 各 15 个任务状态 pass、代码哈希是 v7；有效损失是 dec_bce；预测、内层验证和额外 logits 的哈希和
-   done.json 一致；SMOKE 三组各 2 次实际更新；dec_checks.json 通过。
+   done.json 一致；SMOKE 三组各 2 次实际更新（DEC / DEC-H 之前最多 2 次 fp16 跳步，NLIinit 不许跳步）；dec_checks.json 通过。
 2. 对照组：SMOKE 的 NLIinit 和 Commit 4 归档逐字节相同（nli_reuse.json）且 15 个 Commit 4 任务的身份核对通过时，用 Commit 4
    的 NLIinit；否则用本次重跑的 NLIinit（这时 15 个任务必须都在）。
 3. DEC / DEC-H 和对照组同种子同折：task.json 只差代码身份、group、group_spec、loss 和 config 里的代码说明；group_spec =
@@ -47,7 +47,7 @@ L2I = {l: i for i, l in enumerate(LABELS)}
 SWAP = [0, 2, 1, 3]
 SEEDS, FOLDS = [42, 43, 44], [0, 1, 2, 3, 4]
 B, BOOT_SEED, M = 20000, 20261021, 2
-CODE_SHA = "d7cf722ef7b80584732f9f4eb1919c6f2d2d241e269bf87c39ed135be8b4c5fd"  # train_augb_v7.py v7.1
+CODE_SHA = "80396fd93f2a910a19407e3e3dd4fd7703c86abe97de8499e5f52fce36659e71"  # train_augb_v7.py v7.2
 NLI_SPEC = {"kind": "orig", "init": "nli", "init_model": "MoritzLaurer/mDeBERTa-v3-base-xnli-multilingual-nli-2mil7",
             "init_revision": "b5113eb38ab63efdd7f280f8c144ea8b13f978ce", "init_prefixes": ["deberta.", "pooler."]}
 NEW = {"DEC": {**NLI_SPEC, "head": "dec", "head_seed_offset": 30000, "loss": "dec_bce"},
@@ -210,8 +210,10 @@ if SELFTEST:
 # ---------- SMOKE、回执和对照组来源 ----------
 for g in ("NLIinit", "DEC", "DEC-H"):
     sm = rj(f"{R}/smoke/{g}/smoke.json")
-    check(sm["status"] == "pass" and sm["code_sha256"] == CODE_SHA and sm["updates"] == 2 and sm["skips"] == 0
-          and sum(x["status"] == "updated" for x in sm["grad_trace"]) == 2, f"SMOKE {g} 不是 v7 的 2 次实际更新")
+    sk = sm["skips"]  # v7.2: DEC / DEC-H may skip up to 2 fp16 back-off steps before their 2 actual updates; NLIinit none
+    check(sm["status"] == "pass" and sm["code_sha256"] == CODE_SHA and sm["updates"] == 2 and 0 <= sk <= (0 if g == "NLIinit" else 2)
+          and len(sm["grad_trace"]) == 2 + sk and sum(x["status"] == "updated" for x in sm["grad_trace"]) == 2,
+          f"SMOKE {g} 不是 v7.2 的 2 次实际更新")
 dc = rj(f"{R}/dec_checks.json")
 check(dc.get("status") == "pass" and dc.get("code_sha256") == CODE_SHA and (dc.get("numeric") or {}).get("status") == "pass"
       and (dc.get("init") or {}).get("status") == "pass", "dec_checks.json 没通过或不是 v7")

@@ -1,4 +1,4 @@
-"""v7.1（Commit 6：DEC / DEC-H 对 NLIinit）的 CPU 测试，不需要 torch。
+"""v7.2（Commit 6：DEC / DEC-H 对 NLIinit）的 CPU 测试，不需要 torch。
 
 用真实训练包和官方数据跑 main()：torch / transformers 换成只报版本的假模块，pin_model 和 one_task 换成记录调用的桩，
 dec_checks（要真 torch）换成桩，所以只检查到"每个 worker 会按什么顺序跑哪些任务"为止，不训练。
@@ -300,6 +300,41 @@ class Commit6(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, pattern):
             self.run_main(out, "full")
         self.assertEqual(self.calls, [], name)
+
+    def with_skips(self, g, sk, statuses=None, done_sk=None):
+        """SMOKE records of group g as v7.2 writes them after sk fp16 back-off skips before its 2 actual updates."""
+        def e(tv, out):
+            st = statuses or (["skipped"] * sk + ["updated", "updated"])
+            p = out / "smoke" / g / "smoke.json"
+            r = tv.jload(p)
+            r.update(updates=2, skips=sk, grad_trace=[{"epoch": 1, "batch": b, "status": x, "grad_norm_unscaled_preclip": (None if x != "updated" else 3.0),
+                                                        "loss": 0.7} for b, x in enumerate(st)])
+            tv.jsave(p, r)
+            p = out / "smoke" / g / "done.json"
+            r = tv.jload(p); r.update(actual_optimizer_updates=2, skipped_fp16_updates=sk if done_sk is None else done_sk); tv.jsave(p, r)
+            rc = tv.jload(out / "dec_checks.json"); rc["smoke_binding"] = tv.smoke_binding(out, "6"); tv.jsave(out / "dec_checks.json", rc)
+        return e
+
+    def test_dec_smoke_with_backoff_skips_passes(self):
+        """v7.2: the first Kaggle SMOKE of DEC-H skipped its first fp16 step (GradScaler 65536 -> 32768); with one or two skips
+        before 2 actual updates the formal queue opens (30 tasks)."""
+        for g, sk in (("DEC-H", 1), ("DEC", 2)):
+            out = self.tmp / ("run_%s_%d" % (g, sk))
+            tv = self.fake_smoke(out)
+            self.with_skips(g, sk)(tv, out)
+            self.assertEqual(len(self.formal(out)), 30, g)
+
+    def test_dec_smoke_skip_negatives(self):
+        cases = {"three_skips": ("DEC-H", 3, None, None), "trace_short": ("DEC-H", 1, ["updated", "updated"], None),
+                 "ends_skipped": ("DEC", 1, ["updated", "updated", "skipped"], None), "done_disagrees": ("DEC-H", 1, None, 0),
+                 "nliinit_skip": ("NLIinit", 1, None, None)}
+        for name, (g, sk, st, dsk) in cases.items():
+            out = self.tmp / ("run_" + name)
+            tv = self.fake_smoke(out)
+            self.with_skips(g, sk, st, dsk)(tv, out)
+            with self.assertRaisesRegex(RuntimeError, "Commit 6 SMOKE records do not validate"):
+                self.run_main(out, "full")
+            self.assertEqual(self.calls, [], name)
 
     def test_smoke_gate_negatives(self):
         def upd(path, f):
