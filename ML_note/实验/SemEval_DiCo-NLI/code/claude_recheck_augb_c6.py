@@ -208,12 +208,21 @@ if SELFTEST:
     sys.exit(0 if worst <= 1e-12 else 1)
 
 # ---------- SMOKE、回执和对照组来源 ----------
+def smoke_ok(g, sm, dn):
+    """Same SMOKE conditions as the v7.2 formal entry (Codex v7.2 review): DEC / DEC-H may skip up to 2 fp16 back-off steps
+    before their 2 actual updates, NLIinit none; every trace entry is updated or skipped, the last one updated, and done.json
+    agrees."""
+    tr, sk = sm.get("grad_trace") or [], sm.get("skips")
+    st = [x.get("status") for x in tr]
+    return (sm.get("status") == "pass" and sm.get("code_sha256") == CODE_SHA and sm.get("updates") == 2
+            and isinstance(sk, int) and not isinstance(sk, bool) and 0 <= sk <= (0 if g == "NLIinit" else 2)
+            and len(tr) == 2 + sk and st.count("updated") == 2 and st.count("skipped") == sk and st[-1] == "updated"
+            and sm.get("output_path_checked") is True
+            and dn.get("actual_optimizer_updates") == 2 and dn.get("skipped_fp16_updates") == sk)
+
+
 for g in ("NLIinit", "DEC", "DEC-H"):
-    sm = rj(f"{R}/smoke/{g}/smoke.json")
-    sk = sm["skips"]  # v7.2: DEC / DEC-H may skip up to 2 fp16 back-off steps before their 2 actual updates; NLIinit none
-    check(sm["status"] == "pass" and sm["code_sha256"] == CODE_SHA and sm["updates"] == 2 and 0 <= sk <= (0 if g == "NLIinit" else 2)
-          and len(sm["grad_trace"]) == 2 + sk and sum(x["status"] == "updated" for x in sm["grad_trace"]) == 2,
-          f"SMOKE {g} 不是 v7.2 的 2 次实际更新")
+    check(smoke_ok(g, rj(f"{R}/smoke/{g}/smoke.json"), rj(f"{R}/smoke/{g}/done.json")), f"SMOKE {g} 不是 v7.2 的 2 次实际更新")
 dc = rj(f"{R}/dec_checks.json")
 check(dc.get("status") == "pass" and dc.get("code_sha256") == CODE_SHA and (dc.get("numeric") or {}).get("status") == "pass"
       and (dc.get("init") or {}).get("status") == "pass", "dec_checks.json 没通过或不是 v7")
