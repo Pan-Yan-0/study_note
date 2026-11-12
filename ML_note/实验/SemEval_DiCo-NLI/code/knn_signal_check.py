@@ -37,8 +37,7 @@ for K in (1, 4, 8):
             vote[i] = c.most_common(1)[0][0]
     acc = lambda ids: sum(vote[i] == gold[i] for i in ids) / len(ids)
     qerr = [i for i in gold if qmaj[i] != gold[i]]
-    res[K] = {"all": acc(list(gold)), "stubborn": acc(sorted(stub)), "qwen_majority_wrong": acc(qerr), "n_qwen_wrong": len(qerr),
-              "qwen_wrong_knn_right_and_agrees_with_nothing": None}
+    res[K] = {"all": acc(list(gold)), "stubborn": acc(sorted(stub)), "qwen_majority_wrong": acc(qerr), "n_qwen_wrong": len(qerr)}
     print(K, {k: (round(v, 3) if isinstance(v, float) else v) for k, v in res[K].items()})
 print("majority-class baseline", Counter(gold.values()).most_common(1)[0][1] / len(gold))
 print("stubborn gold dist", Counter(gold[i] for i in stub))
