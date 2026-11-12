@@ -445,5 +445,127 @@ rep('''    queue_groups = list(COMMITS[args.commit])
 rep('''            print("[B0 REUSE] failed in SMOKE: B0 is rerun under v4 (15 extra tasks)", flush=True)''',
     '''            print("[B0 REUSE] failed in SMOKE: B0 is rerun under this code (15 extra tasks)", flush=True)''')
 
+# ---------- v5.1 (Codex review 11-12): software identity of workers / resumed tasks, receipt integrity and binding ----------
+rep('''"""DiCo-NLI AugB v5 (Claude, 11-12): v4.1 + three arms on B0 data for Commit 4 (OLat4, NLIinit, BiBCE).''',
+    '''"""DiCo-NLI AugB v5.1 (Claude, 11-12): v4.1 + three arms on B0 data for Commit 4 (OLat4, NLIinit, BiBCE).
+v5.1 (after Codex's review): for Commit 4 the formal queue also requires torch / cuda / transformers of the worker to equal
+the SMOKE run's (else rerun SMOKE in this environment first), refuses restored done.json trained under other versions, and
+accepts arm_checks.json only when both sub-receipts are complete and it is bound to this SMOKE run (code, model revision,
+input hashes, environment and the digests of this run's SMOKE done.json files).''')
+
+rep('''          "code_version": "v5 (Claude): v4.1 + OLat / NLIinit / BiBCE arms",''',
+    '''          "code_version": "v5.1 (Claude): v4.1 + OLat / NLIinit / BiBCE arms; Commit 4 software identity and receipt binding",''')
+
+rep('''B0_REUSE_IGNORE_TASK = ("code_sha256", "loss")''', '''SOFT_ENV_KEYS = ("torch", "cuda", "transformers")
+RUN_COMMIT = []  # set in main(); one_task uses it for the Commit 4 resume check
+ARM_NUMERIC_KEYS = ("bibce_lambda0_equal", "bibce_four_targets", "bibce_extreme", "olat_K1_zero", "olat_K4_zero", "olat_K4_0.002")
+ARM_INIT_KEYS = ("b0_newly_initialised_keys", "spm_sha256", "K4_zero", "K4_0.002")
+INPUT_NAMES = ("manifest.csv", "fold_selection.csv", "split_manifest.json")
+
+
+def soft_env(info):
+    return {k: str((info or {}).get(k)) for k in SOFT_ENV_KEYS}
+
+
+def smoke_binding(out, commit):
+    """Digests of this run's SMOKE done.json files (they carry runtime and environment), tying a receipt to one SMOKE run."""
+    res = {}
+    for g in SMOKE_GROUPS[commit]:
+        p = Path(out) / "smoke" / g.replace("+", "plus") / "done.json"
+        res[g] = digest(p) if p.exists() else None
+    return res
+
+
+def arm_receipt(out, rev, info, numeric, init):
+    return {"status": "pass", "code_sha256": digest(Path(__file__)), "revision": rev,
+            "input_hashes": {n: digest(Path(out) / "input_data" / n) for n in INPUT_NAMES},
+            "stable_environment": stable_env_identity(info), "software_environment": soft_env(info),
+            "smoke_binding": smoke_binding(out, "4"), "numeric": numeric, "init": init}
+
+
+def arm_receipt_problems(out, rev, info):
+    """Empty list = arm_checks.json is complete, passed, and belongs to this code, model, inputs, environment and SMOKE run."""
+    p = Path(out) / "arm_checks.json"
+    if not p.exists():
+        return ["arm_checks.json missing"]
+    a, probs = jload(p), []
+    if a.get("status") != "pass":
+        probs.append("status")
+    if a.get("code_sha256") != digest(Path(__file__)):
+        probs.append("code_sha256")
+    if a.get("revision") != rev:
+        probs.append("revision")
+    if a.get("input_hashes") != {n: digest(Path(out) / "input_data" / n) for n in INPUT_NAMES}:
+        probs.append("input_hashes")
+    if a.get("stable_environment") != stable_env_identity(info) or a.get("software_environment") != soft_env(info):
+        probs.append("environment")
+    sb = smoke_binding(out, "4")
+    if None in sb.values() or a.get("smoke_binding") != sb:
+        probs.append("smoke_binding")
+    n, i = a.get("numeric"), a.get("init")
+    if (not isinstance(n, dict) or n.get("status") != "pass" or any(k not in n for k in ARM_NUMERIC_KEYS)
+            or n.get("bibce_lambda0_equal") is not True or len(n.get("bibce_four_targets") or []) != 4
+            or not all(isinstance(n.get(k), dict) for k in ("olat_K1_zero", "olat_K4_zero", "olat_K4_0.002"))
+            or n["olat_K1_zero"].get("max_abs_logit_diff") != 0.0):
+        probs.append("numeric")
+    if (not isinstance(i, dict) or i.get("status") != "pass" or any(k not in i for k in ARM_INIT_KEYS)
+            or not isinstance(i.get("spm_sha256"), dict) or not i["spm_sha256"].get("b0")
+            or i["spm_sha256"].get("b0") != i["spm_sha256"].get("nli")
+            or not all(isinstance(i.get(k), dict) and i[k].get("global_rng_restored") is True for k in ("K4_zero", "K4_0.002"))
+            or not (isinstance(i["K4_zero"].get("max_abs_prob_diff"), (int, float)) and i["K4_zero"]["max_abs_prob_diff"] <= 1e-5)):
+        probs.append("init")
+    return probs
+
+
+def env_mismatched_tasks(out, groups, soft_now):
+    """Restored done.json files of these groups trained under other torch / cuda / transformers than soft_now."""
+    bad = []
+    for g in groups:
+        for d in sorted((Path(out) / "tasks" / g.replace("+", "plus")).glob("seed*/fold*/done.json")):
+            env = soft_env(jload(d).get("environment"))
+            if env != soft_now:
+                bad.append("%s %s" % (d.parent.relative_to(Path(out) / "tasks"), env))
+    return bad
+
+
+B0_REUSE_IGNORE_TASK = ("code_sha256", "loss")''')
+
+rep('''            die("Existing done.json identity mismatch or prediction corruption: " + str(done_file))
+        print("[SKIP authenticated]", group, seed, fold, flush=True)''',
+    '''            die("Existing done.json identity mismatch or prediction corruption: " + str(done_file))
+        if RUN_COMMIT and RUN_COMMIT[0] == "4" and soft_env(d.get("environment")) != soft_env(envinfo()):
+            die("Restored task %s seed %d fold %d was trained under %s, this worker runs %s: start a fresh output or keep the "
+                "environment" % (group, seed, fold, soft_env(d.get("environment")), soft_env(envinfo())))
+        print("[SKIP authenticated]", group, seed, fold, flush=True)''')
+
+rep('''    args=parser.parse_args()''', '''    args=parser.parse_args()
+    RUN_COMMIT[:] = [args.commit]''')
+
+rep('''            ac = {"numeric": arm_numeric, "init": arm_init_checks(args.model, rev, tokenizer, original, splits),
+                  "code_sha256": digest(Path(__file__)), "status": "pass"}''',
+    '''            ac = arm_receipt(out, rev, info, arm_numeric, arm_init_checks(args.model, rev, tokenizer, original, splits))''')
+
+rep('''        # v5: arm checks and OLat1 = B0 must come from this code; OLat1 = B0 is recomputed read-only from the SMOKE artifacts
+        ap = out/"arm_checks.json"
+        if not ap.exists() or jload(ap).get("status") != "pass" or jload(ap).get("code_sha256") != digest(Path(__file__)):
+            die("arm_checks.json missing, failed or from other code: rerun --stage smoke --group all")
+        if olat1_equivalence(out, write=False)["status"] != "pass":
+            die("OLat1 = B0 check fails on the SMOKE artifacts: formal queue blocked")''',
+    '''        # v5.1: worker software = SMOKE software; receipt complete and bound to this SMOKE run; OLat1 = B0 recomputed read-only;
+        # restored tasks must come from the same software. All of this happens before the first task.
+        drift = sorted(g for g in SMOKE_GROUPS["4"] if soft_env(jload(out/"smoke"/g/"done.json").get("environment")) != soft_env(info))
+        if drift:
+            die("torch / cuda / transformers of this worker %s differ from the SMOKE run (%s): rerun --stage smoke --group all "
+                "in this environment first" % (soft_env(info), drift))
+        probs = arm_receipt_problems(out, rev, info)
+        if probs:
+            die("arm_checks.json does not validate %s: rerun --stage smoke --group all" % probs)
+        if olat1_equivalence(out, write=False)["status"] != "pass":
+            die("OLat1 = B0 check fails on the SMOKE artifacts: formal queue blocked")
+        stale = env_mismatched_tasks(out, ["B0"] + COMMITS["4"], soft_env(info))
+        if stale:
+            die("%d restored task(s) were trained under other torch / cuda / transformers, e.g. %s: start a fresh output "
+                "or rerun in their environment" % (len(stale), stale[:5]))''')
+
 open(dst, "w", encoding="utf-8").write(s)
 print("ok", dst)
