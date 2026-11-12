@@ -55,7 +55,7 @@
 
 ## 下一步计划
 
-1. **按事先登记的规则，NLIinit 过线后要和 B2 叠加**：比较"B2 + NLIinit"和 B2（同数据、同步数，B2 复用 Commit 2），英语五折三种子，15 项。这一步需要 Pan-Yan-0 确认后再登记、交 Kaggle。
+1. **按事先登记的规则，NLIinit 过线后要和 B2 叠加**：Pan-Yan-0 已确认，登记为 Commit 5，比较"B2 + NLIinit"和 B2（同数据、同步数，英语五折三种子）。Commit 2 没有留 B2 的 SMOKE，没法核对复用，所以 B2 在同一队列里重跑，共 30 项（代码 `code/augment_b_train/train_augb_v6.py`，判定见冻结计划变更记录）。
 2. 由 Pan-Yan-0 和导师决定，是否在西语和跨语言赛道上也试 NLI 初始化（巴斯克语不在这个检查点的语言里）。
 3. 不重跑 OLat4 和 BiBCE。要不要换一种做法检验 Other 子类，另行讨论。
 
