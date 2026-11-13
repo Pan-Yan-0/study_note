@@ -1,0 +1,110 @@
+运行平台： Kaggle ；结果目录： /kaggle/working/a0_run
+模型下载地址： https://huggingface.co ；模型缓存： 默认位置
+方法： ce {'lora_dropout': 0.0, 'loss': 'CE'} ；SMOKE： False
+模型快照： cdbee75f17c01a7cc42f958dc650907174af0554 ；读概率的字母 token： {'A': [32, 362], 'B': [33, 425], 'C': [34, 356], 'D': [35, 422]} ；训练目标 token： {'A': 362, 'B': 425, 'C': 356, 'D': 422}
+
+Loading weights:   0%|          | 0/398 [00:00<?, ?it/s]
+Loading weights:   0%|          | 1/398 [00:01<07:49,  1.18s/it]
+Loading weights:  17%|█▋        | 69/398 [00:01<00:04, 71.49it/s]
+Loading weights:  25%|██▌       | 100/398 [00:01<00:03, 89.74it/s]
+Loading weights:  31%|███       | 124/398 [00:01<00:03, 85.79it/s]
+Loading weights:  36%|███▌      | 142/398 [00:01<00:02, 93.99it/s]
+Loading weights:  40%|███▉      | 158/398 [00:02<00:02, 87.68it/s]
+Loading weights:  43%|████▎     | 171/398 [00:02<00:02, 90.44it/s]
+Loading weights:  46%|████▌     | 183/398 [00:02<00:02, 93.69it/s]
+Loading weights:  49%|████▉     | 195/398 [00:02<00:02, 90.36it/s]
+Loading weights:  53%|█████▎    | 212/398 [00:02<00:01, 99.73it/s]
+Loading weights:  56%|█████▋    | 224/398 [00:02<00:01, 91.59it/s]
+Loading weights:  62%|██████▏   | 245/398 [00:03<00:01, 103.81it/s]
+Loading weights:  64%|██████▍   | 256/398 [00:03<00:01, 96.14it/s] 
+Loading weights:  70%|██████▉   | 278/398 [00:03<00:01, 102.55it/s]
+Loading weights:  73%|███████▎  | 289/398 [00:03<00:01, 102.24it/s]
+Loading weights:  75%|███████▌  | 300/398 [00:03<00:01, 97.78it/s] 
+Loading weights:  79%|███████▊  | 313/398 [00:03<00:00, 97.25it/s]
+Loading weights:  84%|████████▎ | 333/398 [00:03<00:00, 98.01it/s]
+Loading weights:  87%|████████▋ | 345/398 [00:04<00:00, 101.62it/s]
+Loading weights:  89%|████████▉ | 356/398 [00:04<00:00, 97.89it/s] 
+Loading weights:  95%|█████████▍| 377/398 [00:04<00:00, 108.11it/s]
+Loading weights:  97%|█████████▋| 388/398 [00:04<00:00, 102.90it/s]
+Loading weights: 100%|██████████| 398/398 [00:04<00:00, 89.20it/s] 
+    加载模型：加载前已分配显存 0.0 GiB，加载后 7.49 GiB
+完成：fold0 seed42  内层验证一致 0.996  复现 sym 一致 1.000 99% 分位差 0.0444 翻转 4 最大差 0.184  教师 128 条  用时 3.9 分钟
+{
+ "status": "pass",
+ "val_recheck": {
+  "rows": 244,
+  "returned": 244,
+  "argmax_agree": 0.9959016393442623,
+  "max_abs_diff": 0.09476098418235779,
+  "pass": true
+ },
+ "load": {
+  "tensors": 504,
+  "dtype": "torch.float16"
+ },
+ "seconds": {
+  "total": 234.64476323127747,
+  "teacher_inference": 16.61599111557007
+ },
+ "reproduction": {
+  "inputs": 1448,
+  "max_abs_diff": 0.18364493548870087,
+  "mean_abs_diff": 0.0023272657278716365,
+  "abs_diff_quantiles": {
+   "0.5": 8.64863395690918e-05,
+   "0.9": 0.004230320453643799,
+   "0.99": 0.04437023401260376,
+   "max": 0.18364493548870087
+  },
+  "argmax_flips": 4,
+  "holdout_rows": 608,
+  "holdout_sym_agree": 1.0,
+  "holdout_sym_disagree": 0,
+  "worst": {
+   "a": "Robber in Cannes",
+   "b": "Cannes thief",
+   "old_p": [
+    0.42941567301750183,
+    0.5513806343078613,
+    0.002553399186581373,
+    0.016650252044200897
+   ],
+   "new_p": [
+    0.24577073752880096,
+    0.7337359189987183,
+    0.0024094514083117247,
+    0.018083937466144562
+   ]
+  },
+  "low_mass_rows": 0,
+  "answer_tokens": {
+   "option_ids": [
+    [
+     32,
+     362
+    ],
+    [
+     33,
+     425
+    ],
+    [
+     34,
+     356
+    ],
+    [
+     35,
+     422
+    ]
+   ],
+   "target_ids": [
+    362,
+    425,
+    356,
+    422
+   ]
+  },
+  "flip_rate": 0.0027624309392265192,
+  "pass": true
+ }
+}
+已打包： /kaggle/working/a0_run/download/a0_smoke.zip

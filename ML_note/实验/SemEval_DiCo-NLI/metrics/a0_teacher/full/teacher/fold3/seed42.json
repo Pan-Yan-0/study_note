@@ -1,0 +1,204 @@
+{
+ "version": "a0-teacher-v1.2",
+ "fold": 3,
+ "seed": 42,
+ "smoke": false,
+ "best_epoch": 3,
+ "adapter_sha256": {
+  "adapter_model.safetensors": "69381eb6a08b99487ecba6c9d4a5cadda99885a912416b038e24ca8862c16359",
+  "adapter_config.json": "673940008971aa50834c2aa8a55de474510fef7c487b1af1d4cd82410864d676"
+ },
+ "load": {
+  "tensors": 504,
+  "dtype": "torch.float16"
+ },
+ "run_identity": {
+  "version": "a0-teacher-v1.2",
+  "code": {
+   "teacher_a0.py": "be83428e63edf68d07379672b41c2322190c0444be2d00a9a3adff99d852e451",
+   "q4b/upstream_qwen.py": "502e638814ba2b7a840f33aa3b481de1f1e0bf2887ff7d976dd86131d3b603b0",
+   "q4b/common.py": "4393c394f3c231df4f3b09ad59d4336526c3ef0f452e8a37f19222b55ef96df8",
+   "q4b/worker.py": "06e3f2a4d3aad0b49864abd772d6f32a95269632377d11d47688e2b66f563de7",
+   "q4b/expected_data.json": "414df842384464d895e25f6cb43d2a0baa81feedec78e5622c694383dabc4431"
+  },
+  "data": {
+   "b2_inputs.json": "5de72daf4b58c940eddd80f277693b7bee326882f299af55b4f0d170cb387297"
+  },
+  "bundle": "4e4c5cd58dcbb54db4c67014846b6376e2327f20ffed780f94bc78b778e640ab",
+  "model": {
+   "revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+   "files_digest": "81321c57999e184fbeec540978e891721a35099f684756938ff6d79737c0fe3c"
+  },
+  "env": {
+   "gpu": "Tesla T4",
+   "torch": "2.11.0+cu128",
+   "cuda": "12.8",
+   "dtype": "torch.float16",
+   "model_revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+   "transformers": "5.19.0",
+   "peft": "0.21.2",
+   "accelerate": "1.15.0",
+   "datasets": "5.1.0"
+  },
+  "gate": {
+   "holdout_sym_agree": 0.99,
+   "diff_q99": 0.1,
+   "flip_rate": 0.01,
+   "val_argmax_agree": 0.98
+  }
+ },
+ "device": {
+  "A0_GPU": "1",
+  "model_path": "/root/.cache/huggingface/hub/models--Qwen--Qwen3-4B-Instruct-2507/snapshots/cdbee75f17c01a7cc42f958dc650907174af0554"
+ },
+ "val_recheck": {
+  "rows": 232,
+  "returned": 232,
+  "argmax_agree": 0.9956896551724138,
+  "max_abs_diff": 0.12713521718978882,
+  "pass": true
+ },
+ "reproduction": {
+  "inputs": 1464,
+  "max_abs_diff": 0.15517768263816833,
+  "mean_abs_diff": 0.002697448695235944,
+  "abs_diff_quantiles": {
+   "0.5": 0.00011381215881556273,
+   "0.9": 0.00529109314084053,
+   "0.99": 0.04676640033721924,
+   "max": 0.15517768263816833
+  },
+  "argmax_flips": 4,
+  "holdout_rows": 609,
+  "holdout_sym_agree": 1.0,
+  "holdout_sym_disagree": 0,
+  "worst": {
+   "a": "north . Europe",
+   "b": "northern Europe",
+   "old_p": [
+    0.5869781374931335,
+    0.006520738825201988,
+    0.21593721210956573,
+    0.19056390225887299
+   ],
+   "new_p": [
+    0.4318004548549652,
+    0.00625629723072052,
+    0.35797515511512756,
+    0.2039680927991867
+   ]
+  },
+  "flipped": [
+   {
+    "a": "inside and black and white furry enclosure",
+    "b": "inside a cow-schemed , fur-covered dome",
+    "old_top2_gap": 0.06208786368370056,
+    "new_top2_gap": 0.031074494123458862,
+    "old_p": [
+     0.0021594224963337183,
+     0.003141941037029028,
+     0.4663054049015045,
+     0.5283932685852051
+    ],
+    "new_p": [
+     0.0020960690453648567,
+     0.0031961235217750072,
+     0.5128911733627319,
+     0.48181667923927307
+    ]
+   },
+   {
+    "a": "the Philippines together with rebel groups",
+    "b": "Philippines and rebels",
+    "old_top2_gap": 0.0,
+    "new_top2_gap": 0.1294291615486145,
+    "old_p": [
+     0.4909335970878601,
+     0.4909335970878601,
+     0.003307884559035301,
+     0.014824910089373589
+    ],
+    "new_p": [
+     0.42540985345840454,
+     0.554839015007019,
+     0.0035119731910526752,
+     0.01623919978737831
+    ]
+   },
+   {
+    "a": "from a bird feeder",
+    "b": "from the feeder",
+    "old_top2_gap": 0.18323230743408203,
+    "new_top2_gap": 0.0924510657787323,
+    "old_p": [
+     0.40271592140197754,
+     0.5859482288360596,
+     0.0018649448174983263,
+     0.009470970369875431
+    ],
+    "new_p": [
+     0.5407415628433228,
+     0.44829049706459045,
+     0.0019502185750752687,
+     0.009017718955874443
+    ]
+   },
+   {
+    "a": "in a doorway",
+    "b": "on a doorstep",
+    "old_top2_gap": 0.05820256471633911,
+    "new_top2_gap": 0.007303982973098755,
+    "old_p": [
+     0.4371253550052643,
+     0.03588143363595009,
+     0.03166525438427925,
+     0.4953279197216034
+    ],
+    "new_p": [
+     0.47111839056015015,
+     0.0363287515938282,
+     0.02873840555548668,
+     0.4638144075870514
+    ]
+   }
+  ],
+  "low_mass_rows": 0,
+  "answer_tokens": {
+   "option_ids": [
+    [
+     32,
+     362
+    ],
+    [
+     33,
+     425
+    ],
+    [
+     34,
+     356
+    ],
+    [
+     35,
+     422
+    ]
+   ],
+   "target_ids": [
+    362,
+    425,
+    356,
+    422
+   ]
+  },
+  "flip_rate": 0.00273224043715847,
+  "pass": true
+ },
+ "status": "pass",
+ "inputs": 5076,
+ "output_sha256": "5cd95da46e59754654290a45020994a61fb456abbb2ae095a71dcaf5a07c1c8b",
+ "low_mass_rows": 0,
+ "seconds": {
+  "total": 787.1160218715668,
+  "teacher_inference": 586.4625952243805
+ },
+ "mean_answer_mass": 0.9998931227775893
+}

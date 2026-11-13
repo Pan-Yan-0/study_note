@@ -1,0 +1,70 @@
+{
+ "version": "a0-teacher-v1.2",
+ "fold": 2,
+ "seed": 44,
+ "smoke": false,
+ "best_epoch": 3,
+ "adapter_sha256": {
+  "adapter_model.safetensors": "d5c7b8df697341bc1a906a9f1bdd61ee0789829c2d5fa652c452c6266ef33b48",
+  "adapter_config.json": "7079727a98c14c215e29d23e29b9fb05c85e743a96d69a008624cd4aebe266a8"
+ },
+ "load": {
+  "tensors": 504,
+  "dtype": "torch.float16"
+ },
+ "run_identity": {
+  "version": "a0-teacher-v1.2",
+  "code": {
+   "teacher_a0.py": "be83428e63edf68d07379672b41c2322190c0444be2d00a9a3adff99d852e451",
+   "q4b/upstream_qwen.py": "502e638814ba2b7a840f33aa3b481de1f1e0bf2887ff7d976dd86131d3b603b0",
+   "q4b/common.py": "4393c394f3c231df4f3b09ad59d4336526c3ef0f452e8a37f19222b55ef96df8",
+   "q4b/worker.py": "06e3f2a4d3aad0b49864abd772d6f32a95269632377d11d47688e2b66f563de7",
+   "q4b/expected_data.json": "414df842384464d895e25f6cb43d2a0baa81feedec78e5622c694383dabc4431"
+  },
+  "data": {
+   "b2_inputs.json": "5de72daf4b58c940eddd80f277693b7bee326882f299af55b4f0d170cb387297"
+  },
+  "bundle": "4e4c5cd58dcbb54db4c67014846b6376e2327f20ffed780f94bc78b778e640ab",
+  "model": {
+   "revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+   "files_digest": "81321c57999e184fbeec540978e891721a35099f684756938ff6d79737c0fe3c"
+  },
+  "env": {
+   "gpu": "Tesla T4",
+   "torch": "2.11.0+cu128",
+   "cuda": "12.8",
+   "dtype": "torch.float16",
+   "model_revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+   "transformers": "5.19.0",
+   "peft": "0.21.2",
+   "accelerate": "1.15.0",
+   "datasets": "5.1.0"
+  },
+  "gate": {
+   "holdout_sym_agree": 0.99,
+   "diff_q99": 0.1,
+   "flip_rate": 0.01,
+   "val_argmax_agree": 0.98
+  }
+ },
+ "device": {
+  "A0_GPU": "0",
+  "model_path": "/root/.cache/huggingface/hub/models--Qwen--Qwen3-4B-Instruct-2507/snapshots/cdbee75f17c01a7cc42f958dc650907174af0554"
+ },
+ "val_recheck": {
+  "rows": 244,
+  "returned": 244,
+  "argmax_agree": 1.0,
+  "max_abs_diff": 0.06720030307769775,
+  "pass": true
+ },
+ "status": "pass",
+ "inputs": 5080,
+ "output_sha256": "dd7f83fbf853bf00d190e581efd843ed2428bee16ef99d02becb027b30498d65",
+ "low_mass_rows": 0,
+ "seconds": {
+  "total": 683.8843812942505,
+  "teacher_inference": 645.7245953083038
+ },
+ "mean_answer_mass": 0.9998894880606434
+}

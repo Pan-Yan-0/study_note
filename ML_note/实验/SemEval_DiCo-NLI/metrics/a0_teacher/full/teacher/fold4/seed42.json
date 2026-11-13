@@ -1,0 +1,258 @@
+{
+ "version": "a0-teacher-v1.2",
+ "fold": 4,
+ "seed": 42,
+ "smoke": false,
+ "best_epoch": 3,
+ "adapter_sha256": {
+  "adapter_model.safetensors": "14da66bba1619382d588adf63c9cf9279b60c71a79ecd858ca857ff6a9a45a02",
+  "adapter_config.json": "b6040cbe6218d70b52e70bc9e631ecddd26dde87d953ee4e544c1019ada4ad98"
+ },
+ "load": {
+  "tensors": 504,
+  "dtype": "torch.float16"
+ },
+ "run_identity": {
+  "version": "a0-teacher-v1.2",
+  "code": {
+   "teacher_a0.py": "be83428e63edf68d07379672b41c2322190c0444be2d00a9a3adff99d852e451",
+   "q4b/upstream_qwen.py": "502e638814ba2b7a840f33aa3b481de1f1e0bf2887ff7d976dd86131d3b603b0",
+   "q4b/common.py": "4393c394f3c231df4f3b09ad59d4336526c3ef0f452e8a37f19222b55ef96df8",
+   "q4b/worker.py": "06e3f2a4d3aad0b49864abd772d6f32a95269632377d11d47688e2b66f563de7",
+   "q4b/expected_data.json": "414df842384464d895e25f6cb43d2a0baa81feedec78e5622c694383dabc4431"
+  },
+  "data": {
+   "b2_inputs.json": "5de72daf4b58c940eddd80f277693b7bee326882f299af55b4f0d170cb387297"
+  },
+  "bundle": "4e4c5cd58dcbb54db4c67014846b6376e2327f20ffed780f94bc78b778e640ab",
+  "model": {
+   "revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+   "files_digest": "81321c57999e184fbeec540978e891721a35099f684756938ff6d79737c0fe3c"
+  },
+  "env": {
+   "gpu": "Tesla T4",
+   "torch": "2.11.0+cu128",
+   "cuda": "12.8",
+   "dtype": "torch.float16",
+   "model_revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+   "transformers": "5.19.0",
+   "peft": "0.21.2",
+   "accelerate": "1.15.0",
+   "datasets": "5.1.0"
+  },
+  "gate": {
+   "holdout_sym_agree": 0.99,
+   "diff_q99": 0.1,
+   "flip_rate": 0.01,
+   "val_argmax_agree": 0.98
+  }
+ },
+ "device": {
+  "A0_GPU": "0",
+  "model_path": "/root/.cache/huggingface/hub/models--Qwen--Qwen3-4B-Instruct-2507/snapshots/cdbee75f17c01a7cc42f958dc650907174af0554"
+ },
+ "val_recheck": {
+  "rows": 234,
+  "returned": 234,
+  "argmax_agree": 1.0,
+  "max_abs_diff": 0.06346660852432251,
+  "pass": true
+ },
+ "reproduction": {
+  "inputs": 1446,
+  "max_abs_diff": 0.11796212196350098,
+  "mean_abs_diff": 0.0024208238813141466,
+  "abs_diff_quantiles": {
+   "0.5": 5.6033837608993053e-05,
+   "0.9": 0.0049855709075927734,
+   "0.99": 0.0433843731880188,
+   "max": 0.11796212196350098
+  },
+  "argmax_flips": 7,
+  "holdout_rows": 608,
+  "holdout_sym_agree": 0.993421052631579,
+  "holdout_sym_disagree": 4,
+  "worst": {
+   "a": "against Snowden over leaks",
+   "b": "agains NSA leaker",
+   "old_p": [
+    0.4252496659755707,
+    0.5460313558578491,
+    0.0015336899086833,
+    0.02718530036509037
+   ],
+   "new_p": [
+    0.3072875440120697,
+    0.6607720255851746,
+    0.001514800707809627,
+    0.03042558953166008
+   ]
+  },
+  "flipped": [
+   {
+    "a": "Muslim Brotherhood group",
+    "b": "Muslim Brotherhood Supreme Guide",
+    "old_top2_gap": 0.0,
+    "new_top2_gap": 0.12261742353439331,
+    "old_p": [
+     0.0013880438636988401,
+     0.010256333276629448,
+     0.49417781829833984,
+     0.49417781829833984
+    ],
+    "new_p": [
+     0.0017100299010053277,
+     0.01224675215780735,
+     0.43171292543411255,
+     0.5543303489685059
+    ]
+   },
+   {
+    "a": "as Australia 's new Prime Minister",
+    "b": "as Australian PM",
+    "old_top2_gap": 0.06194844841957092,
+    "new_top2_gap": 0.09253934025764465,
+    "old_p": [
+     0.5272068977355957,
+     0.4652584493160248,
+     0.0008981601567938924,
+     0.006636555306613445
+    ],
+    "new_p": [
+     0.4487186372280121,
+     0.5412579774856567,
+     0.0009970255196094513,
+     0.009026331827044487
+    ]
+   },
+   {
+    "a": "the United States' eastern seaboard",
+    "b": "East Coast",
+    "old_top2_gap": 0.1221468448638916,
+    "new_top2_gap": 0.007663339376449585,
+    "old_p": [
+     0.43005603551864624,
+     0.5522028803825378,
+     0.001066002412699163,
+     0.016675082966685295
+    ],
+    "new_p": [
+     0.4942970275878906,
+     0.48663368821144104,
+     0.0010645068250596523,
+     0.01800476759672165
+    ]
+   },
+   {
+    "a": "for democracy march",
+    "b": "for huge democracy rally",
+    "old_top2_gap": 0.184993177652359,
+    "new_top2_gap": 0.04676058888435364,
+    "old_p": [
+     0.0011420166119933128,
+     0.0006926680798642337,
+     0.40658608078956604,
+     0.591579258441925
+    ],
+    "new_p": [
+     0.0011078522074967623,
+     0.0006023288005962968,
+     0.5225251913070679,
+     0.47576460242271423
+    ]
+   },
+   {
+    "a": "a small airplane",
+    "b": "near a small plane",
+    "old_top2_gap": 0.06235787272453308,
+    "new_top2_gap": 0.0078050196170806885,
+    "old_p": [
+     0.000548361917026341,
+     0.00042706471867859364,
+     0.46833333373069763,
+     0.5306912064552307
+    ],
+    "new_p": [
+     0.0005537484539672732,
+     0.0003805853775702417,
+     0.5034353137016296,
+     0.49563029408454895
+    ]
+   },
+   {
+    "a": "on beside the beach",
+    "b": "on the shore",
+    "old_top2_gap": 0.0,
+    "new_top2_gap": 0.1368674635887146,
+    "old_p": [
+     0.38202357292175293,
+     0.38202357292175293,
+     0.004243898671120405,
+     0.23170900344848633
+    ],
+    "new_p": [
+     0.286391019821167,
+     0.4232584834098816,
+     0.003959461115300655,
+     0.286391019821167
+    ]
+   },
+   {
+    "a": "The seagull",
+    "b": "A little bird",
+    "old_top2_gap": 0.0,
+    "new_top2_gap": 0.07744103670120239,
+    "old_p": [
+     0.004292814992368221,
+     0.4961819648742676,
+     0.0033432478085160255,
+     0.4961819648742676
+    ],
+    "new_p": [
+     0.0038398115430027246,
+     0.45791035890579224,
+     0.002898442093282938,
+     0.5353513956069946
+    ]
+   }
+  ],
+  "low_mass_rows": 0,
+  "answer_tokens": {
+   "option_ids": [
+    [
+     32,
+     362
+    ],
+    [
+     33,
+     425
+    ],
+    [
+     34,
+     356
+    ],
+    [
+     35,
+     422
+    ]
+   ],
+   "target_ids": [
+    362,
+    425,
+    356,
+    422
+   ]
+  },
+  "flip_rate": 0.004840940525587829,
+  "pass": true
+ },
+ "status": "pass",
+ "inputs": 5084,
+ "output_sha256": "d1cd81db157448e0feaa1a537d3a34ddf9103ad91462c7e0be4c564b569e42bd",
+ "low_mass_rows": 0,
+ "seconds": {
+  "total": 867.7339379787445,
+  "teacher_inference": 646.6962859630585
+ },
+ "mean_answer_mass": 0.9999269097808963
+}
