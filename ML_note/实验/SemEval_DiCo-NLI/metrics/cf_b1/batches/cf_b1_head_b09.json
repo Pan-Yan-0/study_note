@@ -1,0 +1,36 @@
+{
+ "batch_id": "cf_b1_head_b09",
+ "op": "HEAD",
+ "prompt": "You are editing short English phrases for a phrase-level natural language inference dataset. The phrases are chunks like those in image captions or news headlines.\n\nEach item below gives two phrases, P1 and P2, that mean the same thing, and says which one to edit.\n\nWHAT TO DO\nIn the phrase you are told to edit, replace its head word (the main thing the phrase is about; for a verb phrase, the main verb) with a different word of the same kind, so that afterwards neither phrase follows from the other. Examples of good replacements: dog -> cat, guitar -> violin, running -> swimming.\n\nRULES\n1. Replace exactly one word. Keep every other word unchanged and in the same order; you may only switch \"a\" and \"an\" if the new word needs it.\n2. The new word must be of the same kind as the old one, but it must NOT be a synonym, a broader term (\"animal\" for \"dog\"), a narrower term (\"poodle\" for \"dog\"), a part or a whole of it, or just another form of the same word.\n3. The new word must not appear in the other phrase, and must not be a number.\n4. Keep the grammar correct (same singular or plural, same verb form).\n5. If no such edit is possible for an item, skip it and give a short reason instead of forcing an edit.\n6. Use only the information in this message. Do not open files, search the web or look at any other material.\n\nITEMS\n1. P1: \"an equine whose coat is brown\" | P2: \"Brown horse\" | edit: P2\n2. P1: \"Very crowded office desk\" | P2: \"Messy computer desk\" | edit: P1\n3. P1: \"through deep snow pack\" | P2: \"through the deep snow\" | edit: P2\n4. P1: \"may help\" | P2: \"may boost\" | edit: P1\n\nOUTPUT\nReturn only one JSON object and nothing else, with no Markdown code fence:\n{\"batch_id\": \"cf_b1_head_b09\", \"edits\": [{\"k\": 1, \"new_phrase\": \"...\"}, {\"k\": 2, \"skip\": \"reason\"}, ...]}\nGive exactly one entry for each k from 1 to 4, in order. \"new_phrase\" is the whole edited phrase.\n",
+ "prompt_sha256": "d9ef4495eb23262126535d60960628162f021063c55d95f019525ccbcb03040c",
+ "items": [
+  {
+   "k": 1,
+   "parent": "dico_phrasis_0001242__en-en__original",
+   "edit_side": "text2",
+   "orig": "Brown horse",
+   "other": "an equine whose coat is brown"
+  },
+  {
+   "k": 2,
+   "parent": "dico_phrasis_0001212__en-en__original",
+   "edit_side": "text1",
+   "orig": "Very crowded office desk",
+   "other": "Messy computer desk"
+  },
+  {
+   "k": 3,
+   "parent": "dico_phrasis_0000849__en-en__original",
+   "edit_side": "text2",
+   "orig": "through the deep snow",
+   "other": "through deep snow pack"
+  },
+  {
+   "k": 4,
+   "parent": "dico_phrasis_0000688__en-en__original",
+   "edit_side": "text1",
+   "orig": "may help",
+   "other": "may boost"
+  }
+ ]
+}

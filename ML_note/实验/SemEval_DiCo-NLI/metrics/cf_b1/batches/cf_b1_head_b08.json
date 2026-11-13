@@ -1,0 +1,78 @@
+{
+ "batch_id": "cf_b1_head_b08",
+ "op": "HEAD",
+ "prompt": "You are editing short English phrases for a phrase-level natural language inference dataset. The phrases are chunks like those in image captions or news headlines.\n\nEach item below gives two phrases, P1 and P2, that mean the same thing, and says which one to edit.\n\nWHAT TO DO\nIn the phrase you are told to edit, replace its head word (the main thing the phrase is about; for a verb phrase, the main verb) with a different word of the same kind, so that afterwards neither phrase follows from the other. Examples of good replacements: dog -> cat, guitar -> violin, running -> swimming.\n\nRULES\n1. Replace exactly one word. Keep every other word unchanged and in the same order; you may only switch \"a\" and \"an\" if the new word needs it.\n2. The new word must be of the same kind as the old one, but it must NOT be a synonym, a broader term (\"animal\" for \"dog\"), a narrower term (\"poodle\" for \"dog\"), a part or a whole of it, or just another form of the same word.\n3. The new word must not appear in the other phrase, and must not be a number.\n4. Keep the grammar correct (same singular or plural, same verb form).\n5. If no such edit is possible for an item, skip it and give a short reason instead of forcing an edit.\n6. Use only the information in this message. Do not open files, search the web or look at any other material.\n\nITEMS\n1. P1: \"A Philips flat-screen TV\" | P2: \"A Phillips flat screen TV\" | edit: P2\n2. P1: \"immersed in water\" | P2: \"in the water\" | edit: P1\n3. P1: \"to tornado-ravaged Oklahoma\" | P2: \"tornado hit Oklahoma\" | edit: P2\n4. P1: \"with a cloudy sky overhead\" | P2: \"on a cloudy day\" | edit: P1\n5. P1: \"the other Taliban\" | P2: \"the other Taleban\" | edit: P2\n6. P1: \"Iran nuclear agreement\" | P2: \"Iran 's nuclear deal\" | edit: P1\n7. P1: \"with a blue halter\" | P2: \"wearing a blue halter\" | edit: P2\n8. P1: \"amid snow\" | P2: \"in the snow\" | edit: P1\n9. P1: \"upon a runway path\" | P2: \"on a runway\" | edit: P2\n10. P1: \"a television with a flat display\" | P2: \"A flat-screen TV\" | edit: P1\n\nOUTPUT\nReturn only one JSON object and nothing else, with no Markdown code fence:\n{\"batch_id\": \"cf_b1_head_b08\", \"edits\": [{\"k\": 1, \"new_phrase\": \"...\"}, {\"k\": 2, \"skip\": \"reason\"}, ...]}\nGive exactly one entry for each k from 1 to 10, in order. \"new_phrase\" is the whole edited phrase.\n",
+ "prompt_sha256": "05bb61cc905ee6e968724e134fac4df9d9da746a2afca47f63c2c2dd95a5651c",
+ "items": [
+  {
+   "k": 1,
+   "parent": "dico_phrasis_0001307__en-en__original",
+   "edit_side": "text2",
+   "orig": "A Phillips flat screen TV",
+   "other": "A Philips flat-screen TV"
+  },
+  {
+   "k": 2,
+   "parent": "dico_phrasis_0000765__en-en__original",
+   "edit_side": "text1",
+   "orig": "immersed in water",
+   "other": "in the water"
+  },
+  {
+   "k": 3,
+   "parent": "dico_phrasis_0001057__en-en__original",
+   "edit_side": "text2",
+   "orig": "tornado hit Oklahoma",
+   "other": "to tornado-ravaged Oklahoma"
+  },
+  {
+   "k": 4,
+   "parent": "dico_phrasis_0001314__en-en__original",
+   "edit_side": "text1",
+   "orig": "with a cloudy sky overhead",
+   "other": "on a cloudy day"
+  },
+  {
+   "k": 5,
+   "parent": "dico_phrasis_0001066__en-en__original",
+   "edit_side": "text2",
+   "orig": "the other Taleban",
+   "other": "the other Taliban"
+  },
+  {
+   "k": 6,
+   "parent": "dico_phrasis_0000651__en-en__original",
+   "edit_side": "text1",
+   "orig": "Iran nuclear agreement",
+   "other": "Iran 's nuclear deal"
+  },
+  {
+   "k": 7,
+   "parent": "dico_phrasis_0001151__en-en__original",
+   "edit_side": "text2",
+   "orig": "wearing a blue halter",
+   "other": "with a blue halter"
+  },
+  {
+   "k": 8,
+   "parent": "dico_phrasis_0000749__en-en__original",
+   "edit_side": "text1",
+   "orig": "amid snow",
+   "other": "in the snow"
+  },
+  {
+   "k": 9,
+   "parent": "dico_phrasis_0001165__en-en__original",
+   "edit_side": "text2",
+   "orig": "on a runway",
+   "other": "upon a runway path"
+  },
+  {
+   "k": 10,
+   "parent": "dico_phrasis_0001124__en-en__original",
+   "edit_side": "text1",
+   "orig": "a television with a flat display",
+   "other": "A flat-screen TV"
+  }
+ ]
+}

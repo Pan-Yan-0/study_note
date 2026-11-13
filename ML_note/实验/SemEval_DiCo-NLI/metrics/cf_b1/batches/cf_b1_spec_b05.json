@@ -1,0 +1,78 @@
+{
+ "batch_id": "cf_b1_spec_b05",
+ "op": "SPEC",
+ "prompt": "You are editing short English phrases for a phrase-level natural language inference dataset. The phrases are chunks like those in image captions or news headlines.\n\nEach item below gives two phrases, P1 and P2, that mean the same thing, and says which one to edit.\n\nWHAT TO DO\nInsert ONE restrictive modifier into the phrase you are told to edit, so that the edited phrase becomes strictly more specific than before: it still talks about the same thing, but now covers only some of the situations the original covered.\n\nRULES\n1. Insert 1 to 3 consecutive words: an adjective, a short adjective phrase, or a short prepositional phrase. Do not change, remove or reorder any existing word.\n2. Keep the head word, its meaning and the roles of the people or things in the scene.\n3. The modifier must really narrow the meaning. Do not add something redundant (\"wet water\"), a pure intensifier (\"very\"), or a detail that the other phrase already states or implies.\n4. Do not change time or truth: no \"former\", \"ex-\", \"future\", \"fake\", \"alleged\" and the like. Do not add numbers or quantities.\n5. Keep the style of the phrase: same use of capital letters and articles.\n6. If no such edit is possible for an item, skip it and give a short reason instead of forcing an edit.\n7. Use only the information in this message. Do not open files, search the web or look at any other material.\n\nITEMS\n1. P1: \"in a batman suit\" | P2: \"in a batman costume\" | edit: P1\n2. P1: \"dressed in a red-colored shirt\" | P2: \"in the red shirt\" | edit: P2\n3. P1: \"Cannes thief\" | P2: \"Robber in Cannes\" | edit: P1\n4. P1: \"the canine with black-and-white fur\" | P2: \"A black and white dog\" | edit: P2\n5. P1: \"beside a table\" | P2: \"at a table\" | edit: P1\n6. P1: \"an aircraft operated by Malaysia Airlines\" | P2: \"Malaysia Airlines plane\" | edit: P2\n7. P1: \"Egypt 's leader\" | P2: \"Egypt president\" | edit: P1\n8. P1: \"at PNG immigration centre\" | P2: \"at Papua New Guinea immigration centre\" | edit: P2\n9. P1: \"Kenya Supreme Court\" | P2: \"Kenya SC\" | edit: P1\n10. P1: \"in Chinese police station attack\" | P2: \"in China police station attack\" | edit: P2\n\nOUTPUT\nReturn only one JSON object and nothing else, with no Markdown code fence:\n{\"batch_id\": \"cf_b1_spec_b05\", \"edits\": [{\"k\": 1, \"new_phrase\": \"...\"}, {\"k\": 2, \"skip\": \"reason\"}, ...]}\nGive exactly one entry for each k from 1 to 10, in order. \"new_phrase\" is the whole edited phrase.\n",
+ "prompt_sha256": "3d63cd8a0a83dff0b2ecc185dcdc932a4da107b016645e00545c6d1fc16df78b",
+ "items": [
+  {
+   "k": 1,
+   "parent": "dico_phrasis_0000814__en-en__original",
+   "edit_side": "text1",
+   "orig": "in a batman suit",
+   "other": "in a batman costume"
+  },
+  {
+   "k": 2,
+   "parent": "dico_phrasis_0000839__en-en__original",
+   "edit_side": "text2",
+   "orig": "in the red shirt",
+   "other": "dressed in a red-colored shirt"
+  },
+  {
+   "k": 3,
+   "parent": "dico_phrasis_0000951__en-en__original",
+   "edit_side": "text1",
+   "orig": "Cannes thief",
+   "other": "Robber in Cannes"
+  },
+  {
+   "k": 4,
+   "parent": "dico_phrasis_0000797__en-en__original",
+   "edit_side": "text2",
+   "orig": "A black and white dog",
+   "other": "the canine with black-and-white fur"
+  },
+  {
+   "k": 5,
+   "parent": "dico_phrasis_0001244__en-en__original",
+   "edit_side": "text1",
+   "orig": "beside a table",
+   "other": "at a table"
+  },
+  {
+   "k": 6,
+   "parent": "dico_phrasis_0000717__en-en__original",
+   "edit_side": "text2",
+   "orig": "Malaysia Airlines plane",
+   "other": "an aircraft operated by Malaysia Airlines"
+  },
+  {
+   "k": 7,
+   "parent": "dico_phrasis_0000902__en-en__original",
+   "edit_side": "text1",
+   "orig": "Egypt 's leader",
+   "other": "Egypt president"
+  },
+  {
+   "k": 8,
+   "parent": "dico_phrasis_0000674__en-en__original",
+   "edit_side": "text2",
+   "orig": "at Papua New Guinea immigration centre",
+   "other": "at PNG immigration centre"
+  },
+  {
+   "k": 9,
+   "parent": "dico_phrasis_0000956__en-en__original",
+   "edit_side": "text1",
+   "orig": "Kenya Supreme Court",
+   "other": "Kenya SC"
+  },
+  {
+   "k": 10,
+   "parent": "dico_phrasis_0000990__en-en__original",
+   "edit_side": "text2",
+   "orig": "in China police station attack",
+   "other": "in Chinese police station attack"
+  }
+ ]
+}

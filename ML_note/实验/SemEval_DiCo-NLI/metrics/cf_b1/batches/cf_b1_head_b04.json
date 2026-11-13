@@ -1,0 +1,78 @@
+{
+ "batch_id": "cf_b1_head_b04",
+ "op": "HEAD",
+ "prompt": "You are editing short English phrases for a phrase-level natural language inference dataset. The phrases are chunks like those in image captions or news headlines.\n\nEach item below gives two phrases, P1 and P2, that mean the same thing, and says which one to edit.\n\nWHAT TO DO\nIn the phrase you are told to edit, replace its head word (the main thing the phrase is about; for a verb phrase, the main verb) with a different word of the same kind, so that afterwards neither phrase follows from the other. Examples of good replacements: dog -> cat, guitar -> violin, running -> swimming.\n\nRULES\n1. Replace exactly one word. Keep every other word unchanged and in the same order; you may only switch \"a\" and \"an\" if the new word needs it.\n2. The new word must be of the same kind as the old one, but it must NOT be a synonym, a broader term (\"animal\" for \"dog\"), a narrower term (\"poodle\" for \"dog\"), a part or a whole of it, or just another form of the same word.\n3. The new word must not appear in the other phrase, and must not be a number.\n4. Keep the grammar correct (same singular or plural, same verb form).\n5. If no such edit is possible for an item, skip it and give a short reason instead of forcing an edit.\n6. Use only the information in this message. Do not open files, search the web or look at any other material.\n\nITEMS\n1. P1: \"for the controversy dubbed house sister\" | P2: \"for `` house sister '' scandal\" | edit: P2\n2. P1: \"Three individuals\" | P2: \"Three people\" | edit: P1\n3. P1: \"South African icon Nelson Mandela\" | P2: \"South Africa 's Nelson Mandela\" | edit: P2\n4. P1: \"within an open field\" | P2: \"in a field\" | edit: P1\n5. P1: \"The brown dog\" | P2: \"A tan dog\" | edit: P2\n6. P1: \"Syrian troops\" | P2: \"Syrian army\" | edit: P1\n7. P1: \"may delay\" | P2: \"to delay\" | edit: P2\n8. P1: \"a person equipped for scuba diving\" | P2: \"The scuba diver\" | edit: P1\n9. P1: \"Former Pakistan President Pervez Musharraf\" | P2: \"Former Pakistan military ruler Pervez Musharraf\" | edit: P2\n10. P1: \"a truck painted red\" | P2: \"Red truck\" | edit: P1\n\nOUTPUT\nReturn only one JSON object and nothing else, with no Markdown code fence:\n{\"batch_id\": \"cf_b1_head_b04\", \"edits\": [{\"k\": 1, \"new_phrase\": \"...\"}, {\"k\": 2, \"skip\": \"reason\"}, ...]}\nGive exactly one entry for each k from 1 to 10, in order. \"new_phrase\" is the whole edited phrase.\n",
+ "prompt_sha256": "3ca48bf98616f46d42d5a9eb544e6ab6cb9df5e8a4a202578abd39728daa6aa1",
+ "items": [
+  {
+   "k": 1,
+   "parent": "dico_phrasis_0000864__en-en__original",
+   "edit_side": "text2",
+   "orig": "for `` house sister '' scandal",
+   "other": "for the controversy dubbed house sister"
+  },
+  {
+   "k": 2,
+   "parent": "dico_phrasis_0000795__en-en__original",
+   "edit_side": "text1",
+   "orig": "Three individuals",
+   "other": "Three people"
+  },
+  {
+   "k": 3,
+   "parent": "dico_phrasis_0000949__en-en__original",
+   "edit_side": "text2",
+   "orig": "South Africa 's Nelson Mandela",
+   "other": "South African icon Nelson Mandela"
+  },
+  {
+   "k": 4,
+   "parent": "dico_phrasis_0001089__en-en__original",
+   "edit_side": "text1",
+   "orig": "within an open field",
+   "other": "in a field"
+  },
+  {
+   "k": 5,
+   "parent": "dico_phrasis_0001230__en-en__original",
+   "edit_side": "text2",
+   "orig": "A tan dog",
+   "other": "The brown dog"
+  },
+  {
+   "k": 6,
+   "parent": "dico_phrasis_0000967__en-en__original",
+   "edit_side": "text1",
+   "orig": "Syrian troops",
+   "other": "Syrian army"
+  },
+  {
+   "k": 7,
+   "parent": "dico_phrasis_0000910__en-en__original",
+   "edit_side": "text2",
+   "orig": "to delay",
+   "other": "may delay"
+  },
+  {
+   "k": 8,
+   "parent": "dico_phrasis_0000744__en-en__original",
+   "edit_side": "text1",
+   "orig": "a person equipped for scuba diving",
+   "other": "The scuba diver"
+  },
+  {
+   "k": 9,
+   "parent": "dico_phrasis_0000660__en-en__original",
+   "edit_side": "text2",
+   "orig": "Former Pakistan military ruler Pervez Musharraf",
+   "other": "Former Pakistan President Pervez Musharraf"
+  },
+  {
+   "k": 10,
+   "parent": "dico_phrasis_0001130__en-en__original",
+   "edit_side": "text1",
+   "orig": "a truck painted red",
+   "other": "Red truck"
+  }
+ ]
+}

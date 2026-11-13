@@ -1,0 +1,78 @@
+{
+ "batch_id": "cf_b1_head_b03",
+ "op": "HEAD",
+ "prompt": "You are editing short English phrases for a phrase-level natural language inference dataset. The phrases are chunks like those in image captions or news headlines.\n\nEach item below gives two phrases, P1 and P2, that mean the same thing, and says which one to edit.\n\nWHAT TO DO\nIn the phrase you are told to edit, replace its head word (the main thing the phrase is about; for a verb phrase, the main verb) with a different word of the same kind, so that afterwards neither phrase follows from the other. Examples of good replacements: dog -> cat, guitar -> violin, running -> swimming.\n\nRULES\n1. Replace exactly one word. Keep every other word unchanged and in the same order; you may only switch \"a\" and \"an\" if the new word needs it.\n2. The new word must be of the same kind as the old one, but it must NOT be a synonym, a broader term (\"animal\" for \"dog\"), a narrower term (\"poodle\" for \"dog\"), a part or a whole of it, or just another form of the same word.\n3. The new word must not appear in the other phrase, and must not be a number.\n4. Keep the grammar correct (same singular or plural, same verb form).\n5. If no such edit is possible for an item, skip it and give a short reason instead of forcing an edit.\n6. Use only the information in this message. Do not open files, search the web or look at any other material.\n\nITEMS\n1. P1: \"in the snow\" | P2: \"within the snow\" | edit: P2\n2. P1: \"in public\" | P2: \"in a public place\" | edit: P1\n3. P1: \"off the contested islands\" | P2: \"off disputed islands\" | edit: P2\n4. P1: \"in 3 cities\" | P2: \"in three cities\" | edit: P1\n5. P1: \"in Russian coal mine blast\" | P2: \"in Russia coal mine blast\" | edit: P2\n6. P1: \"Morsi supporters\" | P2: \"Morsi backers\" | edit: P1\n7. P1: \"of a dilapidated wooden fence\" | P2: \"of an old wooden fence\" | edit: P2\n8. P1: \"Blizzard hammers\" | P2: \"Blizzard wallops\" | edit: P1\n9. P1: \"on table\" | P2: \"upon the table\" | edit: P2\n10. P1: \"in a body of water\" | P2: \"on the water\" | edit: P1\n\nOUTPUT\nReturn only one JSON object and nothing else, with no Markdown code fence:\n{\"batch_id\": \"cf_b1_head_b03\", \"edits\": [{\"k\": 1, \"new_phrase\": \"...\"}, {\"k\": 2, \"skip\": \"reason\"}, ...]}\nGive exactly one entry for each k from 1 to 10, in order. \"new_phrase\" is the whole edited phrase.\n",
+ "prompt_sha256": "df9a29856a3f850de8ee2cd8a6d8d3be89d5af5f4e124b89ba73c080ab3d7d95",
+ "items": [
+  {
+   "k": 1,
+   "parent": "dico_phrasis_0001199__en-en__original",
+   "edit_side": "text2",
+   "orig": "within the snow",
+   "other": "in the snow"
+  },
+  {
+   "k": 2,
+   "parent": "dico_phrasis_0000835__en-en__original",
+   "edit_side": "text1",
+   "orig": "in public",
+   "other": "in a public place"
+  },
+  {
+   "k": 3,
+   "parent": "dico_phrasis_0000664__en-en__original",
+   "edit_side": "text2",
+   "orig": "off disputed islands",
+   "other": "off the contested islands"
+  },
+  {
+   "k": 4,
+   "parent": "dico_phrasis_0000901__en-en__original",
+   "edit_side": "text1",
+   "orig": "in 3 cities",
+   "other": "in three cities"
+  },
+  {
+   "k": 5,
+   "parent": "dico_phrasis_0000892__en-en__original",
+   "edit_side": "text2",
+   "orig": "in Russia coal mine blast",
+   "other": "in Russian coal mine blast"
+  },
+  {
+   "k": 6,
+   "parent": "dico_phrasis_0001035__en-en__original",
+   "edit_side": "text1",
+   "orig": "Morsi supporters",
+   "other": "Morsi backers"
+  },
+  {
+   "k": 7,
+   "parent": "dico_phrasis_0001170__en-en__original",
+   "edit_side": "text2",
+   "orig": "of an old wooden fence",
+   "other": "of a dilapidated wooden fence"
+  },
+  {
+   "k": 8,
+   "parent": "dico_phrasis_0000894__en-en__original",
+   "edit_side": "text1",
+   "orig": "Blizzard hammers",
+   "other": "Blizzard wallops"
+  },
+  {
+   "k": 9,
+   "parent": "dico_phrasis_0001197__en-en__original",
+   "edit_side": "text2",
+   "orig": "upon the table",
+   "other": "on table"
+  },
+  {
+   "k": 10,
+   "parent": "dico_phrasis_0001297__en-en__original",
+   "edit_side": "text1",
+   "orig": "in a body of water",
+   "other": "on the water"
+  }
+ ]
+}

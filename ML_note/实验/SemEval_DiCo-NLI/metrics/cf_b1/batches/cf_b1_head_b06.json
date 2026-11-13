@@ -1,0 +1,78 @@
+{
+ "batch_id": "cf_b1_head_b06",
+ "op": "HEAD",
+ "prompt": "You are editing short English phrases for a phrase-level natural language inference dataset. The phrases are chunks like those in image captions or news headlines.\n\nEach item below gives two phrases, P1 and P2, that mean the same thing, and says which one to edit.\n\nWHAT TO DO\nIn the phrase you are told to edit, replace its head word (the main thing the phrase is about; for a verb phrase, the main verb) with a different word of the same kind, so that afterwards neither phrase follows from the other. Examples of good replacements: dog -> cat, guitar -> violin, running -> swimming.\n\nRULES\n1. Replace exactly one word. Keep every other word unchanged and in the same order; you may only switch \"a\" and \"an\" if the new word needs it.\n2. The new word must be of the same kind as the old one, but it must NOT be a synonym, a broader term (\"animal\" for \"dog\"), a narrower term (\"poodle\" for \"dog\"), a part or a whole of it, or just another form of the same word.\n3. The new word must not appear in the other phrase, and must not be a number.\n4. Keep the grammar correct (same singular or plural, same verb form).\n5. If no such edit is possible for an item, skip it and give a short reason instead of forcing an edit.\n6. Use only the information in this message. Do not open files, search the web or look at any other material.\n\nITEMS\n1. P1: \"wearing a plaid-patterned shirt\" | P2: \"in a plaid shirt\" | edit: P2\n2. P1: \"located within the water\" | P2: \"in the water\" | edit: P1\n3. P1: \"A white and brown dog\" | P2: \"A brown and white dog\" | edit: P2\n4. P1: \"into the water\" | P2: \"entering the water\" | edit: P1\n5. P1: \"software guru John McAfee\" | P2: \"John McAfee, an expert in software\" | edit: P2\n6. P1: \"on a field\" | P2: \"upon an open field\" | edit: P1\n7. P1: \"An elderly Asian couple\" | P2: \"An older Asian couple\" | edit: P2\n8. P1: \"A pair of dogs\" | P2: \"Two dogs\" | edit: P1\n9. P1: \"Narendra Modi\" | P2: \"India 's Modi\" | edit: P2\n10. P1: \"inside a hospital facility\" | P2: \"in hospital\" | edit: P1\n\nOUTPUT\nReturn only one JSON object and nothing else, with no Markdown code fence:\n{\"batch_id\": \"cf_b1_head_b06\", \"edits\": [{\"k\": 1, \"new_phrase\": \"...\"}, {\"k\": 2, \"skip\": \"reason\"}, ...]}\nGive exactly one entry for each k from 1 to 10, in order. \"new_phrase\" is the whole edited phrase.\n",
+ "prompt_sha256": "62bb519521b1f3fb0cc73a62106618054e8c96f522d0d2a5a48874391c1118ae",
+ "items": [
+  {
+   "k": 1,
+   "parent": "dico_phrasis_0000759__en-en__original",
+   "edit_side": "text2",
+   "orig": "in a plaid shirt",
+   "other": "wearing a plaid-patterned shirt"
+  },
+  {
+   "k": 2,
+   "parent": "dico_phrasis_0001288__en-en__original",
+   "edit_side": "text1",
+   "orig": "located within the water",
+   "other": "in the water"
+  },
+  {
+   "k": 3,
+   "parent": "dico_phrasis_0000813__en-en__original",
+   "edit_side": "text2",
+   "orig": "A brown and white dog",
+   "other": "A white and brown dog"
+  },
+  {
+   "k": 4,
+   "parent": "dico_phrasis_0000730__en-en__original",
+   "edit_side": "text1",
+   "orig": "into the water",
+   "other": "entering the water"
+  },
+  {
+   "k": 5,
+   "parent": "dico_phrasis_0001056__en-en__original",
+   "edit_side": "text2",
+   "orig": "John McAfee, an expert in software",
+   "other": "software guru John McAfee"
+  },
+  {
+   "k": 6,
+   "parent": "dico_phrasis_0000804__en-en__original",
+   "edit_side": "text1",
+   "orig": "on a field",
+   "other": "upon an open field"
+  },
+  {
+   "k": 7,
+   "parent": "dico_phrasis_0001241__en-en__original",
+   "edit_side": "text2",
+   "orig": "An older Asian couple",
+   "other": "An elderly Asian couple"
+  },
+  {
+   "k": 8,
+   "parent": "dico_phrasis_0000736__en-en__original",
+   "edit_side": "text1",
+   "orig": "A pair of dogs",
+   "other": "Two dogs"
+  },
+  {
+   "k": 9,
+   "parent": "dico_phrasis_0000888__en-en__original",
+   "edit_side": "text2",
+   "orig": "India 's Modi",
+   "other": "Narendra Modi"
+  },
+  {
+   "k": 10,
+   "parent": "dico_phrasis_0000873__en-en__original",
+   "edit_side": "text1",
+   "orig": "inside a hospital facility",
+   "other": "in hospital"
+  }
+ ]
+}

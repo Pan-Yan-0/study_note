@@ -1,0 +1,36 @@
+{
+ "batch_id": "cf_b1_spec_b09",
+ "op": "SPEC",
+ "prompt": "You are editing short English phrases for a phrase-level natural language inference dataset. The phrases are chunks like those in image captions or news headlines.\n\nEach item below gives two phrases, P1 and P2, that mean the same thing, and says which one to edit.\n\nWHAT TO DO\nInsert ONE restrictive modifier into the phrase you are told to edit, so that the edited phrase becomes strictly more specific than before: it still talks about the same thing, but now covers only some of the situations the original covered.\n\nRULES\n1. Insert 1 to 3 consecutive words: an adjective, a short adjective phrase, or a short prepositional phrase. Do not change, remove or reorder any existing word.\n2. Keep the head word, its meaning and the roles of the people or things in the scene.\n3. The modifier must really narrow the meaning. Do not add something redundant (\"wet water\"), a pure intensifier (\"very\"), or a detail that the other phrase already states or implies.\n4. Do not change time or truth: no \"former\", \"ex-\", \"future\", \"fake\", \"alleged\" and the like. Do not add numbers or quantities.\n5. Keep the style of the phrase: same use of capital letters and articles.\n6. If no such edit is possible for an item, skip it and give a short reason instead of forcing an edit.\n7. Use only the information in this message. Do not open files, search the web or look at any other material.\n\nITEMS\n1. P1: \"an equine whose coat is brown\" | P2: \"Brown horse\" | edit: P1\n2. P1: \"Very crowded office desk\" | P2: \"Messy computer desk\" | edit: P2\n3. P1: \"through deep snow pack\" | P2: \"through the deep snow\" | edit: P1\n4. P1: \"may help\" | P2: \"may boost\" | edit: P2\n\nOUTPUT\nReturn only one JSON object and nothing else, with no Markdown code fence:\n{\"batch_id\": \"cf_b1_spec_b09\", \"edits\": [{\"k\": 1, \"new_phrase\": \"...\"}, {\"k\": 2, \"skip\": \"reason\"}, ...]}\nGive exactly one entry for each k from 1 to 4, in order. \"new_phrase\" is the whole edited phrase.\n",
+ "prompt_sha256": "102839e519e7e5c93831ca9ce13ebaaac14b09fb973f53efcda708168b80781a",
+ "items": [
+  {
+   "k": 1,
+   "parent": "dico_phrasis_0001242__en-en__original",
+   "edit_side": "text1",
+   "orig": "an equine whose coat is brown",
+   "other": "Brown horse"
+  },
+  {
+   "k": 2,
+   "parent": "dico_phrasis_0001212__en-en__original",
+   "edit_side": "text2",
+   "orig": "Messy computer desk",
+   "other": "Very crowded office desk"
+  },
+  {
+   "k": 3,
+   "parent": "dico_phrasis_0000849__en-en__original",
+   "edit_side": "text1",
+   "orig": "through deep snow pack",
+   "other": "through the deep snow"
+  },
+  {
+   "k": 4,
+   "parent": "dico_phrasis_0000688__en-en__original",
+   "edit_side": "text2",
+   "orig": "may boost",
+   "other": "may help"
+  }
+ ]
+}

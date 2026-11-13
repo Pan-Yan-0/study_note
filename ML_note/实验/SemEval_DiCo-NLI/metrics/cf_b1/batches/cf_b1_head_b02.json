@@ -1,0 +1,78 @@
+{
+ "batch_id": "cf_b1_head_b02",
+ "op": "HEAD",
+ "prompt": "You are editing short English phrases for a phrase-level natural language inference dataset. The phrases are chunks like those in image captions or news headlines.\n\nEach item below gives two phrases, P1 and P2, that mean the same thing, and says which one to edit.\n\nWHAT TO DO\nIn the phrase you are told to edit, replace its head word (the main thing the phrase is about; for a verb phrase, the main verb) with a different word of the same kind, so that afterwards neither phrase follows from the other. Examples of good replacements: dog -> cat, guitar -> violin, running -> swimming.\n\nRULES\n1. Replace exactly one word. Keep every other word unchanged and in the same order; you may only switch \"a\" and \"an\" if the new word needs it.\n2. The new word must be of the same kind as the old one, but it must NOT be a synonym, a broader term (\"animal\" for \"dog\"), a narrower term (\"poodle\" for \"dog\"), a part or a whole of it, or just another form of the same word.\n3. The new word must not appear in the other phrase, and must not be a number.\n4. Keep the grammar correct (same singular or plural, same verb form).\n5. If no such edit is possible for an item, skip it and give a short reason instead of forcing an edit.\n6. Use only the information in this message. Do not open files, search the web or look at any other material.\n\nITEMS\n1. P1: \"after collapsing\" | P2: \"after collapse\" | edit: P2\n2. P1: \"in the shed\" | P2: \"inside a storage shed\" | edit: P1\n3. P1: \"through a snowy forest\" | P2: \"through a snowy wooded area\" | edit: P2\n4. P1: \"during November\" | P2: \"in November\" | edit: P1\n5. P1: \"Shehla Raza herself\" | P2: \"Shehla Raza\" | edit: P2\n6. P1: \"Ronaldo 's hat trick\" | P2: \"three goals scored by Ronaldo\" | edit: P1\n7. P1: \"after helicopter crashes into pub\" | P2: \"after helicopter pub crash\" | edit: P2\n8. P1: \"initial OK\" | P2: \"initial approval\" | edit: P1\n9. P1: \"Shots , Explosions\" | P2: \"Gunshots , explosions\" | edit: P2\n10. P1: \"at a train station\" | P2: \"in a station\" | edit: P1\n\nOUTPUT\nReturn only one JSON object and nothing else, with no Markdown code fence:\n{\"batch_id\": \"cf_b1_head_b02\", \"edits\": [{\"k\": 1, \"new_phrase\": \"...\"}, {\"k\": 2, \"skip\": \"reason\"}, ...]}\nGive exactly one entry for each k from 1 to 10, in order. \"new_phrase\" is the whole edited phrase.\n",
+ "prompt_sha256": "9159a0e695138750cc3d5d6f7a2656f889b6bb39065e54121184e9ea0c796c52",
+ "items": [
+  {
+   "k": 1,
+   "parent": "dico_phrasis_0001081__en-en__original",
+   "edit_side": "text2",
+   "orig": "after collapse",
+   "other": "after collapsing"
+  },
+  {
+   "k": 2,
+   "parent": "dico_phrasis_0001219__en-en__original",
+   "edit_side": "text1",
+   "orig": "in the shed",
+   "other": "inside a storage shed"
+  },
+  {
+   "k": 3,
+   "parent": "dico_phrasis_0000758__en-en__original",
+   "edit_side": "text2",
+   "orig": "through a snowy wooded area",
+   "other": "through a snowy forest"
+  },
+  {
+   "k": 4,
+   "parent": "dico_phrasis_0000668__en-en__original",
+   "edit_side": "text1",
+   "orig": "during November",
+   "other": "in November"
+  },
+  {
+   "k": 5,
+   "parent": "dico_phrasis_0000643__en-en__original",
+   "edit_side": "text2",
+   "orig": "Shehla Raza",
+   "other": "Shehla Raza herself"
+  },
+  {
+   "k": 6,
+   "parent": "dico_phrasis_0000640__en-en__original",
+   "edit_side": "text1",
+   "orig": "Ronaldo 's hat trick",
+   "other": "three goals scored by Ronaldo"
+  },
+  {
+   "k": 7,
+   "parent": "dico_phrasis_0000941__en-en__original",
+   "edit_side": "text2",
+   "orig": "after helicopter pub crash",
+   "other": "after helicopter crashes into pub"
+  },
+  {
+   "k": 8,
+   "parent": "dico_phrasis_0000883__en-en__original",
+   "edit_side": "text1",
+   "orig": "initial OK",
+   "other": "initial approval"
+  },
+  {
+   "k": 9,
+   "parent": "dico_phrasis_0001001__en-en__original",
+   "edit_side": "text2",
+   "orig": "Gunshots , explosions",
+   "other": "Shots , Explosions"
+  },
+  {
+   "k": 10,
+   "parent": "dico_phrasis_0001318__en-en__original",
+   "edit_side": "text1",
+   "orig": "at a train station",
+   "other": "in a station"
+  }
+ ]
+}

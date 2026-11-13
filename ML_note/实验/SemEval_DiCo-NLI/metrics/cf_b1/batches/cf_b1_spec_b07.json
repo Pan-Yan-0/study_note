@@ -1,0 +1,78 @@
+{
+ "batch_id": "cf_b1_spec_b07",
+ "op": "SPEC",
+ "prompt": "You are editing short English phrases for a phrase-level natural language inference dataset. The phrases are chunks like those in image captions or news headlines.\n\nEach item below gives two phrases, P1 and P2, that mean the same thing, and says which one to edit.\n\nWHAT TO DO\nInsert ONE restrictive modifier into the phrase you are told to edit, so that the edited phrase becomes strictly more specific than before: it still talks about the same thing, but now covers only some of the situations the original covered.\n\nRULES\n1. Insert 1 to 3 consecutive words: an adjective, a short adjective phrase, or a short prepositional phrase. Do not change, remove or reorder any existing word.\n2. Keep the head word, its meaning and the roles of the people or things in the scene.\n3. The modifier must really narrow the meaning. Do not add something redundant (\"wet water\"), a pure intensifier (\"very\"), or a detail that the other phrase already states or implies.\n4. Do not change time or truth: no \"former\", \"ex-\", \"future\", \"fake\", \"alleged\" and the like. Do not add numbers or quantities.\n5. Keep the style of the phrase: same use of capital letters and articles.\n6. If no such edit is possible for an item, skip it and give a short reason instead of forcing an edit.\n7. Use only the information in this message. Do not open files, search the web or look at any other material.\n\nITEMS\n1. P1: \"in a kitchen\" | P2: \"within a kitchen\" | edit: P1\n2. P1: \"Record $ 38 bn\" | P2: \"record US$ 38b\" | edit: P2\n3. P1: \"Over Al Qaeda Threat\" | P2: \"citing Qaeda threats\" | edit: P1\n4. P1: \"An Apple computer\" | P2: \"A Macintosh computer\" | edit: P2\n5. P1: \"beside the dining table\" | P2: \"at the dinner table\" | edit: P1\n6. P1: \"across water of little depth\" | P2: \"through the shallow water\" | edit: P2\n7. P1: \"fiscal cliff deal\" | P2: \"Deal on `` fiscal cliff ''\" | edit: P1\n8. P1: \"on Morsi Supporters\" | P2: \"on Mohamed Morsi supporters\" | edit: P2\n9. P1: \"Suspected U.S. drone strike\" | P2: \"US drone strike\" | edit: P1\n10. P1: \"Francis\" | P2: \"Pope Francis\" | edit: P2\n\nOUTPUT\nReturn only one JSON object and nothing else, with no Markdown code fence:\n{\"batch_id\": \"cf_b1_spec_b07\", \"edits\": [{\"k\": 1, \"new_phrase\": \"...\"}, {\"k\": 2, \"skip\": \"reason\"}, ...]}\nGive exactly one entry for each k from 1 to 10, in order. \"new_phrase\" is the whole edited phrase.\n",
+ "prompt_sha256": "e9e56f50597b08022c0590d58456332465e430bb7f3054ead855ef5fa32b324b",
+ "items": [
+  {
+   "k": 1,
+   "parent": "dico_phrasis_0001091__en-en__original",
+   "edit_side": "text1",
+   "orig": "in a kitchen",
+   "other": "within a kitchen"
+  },
+  {
+   "k": 2,
+   "parent": "dico_phrasis_0000903__en-en__original",
+   "edit_side": "text2",
+   "orig": "record US$ 38b",
+   "other": "Record $ 38 bn"
+  },
+  {
+   "k": 3,
+   "parent": "dico_phrasis_0000696__en-en__original",
+   "edit_side": "text1",
+   "orig": "Over Al Qaeda Threat",
+   "other": "citing Qaeda threats"
+  },
+  {
+   "k": 4,
+   "parent": "dico_phrasis_0001088__en-en__original",
+   "edit_side": "text2",
+   "orig": "A Macintosh computer",
+   "other": "An Apple computer"
+  },
+  {
+   "k": 5,
+   "parent": "dico_phrasis_0001240__en-en__original",
+   "edit_side": "text1",
+   "orig": "beside the dining table",
+   "other": "at the dinner table"
+  },
+  {
+   "k": 6,
+   "parent": "dico_phrasis_0000838__en-en__original",
+   "edit_side": "text2",
+   "orig": "through the shallow water",
+   "other": "across water of little depth"
+  },
+  {
+   "k": 7,
+   "parent": "dico_phrasis_0000878__en-en__original",
+   "edit_side": "text1",
+   "orig": "fiscal cliff deal",
+   "other": "Deal on `` fiscal cliff ''"
+  },
+  {
+   "k": 8,
+   "parent": "dico_phrasis_0000998__en-en__original",
+   "edit_side": "text2",
+   "orig": "on Mohamed Morsi supporters",
+   "other": "on Morsi Supporters"
+  },
+  {
+   "k": 9,
+   "parent": "dico_phrasis_0000978__en-en__original",
+   "edit_side": "text1",
+   "orig": "Suspected U.S. drone strike",
+   "other": "US drone strike"
+  },
+  {
+   "k": 10,
+   "parent": "dico_phrasis_0001045__en-en__original",
+   "edit_side": "text2",
+   "orig": "Pope Francis",
+   "other": "Francis"
+  }
+ ]
+}

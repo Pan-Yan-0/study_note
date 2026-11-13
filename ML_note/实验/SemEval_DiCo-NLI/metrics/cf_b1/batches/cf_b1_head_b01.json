@@ -1,0 +1,78 @@
+{
+ "batch_id": "cf_b1_head_b01",
+ "op": "HEAD",
+ "prompt": "You are editing short English phrases for a phrase-level natural language inference dataset. The phrases are chunks like those in image captions or news headlines.\n\nEach item below gives two phrases, P1 and P2, that mean the same thing, and says which one to edit.\n\nWHAT TO DO\nIn the phrase you are told to edit, replace its head word (the main thing the phrase is about; for a verb phrase, the main verb) with a different word of the same kind, so that afterwards neither phrase follows from the other. Examples of good replacements: dog -> cat, guitar -> violin, running -> swimming.\n\nRULES\n1. Replace exactly one word. Keep every other word unchanged and in the same order; you may only switch \"a\" and \"an\" if the new word needs it.\n2. The new word must be of the same kind as the old one, but it must NOT be a synonym, a broader term (\"animal\" for \"dog\"), a narrower term (\"poodle\" for \"dog\"), a part or a whole of it, or just another form of the same word.\n3. The new word must not appear in the other phrase, and must not be a number.\n4. Keep the grammar correct (same singular or plural, same verb form).\n5. If no such edit is possible for an item, skip it and give a short reason instead of forcing an edit.\n6. Use only the information in this message. Do not open files, search the web or look at any other material.\n\nITEMS\n1. P1: \"in the water\" | P2: \"immersed in the water\" | edit: P2\n2. P1: \"Israel 's ex-PM Ariel Sharon\" | P2: \"Former Israeli Prime Minister Sharon\" | edit: P1\n3. P1: \"upon a floor\" | P2: \"on floor\" | edit: P2\n4. P1: \"the bovines with brown-and-white coloring\" | P2: \"Brown and white cows\" | edit: P1\n5. P1: \"a biographical film about Lance Armstrong\" | P2: \"Lance Armstrong in biopic\" | edit: P2\n6. P1: \"on a grassy field\" | P2: \"upon a grass-covered field\" | edit: P1\n7. P1: \"on her trampoline\" | P2: \"using her trampoline\" | edit: P2\n8. P1: \"over grass\" | P2: \"across the grass\" | edit: P1\n9. P1: \"Cory Monteith, an actor from Glee\" | P2: \"' Glee ' star Cory Monteith\" | edit: P2\n10. P1: \"A silver AreoMexico Jet Liner\" | P2: \"An aeromexico silver plane\" | edit: P1\n\nOUTPUT\nReturn only one JSON object and nothing else, with no Markdown code fence:\n{\"batch_id\": \"cf_b1_head_b01\", \"edits\": [{\"k\": 1, \"new_phrase\": \"...\"}, {\"k\": 2, \"skip\": \"reason\"}, ...]}\nGive exactly one entry for each k from 1 to 10, in order. \"new_phrase\" is the whole edited phrase.\n",
+ "prompt_sha256": "d3259292873bd3ff6423171beb81171b765dbf5ae449d04bcbe27f6badb911f1",
+ "items": [
+  {
+   "k": 1,
+   "parent": "dico_phrasis_0000747__en-en__original",
+   "edit_side": "text2",
+   "orig": "immersed in the water",
+   "other": "in the water"
+  },
+  {
+   "k": 2,
+   "parent": "dico_phrasis_0000639__en-en__original",
+   "edit_side": "text1",
+   "orig": "Israel 's ex-PM Ariel Sharon",
+   "other": "Former Israeli Prime Minister Sharon"
+  },
+  {
+   "k": 3,
+   "parent": "dico_phrasis_0001308__en-en__original",
+   "edit_side": "text2",
+   "orig": "on floor",
+   "other": "upon a floor"
+  },
+  {
+   "k": 4,
+   "parent": "dico_phrasis_0001190__en-en__original",
+   "edit_side": "text1",
+   "orig": "the bovines with brown-and-white coloring",
+   "other": "Brown and white cows"
+  },
+  {
+   "k": 5,
+   "parent": "dico_phrasis_0000871__en-en__original",
+   "edit_side": "text2",
+   "orig": "Lance Armstrong in biopic",
+   "other": "a biographical film about Lance Armstrong"
+  },
+  {
+   "k": 6,
+   "parent": "dico_phrasis_0001195__en-en__original",
+   "edit_side": "text1",
+   "orig": "on a grassy field",
+   "other": "upon a grass-covered field"
+  },
+  {
+   "k": 7,
+   "parent": "dico_phrasis_0000792__en-en__original",
+   "edit_side": "text2",
+   "orig": "using her trampoline",
+   "other": "on her trampoline"
+  },
+  {
+   "k": 8,
+   "parent": "dico_phrasis_0000812__en-en__original",
+   "edit_side": "text1",
+   "orig": "over grass",
+   "other": "across the grass"
+  },
+  {
+   "k": 9,
+   "parent": "dico_phrasis_0000713__en-en__original",
+   "edit_side": "text2",
+   "orig": "' Glee ' star Cory Monteith",
+   "other": "Cory Monteith, an actor from Glee"
+  },
+  {
+   "k": 10,
+   "parent": "dico_phrasis_0001278__en-en__original",
+   "edit_side": "text1",
+   "orig": "A silver AreoMexico Jet Liner",
+   "other": "An aeromexico silver plane"
+  }
+ ]
+}
