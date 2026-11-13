@@ -1,5 +1,7 @@
 # SemEval-2027 Task 2：DiCo-NLI
 
+[A1 教师监督对照](metrics/a1_train/formal_v1/README.md)正式训练已由 Pan-Yan-0 在 Kaggle T4×2 运行、Codex 完成复核与归档（Antigravity 独立复算待完成）：B2-RL −0.782、B2-SL −0.284、B2-LS −0.340 个百分点（双侧 Bonferroni 98.33% 区间均含 0），三臂均未达预定 sym WF1 提升门槛，A2 不触发。
+
 [实验B +1：Haiku生成数据](metrics/augment_b/train_plus1/README.md)已完成：mDeBERTa英语五折三种子，sym WF1 B0 79.37%、原数据重复一遍（step+1）80.59%、加Haiku生成数据（B1-Haiku）82.27%；B1-Haiku对B0 +2.91个百分点[+1.89,+3.89]、对step+1 +1.68[+0.73,+2.58]，三个种子都升，按事先规则扩充有效，可以进入+2/+4。提升主要在NEGATIVE_OTHER（F1 +5.3）。
 
 [实验A：Qwen3-8B英语五折三种子](metrics/qwen8b_a1/README.md)已完成：OOF sym WF1 84.87%，对4B（84.37%）同种子差+0.50个百分点，区间[−0.38,+1.41]，按事先规则不算提升。运行代码见[qwen8b_v5（v5.5）](code/qwen8b_v5/README.md)。
@@ -8,7 +10,7 @@
 
 任务输入为短语对，输出 EQUIVALENCE、FORWARD_ENTAILMENT、BACKWARD_ENTAILMENT、NEGATIVE_OTHER。反向输入的F/B互换；模型只读取文本，不使用pair编号等标签泄漏特征。
 
-[A1 教师监督训练包](code/a1_train/README.md) · [结果与分析](英语五折联合验证结果.md) · [自动实验登记表](实验登记表.md) · [当前状态与待办](实验状态与算力计划.md) · [文件职责](文件导航与维护规则.md)
+[A1 正式结果](metrics/a1_train/formal_v1/README.md) · [A1 教师监督训练包](code/a1_train/README.md) · [结果与分析](英语五折联合验证结果.md) · [自动实验登记表](实验登记表.md) · [当前状态与待办](实验状态与算力计划.md) · [文件职责](文件导航与维护规则.md)
 
 ## 结果
 
@@ -29,6 +31,7 @@
 | 实验B +1 | mDeBERTa CE：B0 / B1-Haiku / step+1（Kaggle T4） | 英语五折三种子，45项、9套OOF | [实验B +1结果](metrics/augment_b/train_plus1/README.md) |
 | 实验B Commit 1 | mDeBERTa CE：B0 / W2 / W4 / step+2 / step+4 / Dup×5（Kaggle T4） | 英语五折三种子，150项；类别加权按规则不算提升，原数据重复在+1之后饱和 | [Commit 1结果](metrics/augment_b/train_c1/README.md) |
 | 实验B Commit 2 | mDeBERTa CE：B2-Haiku / B4-Haiku / G×5（Kaggle T4） | 英语五折三种子，105项；+2 / +4对同步数的原数据重复都显著更好，规模在+2饱和；类别构成都不比按原比例生成更好 | [Commit 2结果](metrics/augment_b/train_c2/README.md) |
+| A1 教师监督对照 | mDeBERTa：B2-RL / B2-SL / B2-LS 对 B2-Haiku（Kaggle T4×2，B2 复用 Commit 5） | 英语五折三种子，45项（Codex 已复核归档，Antigravity 独立复算待完成）；RL −0.78、SL −0.28、LS −0.34，均未达提升门槛，A2 不触发 | [A1 正式结果](metrics/a1_train/formal_v1/README.md) |
 | 实验B Commit 6 | mDeBERTa：DirEnt 方向分解 DEC / DEC-H 对 NLIinit（Kaggle T4，NLIinit 复用 Commit 4） | 英语五折三种子，30项；DEC −1.69、DEC-H −2.07，区间都不含0，显著更差 | [Commit 6结果](metrics/augment_b/train_c6/README.md) |
 | 实验B Commit 5 | mDeBERTa：B2 / B2-NLIinit（Kaggle T4） | 英语五折三种子，30项；B2-NLIinit − B2 +0.38、区间含0，不算提升 | [Commit 5结果](metrics/augment_b/train_c5/README.md) |
 | Qwen 4B +1 扩充（阶段 1） | Qwen3-4B LoRA SFT：Q0 / Q-B1（A10） | 英语五折三种子，30项；Q-B1 − Q0 −0.53、区间含0，不跑阶段2 | [阶段1结果](metrics/qwen4b_augb_s1/README.md) |

@@ -1,6 +1,6 @@
 # Pan-Yan-0 的学习笔记（note 分支）
 
-[DiCo-NLI A1 教师监督对照](ML_note/实验/SemEval_DiCo-NLI/code/a1_train/README.md) 已通过 [Kaggle T4 SMOKE](ML_note/实验/SemEval_DiCo-NLI/metrics/a1_train/smoke_v1/README.md)，B2 复用通过，下一步运行 RL、SL、LS 共 45 项。
+[DiCo-NLI A1 教师监督对照](ML_note/实验/SemEval_DiCo-NLI/metrics/a1_train/formal_v1/README.md)正式训练已由 Pan-Yan-0 在 Kaggle T4×2 运行、Codex 完成复核与归档（Antigravity 独立复算待完成）：复用 Commit 5 的 B2 对照（83.21%），RL −0.78、SL −0.28、LS −0.34 个百分点（Bonferroni 98.33% 区间均含 0），三臂均未达预定提升门槛，A2 不触发；下一步按冻结顺序继续 B1 反事实诊断与 PiSSA 对照。
 
 [实验B Commit 6：把四分类拆成两个方向的蕴含](ML_note/实验/SemEval_DiCo-NLI/metrics/augment_b/train_c6/README.md)已完成：两种头都比 NLIinit 低（DEC −1.69 个百分点，Bonferroni 97.5% 区间 [−2.80, −0.55]；DEC-H −2.07），按事先规则不进 +2，这个方向到此结束。
 
