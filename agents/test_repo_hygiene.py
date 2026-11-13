@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""agents/check_repo_hygiene.py 的回归测试套件（含 Codex 基建验收回执 v2 新增 4 项回归）。"""
+"""agents/check_repo_hygiene.py 的回归测试套件（含 v2 边界回归与 v3 任务范围/Drive 版本绑定回执回归）。"""
 from __future__ import annotations
 
 import contextlib
@@ -79,6 +79,12 @@ class TestRepoHygiene(unittest.TestCase):
         ])
         self.assertEqual(len(issues_infra), 1)
 
+        issues_dotfiles, _ = crh.check_ownership(
+            ["AGENTS.md", "./.github/workflows/repo-hygiene.yml", ".gitignore"],
+            expected_line="infra",
+        )
+        self.assertEqual(issues_dotfiles, [])
+
     def test_multi_commit_range_catches_reverted_leak_and_scans_shared_indexes(self):
         """一次 push 包含多个 commit 时，前序 commit 混入 README.md 或 agents/ 的隐私即使在后序 commit 删掉也必须被拦下。"""
         with tempfile.TemporaryDirectory() as tmp:
@@ -134,10 +140,8 @@ class TestRepoHygiene(unittest.TestCase):
         """回归 2：暂存区（git add）含敏感内容、随后工作区文件改回干净时，--include-worktree 必须扫描 index blob 并报错。"""
         with tempfile.TemporaryDirectory() as tmp:
             repo = init_temp_git_repo(tmp)
-            # 写入私人邮箱并 git add 进暂存区
             (repo / "README.md").write_text("联系：staged_secret" + "@" + "private.org\n", encoding="utf-8")
             subprocess.run(["git", "-C", tmp, "add", "README.md"], check=True)
-            # 工作区改回与 HEAD 完全相同的干净内容
             (repo / "README.md").write_text("# Clean Root\n", encoding="utf-8")
 
             receipt_path = Path(tmp) / "staged_receipt.json"
@@ -166,7 +170,6 @@ class TestRepoHygiene(unittest.TestCase):
             subprocess.run(["git", "-C", tmp, "commit", "-q", "-m", "seed files"], check=True)
             seed_rev = subprocess.check_output(["git", "-C", tmp, "rev-parse", "HEAD"], text=True).strip()
 
-            # 场景 A：修改 SemEval 文件 + 删除学习线文件
             semeval_file.write_text("# SemEval V2\n", encoding="utf-8")
             subprocess.run(["git", "-C", tmp, "rm", "-q", str(learn_file.relative_to(repo))], check=True)
             subprocess.run(["git", "-C", tmp, "add", str(semeval_file.relative_to(repo))], check=True)
@@ -180,7 +183,6 @@ class TestRepoHygiene(unittest.TestCase):
                 ])
             self.assertEqual(rc_del, 1)
 
-            # 场景 B：将文件从 SemEval 重命名到学习线目录
             before_rename = subprocess.check_output(["git", "-C", tmp, "rev-parse", "HEAD"], text=True).strip()
             renamed_target = repo / "ML_note" / "原理笔记" / "BERT" / "moved_exp.md"
             renamed_target.parent.mkdir(parents=True, exist_ok=True)
@@ -231,6 +233,130 @@ class TestRepoHygiene(unittest.TestCase):
             for secret in (fake_token, fake_email, fake_path):
                 self.assertNotIn(secret, stdout_text)
                 self.assertNotIn(secret, receipt_text)
+
+    def test_task_scope_catches_single_line_out_of_scope_edit(self):
+        """回归 5（Codex 建议 1）：即使单次 commit 只改了一条线（未混线），只要越出当前任务允许范围即报错。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = init_temp_git_repo(tmp)
+            base_rev = subprocess.check_output(["git", "-C", tmp, "rev-parse", "HEAD"], text=True).strip()
+
+            # B1 任务只允许修改 SemEval 的 code/ 和 README.md，但提交者只改了学习笔记（单线、未混线）
+            learn_note = repo / "ML_note" / "原理笔记" / "BERT" / "attention.md"
+            learn_note.parent.mkdir(parents=True, exist_ok=True)
+            learn_note.write_text("# Attention Clean Note\n", encoding="utf-8")
+            subprocess.run(["git", "-C", tmp, "add", "."], check=True)
+            subprocess.run(["git", "-C", tmp, "commit", "-q", "-m", "only edit learning note"], check=True)
+
+            b1_prefixes = [
+                "ML_note/实验/SemEval_DiCo-NLI/code/",
+                "ML_note/实验/SemEval_DiCo-NLI/README.md",
+            ]
+            with contextlib.redirect_stdout(io.StringIO()):
+                rc_wrong_line = crh.main([
+                    "--repo", tmp,
+                    "--commit-range", f"{base_rev}..HEAD",
+                    "--expected-line", "semeval",
+                    "--allowed-prefixes", *b1_prefixes,
+                ])
+            self.assertEqual(rc_wrong_line, 1)
+
+            # 进一步验证：父目录前缀 ML_note/实验/SemEval_DiCo-NLI/ 不会误放行独立的 论文研究/ 子线
+            issues_paper, _ = crh.check_ownership(
+                ["ML_note/实验/SemEval_DiCo-NLI/论文研究/survey.md"],
+                allowed_prefixes=["ML_note/实验/SemEval_DiCo-NLI/"],
+            )
+            self.assertEqual(len(issues_paper), 1)
+
+            # 合规修改：修改 B1 允许的 code/ 文件 + 共用索引 README.md 应通过
+            issues_ok, _ = crh.check_ownership(
+                ["ML_note/实验/SemEval_DiCo-NLI/code/b1_infer.py", "README.md"],
+                expected_line="semeval",
+                allowed_prefixes=b1_prefixes,
+            )
+            self.assertEqual(issues_ok, [])
+
+    def test_task_manifest_and_handoff_header_validation(self):
+        """回归 6（Codex 建议 3）：解析并校验交接文件的 6 项必要元数据及可见范围门禁。"""
+        valid_md = (
+            "# ShortGPT BI 删层原理笔记\n\n"
+            "| 字段 | 内容 |\n"
+            "|---|---|\n"
+            "| 任务与当前负责人 | `TASK-LEARN-001 | Gemini 网页端` |\n"
+            "| 允许修改范围 | `ML_note/原理笔记/`、`ML_note/实验/ShortGPT_BI删层/` |\n"
+            "| 来源版本 | `commit:72bf9765 | drive:1DLCgS6Z` |\n"
+            "| 可见范围 | `工作区私有` |\n"
+            "| 当前状态 | `待审` |\n"
+            "| 正式结果链接 | `ML_note/原理笔记/推理优化/ShortGPT_BI删层笔记.md` |\n"
+            "| 目标仓库路径 | `ML_note/原理笔记/推理优化/ShortGPT_BI删层笔记.md` |\n\n"
+            "正文内容干净，公式 $s_i = 1 - \\cos(X_i, X_{i+1})$。\n"
+        )
+        m = crh.parse_task_manifest_text(valid_md)
+        self.assertEqual(m["task_id"], "TASK-LEARN-001")
+        self.assertEqual(m["owner"], "Gemini 网页端")
+        self.assertEqual(m["allowed_prefixes"], ["ML_note/原理笔记/", "ML_note/实验/ShortGPT_BI删层/"])
+        self.assertEqual(crh.validate_handoff_manifest(m, require_public_ready=False), [])
+        # 未标为“允许公开发布”时，--require-public-ready 必须拦截
+        pub_errs = crh.validate_handoff_manifest(m, require_public_ready=True)
+        self.assertEqual(len(pub_errs), 1)
+
+    def test_version_bound_receipt_invalidated_when_file_modified_after_check(self):
+        """回归 7（Drive 同步规则 3）：回执绑定文件 SHA-256；若检查后文件被再次修改，旧回执自动失效。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = init_temp_git_repo(tmp)
+            draft = Path(tmp) / "TASK-LEARN-001_draft.md"
+            receipt_json = Path(tmp) / "receipt.json"
+            receipt_md = Path(tmp) / "receipt.md"
+
+            content_v1 = (
+                "# BI 删层笔记草稿\n\n"
+                "| 字段 | 内容 |\n"
+                "|---|---|\n"
+                "| 任务与当前负责人 | `TASK-LEARN-001 | Gemini 网页端` |\n"
+                "| 允许修改范围 | `ML_note/原理笔记/` |\n"
+                "| 来源版本 | `commit:72bf9765` |\n"
+                "| 可见范围 | `工作区私有` |\n"
+                "| 当前状态 | `待审` |\n"
+                "| 正式结果链接 | `ML_note/原理笔记/推理优化/BI删层.md` |\n"
+                "| 目标仓库路径 | `ML_note/原理笔记/推理优化/BI删层.md` |\n\n"
+                "版本 1：无离群值时量化步长 $\\Delta = 1.0 / 127$。\n"
+            )
+            draft.write_text(content_v1, encoding="utf-8")
+
+            # 第 1 步：对 v1 运行检查并签发 JSON + Markdown 回执
+            with contextlib.redirect_stdout(io.StringIO()):
+                rc_v1 = crh.main([
+                    "--repo", str(repo),
+                    "--files", str(draft),
+                    "--require-handoff-header",
+                    "--drive-file-id", "drive_test_file_001",
+                    "--json-receipt", str(receipt_json),
+                    "--markdown-receipt", str(receipt_md),
+                ])
+            self.assertEqual(rc_v1, 0)
+            self.assertTrue(receipt_md.is_file())
+
+            # 第 2 步：文件未改动时，--verify-receipt 校验通过
+            with contextlib.redirect_stdout(io.StringIO()):
+                rc_verify_ok = crh.main([
+                    "--repo", str(repo),
+                    "--files", str(draft),
+                    "--require-handoff-header",
+                    "--verify-receipt", str(receipt_json),
+                ])
+            self.assertEqual(rc_verify_ok, 0)
+
+            # 第 3 步：模拟 Gemini 在检查期间又改了 Drive 文件（v2），旧回执必须失效（返回码 1）
+            draft.write_text(content_v1 + "\n新增未送检段落。\n", encoding="utf-8")
+            buf = io.StringIO()
+            with contextlib.redirect_stdout(buf):
+                rc_verify_stale = crh.main([
+                    "--repo", str(repo),
+                    "--files", str(draft),
+                    "--require-handoff-header",
+                    "--verify-receipt", str(receipt_json),
+                ])
+            self.assertEqual(rc_verify_stale, 1)
+            self.assertIn("版本失效", buf.getvalue())
 
 
 if __name__ == "__main__":

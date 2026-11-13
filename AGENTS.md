@@ -5,7 +5,7 @@ Pan-Yan-0 的 `study_note` 仓库公共备忘：要遵守的规则、仓库结�
 ## 1. 最重要的几条
 
 1. **称呼和语言**：称呼 Pan-Yan-0（GitHub 用户名），不用中文名；交流和文档都用中文，但**专业名词保留英文原词**（如 fold、seed、OOF、batch、checkpoint、warmup、family、subagent、SMOKE），不硬译成中文（Pan-Yan-0 11-07 定的）。
-2. **仓库是公开的，导师也会看**：不写个人画像、个人邮箱、令牌和本机容器路径。教学方法只放在 Pan-Yan-0 的私有 skill `cognitive-tutoring` 里；学习状态和存档只放在 Pan-Yan-0 的私有仓库里。
+2. **仓库是公开的，导师也会看**：不写个人画像、个人邮箱、令牌和本机容器路径。教学方法与私有学习状态以 Google Drive `Pan-Yan-0_工作区` 私有目录为主工作区，并同步备份至私有仓库 `Pan-Yan-0/personal_study_image`；公开仓库只进标记为`允许公开发布`并通过检查的成果。
 3. **工作分支是 `note`**：`master`、`d2l`、`cuda_study`、`math_modeling` 不要动（`d2l` 已暂停维护）。
 4. **任何决策都要有实验支持**（导师原话："扩充数据，参数选取，我也说不清好不好，实验结果说明好不好"）：
    - 改动都和基线对照，一次只改一处。
@@ -17,13 +17,13 @@ Pan-Yan-0 的 `study_note` 仓库公共备忘：要遵守的规则、仓库结�
 ### 多端文件交接与对话分工
 
 - 当前研究主线为 **SemEval-2027 Task 2 DiCo-NLI**；IMDB、SST-2 已完成，仅按需引用历史代码和经验。
-- 双方各自整理可独立阅读的交接文件：只有讨论、设计或审阅文字时交付一个 Markdown；涉及代码、测试、配置或多份必要材料时打包一个 ZIP，附入口 README。不要仅把长审阅意见留在聊天里，也不为单个 Markdown 额外套 ZIP。
-- 交接写清输入版本、问题、建议及理由、已完成验证、未验证部分和需要对方回应的事项；修订保留版本标识。
-- **单点写入与对话分工**（详见 [agents/分工与纠错机制_v2.md](agents/分工与纠错机制_v2.md)）：一个路径在同一时间只有一个写入方；多端协作的工作线，每个具体任务明确一位实现负责人（单点写入），另一位做独立审阅，修改经交接后由该任务负责人提交。改之前先 `git fetch`，从状态文件读取最新进度，不把聊天存档当状态来源。
+- **Google Drive 主工作区 + GitHub 同步备份与 Actions 检查**：Google Drive（`Pan-Yan-0_工作区`）作为所有端共同读写的主工作区（当前权威版本）；GitHub 保存同步副本、运行 Actions 自动检查并保留版本历史。Drive 内区分`工作区私有`（默认）和`允许公开发布`两个状态。
+- 双方各自整理可独立阅读的交接文件：只有讨论、设计或审阅文字时交付一个 Markdown；涉及代码、测试、配置或多份必要材料时打包一个 ZIP，附入口 README。每份交接记录 6 项必要信息：任务与当前负责人、允许修改范围、来源版本、可见范围、当前状态（待审/退回/通过）与正式结果链接。
+- **单点写入与对话分工**（详见 [agents/分工与纠错机制_v2.md](agents/分工与纠错机制_v2.md)）：一个路径在同一时间只有一个写入方；多端协作的工作线，每个具体任务明确一位实现负责人（单点写入）和允许修改的路径范围，另一位做独立审阅（只查改变正确性、结论、可运行性和隐私边界的问题），修改经交接后由该任务负责人提交。
   - **SemEval 实验线**：实验设计、代码、运行结果、实验 README，以及把论文研究交回的想法落成对照实验。唯一待办与进度入口为 [实验状态与算力计划](ML_note/实验/SemEval_DiCo-NLI/实验状态与算力计划.md)；方案达成一致后再更新 [冻结计划](ML_note/实验/SemEval_DiCo-NLI/更大模型与数据扩充计划.md) 的变更记录。交接本身不启动新增 GPU 训练或付费生成。
   - **SemEval 论文研究线**：按错误分类选论文、预读和精读、阅读表、低成本离线检查；只写 `ML_note/实验/SemEval_DiCo-NLI/论文研究/`，要跑的实验写进其中的《交回SemEval对话的实验》，由 SemEval 对话决定。
   - **学习与模型压缩线**：讲解概念、出题批改，收工时整理进 `ML_note/原理笔记/`；模型压缩方向的论文精读笔记写进 `ML_note/论文阅读/`（和 SemEval 的论文研究分开），动手实验在 `ML_note/实验/ShortGPT_BI删层/`。
-  - **基建与中转线**：维护根 `AGENTS.md`、`agents/`、Google Drive 工作区与仓库自动检查脚本（[`agents/check_repo_hygiene.py`](agents/check_repo_hygiene.py)）。
+  - **基建与中转线**：维护根 `AGENTS.md`、`agents/`、`.github/workflows/`、Google Drive 主工作区同步与仓库自动检查脚本（[`agents/check_repo_hygiene.py`](agents/check_repo_hygiene.py)）。
 
 ## 2. 背景
 
@@ -112,8 +112,8 @@ Coursera-ML-AndrewNg-Notes-master/   课程资料
 |---|---|---|
 | **SemEval 实验主线** | [实验状态与算力计划](ML_note/实验/SemEval_DiCo-NLI/实验状态与算力计划.md) · [SemEval 总表](ML_note/实验/SemEval_DiCo-NLI/README.md) · [冻结计划](ML_note/实验/SemEval_DiCo-NLI/更大模型与数据扩充计划.md) | Antigravity「SemEval 对话」与 Codex 按任务定单点实现负责人、另一方审阅（详见 [多端分工与纠错机制](agents/分工与纠错机制_v2.md)）；历史详录见 [agents/AGENTS历史进度_2026-11.md](agents/AGENTS历史进度_2026-11.md) |
 | **SemEval 论文研究** | `ML_note/实验/SemEval_DiCo-NLI/论文研究/` | 候选实验写进《交回SemEval对话的实验》由 SemEval 线决定 |
-| **学习与模型压缩** | 公开成果见 [原理笔记](ML_note/原理笔记/)、[论文阅读](ML_note/论文阅读/README.md)、[ShortGPT_BI删层](ML_note/实验/ShortGPT_BI删层/README.md)；私有状态在私有仓库 `Pan-Yan-0/personal_study_image` | 私有交接副本在 Google Drive `Pan-Yan-0_工作区/10_交接/学习/` |
-| **多端分工与纠错基建** | [多端分工与纠错机制](agents/分工与纠错机制_v2.md) · [纠错台账](agents/纠错台账.md) | 仓库卫生与路径归属检查：[`agents/check_repo_hygiene.py`](agents/check_repo_hygiene.py) |
+| **学习与模型压缩** | 公开成果见 [原理笔记](ML_note/原理笔记/)、[论文阅读](ML_note/论文阅读/README.md)、[ShortGPT_BI删层](ML_note/实验/ShortGPT_BI删层/README.md) | 私有状态在 Google Drive `Pan-Yan-0_工作区/10_交接/学习/` 主工作区维护，同步备份至私有仓库 `Pan-Yan-0/personal_study_image` |
+| **多端分工与纠错基建** | [多端分工与纠错机制](agents/分工与纠错机制_v2.md) · [纠错台账](agents/纠错台账.md) | 仓库卫生、任务范围与版本回执检查：[`agents/check_repo_hygiene.py`](agents/check_repo_hygiene.py) |
 
 ### 7.1 DiCo-NLI 任务常驻防坑要点（来自官方说明与已验证事实）
 

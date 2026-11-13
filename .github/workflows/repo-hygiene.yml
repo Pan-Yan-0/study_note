@@ -1,0 +1,67 @@
+name: Repo Hygiene & Ownership Check
+
+on:
+  push:
+    branches:
+      - note
+  pull_request:
+    branches:
+      - note
+
+permissions:
+  contents: read
+
+jobs:
+  hygiene-check:
+    name: Run test_repo_hygiene & check_repo_hygiene
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository with full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run regression test suite
+        run: python3 agents/test_repo_hygiene.py
+
+      - name: Scan commit range for ownership and privacy/path rules
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PUSH_BEFORE: ${{ github.event.before }}
+          PUSH_AFTER: ${{ github.sha }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            RANGE="${PR_BASE}..${PR_HEAD}"
+          else
+            if [ -z "$PUSH_BEFORE" ] || [ "$PUSH_BEFORE" = "0000000000000000000000000000000000000000" ]; then
+              if git rev-parse --verify -q "${PUSH_AFTER}^" >/dev/null; then
+                RANGE="${PUSH_AFTER}^..${PUSH_AFTER}"
+              else
+                RANGE="${PUSH_AFTER}"
+              fi
+            else
+              RANGE="${PUSH_BEFORE}..${PUSH_AFTER}"
+            fi
+          fi
+          echo "Scanning commit range: ${RANGE}"
+          python3 agents/check_repo_hygiene.py \
+            --repo . \
+            --commit-range "${RANGE}" \
+            --ownership-mode error \
+            --json-receipt /tmp/repo_hygiene_receipt.json
+
+      - name: Upload check receipt artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: repo-hygiene-receipt
+          path: /tmp/repo_hygiene_receipt.json
+          if-no-files-found: warn
