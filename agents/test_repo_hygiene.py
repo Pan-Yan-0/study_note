@@ -1,13 +1,27 @@
 #!/usr/bin/env python3
-"""agents/check_repo_hygiene.py 的回归测试套件。"""
+"""agents/check_repo_hygiene.py 的回归测试套件（含 Codex 基建验收回执 v2 新增 4 项回归）。"""
 from __future__ import annotations
 
+import contextlib
+import io
+import json
 import subprocess
 import tempfile
 import unittest
 from pathlib import Path
 
 import check_repo_hygiene as crh
+
+
+def init_temp_git_repo(tmp: str) -> Path:
+    repo = Path(tmp)
+    subprocess.run(["git", "-C", tmp, "init", "-q"], check=True)
+    subprocess.run(["git", "-C", tmp, "config", "user.name", "Test"], check=True)
+    subprocess.run(["git", "-C", tmp, "config", "user.email", "noreply@anthropic.com"], check=True)
+    (repo / "README.md").write_text("# Clean Root\n", encoding="utf-8")
+    subprocess.run(["git", "-C", tmp, "add", "README.md"], check=True)
+    subprocess.run(["git", "-C", tmp, "commit", "-q", "-m", "base"], check=True)
+    return repo
 
 
 class TestRepoHygiene(unittest.TestCase):
@@ -53,14 +67,12 @@ class TestRepoHygiene(unittest.TestCase):
         ])
         self.assertEqual(issues, [])
 
-        # SemEval 主线与 论文研究/ 混在同一提交应被判定为跨线
         issues_cross, _ = crh.check_ownership([
             "ML_note/实验/SemEval_DiCo-NLI/实验状态与算力计划.md",
             "ML_note/实验/SemEval_DiCo-NLI/论文研究/reading.md",
         ])
         self.assertEqual(len(issues_cross), 1)
 
-        # SemEval 与 infra (AGENTS.md) 混在同一提交应被判定为跨线
         issues_infra, _ = crh.check_ownership([
             "ML_note/实验/SemEval_DiCo-NLI/README.md",
             "AGENTS.md",
@@ -70,31 +82,155 @@ class TestRepoHygiene(unittest.TestCase):
     def test_multi_commit_range_catches_reverted_leak_and_scans_shared_indexes(self):
         """一次 push 包含多个 commit 时，前序 commit 混入 README.md 或 agents/ 的隐私即使在后序 commit 删掉也必须被拦下。"""
         with tempfile.TemporaryDirectory() as tmp:
-            repo = Path(tmp)
-            subprocess.run(["git", "-C", tmp, "init", "-q"], check=True)
-            subprocess.run(["git", "-C", tmp, "config", "user.name", "Test"], check=True)
-            subprocess.run(["git", "-C", tmp, "config", "user.email", "noreply@anthropic.com"], check=True)
-
-            (repo / "README.md").write_text("# Clean Root\n", encoding="utf-8")
-            subprocess.run(["git", "-C", tmp, "add", "README.md"], check=True)
-            subprocess.run(["git", "-C", tmp, "commit", "-q", "-m", "base"], check=True)
+            repo = init_temp_git_repo(tmp)
             base_rev = subprocess.check_output(["git", "-C", tmp, "rev-parse", "HEAD"], text=True).strip()
 
-            # Commit 1: 在共用索引 README.md 和 agents/ 中混入私有字段与容器路径
             (repo / "agents").mkdir()
             (repo / "README.md").write_text("# Root\n未结算" + "经验" + "值 15\n", encoding="utf-8")
             (repo / "agents" / "note.md").write_text("路径 /" + "home/antigravity/secret.md\n", encoding="utf-8")
             subprocess.run(["git", "-C", tmp, "add", "README.md", "agents/note.md"], check=True)
             subprocess.run(["git", "-C", tmp, "commit", "-q", "-m", "c1 leak"], check=True)
 
-            # Commit 2: 将两处违规内容删回干净状态，模拟“后序 commit 掩盖前序 commit”
             (repo / "README.md").write_text("# Clean Root\n", encoding="utf-8")
             (repo / "agents" / "note.md").write_text("干净归档\n", encoding="utf-8")
             subprocess.run(["git", "-C", tmp, "add", "README.md", "agents/note.md"], check=True)
             subprocess.run(["git", "-C", tmp, "commit", "-q", "-m", "c2 mask"], check=True)
 
-            rc = crh.main(["--repo", tmp, "--commit-range", f"{base_rev}..HEAD"])
+            buf = io.StringIO()
+            with contextlib.redirect_stdout(buf):
+                rc = crh.main(["--repo", tmp, "--commit-range", f"{base_rev}..HEAD"])
             self.assertEqual(rc, 1)
+
+    def test_invalid_commit_range_fails_and_valid_empty_range_passes(self):
+        """回归 1：无效 commit 范围（如 missing_ref..HEAD）必须报错退出（返回码 1），合法空范围（HEAD..HEAD）返回 0。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            init_temp_git_repo(tmp)
+            receipt_bad = Path(tmp) / "bad_receipt.json"
+            buf = io.StringIO()
+            with contextlib.redirect_stdout(buf):
+                rc_bad = crh.main([
+                    "--repo", tmp,
+                    "--commit-range", "missing_ref..HEAD",
+                    "--json-receipt", str(receipt_bad),
+                ])
+            self.assertEqual(rc_bad, 1)
+            data_bad = json.loads(receipt_bad.read_text(encoding="utf-8"))
+            self.assertFalse(data_bad["passed"])
+            self.assertTrue(len(data_bad["git_errors"]) >= 1)
+
+            receipt_empty = Path(tmp) / "empty_receipt.json"
+            with contextlib.redirect_stdout(io.StringIO()):
+                rc_ok = crh.main([
+                    "--repo", tmp,
+                    "--commit-range", "HEAD..HEAD",
+                    "--json-receipt", str(receipt_empty),
+                ])
+            self.assertEqual(rc_ok, 0)
+            data_ok = json.loads(receipt_empty.read_text(encoding="utf-8"))
+            self.assertTrue(data_ok["passed"])
+            self.assertEqual(data_ok["scanned_commits"], [])
+
+    def test_staged_index_scanned_even_when_worktree_cleaned(self):
+        """回归 2：暂存区（git add）含敏感内容、随后工作区文件改回干净时，--include-worktree 必须扫描 index blob 并报错。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = init_temp_git_repo(tmp)
+            # 写入私人邮箱并 git add 进暂存区
+            (repo / "README.md").write_text("联系：staged_secret" + "@" + "private.org\n", encoding="utf-8")
+            subprocess.run(["git", "-C", tmp, "add", "README.md"], check=True)
+            # 工作区改回与 HEAD 完全相同的干净内容
+            (repo / "README.md").write_text("# Clean Root\n", encoding="utf-8")
+
+            receipt_path = Path(tmp) / "staged_receipt.json"
+            with contextlib.redirect_stdout(io.StringIO()):
+                rc = crh.main([
+                    "--repo", tmp,
+                    "--include-worktree",
+                    "--json-receipt", str(receipt_path),
+                ])
+            self.assertEqual(rc, 1)
+            data = json.loads(receipt_path.read_text(encoding="utf-8"))
+            self.assertIn("index:README.md", data["scanned_files"])
+            self.assertEqual(len(data["privacy_errors"]), 1)
+
+    def test_cross_line_deletion_and_rename_caught_by_ownership(self):
+        """回归 3：修改 SemEval 文件同时删除学习线文件，或跨工作线重命名文件，ownership-mode error 必须拦截。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = init_temp_git_repo(tmp)
+            learn_file = repo / "ML_note" / "原理笔记" / "BERT" / "note.md"
+            semeval_file = repo / "ML_note" / "实验" / "SemEval_DiCo-NLI" / "exp.md"
+            learn_file.parent.mkdir(parents=True, exist_ok=True)
+            semeval_file.parent.mkdir(parents=True, exist_ok=True)
+            learn_file.write_text("# Learn Note\n", encoding="utf-8")
+            semeval_file.write_text("# SemEval V1\n", encoding="utf-8")
+            subprocess.run(["git", "-C", tmp, "add", "."], check=True)
+            subprocess.run(["git", "-C", tmp, "commit", "-q", "-m", "seed files"], check=True)
+            seed_rev = subprocess.check_output(["git", "-C", tmp, "rev-parse", "HEAD"], text=True).strip()
+
+            # 场景 A：修改 SemEval 文件 + 删除学习线文件
+            semeval_file.write_text("# SemEval V2\n", encoding="utf-8")
+            subprocess.run(["git", "-C", tmp, "rm", "-q", str(learn_file.relative_to(repo))], check=True)
+            subprocess.run(["git", "-C", tmp, "add", str(semeval_file.relative_to(repo))], check=True)
+            subprocess.run(["git", "-C", tmp, "commit", "-q", "-m", "edit semeval and delete learning"], check=True)
+
+            with contextlib.redirect_stdout(io.StringIO()):
+                rc_del = crh.main([
+                    "--repo", tmp,
+                    "--commit-range", f"{seed_rev}..HEAD",
+                    "--ownership-mode", "error",
+                ])
+            self.assertEqual(rc_del, 1)
+
+            # 场景 B：将文件从 SemEval 重命名到学习线目录
+            before_rename = subprocess.check_output(["git", "-C", tmp, "rev-parse", "HEAD"], text=True).strip()
+            renamed_target = repo / "ML_note" / "原理笔记" / "BERT" / "moved_exp.md"
+            renamed_target.parent.mkdir(parents=True, exist_ok=True)
+            subprocess.run([
+                "git", "-C", tmp, "mv",
+                str(semeval_file.relative_to(repo)),
+                str(renamed_target.relative_to(repo)),
+            ], check=True)
+            subprocess.run(["git", "-C", tmp, "commit", "-q", "-m", "cross-line rename"], check=True)
+
+            with contextlib.redirect_stdout(io.StringIO()):
+                rc_ren = crh.main([
+                    "--repo", tmp,
+                    "--commit-range", f"{before_rename}..HEAD",
+                    "--ownership-mode", "error",
+                ])
+            self.assertEqual(rc_ren, 1)
+
+    def test_redaction_never_echoes_secret_in_findings_stdout_or_json_receipt(self):
+        """回归 4：命中模拟令牌、私人邮箱或容器路径时，返回值、终端输出与 JSON 回执均不得包含原始敏感值。"""
+        fake_token = "ghp_" + ("A" * 32)
+        fake_email = "leak_user_99" + "@" + "personal-domain.com"
+        fake_path = "/" + "home/antigravity/secret_dir/key.pem"
+        sample_content = f"token={fake_token}\nmail={fake_email}\npath={fake_path}\n"
+
+        findings = crh.scan_text("README.md", sample_content)
+        self.assertEqual(len(findings), 3)
+        joined_findings = "\n".join(findings)
+        self.assertNotIn(fake_token, joined_findings)
+        self.assertNotIn(fake_email, joined_findings)
+        self.assertNotIn(fake_path, joined_findings)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            sample_file = Path(tmp) / "README.md"
+            receipt_file = Path(tmp) / "receipt.json"
+            sample_file.write_text(sample_content, encoding="utf-8")
+
+            buf = io.StringIO()
+            with contextlib.redirect_stdout(buf):
+                rc = crh.main([
+                    "--repo", tmp,
+                    "--files", str(sample_file),
+                    "--json-receipt", str(receipt_file),
+                ])
+            self.assertEqual(rc, 1)
+            stdout_text = buf.getvalue()
+            receipt_text = receipt_file.read_text(encoding="utf-8")
+            for secret in (fake_token, fake_email, fake_path):
+                self.assertNotIn(secret, stdout_text)
+                self.assertNotIn(secret, receipt_text)
 
 
 if __name__ == "__main__":

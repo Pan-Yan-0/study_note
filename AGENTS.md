@@ -110,7 +110,7 @@ Coursera-ML-AndrewNg-Notes-master/   课程资料
 
 | 工作线 | 唯一状态与进度入口 | 分工与历史参考 |
 |---|---|---|
-| **SemEval 实验主线** | [实验状态与算力计划](ML_note/实验/SemEval_DiCo-NLI/实验状态与算力计划.md) · [SemEval 总表](ML_note/实验/SemEval_DiCo-NLI/README.md) · [冻结计划](ML_note/实验/SemEval_DiCo-NLI/更大模型与数据扩充计划.md) · [A1 正式结果](ML_note/实验/SemEval_DiCo-NLI/metrics/a1_train/formal_v1/README.md) | A1 由 Pan-Yan-0 在 Kaggle 运行、Codex 完成复核与归档、Antigravity 独立复算待完成；B1 与 PiSSA 包由 Antigravity 写包、Codex 审包。历史详录见 [agents/AGENTS历史进度_2026-11.md](agents/AGENTS历史进度_2026-11.md) |
+| **SemEval 实验主线** | [实验状态与算力计划](ML_note/实验/SemEval_DiCo-NLI/实验状态与算力计划.md) · [SemEval 总表](ML_note/实验/SemEval_DiCo-NLI/README.md) · [冻结计划](ML_note/实验/SemEval_DiCo-NLI/更大模型与数据扩充计划.md) | Antigravity「SemEval 对话」与 Codex 按任务定单点实现负责人、另一方审阅（详见 [多端分工与纠错机制](agents/分工与纠错机制_v2.md)）；历史详录见 [agents/AGENTS历史进度_2026-11.md](agents/AGENTS历史进度_2026-11.md) |
 | **SemEval 论文研究** | `ML_note/实验/SemEval_DiCo-NLI/论文研究/` | 候选实验写进《交回SemEval对话的实验》由 SemEval 线决定 |
 | **学习与模型压缩** | 公开成果见 [原理笔记](ML_note/原理笔记/)、[论文阅读](ML_note/论文阅读/README.md)、[ShortGPT_BI删层](ML_note/实验/ShortGPT_BI删层/README.md)；私有状态在私有仓库 `Pan-Yan-0/personal_study_image` | 私有交接副本在 Google Drive `Pan-Yan-0_工作区/10_交接/学习/` |
 | **多端分工与纠错基建** | [多端分工与纠错机制](agents/分工与纠错机制_v2.md) · [纠错台账](agents/纠错台账.md) | 仓库卫生与路径归属检查：[`agents/check_repo_hygiene.py`](agents/check_repo_hygiene.py) |
