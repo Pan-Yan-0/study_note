@@ -1,0 +1,67 @@
+{
+  "actual_optimizer_updates": 2,
+  "best_epoch": 1,
+  "best_val_original_wf1": 0.0970856102003643,
+  "class_weights": null,
+  "environment": {
+    "cuda": "12.8",
+    "gpu": "Tesla T4",
+    "platform": "Linux-6.18.55+-x86_64-with-glibc2.39",
+    "precision": "fp16",
+    "python": "3.13.15",
+    "runner": "Kaggle",
+    "sklearn": "1.6.1",
+    "torch": "2.11.0+cu128",
+    "transformers": "4.57.6"
+  },
+  "epochs": [
+    {
+      "epoch": 1,
+      "scaler_scale": 65536.0,
+      "skips_total": 0,
+      "train_loss": 1.3891521692276,
+      "updates_total": 2,
+      "val_original_wf1": 0.0970856102003643
+    }
+  ],
+  "extra_logits_sha256": "e57d517dc3f32107e9a23c4d12c68d48fd11775e60a891f45e388a8bbd289f23",
+  "fold": 0,
+  "group": "B2-SL",
+  "inference_precision": "fp32_no_autocast",
+  "lr_schedule": {
+    "scheduler": "linear_decay_after_warmup",
+    "total_scheduled_steps": 2,
+    "warmup_updates": 0
+  },
+  "planned_updates": 2,
+  "predictions_sha256": "b291288130b03b0e441dd539ab61890b8d112659939ce4d2b5535d8e6a3bbc46",
+  "repeat_counts": {},
+  "repeated_original_row_ids": [],
+  "runtime_sec": 11.004,
+  "seed": 42,
+  "seed_policy": "init=seed*1000+fold; per-epoch fresh shuffle RNG (not archived C0 RNG stream)",
+  "skipped_fp16_updates": 0,
+  "source_count": {
+    "claude-haiku-5-5": 4380,
+    "original": 2190
+  },
+  "status": "pass",
+  "target_counts": {
+    "generated": 4380,
+    "hard_label_counts": {
+      "BACKWARD_ENTAILMENT": 1893,
+      "EQUIVALENCE": 1722,
+      "FORWARD_ENTAILMENT": 1893,
+      "NEGATIVE_OTHER": 1062
+    },
+    "original_one_hot": 2190,
+    "soft_generated": 4380
+  },
+  "task_fingerprint": "36e351131b30f70abaa041442e892860a59ba2d199a7b3c5e454037490a4477b",
+  "test_original_wf1": 0.1278046930436272,
+  "test_rows": 608,
+  "test_sym_wf1": 0.12656597910396633,
+  "train_rows": 6570,
+  "val_predictions_sha256": "323ed18e7c990b4639707dabc53d40a73b6ac237d0700f88f75c394e7cddec41",
+  "val_rows": 244
+}

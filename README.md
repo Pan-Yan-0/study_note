@@ -1,6 +1,6 @@
 # Pan-Yan-0 的学习笔记（note 分支）
 
-[DiCo-NLI A1 教师监督对照](ML_note/实验/SemEval_DiCo-NLI/code/a1_train/README.md) 的 Kaggle 训练包已备好，待 T4 SMOKE。三组比较 Q0 硬重标、Q0 软标签和生成行标签平滑。
+[DiCo-NLI A1 教师监督对照](ML_note/实验/SemEval_DiCo-NLI/code/a1_train/README.md) 已通过 [Kaggle T4 SMOKE](ML_note/实验/SemEval_DiCo-NLI/metrics/a1_train/smoke_v1/README.md)，B2 复用通过，下一步运行 RL、SL、LS 共 45 项。
 
 [实验B Commit 6：把四分类拆成两个方向的蕴含](ML_note/实验/SemEval_DiCo-NLI/metrics/augment_b/train_c6/README.md)已完成：两种头都比 NLIinit 低（DEC −1.69 个百分点，Bonferroni 97.5% 区间 [−2.80, −0.55]；DEC-H −2.07），按事先规则不进 +2，这个方向到此结束。
 
