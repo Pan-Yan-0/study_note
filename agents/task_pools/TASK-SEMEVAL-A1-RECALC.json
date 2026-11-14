@@ -3,45 +3,53 @@
   "task_id": "TASK-SEMEVAL-A1-RECALC",
   "expected_line": "semeval",
   "owner": "Antigravity (SemEval 对话)",
-  "reviewer": "Codex",
+  "reviewer": "GPT Codex 端",
   "drive_pool_doc": "10_交接/SemEval/POOL_TASK-SEMEVAL-A1-RECALC.md",
   "drive_package_dir": "20_实验包/TASK-SEMEVAL-A1-RECALC/",
   "allowed_prefixes": [
-    "ML_note/实验/SemEval_DiCo-NLI/code/",
-    "ML_note/实验/SemEval_DiCo-NLI/metrics/a1_train/formal_v1/",
+    "ML_note/实验/SemEval_DiCo-NLI/code/a1_recalc/",
+    "ML_note/实验/SemEval_DiCo-NLI/code/registry.py",
+    "ML_note/实验/SemEval_DiCo-NLI/metrics/registry.json",
+    "ML_note/实验/SemEval_DiCo-NLI/metrics/a1_train/formal_v1/README.md",
+    "ML_note/实验/SemEval_DiCo-NLI/metrics/a1_train/formal_v1/recalc_receipt.json",
     "ML_note/实验/SemEval_DiCo-NLI/实验状态与算力计划.md",
     "ML_note/实验/SemEval_DiCo-NLI/README.md",
     "ML_note/实验/SemEval_DiCo-NLI/实验登记表.md"
   ],
   "forbidden_prefixes": [
-    "ML_note/实验/SemEval_DiCo-NLI/code/a1_train/"
+    "ML_note/实验/SemEval_DiCo-NLI/code/a1_train/",
+    "ML_note/实验/SemEval_DiCo-NLI/metrics/a1_train/formal_v1/summary.json",
+    "ML_note/实验/SemEval_DiCo-NLI/metrics/a1_train/formal_v1/oof/",
+    "ML_note/实验/SemEval_DiCo-NLI/metrics/a1_train/formal_v1/tasks/",
+    "ML_note/实验/SemEval_DiCo-NLI/metrics/a1_train/formal_v1/smoke/"
   ],
   "visibility": "允许公开发布",
   "status": "通过",
-  "task_state": "待同步 A1 正式预测包后复算",
+  "task_state": "可先在 code/a1_recalc/ 编写独立复算脚本与单测；完整 4 组复算待 TASK-SEMEVAL-A1-ARCHIVE 同步 formal_v1 数据文件后执行",
   "endpoints": {
     "pan_yan_0": {
       "role": "runner_and_dispatcher",
       "state": "sent_to_codex",
       "note": "已在 Kaggle T4×2 跑完 A1 正式队列并将 a1_train_v1_results.zip 发给 GPT/Codex"
     },
-    "codex": {
-      "role": "archiver",
-      "state": "verified_in_sandbox_partial_pushed",
-      "note": "Commit 1d4cf169 仅提交了 formal_v1/README.md，尚未 git add -f 提交逐折预测与 summary.json"
+    "gpt_codex": {
+      "role": "archiver_and_reviewer",
+      "state": "assigned_to_a1_archive",
+      "note": "负责 TASK-SEMEVAL-A1-ARCHIVE 补推 formal_v1/ 数据文件，并在复算完成后任独立审阅人（当前 formal_v1 仅已推送 README.md）"
     },
     "antigravity_semeval": {
       "role": "independent_recalculator",
       "state": "blocked_on_unshared_artifact",
       "blocked_by": [
         "ART-A1-RESULTS"
-      ]
+      ],
+      "note": "可先用已有 train_c5 与 formal_v1/README.md 准备 code/a1_recalc/ 独立复算脚本；执行四组全量复算需待 ART-A1-RESULTS"
     }
   },
   "artifacts": [
     {
       "artifact_id": "ART-A1-RESULTS",
-      "name": "a1_train_v1_results.zip (及解压后的 formal_v1/ 逐折预测与回执)",
+      "name": "a1_train_v1_results.zip (及解压后的 formal_v1/ 逐折预测与 summary.json)",
       "sha256_formal_readme": "4596b514e9db6dd004af8d0465095fda1703074f1ffce8d500ba2f87bd1ab647",
       "sha256_results_zip_recorded_in_smoke_readme": "ecba6eb32bfb4815ce5d019ffbac706841b735bf039360e6f0f902bb5fc3a304",
       "visibility": "工作区私有 (原包) / 允许公开发布 (脱敏指标与 OOF)",
@@ -50,7 +58,7 @@
       ],
       "holders": {
         "pan_yan_0": "held",
-        "codex": "held_unpushed",
+        "gpt_codex": "held_unpushed",
         "antigravity_semeval": "missing",
         "drive_pool": "missing",
         "github_repo": "partial_readme_only"
@@ -74,7 +82,7 @@
       ],
       "holders": {
         "pan_yan_0": "held",
-        "codex": "held",
+        "gpt_codex": "held",
         "antigravity_semeval": "held",
         "drive_pool": "not_required",
         "github_repo": "synced"
@@ -97,7 +105,7 @@
       ],
       "holders": {
         "pan_yan_0": "held",
-        "codex": "held",
+        "gpt_codex": "held",
         "antigravity_semeval": "held",
         "drive_pool": "not_required",
         "github_repo": "synced"
@@ -120,7 +128,7 @@
       ],
       "holders": {
         "pan_yan_0": "held",
-        "codex": "held",
+        "gpt_codex": "held",
         "antigravity_semeval": "held",
         "drive_pool": "not_required",
         "github_repo": "synced"

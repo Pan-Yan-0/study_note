@@ -1,0 +1,110 @@
+{
+  "schema_version": "1.0",
+  "task_id": "TASK-LEARN-001",
+  "expected_line": "learning",
+  "owner": "Gemini 网页端",
+  "reviewer": "GPT 聊天端",
+  "drive_pool_doc": "10_交接/学习/POOL_TASK-LEARN-001.md",
+  "drive_package_dir": "10_交接/学习/",
+  "allowed_prefixes": [
+    "ML_note/原理笔记/",
+    "ML_note/实验/ShortGPT_BI删层/"
+  ],
+  "forbidden_prefixes": [],
+  "visibility": "工作区私有",
+  "status": "待审",
+  "task_state": "交接链路试运行，内容待审（Drive 读写 + 基建双检查器联动 + GPT 聊天端只读审阅）",
+  "endpoints": {
+    "gemini_web": {
+      "role": "author_and_tutor",
+      "state": "awaiting_user_answers_in_drive",
+      "note": "在 Drive 10_交接/学习/ 内伴读批改两道待答题并原位更新交接稿与学习存档，然后等待基建双检查与 GPT 聊天端审阅"
+    },
+    "gpt_chat": {
+      "role": "content_reviewer",
+      "state": "awaiting_draft_and_receipt",
+      "note": "只读 Drive 交接稿与 CHECK_RECEIPT_TASK-LEARN-001.md 审阅概念、公式、张量形状与数字出处，在对话中给出审阅结论并指导可见状态切换"
+    },
+    "antigravity_infra": {
+      "role": "dual_checker_and_publisher",
+      "state": "synced_to_drive_pending_recheck_after_answers",
+      "note": "运行 check_repo_hygiene.py 与 check_archive.py 写回双检查器回执；终审通过并单独切换 current_task.json 后剥离交接表头导入 study_note"
+    }
+  },
+  "artifacts": [
+    {
+      "artifact_id": "ART-LEARN-DRAFT",
+      "name": "Drive TASK-LEARN-001_NLP笔记交接稿.md（拟合入 ML_note/原理笔记/推理优化/ShortGPT删层与INT8量化离群值.md）",
+      "drive_file_id": "1zjz8fwIF8-RFGBCfqeX3kH6os1wOA1_S",
+      "sha256": "ad00e87b712aca45f7e52075993b543ea4fe74fbd97e52eaf37f9bdb8d4efabb",
+      "visibility": "工作区私有",
+      "required_by": [
+        "gemini_web",
+        "gpt_chat",
+        "antigravity_infra"
+      ],
+      "holders": {
+        "gemini_web": "editable_in_drive",
+        "gpt_chat": "readable_in_drive",
+        "antigravity_infra": "verified_snapshot",
+        "drive_pool": "synced",
+        "github_repo": "private_drive_only"
+      }
+    },
+    {
+      "artifact_id": "ART-LEARN-RECEIPT",
+      "name": "Drive CHECK_RECEIPT_TASK-LEARN-001.md（双检查器版本绑定回执）",
+      "drive_file_id": "1BGmpZnI6ShHOqHhaVXaHjpTcmqzGSptf",
+      "visibility": "工作区私有",
+      "required_by": [
+        "gpt_chat",
+        "antigravity_infra"
+      ],
+      "holders": {
+        "gemini_web": "readable_in_drive",
+        "gpt_chat": "readable_in_drive",
+        "antigravity_infra": "issued",
+        "drive_pool": "synced",
+        "github_repo": "private_drive_only"
+      }
+    },
+    {
+      "artifact_id": "ART-LEARN-PRIVATE-FILES",
+      "name": "Drive 学习存档、Skill 与 check_archive.py（仅存 Drive 私有目录与私有仓库 personal_study_image，严禁进入 study_note）",
+      "check_archive_sha256": "bfe3fe8f947551d7314e331794f8f7f60cde50c88a3af8263ca17f775d72f1c7",
+      "visibility": "工作区私有",
+      "required_by": [
+        "gemini_web",
+        "antigravity_infra"
+      ],
+      "holders": {
+        "gemini_web": "editable_in_drive",
+        "gpt_chat": "readable_in_drive",
+        "antigravity_infra": "checked_via_drive",
+        "drive_pool": "synced",
+        "github_repo": "not_synced_private"
+      }
+    },
+    {
+      "artifact_id": "ART-BI-EXP-README",
+      "name": "ShortGPT BI 删层实验说明（公开基线数字出处）",
+      "sha256": "888453683f91bdab8fb4160f93ce23dcda78b3c03232a93e3b05d497bb2c1129",
+      "visibility": "允许公开发布",
+      "required_by": [
+        "gemini_web",
+        "gpt_chat"
+      ],
+      "holders": {
+        "gemini_web": "readable_in_repo",
+        "gpt_chat": "readable_in_repo",
+        "antigravity_infra": "synced",
+        "drive_pool": "not_required",
+        "github_repo": "synced"
+      },
+      "repo_path": "ML_note/实验/ShortGPT_BI删层/README.md",
+      "required_repo_files_for_recalc": [
+        "ML_note/实验/ShortGPT_BI删层/README.md"
+      ]
+    }
+  ]
+}

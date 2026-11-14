@@ -3,39 +3,45 @@
   "task_id": "TASK-SEMEVAL-B1",
   "expected_line": "semeval",
   "owner": "Antigravity (SemEval 对话)",
-  "reviewer": "Codex",
+  "reviewer": "GPT Codex 端",
   "drive_pool_doc": "10_交接/SemEval/POOL_TASK-SEMEVAL-B1.md",
   "drive_package_dir": "20_实验包/TASK-SEMEVAL-B1/",
   "allowed_prefixes": [
-    "ML_note/实验/SemEval_DiCo-NLI/code/",
+    "ML_note/实验/SemEval_DiCo-NLI/code/cf_b1_eval/",
+    "ML_note/实验/SemEval_DiCo-NLI/code/registry.py",
     "ML_note/实验/SemEval_DiCo-NLI/metrics/cf_b1/",
+    "ML_note/实验/SemEval_DiCo-NLI/metrics/registry.json",
     "ML_note/实验/SemEval_DiCo-NLI/notebooks/",
     "ML_note/实验/SemEval_DiCo-NLI/实验状态与算力计划.md",
     "ML_note/实验/SemEval_DiCo-NLI/README.md",
     "ML_note/实验/SemEval_DiCo-NLI/实验登记表.md"
   ],
   "forbidden_prefixes": [
-    "ML_note/实验/SemEval_DiCo-NLI/code/a1_train/"
+    "ML_note/实验/SemEval_DiCo-NLI/code/a1_train/",
+    "ML_note/实验/SemEval_DiCo-NLI/metrics/cf_b1/dispatch_log.jsonl",
+    "ML_note/实验/SemEval_DiCo-NLI/metrics/cf_b1/b1_testset.json",
+    "ML_note/实验/SemEval_DiCo-NLI/metrics/cf_b1/b1_key.json",
+    "ML_note/实验/SemEval_DiCo-NLI/metrics/cf_b1/review_key.json"
   ],
   "visibility": "允许公开发布",
   "status": "通过",
-  "task_state": "待启动（写包输入已全部就绪）",
+  "task_state": "待启动（写包输入已全部就绪；推理按 Kaggle T4 fp16 执行，勿把 trained.json 的 A10 bf16 当作推理约束）",
   "endpoints": {
     "antigravity_semeval": {
       "role": "package_author",
       "state": "ready_to_start",
       "blocked_by": [],
-      "note": "写包所需的 b1_testset.json 与 Q0 15 份 adapter 封存哈希均已在仓库中，无阻塞"
+      "note": "b1_testset.json（含编辑对文本与 parent ID）及 Q0 15 份 adapter 元数据（trained.json 的 best_epoch、COMPLETE.json 的 files 哈希表、pred_fold0_sym.csv）均已在仓库中；build_bundle 加载官方 588968e（dico_nli_train_track1_participant_labeled.csv）以查找父样本 (t1, t2) 原文；推理固定按 Kaggle T4 fp16"
     },
-    "codex": {
+    "gpt_codex": {
       "role": "independent_reviewer",
       "state": "awaiting_package",
-      "note": "已完成 184 行盲标并锁定 171 条测试集；待 B1 推理包提交后执行 CPU 重建与验收"
+      "note": "已完成 184 行盲标并锁定 171 条测试集；待 B1 推理包提交后执行独立重建、CPU 测试与验收"
     },
     "pan_yan_0": {
       "role": "runner_and_dispatcher",
       "state": "weights_mounted_on_kaggle",
-      "note": "本地持有 Q0 15 份 LoRA 权重包，且已在跑 A0 时挂载为 Kaggle Dataset 验证通过"
+      "note": "本地持有 Q0 15 份 LoRA 权重包且已挂载 Kaggle Dataset；持有官方数据 588968e 用于 build_bundle 打包或 Kaggle 挂载"
     }
   },
   "artifacts": [
@@ -48,11 +54,11 @@
       "cf_b1_sha256": "9c856d06b64a22126d3fa0fe934eab128c49577a4cfab44e809d403778def734",
       "required_by": [
         "antigravity_semeval",
-        "codex"
+        "gpt_codex"
       ],
       "holders": {
         "pan_yan_0": "held",
-        "codex": "held",
+        "gpt_codex": "held",
         "antigravity_semeval": "held",
         "drive_pool": "synced",
         "github_repo": "synced"
@@ -67,18 +73,20 @@
     },
     {
       "artifact_id": "ART-Q0-WEIGHTS-META",
-      "name": "Q0 15 份 LoRA 权重归档元数据、封存 SHA-256 与三套种子留出缓存（协议先复现各折 seed 42 归档预测）",
+      "name": "Q0 15 份 LoRA 权重归档元数据、trained.json best_epoch、COMPLETE.json files 哈希与 cache.jsonl（训练环境为 A10 bf16；B1 推理按 T4 fp16 先复现各折 seed 42 归档 pred_fold0_sym.csv）",
       "sha256": "e07c957b9ca4cd42a745d2d72da541f838ceb33fe50e5327d287665d6c8ba865",
+      "complete_json_s42_f0_sha256": "20b5f777c65f7dc6c6e76c2ad75d419b52e076bc18dbb5ac48881c8ed1831c0f",
+      "trained_json_s42_f0_sha256": "5c6a1f9e454c2e59405cd386889e01522a0bbef31db532b5a19dd1f5a139e9d2",
       "a0_summary_sha256": "29e1285e16471aedba1e0f5923cba80ae1d8f415283427421f3ad1b44386013a",
       "teacher_a0_sha256": "be83428e63edf68d07379672b41c2322190c0444be2d00a9a3adff99d852e451",
       "upstream_qwen_sha256": "502e638814ba2b7a840f33aa3b481de1f1e0bf2887ff7d976dd86131d3b603b0",
       "required_by": [
         "antigravity_semeval",
-        "codex"
+        "gpt_codex"
       ],
       "holders": {
         "pan_yan_0": "held",
-        "codex": "held",
+        "gpt_codex": "held",
         "antigravity_semeval": "held",
         "drive_pool": "not_required",
         "github_repo": "synced"
@@ -92,6 +100,22 @@
       ]
     },
     {
+      "artifact_id": "ART-OFFICIAL-DATA-588968E",
+      "name": "官方数据集 588968e (final_data/train/dico_nli_train_track1_participant_labeled.csv，用于 build_bundle 查找父样本 text1/text2)",
+      "sha256": "5e8dd9f3a7e000933fec3c9e64d064f9a25586f141f58d6e6afb47c4fc797211",
+      "visibility": "受限官方数据（不进公开仓库；CPU 单元测试用合成样本或路径注入）",
+      "required_by": [
+        "pan_yan_0"
+      ],
+      "holders": {
+        "pan_yan_0": "held_locally_and_kaggle",
+        "gpt_codex": "not_required_for_cpu_test",
+        "antigravity_semeval": "not_required_in_sandbox",
+        "drive_pool": "optional",
+        "github_repo": "hashes_only"
+      }
+    },
+    {
       "artifact_id": "ART-Q0-WEIGHTS-BIN",
       "name": "Q0 15 份 LoRA 权重二进制包 (adapters/epoch{best}/adapter_model.safetensors)",
       "visibility": "工作区私有",
@@ -100,7 +124,7 @@
       ],
       "holders": {
         "pan_yan_0": "held_and_kaggle_dataset_mounted",
-        "codex": "not_required_for_cpu_test",
+        "gpt_codex": "not_required_for_cpu_test",
         "antigravity_semeval": "not_required_for_coding",
         "drive_pool": "optional_cold_backup",
         "github_repo": "hashes_only"
