@@ -1,17 +1,95 @@
 {
-  "task_id": "TASK-INFRA-004",
-  "owner": "Antigravity (基建对话)",
-  "expected_line": "infra",
-  "allowed_prefixes": [
-    "AGENTS.md",
-    "CLAUDE.md",
-    ".gitignore",
-    "agents/",
-    ".github/"
-  ],
-  "allow_shared_index": true,
-  "source_version": "commit:3bb31a45",
-  "visibility": "允许公开发布",
-  "status": "通过",
-  "canonical_link": "agents/分工与纠错机制_v2.md"
+  "schema_version": "2.0",
+  "updated_at": "2026-11-14",
+  "note": "任务绑定文件必须单独 commit（禁止与其他路径混交）；检查非绑定 commit C 时按父 commit C^ 的 active_tasks 校验，单次 commit 完整落在任一活跃任务允许范围内且未触碰 forbidden_prefixes 即放行。",
+  "active_tasks": [
+    {
+      "task_id": "TASK-INFRA-005",
+      "title": "任务绑定改为活跃任务列表、父提交绑定校验与任务级分端信息共享池同步",
+      "owner": "Antigravity (基建对话)",
+      "reviewer": "Codex",
+      "workline": "infra",
+      "expected_line": "infra",
+      "allowed_prefixes": [
+        "AGENTS.md",
+        "CLAUDE.md",
+        ".gitignore",
+        "agents/",
+        ".github/"
+      ],
+      "forbidden_prefixes": [],
+      "allow_shared_index": true,
+      "source_version": "commit:ba7b40a2",
+      "visibility": "允许公开发布",
+      "status": "通过",
+      "canonical_link": "agents/分工与纠错机制_v2.md"
+    },
+    {
+      "task_id": "TASK-SEMEVAL-A1-RECALC",
+      "title": "A1 正式训练四组结果独立复算核对（OOF / sym WF1 / 双侧 Bonferroni 98.33% CI）",
+      "owner": "Antigravity (SemEval 对话)",
+      "reviewer": "Codex",
+      "workline": "semeval",
+      "expected_line": "semeval",
+      "allowed_prefixes": [
+        "ML_note/实验/SemEval_DiCo-NLI/code/",
+        "ML_note/实验/SemEval_DiCo-NLI/metrics/a1_train/formal_v1/",
+        "ML_note/实验/SemEval_DiCo-NLI/实验状态与算力计划.md",
+        "ML_note/实验/SemEval_DiCo-NLI/README.md",
+        "ML_note/实验/SemEval_DiCo-NLI/实验登记表.md"
+      ],
+      "forbidden_prefixes": [
+        "ML_note/实验/SemEval_DiCo-NLI/code/a1_train/"
+      ],
+      "allow_shared_index": true,
+      "pool_path": "agents/task_pools/TASK-SEMEVAL-A1-RECALC.json",
+      "source_version": "commit:ba7b40a2",
+      "visibility": "允许公开发布",
+      "status": "通过",
+      "canonical_link": "ML_note/实验/SemEval_DiCo-NLI/metrics/a1_train/formal_v1/README.md"
+    },
+    {
+      "task_id": "TASK-SEMEVAL-B1",
+      "title": "171 条锁定反事实编辑的 Q0 留出 fold 诊断推理包准备与验收",
+      "owner": "Antigravity (SemEval 对话)",
+      "reviewer": "Codex",
+      "workline": "semeval",
+      "expected_line": "semeval",
+      "allowed_prefixes": [
+        "ML_note/实验/SemEval_DiCo-NLI/code/",
+        "ML_note/实验/SemEval_DiCo-NLI/metrics/cf_b1/",
+        "ML_note/实验/SemEval_DiCo-NLI/notebooks/",
+        "ML_note/实验/SemEval_DiCo-NLI/实验状态与算力计划.md",
+        "ML_note/实验/SemEval_DiCo-NLI/README.md",
+        "ML_note/实验/SemEval_DiCo-NLI/实验登记表.md"
+      ],
+      "forbidden_prefixes": [
+        "ML_note/实验/SemEval_DiCo-NLI/code/a1_train/"
+      ],
+      "allow_shared_index": true,
+      "pool_path": "agents/task_pools/TASK-SEMEVAL-B1.json",
+      "source_version": "commit:ba7b40a2",
+      "visibility": "允许公开发布",
+      "status": "通过",
+      "canonical_link": "ML_note/实验/SemEval_DiCo-NLI/metrics/cf_b1/README.md"
+    },
+    {
+      "task_id": "TASK-LEARN-001",
+      "title": "ShortGPT 删层评测偏差与 INT8 量化离群值学习闭环",
+      "owner": "Gemini 网页端",
+      "reviewer": "GPT 聊天端",
+      "workline": "learning",
+      "expected_line": "learning",
+      "allowed_prefixes": [
+        "ML_note/原理笔记/",
+        "ML_note/实验/ShortGPT_BI删层/"
+      ],
+      "forbidden_prefixes": [],
+      "allow_shared_index": true,
+      "source_version": "commit:ba7b40a2 | drive:1zjz8fwIF8-RFGBCfqeX3kH6os1wOA1_S",
+      "visibility": "工作区私有",
+      "status": "待审",
+      "canonical_link": "ML_note/原理笔记/推理优化/ShortGPT_BI删层笔记.md"
+    }
+  ]
 }
