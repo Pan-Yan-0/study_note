@@ -5,9 +5,9 @@
   "active_tasks": [
     {
       "task_id": "TASK-INFRA-005",
-      "title": "任务绑定改为活跃任务列表、父提交绑定校验与任务级分端信息共享池同步",
+      "title": "多端边界核查、任务级分端信息共享池闭环与门禁补漏（回归 12-26）",
       "owner": "Antigravity (基建对话)",
-      "reviewer": "Codex",
+      "reviewer": "GPT Codex 端",
       "workline": "infra",
       "expected_line": "infra",
       "allowed_prefixes": [
@@ -19,31 +19,60 @@
       ],
       "forbidden_prefixes": [],
       "allow_shared_index": true,
-      "source_version": "commit:ba7b40a2",
+      "source_version": "commit:115df6dd",
       "visibility": "允许公开发布",
       "status": "待审",
       "canonical_link": "agents/分工与纠错机制_v2.md"
     },
     {
-      "task_id": "TASK-SEMEVAL-A1-RECALC",
-      "title": "A1 正式训练四组结果独立复算核对（OOF / sym WF1 / 双侧 Bonferroni 98.33% CI）",
-      "owner": "Antigravity (SemEval 对话)",
-      "reviewer": "Codex",
+      "task_id": "TASK-SEMEVAL-A1-ARCHIVE",
+      "title": "A1 正式训练四组逐折预测、summary.json 与 OOF 归档补推及回执核对",
+      "owner": "GPT Codex 端",
+      "reviewer": "Antigravity (SemEval 对话)",
       "workline": "semeval",
       "expected_line": "semeval",
       "allowed_prefixes": [
-        "ML_note/实验/SemEval_DiCo-NLI/code/",
-        "ML_note/实验/SemEval_DiCo-NLI/metrics/a1_train/formal_v1/",
+        "ML_note/实验/SemEval_DiCo-NLI/metrics/a1_train/formal_v1/"
+      ],
+      "forbidden_prefixes": [
+        "ML_note/实验/SemEval_DiCo-NLI/code/a1_train/",
+        "ML_note/实验/SemEval_DiCo-NLI/metrics/a1_train/formal_v1/README.md",
+        "ML_note/实验/SemEval_DiCo-NLI/metrics/a1_train/formal_v1/recalc_receipt.json"
+      ],
+      "allow_shared_index": false,
+      "pool_path": "agents/task_pools/TASK-SEMEVAL-A1-ARCHIVE.json",
+      "source_version": "commit:115df6dd",
+      "visibility": "允许公开发布",
+      "status": "通过",
+      "canonical_link": "ML_note/实验/SemEval_DiCo-NLI/metrics/a1_train/formal_v1/README.md"
+    },
+    {
+      "task_id": "TASK-SEMEVAL-A1-RECALC",
+      "title": "A1 正式训练四组结果独立复算核对（OOF / sym WF1 / 双侧 Bonferroni 98.33% CI）",
+      "owner": "Antigravity (SemEval 对话)",
+      "reviewer": "GPT Codex 端",
+      "workline": "semeval",
+      "expected_line": "semeval",
+      "allowed_prefixes": [
+        "ML_note/实验/SemEval_DiCo-NLI/code/a1_recalc/",
+        "ML_note/实验/SemEval_DiCo-NLI/code/registry.py",
+        "ML_note/实验/SemEval_DiCo-NLI/metrics/registry.json",
+        "ML_note/实验/SemEval_DiCo-NLI/metrics/a1_train/formal_v1/README.md",
+        "ML_note/实验/SemEval_DiCo-NLI/metrics/a1_train/formal_v1/recalc_receipt.json",
         "ML_note/实验/SemEval_DiCo-NLI/实验状态与算力计划.md",
         "ML_note/实验/SemEval_DiCo-NLI/README.md",
         "ML_note/实验/SemEval_DiCo-NLI/实验登记表.md"
       ],
       "forbidden_prefixes": [
-        "ML_note/实验/SemEval_DiCo-NLI/code/a1_train/"
+        "ML_note/实验/SemEval_DiCo-NLI/code/a1_train/",
+        "ML_note/实验/SemEval_DiCo-NLI/metrics/a1_train/formal_v1/summary.json",
+        "ML_note/实验/SemEval_DiCo-NLI/metrics/a1_train/formal_v1/oof/",
+        "ML_note/实验/SemEval_DiCo-NLI/metrics/a1_train/formal_v1/tasks/",
+        "ML_note/实验/SemEval_DiCo-NLI/metrics/a1_train/formal_v1/smoke/"
       ],
       "allow_shared_index": true,
       "pool_path": "agents/task_pools/TASK-SEMEVAL-A1-RECALC.json",
-      "source_version": "commit:ba7b40a2",
+      "source_version": "commit:115df6dd",
       "visibility": "允许公开发布",
       "status": "通过",
       "canonical_link": "ML_note/实验/SemEval_DiCo-NLI/metrics/a1_train/formal_v1/README.md"
@@ -52,23 +81,29 @@
       "task_id": "TASK-SEMEVAL-B1",
       "title": "171 条锁定反事实编辑的 Q0 留出 fold 诊断推理包准备与验收",
       "owner": "Antigravity (SemEval 对话)",
-      "reviewer": "Codex",
+      "reviewer": "GPT Codex 端",
       "workline": "semeval",
       "expected_line": "semeval",
       "allowed_prefixes": [
-        "ML_note/实验/SemEval_DiCo-NLI/code/",
+        "ML_note/实验/SemEval_DiCo-NLI/code/cf_b1_eval/",
+        "ML_note/实验/SemEval_DiCo-NLI/code/registry.py",
         "ML_note/实验/SemEval_DiCo-NLI/metrics/cf_b1/",
+        "ML_note/实验/SemEval_DiCo-NLI/metrics/registry.json",
         "ML_note/实验/SemEval_DiCo-NLI/notebooks/",
         "ML_note/实验/SemEval_DiCo-NLI/实验状态与算力计划.md",
         "ML_note/实验/SemEval_DiCo-NLI/README.md",
         "ML_note/实验/SemEval_DiCo-NLI/实验登记表.md"
       ],
       "forbidden_prefixes": [
-        "ML_note/实验/SemEval_DiCo-NLI/code/a1_train/"
+        "ML_note/实验/SemEval_DiCo-NLI/code/a1_train/",
+        "ML_note/实验/SemEval_DiCo-NLI/metrics/cf_b1/dispatch_log.jsonl",
+        "ML_note/实验/SemEval_DiCo-NLI/metrics/cf_b1/b1_testset.json",
+        "ML_note/实验/SemEval_DiCo-NLI/metrics/cf_b1/b1_key.json",
+        "ML_note/实验/SemEval_DiCo-NLI/metrics/cf_b1/review_key.json"
       ],
       "allow_shared_index": true,
       "pool_path": "agents/task_pools/TASK-SEMEVAL-B1.json",
-      "source_version": "commit:ba7b40a2",
+      "source_version": "commit:115df6dd",
       "visibility": "允许公开发布",
       "status": "通过",
       "canonical_link": "ML_note/实验/SemEval_DiCo-NLI/metrics/cf_b1/README.md"
@@ -86,7 +121,8 @@
       ],
       "forbidden_prefixes": [],
       "allow_shared_index": true,
-      "source_version": "commit:ba7b40a2 | drive:1zjz8fwIF8-RFGBCfqeX3kH6os1wOA1_S",
+      "pool_path": "agents/task_pools/TASK-LEARN-001.json",
+      "source_version": "commit:115df6dd | drive:1zjz8fwIF8-RFGBCfqeX3kH6os1wOA1_S",
       "visibility": "工作区私有",
       "status": "待审",
       "canonical_link": "ML_note/原理笔记/推理优化/ShortGPT删层与INT8量化离群值.md",
