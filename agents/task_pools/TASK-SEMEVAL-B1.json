@@ -1,0 +1,104 @@
+{
+  "schema_version": "1.0",
+  "task_id": "TASK-SEMEVAL-B1",
+  "expected_line": "semeval",
+  "owner": "Antigravity (SemEval 对话)",
+  "reviewer": "Codex",
+  "drive_pool_doc": "10_交接/SemEval/POOL_TASK-SEMEVAL-B1.md",
+  "drive_package_dir": "20_实验包/TASK-SEMEVAL-B1/",
+  "allowed_prefixes": [
+    "ML_note/实验/SemEval_DiCo-NLI/code/",
+    "ML_note/实验/SemEval_DiCo-NLI/metrics/cf_b1/",
+    "ML_note/实验/SemEval_DiCo-NLI/notebooks/",
+    "ML_note/实验/SemEval_DiCo-NLI/实验状态与算力计划.md",
+    "ML_note/实验/SemEval_DiCo-NLI/README.md",
+    "ML_note/实验/SemEval_DiCo-NLI/实验登记表.md"
+  ],
+  "forbidden_prefixes": [
+    "ML_note/实验/SemEval_DiCo-NLI/code/a1_train/"
+  ],
+  "visibility": "允许公开发布",
+  "status": "通过",
+  "task_state": "待启动（写包输入已全部就绪）",
+  "endpoints": {
+    "antigravity_semeval": {
+      "role": "package_author",
+      "state": "ready_to_start",
+      "blocked_by": [],
+      "note": "写包所需的 b1_testset.json 与 Q0 15 份 adapter 封存哈希均已在仓库中，无阻塞"
+    },
+    "codex": {
+      "role": "independent_reviewer",
+      "state": "awaiting_package",
+      "note": "已完成 184 行盲标并锁定 171 条测试集；待 B1 推理包提交后执行 CPU 重建与验收"
+    },
+    "pan_yan_0": {
+      "role": "runner_and_dispatcher",
+      "state": "weights_mounted_on_kaggle",
+      "note": "本地持有 Q0 15 份 LoRA 权重包，且已在跑 A0 时挂载为 Kaggle Dataset 验证通过"
+    }
+  },
+  "artifacts": [
+    {
+      "artifact_id": "ART-B1-TESTSET",
+      "name": "171 条锁定反事实测试集与封存键值 (b1 126 + pilot 45)",
+      "sha256": "03f034e9",
+      "required_by": [
+        "antigravity_semeval",
+        "codex"
+      ],
+      "holders": {
+        "pan_yan_0": "held",
+        "codex": "held",
+        "antigravity_semeval": "held",
+        "drive_pool": "synced",
+        "github_repo": "synced"
+      },
+      "repo_path": "ML_note/实验/SemEval_DiCo-NLI/metrics/cf_b1/",
+      "required_repo_files_for_recalc": [
+        "ML_note/实验/SemEval_DiCo-NLI/metrics/cf_b1/b1_testset.json",
+        "ML_note/实验/SemEval_DiCo-NLI/metrics/cf_b1/b1_key.json",
+        "ML_note/实验/SemEval_DiCo-NLI/metrics/cf_b1/README.md",
+        "ML_note/实验/SemEval_DiCo-NLI/code/cf_b1.py"
+      ]
+    },
+    {
+      "artifact_id": "ART-Q0-WEIGHTS-META",
+      "name": "Q0 15 份 LoRA 权重归档元数据、封存 SHA-256 与 seed 42 留出缓存",
+      "sha256": "e07c957b9ca4cd42a745d2d72da541f838ceb33fe50e5327d287665d6c8ba865",
+      "required_by": [
+        "antigravity_semeval",
+        "codex"
+      ],
+      "holders": {
+        "pan_yan_0": "held",
+        "codex": "held",
+        "antigravity_semeval": "held",
+        "drive_pool": "not_required",
+        "github_repo": "synced"
+      },
+      "repo_path": "ML_note/实验/SemEval_DiCo-NLI/metrics/qwen4b_augb_s1/formal/Q0/",
+      "required_repo_files_for_recalc": [
+        "ML_note/实验/SemEval_DiCo-NLI/metrics/qwen4b_augb_s1/formal/Q0/seed42/fold0/COMPLETE.json",
+        "ML_note/实验/SemEval_DiCo-NLI/metrics/qwen4b_augb_s1/formal/Q0/seed42/fold0/trained.json",
+        "ML_note/实验/SemEval_DiCo-NLI/metrics/qwen4b_augb_s1/formal/Q0/seed42/fold0/cache.jsonl",
+        "ML_note/实验/SemEval_DiCo-NLI/metrics/a0_teacher/full/A0_SUMMARY.json"
+      ]
+    },
+    {
+      "artifact_id": "ART-Q0-WEIGHTS-BIN",
+      "name": "Q0 15 份 LoRA 权重二进制包 (adapters/epoch{best}/adapter_model.safetensors)",
+      "visibility": "工作区私有",
+      "required_by": [
+        "pan_yan_0"
+      ],
+      "holders": {
+        "pan_yan_0": "held_and_kaggle_dataset_mounted",
+        "codex": "not_required_for_cpu_test",
+        "antigravity_semeval": "not_required_for_coding",
+        "drive_pool": "optional_cold_backup",
+        "github_repo": "hashes_only"
+      }
+    }
+  ]
+}

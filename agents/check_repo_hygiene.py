@@ -2,11 +2,13 @@
 """仓库路径归属、任务范围限定、隐私/本机路径扫描与 Drive 版本绑定回执检查脚本。
 
 满足核心验收要求：
-1. 路径归属与任务级范围检查：
-   - 单次提交只改同一工作线目录；共用索引（根 README.md、ML_note/实验结果汇总.md）及任务绑定清单（agents/current_task.json）允许随同更新；
+1. 路径归属与活跃任务列表范围检查：
+   - 单次提交只改同一工作线目录；共用索引（根 README.md、ML_note/实验结果汇总.md）允许随同更新；
+   - 任务绑定清单（agents/current_task.json）不作为共用索引，修改时必须单独作为一个 commit 提交（禁止与其他路径混交）；
+   - 扫描非绑定 commit C 时，强制从父提交 C^:agents/current_task.json 读取 active_tasks（扫描未提交改动时从 HEAD 读取），
+     只要单次提交全部改动落在至少一个活跃任务的 allowed_prefixes 内且未触碰 forbidden_prefixes 即放行；
    - ML_note/实验/SemEval_DiCo-NLI/论文研究/ 按独立工作线判定，且不会被父目录前缀 ML_note/实验/SemEval_DiCo-NLI/ 误放行；
-   - 支持 --expected-line、--allowed-prefixes、--task-manifest 与 --require-task-scope（默认读取仓库 agents/current_task.json），
-     将“具体任务允许改哪里”接入自动检查；启用 --require-task-scope 时若缺失任务范围定义，直接报错“未完成任务范围验收”；
+   - 支持 --expected-line、--allowed-prefixes、--forbidden-prefixes、--task-manifest、--require-task-scope 与 --check-task-pool；
    - 归属与范围检查覆盖新增、修改、删除（D）以及重命名（R）/复制（C）的源与目标路径。
 2. 上下文感知的隐私与本机路径扫描：
    - 拦截私有学习字段、个人邮箱、密钥令牌与本地容器路径前缀，同时允许 NLP 笔记中的正常缩写（如 Lv et al.）；
@@ -17,8 +19,9 @@
    - 任何用于枚举或读取扫描输入的 Git 调用失败（如无效 commit 范围、浅克隆缺 base）均直接报错退出（返回码 1）；
    - 检查未提交改动时，分别枚举并扫描暂存区（git diff --cached 与 index blob :path）和工作区（git diff 与未跟踪文件）；
    - 覆盖一次 push 范围内的每个 commit 逐个扫描。
-5. 公开发布门禁与 Drive 版本绑定回执：
+5. 公开发布门禁、任务级分端信息共享池校验与 Drive 版本绑定回执：
    - --require-public-ready 同时作用于 --files、commit 范围扫描与暂存区/工作区扫描：任何标记为“工作区私有”或状态为“待审/退回/待提稿”的文件均报错拦截；
+   - --check-task-pool（并在 --require-task-scope 下自动校验 agents/task_pools/*.json）核验分端信息共享池 JSON 结构及 github_repo=synced 产物的仓库跟踪完整性；
    - verify_bound_receipt 拒绝空输入，强制要求传入待审文件的实际字节哈希并双向核对回执绑定清单；
    - 支持联动运行 check_archive.py 并将双检查器身份与结果共同写入回执；回执明确区分“格式与卫生检查通过（内容待审）”与“公开发布门禁通过”。
 """
@@ -34,7 +37,8 @@ from pathlib import Path
 from typing import Any, Iterable
 
 TASK_BINDING_REL_PATH = "agents/current_task.json"
-SHARED_INDEX_FILES = {"README.md", "ML_note/实验结果汇总.md", TASK_BINDING_REL_PATH}
+TASK_POOLS_REL_PREFIX = "agents/task_pools/"
+SHARED_INDEX_FILES = {"README.md", "ML_note/实验结果汇总.md"}
 VALID_LINES = ("semeval", "semeval_papers", "learning", "infra", "shared_index", "other")
 SEMEVAL_PAPERS_PREFIX = "ML_note/实验/SemEval_DiCo-NLI/论文研究/"
 
@@ -159,25 +163,29 @@ def check_ownership(
     allowed_prefixes: Iterable[str] | None = None,
     allow_shared_index: bool = True,
     task_label: str | None = None,
+    forbidden_prefixes: Iterable[str] | None = None,
 ) -> tuple[list[str], dict[str, list[str]]]:
-    """检查一组改动路径（含新增、修改、删除及重命名源/目标）是否跨越工作线或越出任务允许范围。"""
+    """检查一组改动路径（含新增、修改、删除及重命名源/目标）是否跨越工作线、违规混交任务绑定文件或越出任务允许范围。"""
     by_line: dict[str, list[str]] = {}
     norm_paths = [normalize_rel_path(p) for p in sorted(set(paths)) if p and normalize_rel_path(p)]
     for p in norm_paths:
-        # 任务绑定文件 agents/current_task.json 在仅随其他单线任务同步更新时归入 shared_index，单独在 infra 修改时正常归入 infra
-        if p == TASK_BINDING_REL_PATH and allow_shared_index and expected_line and expected_line != "infra":
-            line = "shared_index"
-        else:
-            line = classify_line(p)
+        line = classify_line(p)
         by_line.setdefault(line, []).append(p)
 
-    non_shared = {k: v for k, v in by_line.items() if k != "shared_index"}
     issues: list[str] = []
+    if TASK_BINDING_REL_PATH in norm_paths and len(norm_paths) > 1:
+        others = ", ".join(p for p in norm_paths if p != TASK_BINDING_REL_PATH)
+        issues.append(
+            f"越界修改（任务绑定文件违规混交）：{TASK_BINDING_REL_PATH} 必须单独提交，禁止与其他路径（{others}）混在同一个 commit 中修改"
+        )
+
+    non_shared = {k: v for k, v in by_line.items() if k != "shared_index"}
     if len(non_shared) > 1:
         summary = ", ".join(f"{k}({len(v)}个文件: {v[0]}等)" for k, v in sorted(non_shared.items()))
         issues.append(f"单次提交跨越多个工作线：{summary}")
 
     prefix_list = [normalize_rel_path(x) for x in (allowed_prefixes or []) if normalize_rel_path(x)]
+    forbidden_list = [normalize_rel_path(x) for x in (forbidden_prefixes or []) if normalize_rel_path(x)]
     ctx = f"任务[{task_label}]" if task_label else "当前任务"
 
     if expected_line:
@@ -200,7 +208,57 @@ def check_ownership(
                     f"越界修改（超出任务范围）：路径 {p} 不在{ctx}允许修改的范围内（允许范围：{allowed_desc}）"
                 )
 
+    if forbidden_list:
+        forb_desc = ", ".join(forbidden_list)
+        for p in norm_paths:
+            if path_matches_allowed_prefixes(p, forbidden_list):
+                issues.append(
+                    f"越界修改（命中禁止修改路径）：路径 {p} 落在{ctx}禁止修改范围（{forb_desc}）内"
+                )
+
     return issues, by_line
+
+
+def check_ownership_against_tasks(
+    paths: Iterable[str],
+    active_tasks: list[dict[str, Any]],
+) -> tuple[list[str], dict[str, list[str]], str | None]:
+    """核对一组改动路径是否完整落在 active_tasks 中至少一个活跃任务的允许范围内（且未触碰该任务的 forbidden_prefixes）。"""
+    base_issues, by_line = check_ownership(paths)
+    norm_paths = [normalize_rel_path(p) for p in sorted(set(paths)) if p and normalize_rel_path(p)]
+    if base_issues or not norm_paths or not active_tasks:
+        return base_issues, by_line, None
+
+    for task in active_tasks:
+        t_label = " | ".join(x for x in (task.get("task_id"), task.get("owner")) if x) or None
+        t_issues, _ = check_ownership(
+            norm_paths,
+            expected_line=task.get("expected_line"),
+            allowed_prefixes=task.get("allowed_prefixes"),
+            allow_shared_index=bool(task.get("allow_shared_index", True)),
+            task_label=t_label,
+            forbidden_prefixes=task.get("forbidden_prefixes"),
+        )
+        if not t_issues:
+            return [], by_line, t_label
+
+    non_shared_lines = [k for k in by_line if k != "shared_index"]
+    candidate_tasks = [t for t in active_tasks if t.get("expected_line") in non_shared_lines] or active_tasks
+    collected: list[str] = []
+    for task in candidate_tasks:
+        t_label = " | ".join(x for x in (task.get("task_id"), task.get("owner")) if x) or None
+        t_issues, _ = check_ownership(
+            norm_paths,
+            expected_line=task.get("expected_line"),
+            allowed_prefixes=task.get("allowed_prefixes"),
+            allow_shared_index=bool(task.get("allow_shared_index", True)),
+            task_label=t_label,
+            forbidden_prefixes=task.get("forbidden_prefixes"),
+        )
+        for iss in t_issues:
+            if iss not in collected:
+                collected.append(iss)
+    return collected, by_line, None
 
 
 def _split_prefix_values(raw: str) -> list[str]:
@@ -212,17 +270,101 @@ def _split_prefix_values(raw: str) -> list[str]:
     return [normalize_rel_path(p.strip()) for p in parts if p.strip()]
 
 
+def normalize_task_entry(raw: dict[str, Any], strict_schema: bool = False) -> dict[str, Any]:
+    """规范化并校验单条任务绑定记录（支持 expected_line/workline、allowed_prefixes/allowed_paths、forbidden_prefixes）。"""
+    if not isinstance(raw, dict):
+        raise ValueError("任务绑定条目必须是 JSON 对象")
+    task_id = str(raw.get("task_id", "")).strip()
+    owner = str(raw.get("owner", "")).strip()
+    expected_line = str(raw.get("expected_line") or raw.get("workline") or "").strip() or None
+
+    raw_prefs = raw.get("allowed_prefixes") if "allowed_prefixes" in raw else raw.get("allowed_paths", [])
+    if not isinstance(raw_prefs, list):
+        raise ValueError(f"任务 {task_id or '?'} 的 allowed_prefixes 必须是列表")
+    allowed_prefixes = [normalize_rel_path(str(x)) for x in raw_prefs if normalize_rel_path(str(x))]
+
+    raw_forb = raw.get("forbidden_prefixes") if "forbidden_prefixes" in raw else raw.get("excluded_prefixes", [])
+    if not isinstance(raw_forb, list):
+        raise ValueError(f"任务 {task_id or '?'} 的 forbidden_prefixes 必须是列表")
+    forbidden_prefixes = [normalize_rel_path(str(x)) for x in raw_forb if normalize_rel_path(str(x))]
+
+    valid_worklines = {"semeval", "semeval_papers", "learning", "infra"}
+    if expected_line and expected_line not in valid_worklines:
+        raise ValueError(f"任务 {task_id or '?'} 的 expected_line {expected_line!r} 不合法")
+
+    if strict_schema:
+        if not task_id or not owner:
+            raise ValueError("任务绑定条目必须包含非空 task_id 与 owner")
+        if not expected_line:
+            raise ValueError(f"任务 {task_id} 缺少 expected_line（或 workline）")
+        if not allowed_prefixes:
+            raise ValueError(f"任务 {task_id} 的 allowed_prefixes 不能为空")
+        for pref in allowed_prefixes:
+            if pref in {"", "."}:
+                raise ValueError(f"任务 {task_id} 包含非法通配根路径前缀 {pref!r}")
+            pref_line = classify_line(pref)
+            if pref_line != expected_line:
+                raise ValueError(
+                    f"任务 {task_id}（工作线 {expected_line}）包含跨工作线路径前缀 {pref!r}（归属 {pref_line}）"
+                )
+    else:
+        if not (expected_line or allowed_prefixes):
+            raise ValueError(f"任务 {task_id or '?'} 缺少 expected_line 和 allowed_prefixes")
+
+    return {
+        "task_id": task_id,
+        "owner": owner,
+        "expected_line": expected_line,
+        "allowed_prefixes": allowed_prefixes,
+        "forbidden_prefixes": forbidden_prefixes,
+        "allow_shared_index": bool(raw.get("allow_shared_index", True)),
+        "pool_path": normalize_rel_path(str(raw.get("pool_path", "")).strip()) if raw.get("pool_path") else "",
+        "source_version": str(raw.get("source_version", "")).strip(),
+        "visibility": str(raw.get("visibility", "")).strip(),
+        "status": str(raw.get("status", "")).strip(),
+        "canonical_link": str(raw.get("canonical_link", "")).strip(),
+        "target_repo_path": normalize_rel_path(str(raw.get("target_repo_path", "")).strip())
+        if raw.get("target_repo_path")
+        else "",
+    }
+
+
+def parse_task_binding_text(text: str, strict_schema: bool = False) -> list[dict[str, Any]]:
+    """解析 agents/current_task.json 文本，支持 schema v2.0 active_tasks 列表与旧版单任务字典。"""
+    stripped = text.strip()
+    if not stripped:
+        raise ValueError("任务绑定文件内容为空")
+    data = json.loads(stripped)
+    if not isinstance(data, dict):
+        raise ValueError("任务绑定文件顶层必须是 JSON 对象")
+    if "active_tasks" in data:
+        raw_tasks = data.get("active_tasks")
+        if not isinstance(raw_tasks, list) or not raw_tasks:
+            raise ValueError("active_tasks 必须是非空列表")
+        return [normalize_task_entry(item, strict_schema=strict_schema) for item in raw_tasks]
+    return [normalize_task_entry(data, strict_schema=strict_schema)]
+
+
 def parse_task_manifest_text(text: str) -> dict[str, Any]:
     """解析 JSON 或 Markdown 交接元数据表，统一返回结构化字段。"""
     stripped = text.strip()
     if stripped.startswith("{"):
         data = json.loads(stripped)
+        if isinstance(data, dict) and "active_tasks" in data:
+            tasks = parse_task_binding_text(stripped, strict_schema=False)
+            first = tasks[0]
+            return {
+                **first,
+                "active_tasks": tasks,
+            }
         return {
             "task_id": str(data.get("task_id", "")).strip(),
             "owner": str(data.get("owner", "")).strip(),
-            "expected_line": str(data.get("expected_line", "")).strip() or None,
+            "expected_line": str(data.get("expected_line") or data.get("workline") or "").strip() or None,
             "allowed_prefixes": [normalize_rel_path(x) for x in data.get("allowed_prefixes", []) if str(x).strip()],
+            "forbidden_prefixes": [normalize_rel_path(x) for x in data.get("forbidden_prefixes", []) if str(x).strip()],
             "allow_shared_index": bool(data.get("allow_shared_index", True)),
+            "pool_path": normalize_rel_path(str(data.get("pool_path", "")).strip()) if data.get("pool_path") else "",
             "source_version": str(data.get("source_version", "")).strip(),
             "visibility": str(data.get("visibility", "")).strip(),
             "status": str(data.get("status", "")).strip(),
@@ -237,7 +379,9 @@ def parse_task_manifest_text(text: str) -> dict[str, Any]:
         "owner": "",
         "expected_line": None,
         "allowed_prefixes": [],
+        "forbidden_prefixes": [],
         "allow_shared_index": True,
+        "pool_path": "",
         "source_version": "",
         "visibility": "",
         "status": "",
@@ -280,6 +424,8 @@ def parse_task_manifest_text(text: str) -> dict[str, Any]:
             manifest["expected_line"] = clean_val
         elif key in {"允许修改范围", "允许修改路径"} or k_lower == "allowed_prefixes":
             manifest["allowed_prefixes"] = _split_prefix_values(val)
+        elif key in {"禁止修改范围", "禁止修改路径"} or k_lower == "forbidden_prefixes":
+            manifest["forbidden_prefixes"] = _split_prefix_values(val)
         elif key in {"来源版本", "输入版本"} or k_lower == "source_version":
             manifest["source_version"] = clean_val
         elif key in {"可见范围", "公开状态"} or k_lower == "visibility":
@@ -339,8 +485,9 @@ def check_content_gates(
     """对文件内容执行交接元数据校验与公开发布门禁校验（同时适用于 --files、commit 扫描与暂存区/工作区扫描）。"""
     if not (require_handoff_header or require_public_ready):
         return []
-    # 任务绑定 JSON 本身允许配置当前任务状态，不按文稿拦截；但若其中 visibility 显式标为工作区私有且非 infra 任务也可按需检查
-    if label.endswith(TASK_BINDING_REL_PATH):
+    # 任务绑定 JSON 与任务池 JSON 本身用于记录多端状态（由专门的 schema 校验器检查），不按交接文稿头拦截
+    norm_lbl = normalize_rel_path(label.split(":", 1)[-1] if ":" in label else label)
+    if norm_lbl == TASK_BINDING_REL_PATH or norm_lbl.startswith(TASK_POOLS_REL_PREFIX):
         return []
 
     try:
@@ -454,49 +601,149 @@ def parse_name_status(lines: Iterable[str]) -> tuple[list[str], list[str]]:
     return sorted(set(ownership_paths)), sorted(set(content_paths))
 
 
-def resolve_commit_task_scope(
+def load_repo_active_tasks(
     repo: Path,
-    rev: str,
-    expected_line: str | None,
-    allowed_prefixes: list[str],
-    allow_shared_index: bool,
-    task_label: str | None,
-    require_task_scope: bool,
-    git_errors: list[str],
-) -> tuple[str | None, list[str], bool, str | None]:
-    """解析单个 commit 绑定的任务范围；若启用了 --require-task-scope 且缺失任务范围则记入错误。"""
-    if expected_line or allowed_prefixes:
-        return expected_line, allowed_prefixes, allow_shared_index, task_label
-
-    # 尝试从该 commit 快照或工作区读取 agents/current_task.json
-    raw_manifest_text = ""
-    r = git_run(repo, "show", f"{rev}:{TASK_BINDING_REL_PATH}")
+    rev_spec: str = "HEAD",
+    allow_disk_fallback_if_no_head: bool = False,
+) -> tuple[list[dict[str, Any]], str | None]:
+    """从指定提交（如 C^ 或 HEAD）读取并解析 agents/current_task.json 的活跃任务列表。"""
+    r = git_run(repo, "show", f"{rev_spec}:{TASK_BINDING_REL_PATH}")
+    raw_text = ""
     if r.returncode == 0 and r.stdout.strip():
-        raw_manifest_text = r.stdout
-    else:
-        disk_path = repo / TASK_BINDING_REL_PATH
-        if disk_path.is_file():
-            raw_manifest_text = disk_path.read_text(encoding="utf-8", errors="replace")
+        raw_text = r.stdout
+    elif allow_disk_fallback_if_no_head:
+        has_head = git_run(repo, "rev-parse", "--verify", "-q", "HEAD").returncode == 0
+        if not has_head:
+            disk_path = repo / TASK_BINDING_REL_PATH
+            if disk_path.is_file():
+                raw_text = disk_path.read_text(encoding="utf-8", errors="replace")
 
-    if raw_manifest_text:
+    if not raw_text:
+        return [], None
+    try:
+        tasks = parse_task_binding_text(raw_text, strict_schema=False)
+        return tasks, None
+    except Exception as exc:
+        return [], str(exc)
+
+
+def validate_task_pools(
+    repo: Path,
+    active_tasks: list[dict[str, Any]] | None = None,
+    require_non_empty: bool = False,
+) -> list[str]:
+    """校验仓库 agents/task_pools/*.json 的任务级分端信息共享池结构，并拦截 github_repo=synced 的假同步。"""
+    errors: list[str] = []
+    pools_dir = repo / "agents" / "task_pools"
+    pool_files: list[Path] = sorted(pools_dir.glob("*.json")) if pools_dir.is_dir() else []
+
+    for task in active_tasks or []:
+        pp_rel = task.get("pool_path", "")
+        if pp_rel:
+            pp = repo / normalize_rel_path(pp_rel)
+            if not pp.is_file():
+                errors.append(
+                    f"任务信息共享池缺失：任务 {task.get('task_id') or '?'} 声明的 pool_path {pp_rel} 不存在"
+                )
+            elif pp not in pool_files:
+                pool_files.append(pp)
+
+    if not pool_files:
+        if require_non_empty:
+            errors.append("任务信息共享池校验失败：未找到任何 agents/task_pools/*.json 文件")
+        return errors
+
+    valid_lines = {"semeval", "semeval_papers", "learning", "infra"}
+    for pf in pool_files:
+        rel_pf = normalize_rel_path(str(pf.relative_to(repo))) if pf.is_relative_to(repo) else pf.name
         try:
-            m = parse_task_manifest_text(raw_manifest_text)
-            c_line = m.get("expected_line")
-            c_prefs = list(m.get("allowed_prefixes") or [])
-            c_shared = bool(m.get("allow_shared_index", True))
-            c_label = " | ".join(x for x in (m.get("task_id"), m.get("owner")) if x) or None
-            if c_line or c_prefs:
-                return c_line, c_prefs, c_shared, c_label
+            data = json.loads(pf.read_text(encoding="utf-8"))
         except Exception as exc:
-            if require_task_scope:
-                git_errors.append(f"[{rev[:8]}] 解析 {TASK_BINDING_REL_PATH} 失败：{exc}")
-                return None, [], True, None
+            errors.append(f"任务信息共享池 JSON 解析失败 ({rel_pf})：{exc}")
+            continue
+        if not isinstance(data, dict):
+            errors.append(f"任务信息共享池格式错误 ({rel_pf})：顶层必须是 JSON 对象")
+            continue
 
-    if require_task_scope:
-        git_errors.append(
-            f"[{rev[:8]}] 未完成任务范围验收：未提供任务绑定范围（缺少 --task-manifest / --allowed-prefixes / --expected-line 或有效的 {TASK_BINDING_REL_PATH}）"
-        )
-    return None, [], True, None
+        task_id = str(data.get("task_id", "")).strip()
+        exp_line = str(data.get("expected_line") or data.get("workline") or "").strip()
+        owner = str(data.get("owner", "")).strip()
+        endpoints = data.get("endpoints")
+        artifacts = data.get("artifacts")
+
+        if not task_id or not owner or exp_line not in valid_lines:
+            errors.append(
+                f"任务信息共享池元数据缺失 ({rel_pf})：必须包含非空 task_id、owner 及合法的 expected_line"
+            )
+        if not isinstance(endpoints, dict) or not endpoints:
+            errors.append(f"任务信息共享池分端状态缺失 ({rel_pf})：endpoints 必须是非空对象")
+        else:
+            for ep_name, ep_val in endpoints.items():
+                if not isinstance(ep_val, dict) or not ep_val.get("role") or not ep_val.get("state"):
+                    errors.append(
+                        f"任务信息共享池分端条目无效 ({rel_pf} -> endpoints.{ep_name})：必须包含 role 与 state"
+                    )
+
+        if not isinstance(artifacts, list) or not artifacts:
+            errors.append(f"任务信息共享池产物账本缺失 ({rel_pf})：artifacts 必须是非空列表")
+            continue
+
+        art_by_id: dict[str, dict[str, Any]] = {}
+        for art in artifacts:
+            if not isinstance(art, dict):
+                errors.append(f"任务信息共享池产物条目格式错误 ({rel_pf})：条目必须是对象")
+                continue
+            art_id = str(art.get("artifact_id", "")).strip()
+            art_name = str(art.get("name", "")).strip()
+            holders = art.get("holders")
+            if not art_id or not art_name or not isinstance(holders, dict) or not holders:
+                errors.append(
+                    f"任务信息共享池产物字段缺失 ({rel_pf} -> {art_id or '?'})：必须包含 artifact_id、name 与非空 holders"
+                )
+                continue
+            art_by_id[art_id] = art
+
+            if holders.get("github_repo") == "synced":
+                req_files = art.get("required_repo_files_for_recalc") or []
+                repo_path = normalize_rel_path(str(art.get("repo_path", "")).strip())
+                if not req_files and not repo_path:
+                    errors.append(
+                        f"任务信息共享池假同步拦截 [{task_id}/{art_id}]：产物标记为 github_repo=synced，但未声明 repo_path 或 required_repo_files_for_recalc"
+                    )
+                for rf in req_files:
+                    norm_rf = normalize_rel_path(str(rf))
+                    in_head = git_run(repo, "cat-file", "-e", f"HEAD:{norm_rf}").returncode == 0
+                    in_index = git_run(repo, "cat-file", "-e", f":{norm_rf}").returncode == 0
+                    on_disk = (repo / norm_rf).is_file()
+                    if not ((in_head or in_index) and on_disk):
+                        errors.append(
+                            f"任务信息共享池假同步拦截 [{task_id}/{art_id}]：产物标记为 github_repo=synced，但必需文件 {norm_rf} 未在 Git 仓库中跟踪入库（请检查是否因 .gitignore 漏执行 git add -f）"
+                        )
+                if repo_path:
+                    in_head_rp = git_run(repo, "cat-file", "-e", f"HEAD:{repo_path}").returncode == 0
+                    ls_rp = git_run(repo, "ls-files", repo_path)
+                    has_tracked = ls_rp.returncode == 0 and bool(ls_rp.stdout.strip())
+                    if not (in_head_rp or has_tracked) or not (repo / repo_path).exists():
+                        errors.append(
+                            f"任务信息共享池假同步拦截 [{task_id}/{art_id}]：产物标记为 github_repo=synced，但 repo_path {repo_path} 在 Git 仓库中不存在或未跟踪任何文件"
+                        )
+
+        if isinstance(endpoints, dict):
+            for ep_name, ep_val in endpoints.items():
+                if isinstance(ep_val, dict) and ep_val.get("state") == "blocked_on_unshared_artifact":
+                    blocked_by = ep_val.get("blocked_by")
+                    if not isinstance(blocked_by, list) or not blocked_by:
+                        errors.append(
+                            f"任务信息共享池阻塞声明不完整 ({rel_pf} -> {ep_name})：state=blocked_on_unshared_artifact 时必须提供非空 blocked_by 列表"
+                        )
+                    else:
+                        for bid in blocked_by:
+                            if bid not in art_by_id:
+                                errors.append(
+                                    f"任务信息共享池阻塞引用无效 ({rel_pf} -> {ep_name})：blocked_by 引用的产物 {bid} 不在 artifacts 中"
+                                )
+
+    return errors
 
 
 def scan_commit(
@@ -511,6 +758,7 @@ def scan_commit(
     require_task_scope: bool = False,
     require_handoff_header: bool = False,
     require_public_ready: bool = False,
+    forbidden_prefixes: Iterable[str] | None = None,
 ) -> tuple[list[str], list[str], dict[str, list[str]]]:
     """扫描单个 commit 的路径归属/任务范围（含删除与重命名两端）、公开发布门禁及现存改动文件的完整内容。"""
     r = git_checked(
@@ -528,25 +776,73 @@ def scan_commit(
     if r is None:
         return [], [], {}
 
-    c_line, c_prefs, c_shared, c_label = resolve_commit_task_scope(
-        repo,
-        rev,
-        expected_line,
-        list(allowed_prefixes or []),
-        allow_shared_index,
-        task_label,
-        require_task_scope,
-        git_errors,
-    )
-
     ownership_paths, content_paths = parse_name_status(r.stdout.splitlines())
-    ownership_issues, by_line = check_ownership(
-        ownership_paths,
-        expected_line=c_line,
-        allowed_prefixes=c_prefs,
-        allow_shared_index=c_shared,
-        task_label=c_label,
-    )
+    norm_own = [normalize_rel_path(p) for p in ownership_paths if normalize_rel_path(p)]
+    norm_content = [normalize_rel_path(p) for p in content_paths if normalize_rel_path(p)]
+    explicit_prefs = list(allowed_prefixes or [])
+    explicit_forb = list(forbidden_prefixes or [])
+
+    if norm_own == [TASK_BINDING_REL_PATH]:
+        if TASK_BINDING_REL_PATH not in norm_content:
+            if require_task_scope:
+                git_errors.append(f"[{rev[:8]}] 未完成任务范围验收：禁止删除 {TASK_BINDING_REL_PATH}")
+        else:
+            bind_blob = git_run(repo, "show", f"{rev}:{TASK_BINDING_REL_PATH}")
+            if bind_blob.returncode == 0 and bind_blob.stdout.strip():
+                try:
+                    parse_task_binding_text(bind_blob.stdout, strict_schema=True)
+                except Exception as exc:
+                    git_errors.append(f"[{rev[:8]}] 解析 {TASK_BINDING_REL_PATH} 失败：{exc}")
+            else:
+                git_errors.append(f"[{rev[:8]}] 读取 {TASK_BINDING_REL_PATH} 失败")
+
+        if expected_line or explicit_prefs:
+            ownership_issues, by_line = check_ownership(
+                ownership_paths,
+                expected_line=expected_line,
+                allowed_prefixes=explicit_prefs,
+                allow_shared_index=allow_shared_index,
+                task_label=task_label,
+                forbidden_prefixes=explicit_forb,
+            )
+        else:
+            ownership_issues, by_line = [], {"infra": [TASK_BINDING_REL_PATH]}
+    elif expected_line or explicit_prefs:
+        ownership_issues, by_line = check_ownership(
+            ownership_paths,
+            expected_line=expected_line,
+            allowed_prefixes=explicit_prefs,
+            allow_shared_index=allow_shared_index,
+            task_label=task_label,
+            forbidden_prefixes=explicit_forb,
+        )
+    else:
+        has_parent = git_run(repo, "rev-parse", "--verify", "-q", f"{rev}^").returncode == 0
+        if not has_parent and set(norm_own) <= SHARED_INDEX_FILES:
+            ownership_issues, by_line = check_ownership(ownership_paths)
+        else:
+            active_tasks: list[dict[str, Any]] = []
+            if has_parent:
+                active_tasks, parse_err = load_repo_active_tasks(
+                    repo, rev_spec=f"{rev}^", allow_disk_fallback_if_no_head=False
+                )
+                if parse_err and require_task_scope:
+                    git_errors.append(f"[{rev[:8]}] 解析父提交 {TASK_BINDING_REL_PATH} 失败：{parse_err}")
+                elif not active_tasks and require_task_scope:
+                    git_errors.append(
+                        f"[{rev[:8]}] 未完成任务范围验收：未提供任务绑定范围（父提交缺少有效的 {TASK_BINDING_REL_PATH}，且未传 --task-manifest / --allowed-prefixes / --expected-line）"
+                    )
+            else:
+                if require_task_scope:
+                    git_errors.append(
+                        f"[{rev[:8]}] 未完成任务范围验收：根提交修改了非共用索引路径且缺少父提交 {TASK_BINDING_REL_PATH}"
+                    )
+
+            if active_tasks:
+                ownership_issues, by_line, _ = check_ownership_against_tasks(ownership_paths, active_tasks)
+            else:
+                ownership_issues, by_line = check_ownership(ownership_paths)
+
     ownership_issues = [f"[{rev[:8]}] {msg}" for msg in ownership_issues]
 
     privacy_findings: list[str] = []
@@ -579,11 +875,59 @@ def scan_uncommitted(
     task_label: str | None = None,
     require_handoff_header: bool = False,
     require_public_ready: bool = False,
+    active_tasks: list[dict[str, Any]] | None = None,
+    forbidden_prefixes: Iterable[str] | None = None,
+    require_task_scope: bool = False,
 ) -> tuple[list[str], list[str], list[str]]:
     """分别枚举并扫描暂存区（index）与工作区（worktree），返回 (ownership_issues, privacy_findings, scanned_labels)。"""
     ownership_issues: list[str] = []
     privacy_findings: list[str] = []
     scanned_labels: list[str] = []
+    explicit_prefs = list(allowed_prefixes or [])
+    explicit_forb = list(forbidden_prefixes or [])
+
+    def _check_uncommitted_paths(paths_list: list[str], content_list: list[str], tag: str) -> list[str]:
+        norm_p = [normalize_rel_path(p) for p in paths_list if normalize_rel_path(p)]
+        norm_c = [normalize_rel_path(p) for p in content_list if normalize_rel_path(p)]
+        if not norm_p:
+            return []
+        if norm_p == [TASK_BINDING_REL_PATH]:
+            if TASK_BINDING_REL_PATH not in norm_c:
+                if require_task_scope:
+                    git_errors.append(f"[{tag}] 未完成任务范围验收：禁止删除 {TASK_BINDING_REL_PATH}")
+            else:
+                if tag == "index":
+                    b = git_run(repo, "show", f":{TASK_BINDING_REL_PATH}")
+                    raw_txt = b.stdout if b.returncode == 0 else ""
+                else:
+                    dp = repo / TASK_BINDING_REL_PATH
+                    raw_txt = dp.read_text(encoding="utf-8", errors="replace") if dp.is_file() else ""
+                try:
+                    parse_task_binding_text(raw_txt, strict_schema=True)
+                except Exception as exc:
+                    git_errors.append(f"[{tag}] 解析 {TASK_BINDING_REL_PATH} 失败：{exc}")
+            if expected_line or explicit_prefs:
+                return check_ownership(
+                    paths_list,
+                    expected_line=expected_line,
+                    allowed_prefixes=explicit_prefs,
+                    allow_shared_index=allow_shared_index,
+                    task_label=task_label,
+                    forbidden_prefixes=explicit_forb,
+                )[0]
+            return []
+        if expected_line or explicit_prefs:
+            return check_ownership(
+                paths_list,
+                expected_line=expected_line,
+                allowed_prefixes=explicit_prefs,
+                allow_shared_index=allow_shared_index,
+                task_label=task_label,
+                forbidden_prefixes=explicit_forb,
+            )[0]
+        if active_tasks:
+            return check_ownership_against_tasks(paths_list, active_tasks)[0]
+        return check_ownership(paths_list)[0]
 
     # 1. 暂存区（index vs HEAD）
     staged_res = git_checked(repo, git_errors, "枚举暂存区改动", "diff", "--cached", "--name-status", "-M")
@@ -591,13 +935,7 @@ def scan_uncommitted(
     staged_content: list[str] = []
     if staged_res is not None:
         staged_own, staged_content = parse_name_status(staged_res.stdout.splitlines())
-        own_idx, _ = check_ownership(
-            staged_own,
-            expected_line=expected_line,
-            allowed_prefixes=allowed_prefixes,
-            allow_shared_index=allow_shared_index,
-            task_label=task_label,
-        )
+        own_idx = _check_uncommitted_paths(staged_own, staged_content, "index")
         ownership_issues.extend(f"[index] {m}" for m in own_idx)
         for rel in staged_content:
             label = f"index:{rel}"
@@ -631,24 +969,38 @@ def scan_uncommitted(
         wt_own = sorted(set(wt_own) | set(untracked))
         wt_content = sorted(set(wt_content) | set(untracked))
 
-    own_wt, _ = check_ownership(
-        wt_own,
-        expected_line=expected_line,
-        allowed_prefixes=allowed_prefixes,
-        allow_shared_index=allow_shared_index,
-        task_label=task_label,
-    )
+    own_wt = _check_uncommitted_paths(wt_own, wt_content, "worktree")
     ownership_issues.extend(f"[worktree] {m}" for m in own_wt)
 
     if not own_idx_or_wt(ownership_issues) and (staged_own and wt_own):
-        own_combined, _ = check_ownership(
-            staged_own + wt_own,
-            expected_line=expected_line,
-            allowed_prefixes=allowed_prefixes,
-            allow_shared_index=allow_shared_index,
-            task_label=task_label,
+        combined_paths = sorted(set(staged_own) | set(wt_own))
+        combined_norm = [normalize_rel_path(p) for p in combined_paths if normalize_rel_path(p)]
+        if combined_norm != [TASK_BINDING_REL_PATH]:
+            if expected_line or explicit_prefs:
+                own_combined, _ = check_ownership(
+                    combined_paths,
+                    expected_line=expected_line,
+                    allowed_prefixes=explicit_prefs,
+                    allow_shared_index=allow_shared_index,
+                    task_label=task_label,
+                    forbidden_prefixes=explicit_forb,
+                )
+            elif active_tasks:
+                own_combined, _, _ = check_ownership_against_tasks(combined_paths, active_tasks)
+            else:
+                own_combined, _ = check_ownership(combined_paths)
+            ownership_issues.extend(f"[uncommitted] {m}" for m in own_combined)
+
+    all_uncommitted_norm = [normalize_rel_path(p) for p in sorted(set(staged_own) | set(wt_own)) if normalize_rel_path(p)]
+    if (
+        require_task_scope
+        and all_uncommitted_norm
+        and all_uncommitted_norm != [TASK_BINDING_REL_PATH]
+        and not (expected_line or explicit_prefs or active_tasks)
+    ):
+        git_errors.append(
+            f"[uncommitted] 未完成任务范围验收：未提供任务绑定范围（缺少 --task-manifest / --allowed-prefixes / --expected-line 或 HEAD 中有效的 {TASK_BINDING_REL_PATH}）"
         )
-        ownership_issues.extend(f"[uncommitted] {m}" for m in own_combined)
 
     for rel in wt_content:
         fp = repo / rel
@@ -909,13 +1261,23 @@ def main(argv: list[str] | None = None) -> int:
         help="限定当前任务允许修改的路径前缀或精确文件列表",
     )
     ap.add_argument(
+        "--forbidden-prefixes",
+        nargs="*",
+        help="限定当前任务禁止修改的路径前缀或精确文件列表",
+    )
+    ap.add_argument(
         "--task-manifest",
         help="读取任务范围与交接元数据文件（支持 JSON 或含 6 项元数据的 Markdown 交接文件）",
     )
     ap.add_argument(
         "--require-task-scope",
         action="store_true",
-        help="强制要求本次检查具备任务级允许修改范围（从 CLI 参数、--task-manifest 或仓库 agents/current_task.json 读取；缺失则报错）",
+        help="强制要求本次检查具备任务级允许修改范围（从 CLI 参数、--task-manifest 或仓库父提交 agents/current_task.json 读取；缺失则报错）",
+    )
+    ap.add_argument(
+        "--check-task-pool",
+        action="store_true",
+        help="校验仓库 agents/task_pools/*.json 任务级分端信息共享池格式及 github_repo=synced 产物完整性",
     )
     ap.add_argument(
         "--require-handoff-header",
@@ -953,11 +1315,13 @@ def main(argv: list[str] | None = None) -> int:
 
     expected_line = args.expected_line
     allowed_prefixes: list[str] = list(args.allowed_prefixes or [])
+    forbidden_prefixes: list[str] = list(args.forbidden_prefixes or [])
     allow_shared_index = True
     task_label: str | None = None
     visibility: str = ""
     status: str = ""
     manifest_target_rel: str = ""
+    manifest_active_tasks: list[dict[str, Any]] = []
 
     # 若指定了 --task-manifest，解析并合并任务范围与交接元数据
     if args.task_manifest:
@@ -967,20 +1331,25 @@ def main(argv: list[str] | None = None) -> int:
         else:
             try:
                 manifest = parse_task_manifest(tm_path)
-                if args.require_handoff_header or args.require_public_ready:
-                    git_errors.extend(validate_handoff_manifest(manifest, require_public_ready=args.require_public_ready))
-                elif manifest.get("visibility") or manifest.get("status"):
-                    git_errors.extend(validate_handoff_manifest(manifest, require_public_ready=args.require_public_ready))
-                if not expected_line and manifest.get("expected_line"):
-                    expected_line = manifest["expected_line"]
-                if not allowed_prefixes and manifest.get("allowed_prefixes"):
-                    allowed_prefixes = list(manifest["allowed_prefixes"])
-                allow_shared_index = bool(manifest.get("allow_shared_index", True))
-                if manifest.get("task_id") or manifest.get("owner"):
-                    task_label = " | ".join(x for x in (manifest.get("task_id"), manifest.get("owner")) if x)
-                visibility = manifest.get("visibility", "")
-                status = manifest.get("status", "")
-                manifest_target_rel = manifest.get("target_repo_path", "")
+                if manifest.get("active_tasks"):
+                    manifest_active_tasks = list(manifest["active_tasks"])
+                else:
+                    if args.require_handoff_header or args.require_public_ready:
+                        git_errors.extend(validate_handoff_manifest(manifest, require_public_ready=args.require_public_ready))
+                    elif manifest.get("visibility") or manifest.get("status"):
+                        git_errors.extend(validate_handoff_manifest(manifest, require_public_ready=args.require_public_ready))
+                    if not expected_line and manifest.get("expected_line"):
+                        expected_line = manifest["expected_line"]
+                    if not allowed_prefixes and manifest.get("allowed_prefixes"):
+                        allowed_prefixes = list(manifest["allowed_prefixes"])
+                    if not forbidden_prefixes and manifest.get("forbidden_prefixes"):
+                        forbidden_prefixes = list(manifest["forbidden_prefixes"])
+                    allow_shared_index = bool(manifest.get("allow_shared_index", True))
+                    if manifest.get("task_id") or manifest.get("owner"):
+                        task_label = " | ".join(x for x in (manifest.get("task_id"), manifest.get("owner")) if x)
+                    visibility = manifest.get("visibility", "")
+                    status = manifest.get("status", "")
+                    manifest_target_rel = manifest.get("target_repo_path", "")
             except Exception as exc:
                 git_errors.append(f"解析任务清单 {args.task_manifest} 失败：{exc}")
 
@@ -990,8 +1359,10 @@ def main(argv: list[str] | None = None) -> int:
             args.ownership_mode == "error"
             or expected_line
             or allowed_prefixes
+            or forbidden_prefixes
             or args.task_manifest
             or args.require_task_scope
+            or args.check_task_pool
             or args.require_handoff_header
             or args.require_public_ready
         )
@@ -1021,20 +1392,23 @@ def main(argv: list[str] | None = None) -> int:
             except Exception:
                 inline_manifest = {}
 
-            if not allowed_prefixes and inline_manifest.get("allowed_prefixes"):
-                allowed_prefixes = list(inline_manifest["allowed_prefixes"])
-            if not expected_line and inline_manifest.get("expected_line"):
-                expected_line = inline_manifest["expected_line"]
-            if not task_label and (inline_manifest.get("task_id") or inline_manifest.get("owner")):
-                task_label = " | ".join(
-                    x for x in (inline_manifest.get("task_id"), inline_manifest.get("owner")) if x
-                )
-            if not visibility and inline_manifest.get("visibility"):
-                visibility = inline_manifest.get("visibility", "")
-            if not status and inline_manifest.get("status"):
-                status = inline_manifest.get("status", "")
-            if not manifest_target_rel and inline_manifest.get("target_repo_path"):
-                manifest_target_rel = inline_manifest["target_repo_path"]
+            if not inline_manifest.get("active_tasks"):
+                if not allowed_prefixes and inline_manifest.get("allowed_prefixes"):
+                    allowed_prefixes = list(inline_manifest["allowed_prefixes"])
+                if not forbidden_prefixes and inline_manifest.get("forbidden_prefixes"):
+                    forbidden_prefixes = list(inline_manifest["forbidden_prefixes"])
+                if not expected_line and inline_manifest.get("expected_line"):
+                    expected_line = inline_manifest["expected_line"]
+                if not task_label and (inline_manifest.get("task_id") or inline_manifest.get("owner")):
+                    task_label = " | ".join(
+                        x for x in (inline_manifest.get("task_id"), inline_manifest.get("owner")) if x
+                    )
+                if not visibility and inline_manifest.get("visibility"):
+                    visibility = inline_manifest.get("visibility", "")
+                if not status and inline_manifest.get("status"):
+                    status = inline_manifest.get("status", "")
+                if not manifest_target_rel and inline_manifest.get("target_repo_path"):
+                    manifest_target_rel = inline_manifest["target_repo_path"]
 
             if args.target_rel_path and idx == 0:
                 rel = normalize_rel_path(args.target_rel_path)
@@ -1061,29 +1435,53 @@ def main(argv: list[str] | None = None) -> int:
             file_hashes[rel] = sha
             privacy_errors.extend(scan_text(rel, text))
 
-        if args.require_task_scope and not (expected_line or allowed_prefixes):
-            disk_tm = repo / TASK_BINDING_REL_PATH
-            if disk_tm.is_file():
+        files_active_tasks = list(manifest_active_tasks)
+        if not (expected_line or allowed_prefixes or files_active_tasks):
+            loaded_tasks, parse_err = load_repo_active_tasks(repo, rev_spec="HEAD", allow_disk_fallback_if_no_head=True)
+            if not loaded_tasks and (repo / TASK_BINDING_REL_PATH).is_file():
                 try:
-                    m = parse_task_manifest(disk_tm)
-                    expected_line = m.get("expected_line")
-                    allowed_prefixes = list(m.get("allowed_prefixes") or [])
-                    allow_shared_index = bool(m.get("allow_shared_index", True))
-                    task_label = " | ".join(x for x in (m.get("task_id"), m.get("owner")) if x) or None
+                    loaded_tasks = parse_task_binding_text(
+                        (repo / TASK_BINDING_REL_PATH).read_text(encoding="utf-8", errors="replace"),
+                        strict_schema=False,
+                    )
+                    parse_err = None
                 except Exception as exc:
-                    git_errors.append(f"解析 {TASK_BINDING_REL_PATH} 失败：{exc}")
-            if not (expected_line or allowed_prefixes):
-                git_errors.append(
-                    f"未完成任务范围验收：未提供任务绑定范围（缺少 --task-manifest / --allowed-prefixes / --expected-line 或有效的 {TASK_BINDING_REL_PATH}）"
-                )
+                    parse_err = str(exc)
+            if parse_err and args.require_task_scope:
+                git_errors.append(f"解析 {TASK_BINDING_REL_PATH} 失败：{parse_err}")
+            files_active_tasks = loaded_tasks
 
-        own_issues, _ = check_ownership(
-            rel_list,
-            expected_line=expected_line,
-            allowed_prefixes=allowed_prefixes,
-            allow_shared_index=allow_shared_index,
-            task_label=task_label,
-        )
+        if args.require_task_scope and not (expected_line or allowed_prefixes or files_active_tasks):
+            git_errors.append(
+                f"未完成任务范围验收：未提供任务绑定范围（缺少 --task-manifest / --allowed-prefixes / --expected-line 或有效的 {TASK_BINDING_REL_PATH}）"
+            )
+
+        norm_rel_list = [normalize_rel_path(p) for p in rel_list if normalize_rel_path(p)]
+        if norm_rel_list == [TASK_BINDING_REL_PATH]:
+            try:
+                parse_task_binding_text(
+                    resolved_file_paths[0].read_text(encoding="utf-8", errors="replace"),
+                    strict_schema=True,
+                )
+            except Exception as exc:
+                git_errors.append(f"解析 {TASK_BINDING_REL_PATH} 失败：{exc}")
+            own_issues = []
+        elif expected_line or allowed_prefixes:
+            own_issues, _ = check_ownership(
+                rel_list,
+                expected_line=expected_line,
+                allowed_prefixes=allowed_prefixes,
+                allow_shared_index=allow_shared_index,
+                task_label=task_label,
+                forbidden_prefixes=forbidden_prefixes,
+            )
+        elif files_active_tasks:
+            own_issues, _, matched_lbl = check_ownership_against_tasks(rel_list, files_active_tasks)
+            if matched_lbl and not task_label:
+                task_label = matched_lbl
+        else:
+            own_issues, _ = check_ownership(rel_list)
+
         if effective_ownership_mode == "error":
             ownership_errors.extend(own_issues)
         else:
@@ -1101,9 +1499,13 @@ def main(argv: list[str] | None = None) -> int:
                 revs_proc = git_checked(repo, git_errors, f"解析 commit 范围 {rng}", "rev-list", "--reverse", rng)
                 if revs_proc is not None:
                     revs = [l.strip() for l in revs_proc.stdout.splitlines() if l.strip()]
-                    if not revs and args.require_task_scope and not (expected_line or allowed_prefixes):
-                        disk_tm = repo / TASK_BINDING_REL_PATH
-                        if not disk_tm.is_file():
+                    if not revs and args.require_task_scope and not (expected_line or allowed_prefixes or manifest_active_tasks):
+                        head_tasks, head_err = load_repo_active_tasks(
+                            repo, rev_spec="HEAD", allow_disk_fallback_if_no_head=True
+                        )
+                        if head_err:
+                            git_errors.append(f"解析 {TASK_BINDING_REL_PATH} 失败：{head_err}")
+                        elif not head_tasks:
                             git_errors.append(
                                 f"未完成任务范围验收：未提供任务绑定范围（缺少 --task-manifest / --allowed-prefixes / --expected-line 或有效的 {TASK_BINDING_REL_PATH}）"
                             )
@@ -1121,6 +1523,7 @@ def main(argv: list[str] | None = None) -> int:
                             require_task_scope=args.require_task_scope,
                             require_handoff_header=args.require_handoff_header,
                             require_public_ready=args.require_public_ready,
+                            forbidden_prefixes=forbidden_prefixes,
                         )
                         if effective_ownership_mode == "error":
                             ownership_errors.extend(own_issues)
@@ -1131,23 +1534,17 @@ def main(argv: list[str] | None = None) -> int:
             if args.include_worktree or (not explicit_range and not scanned_commits and not git_errors):
                 wt_line = expected_line
                 wt_prefs = list(allowed_prefixes)
+                wt_forb = list(forbidden_prefixes)
                 wt_shared = allow_shared_index
                 wt_label = task_label
-                if args.require_task_scope and not (wt_line or wt_prefs):
-                    disk_tm = repo / TASK_BINDING_REL_PATH
-                    if disk_tm.is_file():
-                        try:
-                            m = parse_task_manifest(disk_tm)
-                            wt_line = m.get("expected_line")
-                            wt_prefs = list(m.get("allowed_prefixes") or [])
-                            wt_shared = bool(m.get("allow_shared_index", True))
-                            wt_label = " | ".join(x for x in (m.get("task_id"), m.get("owner")) if x) or None
-                        except Exception as exc:
-                            git_errors.append(f"解析 {TASK_BINDING_REL_PATH} 失败：{exc}")
-                    if not (wt_line or wt_prefs):
-                        git_errors.append(
-                            f"未完成任务范围验收：未提供任务绑定范围（缺少 --task-manifest / --allowed-prefixes / --expected-line 或有效的 {TASK_BINDING_REL_PATH}）"
-                        )
+                wt_active_tasks = list(manifest_active_tasks)
+                if not (wt_line or wt_prefs or wt_active_tasks):
+                    loaded_wt_tasks, wt_err = load_repo_active_tasks(
+                        repo, rev_spec="HEAD", allow_disk_fallback_if_no_head=True
+                    )
+                    if wt_err and args.require_task_scope:
+                        git_errors.append(f"解析 HEAD:{TASK_BINDING_REL_PATH} 失败：{wt_err}")
+                    wt_active_tasks = loaded_wt_tasks
 
                 own_issues, priv_issues, labels = scan_uncommitted(
                     repo,
@@ -1159,6 +1556,9 @@ def main(argv: list[str] | None = None) -> int:
                     task_label=wt_label,
                     require_handoff_header=args.require_handoff_header,
                     require_public_ready=args.require_public_ready,
+                    active_tasks=wt_active_tasks,
+                    forbidden_prefixes=wt_forb,
+                    require_task_scope=args.require_task_scope,
                 )
                 scanned_files.extend(labels)
                 if effective_ownership_mode == "error":
@@ -1166,6 +1566,16 @@ def main(argv: list[str] | None = None) -> int:
                 else:
                     ownership_warnings.extend(own_issues)
                 privacy_errors.extend(priv_issues)
+
+    if args.check_task_pool or args.require_task_scope:
+        pool_active_tasks, _ = load_repo_active_tasks(repo, rev_spec="HEAD", allow_disk_fallback_if_no_head=True)
+        git_errors.extend(
+            validate_task_pools(
+                repo,
+                active_tasks=pool_active_tasks,
+                require_non_empty=bool(args.check_task_pool),
+            )
+        )
 
     if args.archive_check_script and args.archive_file:
         archive_check_result = run_archive_check_integration(
