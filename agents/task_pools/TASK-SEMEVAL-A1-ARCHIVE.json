@@ -16,40 +16,44 @@
   ],
   "visibility": "允许公开发布",
   "status": "通过",
-  "task_state": "正式原包位置与可获取性待核验：formal_v1/ 当前仅有 README.md，smoke_v1/README.md 中的 ecba6eb3… 系 SMOKE 阶段压缩包哈希；待定位并核验实际正式 45 项结果 ZIP 后，再补齐 summary.json、oof/ 与 tasks/B2-{RL,SL,LS}/",
+  "task_state": "正式结果包已由 Pan-Yan-0 上传 Drive（1aUiQJZYsx2w_fGjHkL3Kr4sW9HbE0HQG，5201cfeac0bc…）并核验通过（含 45 项 RL/SL/LS 逐折预测、108 项 oof 与 summary.json）；待 GPT Codex 端在 formal_v1/ 用 git add -f 补推上 note 分支，同时下游 A1-RECALC 可直接凭该 Drive ZIP 启动独立复算",
   "endpoints": {
     "pan_yan_0": {
       "role": "runner_and_dispatcher",
-      "state": "locate_formal_zip",
-      "note": "已在 Kaggle T4×2 完成 A1 45 项正式队列；需核查本机或 Kaggle Output 中实际正式 45 项结果包 a1_train_v1_results.zip 所在位置与校验和（区分 smoke_v1 中的 SMOKE 压缩包哈希 ecba6eb3…）"
+      "state": "uploaded_verified_formal_zip",
+      "note": "已在 Kaggle T4×2 完成 A1 45 项正式队列并将核验后的 a1_train_v1_results_FORMAL.zip（SHA-256 5201cfeac0bc…）上传至 Drive 20_实验包/TASK-SEMEVAL-A1-RECALC/（1aUiQJZYsx2w_fGjHkL3Kr4sW9HbE0HQG），与 smoke_v1 中的 SMOKE 包哈希 ecba6eb3… 已明确区分"
     },
     "gpt_codex": {
       "role": "single_writer_archiver",
-      "state": "formal_zip_location_unverified",
-      "note": "Commit 1d4cf169 仅含 formal_v1/README.md，当前工作目录未找到正式 A1 ZIP，且仅据此尚无法确定原因或原包位置；待定位并核验实际正式结果 ZIP 后，再用 git add -f 补推 summary.json、oof/ 与 tasks/B2-{RL,SL,LS}/（禁改 README.md 与 recalc_receipt.json）"
+      "state": "ready_to_archive_from_drive_zip",
+      "note": "可从 Drive 1aUiQJZYsx2w_fGjHkL3Kr4sW9HbE0HQG（或 Pan-Yan-0 转交包）读取经核验的 a1_train_v1_results_FORMAL.zip（5201cfeac0bc…），在 formal_v1/ 用 git add -f 补推 summary.json、oof/ 与 45 项 tasks/B2-{RL,SL,LS}/（禁改 README.md 与 recalc_receipt.json）"
     },
     "antigravity_semeval": {
       "role": "independent_reviewer",
-      "state": "awaiting_formal_archive",
-      "note": "待正式 A1 数据文件定位、核验并入库后，核对完整性并在下游 TASK-SEMEVAL-A1-RECALC 执行只读独立复算"
+      "state": "ready_to_recalc_and_review",
+      "note": "已可直接从 Drive 1aUiQJZYsx2w_fGjHkL3Kr4sW9HbE0HQG 启动 TASK-SEMEVAL-A1-RECALC 独立复算，并在 formal_v1/ 数据文件入库 GitHub 后执行只读完整性核对"
     }
   },
   "artifacts": [
     {
       "artifact_id": "ART-A1-RESULTS",
-      "name": "实际正式 45 项 A1 结果包解压后的 formal_v1/ 逐折预测、OOF 与 summary.json（正式原包位置与可获取性待核验）",
+      "name": "实际正式 45 项 A1 结果包 a1_train_v1_results_FORMAL.zip 及解压后的 formal_v1/ 逐折预测、OOF 与 summary.json",
+      "drive_file_id": "1aUiQJZYsx2w_fGjHkL3Kr4sW9HbE0HQG",
+      "formal_zip_sha256": "5201cfeac0bc2af25e24695a7037d14b4d929d23d8428a1badadc0b9b66d2a25",
+      "summary_json_sha256": "56143eded9aa6a72bcde7c6897a8c5a31c0569e822d616456035633c1e7d9e11",
+      "oof_b2_sl_s42_sha256": "982d1d41008578097d06a037b5550c3524c3784963118f4e199703718daae9d9",
       "sha256_formal_readme": "4596b514e9db6dd004af8d0465095fda1703074f1ffce8d500ba2f87bd1ab647",
-      "formal_zip_sha256": null,
-      "formal_zip_sha256_status": "未入库登记（smoke_v1/README.md 中的 ecba6eb3… 系 SMOKE 包哈希；须定位实际正式 ZIP 核验内容后再登记）",
+      "formal_zip_sha256_status": "已上传 Drive（1aUiQJZYsx2w_fGjHkL3Kr4sW9HbE0HQG）并校验完整性通过（367 项；45 项 tasks/B2-{RL,SL,LS}、108 项 oof、summary.json 与 formal_v1/README.md 一致）",
       "visibility": "工作区私有 (原包) / 允许公开发布 (脱敏指标、OOF 与逐折预测)",
       "required_by": [
+        "gpt_codex",
         "antigravity_semeval"
       ],
       "holders": {
-        "pan_yan_0": "to_verify_local_or_kaggle",
-        "gpt_codex": "not_found_in_current_workspace",
-        "antigravity_semeval": "missing",
-        "drive_pool": "missing",
+        "pan_yan_0": "held",
+        "gpt_codex": "accessible_via_drive_or_user",
+        "antigravity_semeval": "accessible_via_drive",
+        "drive_pool": "synced",
         "github_repo": "partial_readme_only"
       },
       "repo_path": "ML_note/实验/SemEval_DiCo-NLI/metrics/a1_train/formal_v1/",
