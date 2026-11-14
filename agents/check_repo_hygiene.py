@@ -694,6 +694,16 @@ def script_sha256() -> str:
     return hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
 
 
+def normalize_commit_range(rng: str) -> str:
+    """将全零远端 SHA（如首次推送 0000...000..<sha>）规范化为完整可达历史 <sha>，不退化为单 commit。"""
+    s = rng.strip()
+    if ".." in s and "..." not in s:
+        left, right = s.split("..", 1)
+        if left and set(left) == {"0"} and len(left) >= 7 and right.strip():
+            return right.strip()
+    return s
+
+
 def install_pre_push_hook(repo: Path) -> Path:
     """在本地 Git 仓库安装 pre-push 钩子，确保公开发布前在本地拦截违规提交（先于 GitHub Actions）。"""
     hook_path = repo / ".git" / "hooks" / "pre-push"
@@ -707,11 +717,7 @@ while read -r local_ref local_sha remote_ref remote_sha; do
     continue
   fi
   if [ "$remote_sha" = "$ZERO" ]; then
-    if git rev-parse --verify -q "${local_sha}^" >/dev/null; then
-      RANGE="${local_sha}^..${local_sha}"
-    else
-      RANGE="${local_sha}"
-    fi
+    RANGE="${local_sha}"
   else
     RANGE="${remote_sha}..${local_sha}"
   fi
@@ -1091,6 +1097,7 @@ def main(argv: list[str] | None = None) -> int:
             explicit_range = args.commit_range is not None
             rng = args.commit_range if explicit_range else default_commit_range(repo)
             if rng:
+                rng = normalize_commit_range(rng)
                 revs_proc = git_checked(repo, git_errors, f"解析 commit 范围 {rng}", "rev-list", "--reverse", rng)
                 if revs_proc is not None:
                     revs = [l.strip() for l in revs_proc.stdout.splitlines() if l.strip()]

@@ -42,11 +42,7 @@ jobs:
             RANGE="${PR_BASE}..${PR_HEAD}"
           else
             if [ -z "$PUSH_BEFORE" ] || [ "$PUSH_BEFORE" = "0000000000000000000000000000000000000000" ]; then
-              if git rev-parse --verify -q "${PUSH_AFTER}^" >/dev/null; then
-                RANGE="${PUSH_AFTER}^..${PUSH_AFTER}"
-              else
-                RANGE="${PUSH_AFTER}"
-              fi
+              RANGE="${PUSH_AFTER}"
             else
               RANGE="${PUSH_BEFORE}..${PUSH_AFTER}"
             fi

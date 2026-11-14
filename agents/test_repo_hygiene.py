@@ -499,6 +499,72 @@ class TestRepoHygiene(unittest.TestCase):
                 ])
             self.assertEqual(rc_no_files, 1)
 
+    def test_first_push_zero_remote_sha_scans_full_history_and_catches_reverted_private_draft(self):
+        """回归 11（Codex v5 首次推送漏扫历史）：remote_sha 为全零时扫描全部将被发布的历史，拦截中间 commit 写入后又删除的私有草稿。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = init_temp_git_repo(tmp)
+            # Commit 1：建立基础文件、检查脚本与任务绑定清单
+            agents_dir = repo / "agents"
+            agents_dir.mkdir(parents=True, exist_ok=True)
+            (agents_dir / "check_repo_hygiene.py").write_bytes(Path(crh.__file__).read_bytes())
+            (agents_dir / "current_task.json").write_text(
+                json.dumps(
+                    {
+                        "task_id": "TASK-LEARN-001",
+                        "owner": "学习线",
+                        "allowed_prefixes": ["ML_note/原理笔记/", "agents/"],
+                        "allow_shared_index": True,
+                    },
+                    ensure_ascii=False,
+                ),
+                encoding="utf-8",
+            )
+            subprocess.run(["git", "-C", tmp, "add", "."], check=True)
+            subprocess.run(["git", "-C", tmp, "commit", "-q", "-m", "commit 1: base setup"], check=True)
+
+            # Commit 2：加入标记“工作区私有”的 NLP 草稿
+            draft = repo / "ML_note" / "原理笔记" / "BERT" / "private_draft.md"
+            draft.parent.mkdir(parents=True, exist_ok=True)
+            draft.write_text(
+                "# 私有草稿\n\n| 字段 | 内容 |\n|---|---|\n| 可见范围 | `工作区私有` |\n",
+                encoding="utf-8",
+            )
+            subprocess.run(["git", "-C", tmp, "add", "."], check=True)
+            subprocess.run(["git", "-C", tmp, "commit", "-q", "-m", "commit 2: add private draft"], check=True)
+
+            # Commit 3：删除该私有草稿（但仍在 Git 历史中）
+            subprocess.run(["git", "-C", tmp, "rm", "-q", "ML_note/原理笔记/BERT/private_draft.md"], check=True)
+            subprocess.run(["git", "-C", tmp, "commit", "-q", "-m", "commit 3: delete private draft"], check=True)
+            head_sha = subprocess.check_output(["git", "-C", tmp, "rev-parse", "HEAD"], text=True).strip()
+            zero_sha = "0" * 40
+
+            # 1) 验证 --commit-range 0000...000..HEAD 扫描全部 3 个 commit 并拦截 Commit 2 的私有草稿
+            buf = io.StringIO()
+            with contextlib.redirect_stdout(buf):
+                rc_cli = crh.main([
+                    "--repo", tmp,
+                    "--commit-range", f"{zero_sha}..{head_sha}",
+                    "--ownership-mode", "error",
+                    "--require-task-scope",
+                    "--require-public-ready",
+                ])
+            self.assertEqual(rc_cli, 1)
+            self.assertIn("公开发布拦截", buf.getvalue())
+
+            # 2) 验证实际执行 pre-push 钩子（stdin 传入 remote_sha=0000...000）同样拦截
+            hook_path = crh.install_pre_push_hook(repo)
+            stdin_line = f"refs/heads/note {head_sha} refs/heads/note {zero_sha}\n"
+            proc = subprocess.run(
+                [str(hook_path)],
+                cwd=tmp,
+                input=stdin_line,
+                text=True,
+                capture_output=True,
+            )
+            self.assertNotEqual(proc.returncode, 0)
+            self.assertIn("公开发布拦截", proc.stdout + proc.stderr)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+
