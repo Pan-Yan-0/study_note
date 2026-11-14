@@ -25,13 +25,13 @@
   ],
   "visibility": "允许公开发布",
   "status": "通过",
-  "task_state": "待启动（写包输入已全部就绪；推理按 Kaggle T4 fp16 执行，勿把 trained.json 的 A10 bf16 当作推理约束）",
+  "task_state": "待启动（写包输入已全部就绪；Q0 训练环境 NVIDIA A10 / bf16 记于 COMPLETE.json[\"identity\"][\"runtime\"]，B1 推理按 Kaggle T4 fp16 执行，勿把上述 A10 bf16 训练记录当成推理约束）",
   "endpoints": {
     "antigravity_semeval": {
       "role": "package_author",
       "state": "ready_to_start",
       "blocked_by": [],
-      "note": "b1_testset.json（含编辑对文本与 parent ID）及 Q0 15 份 adapter 元数据（trained.json 的 best_epoch、COMPLETE.json 的 files 哈希表、pred_fold0_sym.csv）均已在仓库中；build_bundle 加载官方 588968e（dico_nli_train_track1_participant_labeled.csv）以查找父样本 (t1, t2) 原文；推理固定按 Kaggle T4 fp16"
+      "note": "b1_testset.json（含编辑对文本与 parent ID）及 Q0 15 份 adapter 元数据（trained.json 的 best_epoch、COMPLETE.json 的 identity.runtime 与 files 哈希表、cache.jsonl 与 pred_fold0_sym.csv）均已在仓库中；待在 code/cf_b1_eval/ 新建的 build_bundle 脚本参照 code/cf_b1.py 的 data() 口径加载官方 588968e（dico_nli_train_track1_participant_labeled.csv）查找父样本 (t1, t2) 原文；推理固定按 Kaggle T4 fp16"
     },
     "gpt_codex": {
       "role": "independent_reviewer",
@@ -73,7 +73,7 @@
     },
     {
       "artifact_id": "ART-Q0-WEIGHTS-META",
-      "name": "Q0 15 份 LoRA 权重归档元数据、trained.json best_epoch、COMPLETE.json files 哈希与 cache.jsonl（训练环境为 A10 bf16；B1 推理按 T4 fp16 先复现各折 seed 42 归档 pred_fold0_sym.csv）",
+      "name": "Q0 15 份 LoRA 权重归档元数据：COMPLETE.json（identity.runtime 记 NVIDIA A10 / bf16，files 含权重哈希）、trained.json（best_epoch 与前向检查）、cache.jsonl 与各折 pred_fold0_sym.csv（B1 推理按 T4 fp16 先复现各折 seed 42 归档预测）",
       "sha256": "e07c957b9ca4cd42a745d2d72da541f838ceb33fe50e5327d287665d6c8ba865",
       "complete_json_s42_f0_sha256": "20b5f777c65f7dc6c6e76c2ad75d419b52e076bc18dbb5ac48881c8ed1831c0f",
       "trained_json_s42_f0_sha256": "5c6a1f9e454c2e59405cd386889e01522a0bbef31db532b5a19dd1f5a139e9d2",
