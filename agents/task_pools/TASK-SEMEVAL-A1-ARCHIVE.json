@@ -16,37 +16,38 @@
   ],
   "visibility": "允许公开发布",
   "status": "通过",
-  "task_state": "待 GPT Codex 端使用 git add -f 补推 formal_v1/ 逐折预测、OOF 与 summary.json",
+  "task_state": "正式原包位置与可获取性待核验：formal_v1/ 当前仅有 README.md，smoke_v1/README.md 中的 ecba6eb3… 系 SMOKE 阶段压缩包哈希；待定位并核验实际正式 45 项结果 ZIP 后，再补齐 summary.json、oof/ 与 tasks/B2-{RL,SL,LS}/",
   "endpoints": {
     "pan_yan_0": {
       "role": "runner_and_dispatcher",
-      "state": "sent_to_codex",
-      "note": "已在 Kaggle T4×2 完成 45 项正式队列并将 a1_train_v1_results.zip 发给 GPT/Codex"
+      "state": "locate_formal_zip",
+      "note": "已在 Kaggle T4×2 完成 A1 45 项正式队列；需核查本机或 Kaggle Output 中实际正式 45 项结果包 a1_train_v1_results.zip 所在位置与校验和（区分 smoke_v1 中的 SMOKE 压缩包哈希 ecba6eb3…）"
     },
     "gpt_codex": {
       "role": "single_writer_archiver",
-      "state": "held_unpushed_data_files",
-      "note": "Commit 1d4cf169 仅推了 formal_v1/README.md；待使用 git add -f 推送 summary.json、oof/ 与 tasks/B2-{RL,SL,LS}/（禁止触碰 README.md 与 recalc_receipt.json）"
+      "state": "formal_zip_location_unverified",
+      "note": "Commit 1d4cf169 仅含 formal_v1/README.md，当前工作目录未找到正式 A1 ZIP，且仅据此尚无法确定原因或原包位置；待定位并核验实际正式结果 ZIP 后，再用 git add -f 补推 summary.json、oof/ 与 tasks/B2-{RL,SL,LS}/（禁改 README.md 与 recalc_receipt.json）"
     },
     "antigravity_semeval": {
       "role": "independent_reviewer",
-      "state": "awaiting_archive_push",
-      "note": "待 formal_v1 数据文件入库后移交 TASK-SEMEVAL-A1-RECALC 执行只读独立复算"
+      "state": "awaiting_formal_archive",
+      "note": "待正式 A1 数据文件定位、核验并入库后，核对完整性并在下游 TASK-SEMEVAL-A1-RECALC 执行只读独立复算"
     }
   },
   "artifacts": [
     {
       "artifact_id": "ART-A1-RESULTS",
-      "name": "a1_train_v1_results.zip 解压后的 formal_v1/ 逐折预测、OOF 与 summary.json",
+      "name": "实际正式 45 项 A1 结果包解压后的 formal_v1/ 逐折预测、OOF 与 summary.json（正式原包位置与可获取性待核验）",
       "sha256_formal_readme": "4596b514e9db6dd004af8d0465095fda1703074f1ffce8d500ba2f87bd1ab647",
-      "sha256_results_zip_recorded_in_smoke_readme": "ecba6eb32bfb4815ce5d019ffbac706841b735bf039360e6f0f902bb5fc3a304",
+      "formal_zip_sha256": null,
+      "formal_zip_sha256_status": "未入库登记（smoke_v1/README.md 中的 ecba6eb3… 系 SMOKE 包哈希；须定位实际正式 ZIP 核验内容后再登记）",
       "visibility": "工作区私有 (原包) / 允许公开发布 (脱敏指标、OOF 与逐折预测)",
       "required_by": [
         "antigravity_semeval"
       ],
       "holders": {
-        "pan_yan_0": "held",
-        "gpt_codex": "held_unpushed",
+        "pan_yan_0": "to_verify_local_or_kaggle",
+        "gpt_codex": "not_found_in_current_workspace",
         "antigravity_semeval": "missing",
         "drive_pool": "missing",
         "github_repo": "partial_readme_only"
@@ -60,10 +61,11 @@
     },
     {
       "artifact_id": "ART-A1-SMOKE",
-      "name": "A1 SMOKE 回执与运行身份 (smoke_v1/ 共 17 个文件)",
+      "name": "A1 SMOKE 回执与运行身份 (smoke_v1/ 共 17 个文件；smoke_v1/README.md 所记 a1_train_v1_results.zip 系 SMOKE 阶段回传包)",
       "sha256": "c0bd8f6b80a67bd08a655fb79f8b07204f83283c1412e57950305c8aa426eaf2",
       "smoke_bundle_sha256": "cbaf63699f99edf90516c695b7958b139027c8583b2b7bdf0532020f501170a1",
       "formal_bundle_sha256": "70fc1e01624947a476190c6b890806fbe8e213febeec7bead2663cc0c7886332",
+      "smoke_results_zip_sha256": "ecba6eb32bfb4815ce5d019ffbac706841b735bf039360e6f0f902bb5fc3a304",
       "b2_smoke_done_sha256": "e7b00c9f26ab1ebbb36f057293e56e8dfe4e765c2c9b9245c3be0c5ea7617a8e",
       "required_by": [
         "gpt_codex",
