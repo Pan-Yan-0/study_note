@@ -119,18 +119,26 @@ def normalize_rel_path(rel_path: str) -> str:
     return p.lstrip("/")
 
 
+def _matches_dir_prefix(rel_path: str, dir_prefix: str) -> bool:
+    base = dir_prefix.rstrip("/")
+    return rel_path == base or rel_path.startswith(base + "/")
+
+
 def classify_line(rel_path: str) -> str:
     """将仓库相对路径映射为工作线名称。"""
     p = normalize_rel_path(rel_path)
     if p in {"README.md", "ML_note/实验结果汇总.md"}:
         return "shared_index"
-    if p.startswith(SEMEVAL_PAPERS_PREFIX):
+    if _matches_dir_prefix(p, SEMEVAL_PAPERS_PREFIX):
         return "semeval_papers"
-    if p.startswith("ML_note/实验/SemEval_DiCo-NLI/"):
+    if _matches_dir_prefix(p, "ML_note/实验/SemEval_DiCo-NLI/"):
         return "semeval"
-    if p.startswith(("ML_note/原理笔记/", "ML_note/论文阅读/", "ML_note/实验/ShortGPT_BI删层/", "ML_note/吴恩达机器学习/")):
+    if any(
+        _matches_dir_prefix(p, pref)
+        for pref in ("ML_note/原理笔记/", "ML_note/论文阅读/", "ML_note/实验/ShortGPT_BI删层/", "ML_note/吴恩达机器学习/")
+    ):
         return "learning"
-    if p in {"AGENTS.md", "CLAUDE.md", ".gitignore"} or p.startswith(("agents/", ".github/")):
+    if p in {"AGENTS.md", "CLAUDE.md", ".gitignore"} or any(_matches_dir_prefix(p, pref) for pref in ("agents/", ".github/")):
         return "infra"
     return "other"
 
@@ -146,7 +154,7 @@ def path_matches_allowed_prefixes(rel_path: str, allowed_prefixes: Iterable[str]
         pref = normalize_rel_path(raw_prefix).strip()
         if not pref:
             continue
-        if p.startswith(SEMEVAL_PAPERS_PREFIX) and not pref.startswith(SEMEVAL_PAPERS_PREFIX.rstrip("/")):
+        if _matches_dir_prefix(p, SEMEVAL_PAPERS_PREFIX) and not _matches_dir_prefix(pref, SEMEVAL_PAPERS_PREFIX):
             continue
         if p == pref:
             return True
@@ -636,11 +644,14 @@ def validate_task_pools(
     errors: list[str] = []
     pools_dir = repo / "agents" / "task_pools"
     pool_files: list[Path] = sorted(pools_dir.glob("*.json")) if pools_dir.is_dir() else []
+    expected_pool_tasks: dict[str, dict[str, Any]] = {}
 
     for task in active_tasks or []:
         pp_rel = task.get("pool_path", "")
         if pp_rel:
-            pp = repo / normalize_rel_path(pp_rel)
+            norm_pp = normalize_rel_path(pp_rel)
+            expected_pool_tasks[norm_pp] = task
+            pp = repo / norm_pp
             if not pp.is_file():
                 errors.append(
                     f"任务信息共享池缺失：任务 {task.get('task_id') or '?'} 声明的 pool_path {pp_rel} 不存在"
@@ -675,6 +686,30 @@ def validate_task_pools(
             errors.append(
                 f"任务信息共享池元数据缺失 ({rel_pf})：必须包含非空 task_id、owner 及合法的 expected_line"
             )
+
+        linked_task = expected_pool_tasks.get(rel_pf)
+        if linked_task:
+            if linked_task.get("task_id") and task_id != linked_task["task_id"]:
+                errors.append(
+                    f"任务信息共享池绑定不一致 ({rel_pf})：pool task_id={task_id!r} 与任务清单 {linked_task['task_id']!r} 不一致"
+                )
+            if linked_task.get("expected_line") and exp_line != linked_task["expected_line"]:
+                errors.append(
+                    f"任务信息共享池绑定不一致 ({rel_pf})：pool expected_line={exp_line!r} 与任务清单 {linked_task['expected_line']!r} 不一致"
+                )
+            if "allowed_prefixes" in data and linked_task.get("allowed_prefixes"):
+                pool_allowed = [normalize_rel_path(str(x)) for x in (data.get("allowed_prefixes") or []) if normalize_rel_path(str(x))]
+                if pool_allowed != linked_task["allowed_prefixes"]:
+                    errors.append(
+                        f"任务信息共享池绑定不一致 ({rel_pf})：allowed_prefixes 与任务清单不一致"
+                    )
+            if "forbidden_prefixes" in data and linked_task.get("forbidden_prefixes") is not None:
+                pool_forb = [normalize_rel_path(str(x)) for x in (data.get("forbidden_prefixes") or []) if normalize_rel_path(str(x))]
+                if pool_forb != linked_task["forbidden_prefixes"]:
+                    errors.append(
+                        f"任务信息共享池绑定不一致 ({rel_pf})：forbidden_prefixes 与任务清单不一致"
+                    )
+
         if not isinstance(endpoints, dict) or not endpoints:
             errors.append(f"任务信息共享池分端状态缺失 ({rel_pf})：endpoints 必须是非空对象")
         else:
@@ -709,6 +744,10 @@ def validate_task_pools(
                 if not req_files and not repo_path:
                     errors.append(
                         f"任务信息共享池假同步拦截 [{task_id}/{art_id}]：产物标记为 github_repo=synced，但未声明 repo_path 或 required_repo_files_for_recalc"
+                    )
+                elif repo_path.endswith("/") and not req_files:
+                    errors.append(
+                        f"任务信息共享池假同步拦截 [{task_id}/{art_id}]：目录产物 {repo_path} 标记为 github_repo=synced 时，必须列出 required_repo_files_for_recalc 逐个核验"
                     )
                 for rf in req_files:
                     norm_rf = normalize_rel_path(str(rf))
@@ -759,20 +798,37 @@ def scan_commit(
     require_handoff_header: bool = False,
     require_public_ready: bool = False,
     forbidden_prefixes: Iterable[str] | None = None,
+    active_tasks: list[dict[str, Any]] | None = None,
 ) -> tuple[list[str], list[str], dict[str, list[str]]]:
-    """扫描单个 commit 的路径归属/任务范围（含删除与重命名两端）、公开发布门禁及现存改动文件的完整内容。"""
-    r = git_checked(
-        repo,
-        git_errors,
-        f"枚举 commit {rev[:8]} 改动",
-        "diff-tree",
-        "--no-commit-id",
-        "--name-status",
-        "-r",
-        "-M",
-        "--root",
-        rev,
-    )
+    """扫描单个 commit 的路径归属/任务范围（含删除、重命名与合并提交）、公开发布门禁及现存改动文件的完整内容。"""
+    parents_proc = git_checked(repo, git_errors, f"读取 commit {rev[:8]} 父提交", "rev-list", "--parents", "-n", "1", rev)
+    if parents_proc is None:
+        return [], [], {}
+    parents = parents_proc.stdout.strip().split()[1:]
+    if len(parents) >= 2:
+        r = git_checked(
+            repo,
+            git_errors,
+            f"枚举合并 commit {rev[:8]} 改动",
+            "diff",
+            "--name-status",
+            "-M",
+            f"{rev}^1",
+            rev,
+        )
+    else:
+        r = git_checked(
+            repo,
+            git_errors,
+            f"枚举 commit {rev[:8]} 改动",
+            "diff-tree",
+            "--no-commit-id",
+            "--name-status",
+            "-r",
+            "-M",
+            "--root",
+            rev,
+        )
     if r is None:
         return [], [], {}
 
@@ -781,6 +837,7 @@ def scan_commit(
     norm_content = [normalize_rel_path(p) for p in content_paths if normalize_rel_path(p)]
     explicit_prefs = list(allowed_prefixes or [])
     explicit_forb = list(forbidden_prefixes or [])
+    explicit_active_tasks = list(active_tasks or [])
 
     if norm_own == [TASK_BINDING_REL_PATH]:
         if TASK_BINDING_REL_PATH not in norm_content:
@@ -805,6 +862,10 @@ def scan_commit(
                 task_label=task_label,
                 forbidden_prefixes=explicit_forb,
             )
+        elif explicit_active_tasks:
+            ownership_issues, by_line, _ = check_ownership_against_tasks(
+                ownership_paths, explicit_active_tasks
+            )
         else:
             ownership_issues, by_line = [], {"infra": [TASK_BINDING_REL_PATH]}
     elif expected_line or explicit_prefs:
@@ -816,19 +877,23 @@ def scan_commit(
             task_label=task_label,
             forbidden_prefixes=explicit_forb,
         )
+    elif explicit_active_tasks:
+        ownership_issues, by_line, _ = check_ownership_against_tasks(
+            ownership_paths, explicit_active_tasks
+        )
     else:
         has_parent = git_run(repo, "rev-parse", "--verify", "-q", f"{rev}^").returncode == 0
         if not has_parent and set(norm_own) <= SHARED_INDEX_FILES:
             ownership_issues, by_line = check_ownership(ownership_paths)
         else:
-            active_tasks: list[dict[str, Any]] = []
+            parent_tasks: list[dict[str, Any]] = []
             if has_parent:
-                active_tasks, parse_err = load_repo_active_tasks(
+                parent_tasks, parse_err = load_repo_active_tasks(
                     repo, rev_spec=f"{rev}^", allow_disk_fallback_if_no_head=False
                 )
                 if parse_err and require_task_scope:
                     git_errors.append(f"[{rev[:8]}] 解析父提交 {TASK_BINDING_REL_PATH} 失败：{parse_err}")
-                elif not active_tasks and require_task_scope:
+                elif not parent_tasks and require_task_scope:
                     git_errors.append(
                         f"[{rev[:8]}] 未完成任务范围验收：未提供任务绑定范围（父提交缺少有效的 {TASK_BINDING_REL_PATH}，且未传 --task-manifest / --allowed-prefixes / --expected-line）"
                     )
@@ -838,8 +903,8 @@ def scan_commit(
                         f"[{rev[:8]}] 未完成任务范围验收：根提交修改了非共用索引路径且缺少父提交 {TASK_BINDING_REL_PATH}"
                     )
 
-            if active_tasks:
-                ownership_issues, by_line, _ = check_ownership_against_tasks(ownership_paths, active_tasks)
+            if parent_tasks:
+                ownership_issues, by_line, _ = check_ownership_against_tasks(ownership_paths, parent_tasks)
             else:
                 ownership_issues, by_line = check_ownership(ownership_paths)
 
@@ -1322,6 +1387,7 @@ def main(argv: list[str] | None = None) -> int:
     status: str = ""
     manifest_target_rel: str = ""
     manifest_active_tasks: list[dict[str, Any]] = []
+    tm_resolved: Path | None = None
 
     # 若指定了 --task-manifest，解析并合并任务范围与交接元数据
     if args.task_manifest:
@@ -1329,6 +1395,7 @@ def main(argv: list[str] | None = None) -> int:
         if not tm_path.is_file():
             git_errors.append(f"指定的任务清单文件不存在：{args.task_manifest}")
         else:
+            tm_resolved = tm_path.resolve()
             try:
                 manifest = parse_task_manifest(tm_path)
                 if manifest.get("active_tasks"):
@@ -1374,6 +1441,7 @@ def main(argv: list[str] | None = None) -> int:
         if not args.files:
             git_errors.append("--files 参数不能为空列表")
         rel_list: list[str] = []
+        binding_disk_resolved = (repo / TASK_BINDING_REL_PATH).resolve()
         for idx, f in enumerate(args.files):
             fp = Path(f)
             if not fp.is_absolute():
@@ -1387,9 +1455,15 @@ def main(argv: list[str] | None = None) -> int:
             sha = hashlib.sha256(raw_bytes).hexdigest()
             text = raw_bytes.decode("utf-8", errors="replace")
 
-            try:
-                inline_manifest = parse_task_manifest_text(text)
-            except Exception:
+            is_binding_target = fp == binding_disk_resolved or (
+                idx == 0 and bool(args.target_rel_path) and normalize_rel_path(args.target_rel_path) == TASK_BINDING_REL_PATH
+            )
+            if not is_binding_target:
+                try:
+                    inline_manifest = parse_task_manifest_text(text)
+                except Exception:
+                    inline_manifest = {}
+            else:
                 inline_manifest = {}
 
             if not inline_manifest.get("active_tasks"):
@@ -1420,15 +1494,16 @@ def main(argv: list[str] | None = None) -> int:
                 except ValueError:
                     rel = fp.name
 
-            if not args.task_manifest and (args.require_handoff_header or args.require_public_ready):
-                git_errors.extend(
-                    check_content_gates(
-                        rel,
-                        text,
-                        require_handoff_header=args.require_handoff_header,
-                        require_public_ready=args.require_public_ready,
+            if args.require_handoff_header or args.require_public_ready:
+                if tm_resolved is None or fp != tm_resolved or bool(manifest_active_tasks):
+                    git_errors.extend(
+                        check_content_gates(
+                            rel,
+                            text,
+                            require_handoff_header=args.require_handoff_header,
+                            require_public_ready=args.require_public_ready,
+                        )
                     )
-                )
 
             rel_list.append(rel)
             scanned_files.append(rel)
@@ -1465,7 +1540,21 @@ def main(argv: list[str] | None = None) -> int:
                 )
             except Exception as exc:
                 git_errors.append(f"解析 {TASK_BINDING_REL_PATH} 失败：{exc}")
-            own_issues = []
+            if expected_line or allowed_prefixes:
+                own_issues, _ = check_ownership(
+                    rel_list,
+                    expected_line=expected_line,
+                    allowed_prefixes=allowed_prefixes,
+                    allow_shared_index=allow_shared_index,
+                    task_label=task_label,
+                    forbidden_prefixes=forbidden_prefixes,
+                )
+            elif manifest_active_tasks:
+                own_issues, _, matched_lbl = check_ownership_against_tasks(rel_list, manifest_active_tasks)
+                if matched_lbl and not task_label:
+                    task_label = matched_lbl
+            else:
+                own_issues = []
         elif expected_line or allowed_prefixes:
             own_issues, _ = check_ownership(
                 rel_list,
@@ -1524,6 +1613,7 @@ def main(argv: list[str] | None = None) -> int:
                             require_handoff_header=args.require_handoff_header,
                             require_public_ready=args.require_public_ready,
                             forbidden_prefixes=forbidden_prefixes,
+                            active_tasks=manifest_active_tasks,
                         )
                         if effective_ownership_mode == "error":
                             ownership_errors.extend(own_issues)
@@ -1568,7 +1658,14 @@ def main(argv: list[str] | None = None) -> int:
                 privacy_errors.extend(priv_issues)
 
     if args.check_task_pool or args.require_task_scope:
-        pool_active_tasks, _ = load_repo_active_tasks(repo, rev_spec="HEAD", allow_disk_fallback_if_no_head=True)
+        if manifest_active_tasks:
+            pool_active_tasks = list(manifest_active_tasks)
+        else:
+            pool_active_tasks, pool_err = load_repo_active_tasks(
+                repo, rev_spec="HEAD", allow_disk_fallback_if_no_head=True
+            )
+            if pool_err and args.check_task_pool and not args.require_task_scope:
+                git_errors.append(f"解析 {TASK_BINDING_REL_PATH} 失败：{pool_err}")
         git_errors.extend(
             validate_task_pools(
                 repo,

@@ -966,8 +966,371 @@ class TestRepoHygiene(unittest.TestCase):
             self.assertEqual(rc_false_sync, 1)
             self.assertIn("任务信息共享池假同步拦截", buf_false_sync.getvalue())
 
+    def test_task_manifest_v2_commit_range_and_missing_pool_path_rejected(self):
+        """回归 15（审查补漏）：--task-manifest 使用 schema v2.0 active_tasks 在 commit-range 模式生效，且缺失声明的 pool_path 报错。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = init_temp_git_repo(tmp)
+            base_rev = subprocess.check_output(["git", "-C", tmp, "rev-parse", "HEAD"], text=True).strip()
+
+            manifest_file = Path(tmp) / "ext_manifest.json"
+            manifest_file.write_text(
+                json.dumps({
+                    "schema_version": "2.0",
+                    "active_tasks": [
+                        {
+                            "task_id": "TASK-SEMEVAL-B1",
+                            "owner": "Antigravity (SemEval)",
+                            "expected_line": "semeval",
+                            "allowed_prefixes": ["ML_note/实验/SemEval_DiCo-NLI/code/"],
+                            "forbidden_prefixes": ["ML_note/实验/SemEval_DiCo-NLI/code/a1_train/"],
+                            "pool_path": "agents/task_pools/NONEXISTENT.json",
+                        }
+                    ],
+                }),
+                encoding="utf-8",
+            )
+
+            ok_file = repo / "ML_note" / "实验" / "SemEval_DiCo-NLI" / "code" / "b1_ok.py"
+            ok_file.parent.mkdir(parents=True, exist_ok=True)
+            ok_file.write_text("# B1 ok\n", encoding="utf-8")
+            subprocess.run(["git", "-C", tmp, "add", "."], check=True)
+            subprocess.run(["git", "-C", tmp, "commit", "-q", "-m", "valid b1 commit"], check=True)
+
+            # 1) 声明的 pool_path 不存在时，--check-task-pool / --require-task-scope 必须拦截
+            buf_missing_pool = io.StringIO()
+            with contextlib.redirect_stdout(buf_missing_pool):
+                rc_missing_pool = crh.main([
+                    "--repo", tmp,
+                    "--commit-range", f"{base_rev}..HEAD",
+                    "--task-manifest", str(manifest_file),
+                    "--require-task-scope",
+                ])
+            self.assertEqual(rc_missing_pool, 1)
+            self.assertIn("任务信息共享池缺失", buf_missing_pool.getvalue())
+
+            # 补齐对应 pool JSON 后，allowed_prefixes 内提交应通过
+            pool_file = repo / "agents" / "task_pools" / "NONEXISTENT.json"
+            pool_file.parent.mkdir(parents=True, exist_ok=True)
+            pool_file.write_text(
+                json.dumps({
+                    "task_id": "TASK-SEMEVAL-B1",
+                    "expected_line": "semeval",
+                    "owner": "Antigravity (SemEval)",
+                    "endpoints": {"antigravity_semeval": {"role": "author", "state": "ready"}},
+                    "artifacts": [{"artifact_id": "A1", "name": "test", "holders": {"github_repo": "not_required"}}],
+                }),
+                encoding="utf-8",
+            )
+            ok_rev = subprocess.check_output(["git", "-C", tmp, "rev-parse", "HEAD"], text=True).strip()
+            ok_file2 = repo / "ML_note" / "实验" / "SemEval_DiCo-NLI" / "code" / "b1_ok2.py"
+            ok_file2.write_text("# B1 ok 2\n", encoding="utf-8")
+            subprocess.run(["git", "-C", tmp, "add", str(ok_file2.relative_to(repo))], check=True)
+            subprocess.run(["git", "-C", tmp, "commit", "-q", "-m", "valid b1 commit 2"], check=True)
+
+            with contextlib.redirect_stdout(io.StringIO()):
+                rc_pass = crh.main([
+                    "--repo", tmp,
+                    "--commit-range", f"{ok_rev}..HEAD",
+                    "--task-manifest", str(manifest_file),
+                    "--require-task-scope",
+                    "--check-task-pool",
+                ])
+            self.assertEqual(rc_pass, 0)
+
+            # 2) commit-range 下触碰 forbidden_prefixes -> --task-manifest active_tasks 必须拦下
+            prev_rev = subprocess.check_output(["git", "-C", tmp, "rev-parse", "HEAD"], text=True).strip()
+            forb_file = repo / "ML_note" / "实验" / "SemEval_DiCo-NLI" / "code" / "a1_train" / "hack.py"
+            forb_file.parent.mkdir(parents=True, exist_ok=True)
+            forb_file.write_text("# forbidden\n", encoding="utf-8")
+            subprocess.run(["git", "-C", tmp, "add", str(forb_file.relative_to(repo))], check=True)
+            subprocess.run(["git", "-C", tmp, "commit", "-q", "-m", "touch forbidden in manifest commit-range"], check=True)
+
+            buf_forb = io.StringIO()
+            with contextlib.redirect_stdout(buf_forb):
+                rc_forb = crh.main([
+                    "--repo", tmp,
+                    "--commit-range", f"{prev_rev}..HEAD",
+                    "--task-manifest", str(manifest_file),
+                    "--require-task-scope",
+                ])
+            self.assertEqual(rc_forb, 1)
+            self.assertIn("禁止修改范围", buf_forb.getvalue())
+
+    def test_files_with_task_manifest_still_enforces_public_ready_and_binding_scope(self):
+        """回归 16（独立子 agent 审计补漏 #1）：--files 与 --task-manifest 并用时仍须执行公开发布门禁，且 --files agents/current_task.json 服从显式范围限定。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = init_temp_git_repo(tmp)
+            agents_dir = repo / "agents"
+            agents_dir.mkdir(parents=True, exist_ok=True)
+            binding_path = agents_dir / "current_task.json"
+            binding_path.write_text(
+                json.dumps({
+                    "schema_version": "2.0",
+                    "active_tasks": [
+                        {
+                            "task_id": "TASK-LEARN-001",
+                            "owner": "Gemini 网页端",
+                            "expected_line": "learning",
+                            "allowed_prefixes": ["ML_note/原理笔记/"],
+                        }
+                    ],
+                }),
+                encoding="utf-8",
+            )
+
+            private_draft = repo / "ML_note" / "原理笔记" / "推理优化" / "draft.md"
+            private_draft.parent.mkdir(parents=True, exist_ok=True)
+            private_draft.write_text(
+                "# 学习草稿\n\n| 字段 | 内容 |\n|---|---|\n| 可见范围 | `工作区私有` |\n| 当前状态 | `待审` |\n",
+                encoding="utf-8",
+            )
+
+            # 1) --files + --task-manifest current_task.json + --require-public-ready 必须拦截工作区私有/待审文件
+            buf_v2 = io.StringIO()
+            with contextlib.redirect_stdout(buf_v2):
+                rc_v2 = crh.main([
+                    "--repo", tmp,
+                    "--files", str(private_draft),
+                    "--task-manifest", str(binding_path),
+                    "--require-public-ready",
+                ])
+            self.assertEqual(rc_v2, 1)
+            self.assertIn("公开发布拦截", buf_v2.getvalue())
+
+            # 2) --files + 外部干净 --task-manifest md + --require-public-ready 同样必须拦截 private_draft
+            clean_manifest = Path(tmp) / "clean_manifest.md"
+            clean_manifest.write_text(
+                "| 字段 | 内容 |\n|---|---|\n"
+                "| 任务与当前负责人 | `TASK-LEARN-001 | Gemini 网页端` |\n"
+                "| 允许修改范围 | `ML_note/原理笔记/` |\n"
+                "| 来源版本 | `commit:deadbeef` |\n"
+                "| 可见范围 | `允许公开发布` |\n"
+                "| 当前状态 | `通过` |\n"
+                "| 正式结果链接 | `ML_note/原理笔记/推理优化/draft.md` |\n",
+                encoding="utf-8",
+            )
+            buf_ext = io.StringIO()
+            with contextlib.redirect_stdout(buf_ext):
+                rc_ext = crh.main([
+                    "--repo", tmp,
+                    "--files", str(private_draft),
+                    "--task-manifest", str(clean_manifest),
+                    "--require-public-ready",
+                ])
+            self.assertEqual(rc_ext, 1)
+            self.assertIn("公开发布拦截", buf_ext.getvalue())
+
+            # 3) --files agents/current_task.json 单独校验 passes，但显式传 --expected-line semeval 必须报错
+            with contextlib.redirect_stdout(io.StringIO()):
+                rc_bind_ok = crh.main([
+                    "--repo", tmp,
+                    "--files", str(binding_path),
+                    "--require-task-scope",
+                ])
+            self.assertEqual(rc_bind_ok, 0)
+
+            buf_bind_bad = io.StringIO()
+            with contextlib.redirect_stdout(buf_bind_bad):
+                rc_bind_bad = crh.main([
+                    "--repo", tmp,
+                    "--files", str(binding_path),
+                    "--expected-line", "semeval",
+                ])
+            self.assertEqual(rc_bind_bad, 1)
+            self.assertIn("工作线不符", buf_bind_bad.getvalue())
+
+    def test_merge_commit_scanned_for_clean_and_evil_merges(self):
+        """回归 17（独立子 agent 审计补漏 #2）：合并提交（--no-ff）既不误报主分支既有文件，也不漏扫合并引入的跨线/隐私违规。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = init_temp_git_repo(tmp)
+            agents_dir = repo / "agents"
+            agents_dir.mkdir(parents=True, exist_ok=True)
+            (agents_dir / "current_task.json").write_text(
+                json.dumps({
+                    "schema_version": "2.0",
+                    "active_tasks": [
+                        {
+                            "task_id": "TASK-INFRA-005",
+                            "owner": "基建对话",
+                            "expected_line": "infra",
+                            "allowed_prefixes": ["agents/"],
+                        },
+                        {
+                            "task_id": "TASK-SEMEVAL-B1",
+                            "owner": "SemEval 对话",
+                            "expected_line": "semeval",
+                            "allowed_prefixes": ["ML_note/实验/SemEval_DiCo-NLI/code/"],
+                        },
+                    ],
+                }),
+                encoding="utf-8",
+            )
+            subprocess.run(["git", "-C", tmp, "add", "agents/current_task.json"], check=True)
+            subprocess.run(["git", "-C", tmp, "commit", "-q", "-m", "bind infra and semeval"], check=True)
+            bind_rev = subprocess.check_output(["git", "-C", tmp, "rev-parse", "HEAD"], text=True).strip()
+
+            # 侧分支干净提交 infra/a.md
+            subprocess.run(["git", "-C", tmp, "checkout", "-q", "-b", "side"], check=True)
+            (agents_dir / "side_ok.md").write_text("# 侧分支干净文档\n", encoding="utf-8")
+            subprocess.run(["git", "-C", tmp, "add", "agents/side_ok.md"], check=True)
+            subprocess.run(["git", "-C", tmp, "commit", "-q", "-m", "clean side infra commit"], check=True)
+
+            # 主分支干净提交 semeval/code/b1.py（若误用 diff-tree -m 会把 semeval 与 infra 混在一起误报跨线！）
+            subprocess.run(["git", "-C", tmp, "checkout", "-q", "master"], check=False)
+            main_branch = subprocess.check_output(["git", "-C", tmp, "branch", "--list"], text=True)
+            if "* " not in main_branch:
+                subprocess.run(["git", "-C", tmp, "checkout", "-q", "main"], check=True)
+            semeval_code = repo / "ML_note" / "实验" / "SemEval_DiCo-NLI" / "code" / "b1.py"
+            semeval_code.parent.mkdir(parents=True, exist_ok=True)
+            semeval_code.write_text("# ok on main\n", encoding="utf-8")
+            subprocess.run(["git", "-C", tmp, "add", str(semeval_code.relative_to(repo))], check=True)
+            subprocess.run(["git", "-C", tmp, "commit", "-q", "-m", "clean main semeval commit"], check=True)
+            main_before_merge = subprocess.check_output(["git", "-C", tmp, "rev-parse", "HEAD"], text=True).strip()
+
+            # 1) 干净 --no-ff 合并必须通过（不把 main 的 semeval 与 side 的 infra 混报）
+            subprocess.run(
+                ["git", "-C", tmp, "merge", "--no-ff", "-q", "-m", "clean merge side", "side"],
+                check=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+            clean_merge_rev = subprocess.check_output(["git", "-C", tmp, "rev-parse", "HEAD"], text=True).strip()
+
+            with contextlib.redirect_stdout(io.StringIO()):
+                rc_clean_merge = crh.main([
+                    "--repo", tmp,
+                    "--commit-range", f"{bind_rev}..{clean_merge_rev}",
+                    "--ownership-mode", "error",
+                    "--require-task-scope",
+                    "--require-public-ready",
+                ])
+            self.assertEqual(rc_clean_merge, 0)
+
+            # 2) evil merge：在合并提交本身偷偷加入学习线私有文件 -> 仅扫合并提交亦必须拦截
+            subprocess.run(["git", "-C", tmp, "reset", "--hard", "-q", main_before_merge], check=True)
+            subprocess.run(
+                ["git", "-C", tmp, "merge", "--no-ff", "--no-commit", "side"],
+                check=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+            evil_file = repo / "ML_note" / "原理笔记" / "evil_leak.md"
+            evil_file.parent.mkdir(parents=True, exist_ok=True)
+            evil_file.write_text(
+                "# Evil\n可见范围: 工作区私有\n联系 private_leak" + "@example.org\n",
+                encoding="utf-8",
+            )
+            subprocess.run(["git", "-C", tmp, "add", str(evil_file.relative_to(repo))], check=True)
+            subprocess.run(["git", "-C", tmp, "commit", "-q", "-m", "evil merge with leak"], check=True)
+            evil_merge_rev = subprocess.check_output(["git", "-C", tmp, "rev-parse", "HEAD"], text=True).strip()
+
+            buf_evil = io.StringIO()
+            with contextlib.redirect_stdout(buf_evil):
+                rc_evil = crh.main([
+                    "--repo", tmp,
+                    "--commit-range", f"{main_before_merge}..{evil_merge_rev}",
+                    "--ownership-mode", "error",
+                    "--require-task-scope",
+                    "--require-public-ready",
+                ])
+            self.assertEqual(rc_evil, 1)
+            out_evil = buf_evil.getvalue()
+            self.assertIn("公开发布拦截", out_evil)
+            self.assertIn("非白名单邮箱", out_evil)
+            self.assertIn("跨越多个工作线", out_evil)
+
+    def test_classify_line_without_trailing_slash_prevents_bypass(self):
+        """回归 18（独立子 agent 审计补漏 #3）：不带尾部斜杠的目录前缀也能正确归类，并阻止 semeval 偷写 论文研究 目录。"""
+        self.assertEqual(crh.classify_line("ML_note/实验/SemEval_DiCo-NLI/论文研究"), "semeval_papers")
+        self.assertEqual(crh.classify_line("ML_note/实验/SemEval_DiCo-NLI"), "semeval")
+        self.assertEqual(crh.classify_line("ML_note/原理笔记"), "learning")
+        self.assertEqual(crh.classify_line("agents"), "infra")
+        self.assertEqual(crh.classify_line(".github"), "infra")
+        self.assertEqual(crh.classify_line("agents_extra/foo.md"), "other")
+
+        self.assertFalse(
+            crh.path_matches_allowed_prefixes(
+                "ML_note/实验/SemEval_DiCo-NLI/论文研究",
+                ["ML_note/实验/SemEval_DiCo-NLI"],
+            )
+        )
+
+        # 不带尾部斜杠的 论文研究 前缀不得通过 semeval 的严格 schema 校验
+        with self.assertRaises(ValueError):
+            crh.parse_task_binding_text(
+                json.dumps({
+                    "schema_version": "2.0",
+                    "active_tasks": [
+                        {
+                            "task_id": "TASK-SEMEVAL-BAD",
+                            "owner": "SemEval",
+                            "expected_line": "semeval",
+                            "allowed_prefixes": ["ML_note/实验/SemEval_DiCo-NLI/论文研究"],
+                        }
+                    ],
+                }),
+                strict_schema=True,
+            )
+
+    def test_validate_task_pools_cross_checks_binding_and_dir_synced_files(self):
+        """回归 19（独立子 agent 审计补漏 #4）：pool JSON 的 task_id/expected_line 须与任务清单一致，目录型 synced 须列明必需文件。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = init_temp_git_repo(tmp)
+            pools_dir = repo / "agents" / "task_pools"
+            pools_dir.mkdir(parents=True, exist_ok=True)
+            data_dir = repo / "ML_note" / "实验" / "SemEval_DiCo-NLI" / "metrics" / "dir_only"
+            data_dir.mkdir(parents=True, exist_ok=True)
+            (data_dir / "README.md").write_text("# readme\n", encoding="utf-8")
+            subprocess.run(["git", "-C", tmp, "add", "."], check=True)
+            subprocess.run(["git", "-C", tmp, "commit", "-q", "-m", "add dir_only readme"], check=True)
+
+            pool_file = pools_dir / "TASK-A.json"
+            pool_file.write_text(
+                json.dumps({
+                    "task_id": "TASK-WRONG-ID",
+                    "expected_line": "learning",
+                    "owner": "Author",
+                    "endpoints": {"author": {"role": "author", "state": "ready"}},
+                    "artifacts": [
+                        {
+                            "artifact_id": "ART-1",
+                            "name": "dir only claim",
+                            "holders": {"github_repo": "synced"},
+                            "repo_path": "ML_note/实验/SemEval_DiCo-NLI/metrics/dir_only/",
+                        }
+                    ],
+                }),
+                encoding="utf-8",
+            )
+            (repo / "agents" / "current_task.json").write_text(
+                json.dumps({
+                    "schema_version": "2.0",
+                    "active_tasks": [
+                        {
+                            "task_id": "TASK-A",
+                            "owner": "Author",
+                            "expected_line": "semeval",
+                            "allowed_prefixes": ["ML_note/实验/SemEval_DiCo-NLI/"],
+                            "pool_path": "agents/task_pools/TASK-A.json",
+                        }
+                    ],
+                }),
+                encoding="utf-8",
+            )
+            subprocess.run(["git", "-C", tmp, "add", "agents/current_task.json"], check=True)
+            subprocess.run(["git", "-C", tmp, "commit", "-q", "-m", "bind task A"], check=True)
+
+            buf = io.StringIO()
+            with contextlib.redirect_stdout(buf):
+                rc = crh.main(["--repo", tmp, "--check-task-pool"])
+            self.assertEqual(rc, 1)
+            out = buf.getvalue()
+            self.assertIn("任务信息共享池绑定不一致", out)
+            self.assertIn("必须列出 required_repo_files_for_recalc", out)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+
 
 

@@ -42,6 +42,8 @@
     {
       "artifact_id": "ART-A1-RESULTS",
       "name": "a1_train_v1_results.zip (及解压后的 formal_v1/ 逐折预测与回执)",
+      "sha256_formal_readme": "4596b514e9db6dd004af8d0465095fda1703074f1ffce8d500ba2f87bd1ab647",
+      "sha256_results_zip_recorded_in_smoke_readme": "ecba6eb32bfb4815ce5d019ffbac706841b735bf039360e6f0f902bb5fc3a304",
       "visibility": "工作区私有 (原包) / 允许公开发布 (脱敏指标与 OOF)",
       "required_by": [
         "antigravity_semeval"
@@ -57,13 +59,16 @@
       "required_repo_files_for_recalc": [
         "ML_note/实验/SemEval_DiCo-NLI/metrics/a1_train/formal_v1/README.md",
         "ML_note/实验/SemEval_DiCo-NLI/metrics/a1_train/formal_v1/summary.json",
-        "ML_note/实验/SemEval_DiCo-NLI/metrics/a1_train/formal_v1/a1_smoke.json"
+        "ML_note/实验/SemEval_DiCo-NLI/metrics/a1_train/formal_v1/oof/B2-SL/seed42/predictions.csv"
       ]
     },
     {
       "artifact_id": "ART-A1-SMOKE",
-      "name": "A1 SMOKE 回执与运行身份",
-      "sha256": "cbaf63699f99",
+      "name": "A1 SMOKE 回执与运行身份 (smoke_v1/ 共 17 个文件)",
+      "sha256": "c0bd8f6b80a67bd08a655fb79f8b07204f83283c1412e57950305c8aa426eaf2",
+      "smoke_bundle_sha256": "cbaf63699f99edf90516c695b7958b139027c8583b2b7bdf0532020f501170a1",
+      "formal_bundle_sha256": "70fc1e01624947a476190c6b890806fbe8e213febeec7bead2663cc0c7886332",
+      "b2_smoke_done_sha256": "e7b00c9f26ab1ebbb36f057293e56e8dfe4e765c2c9b9245c3be0c5ea7617a8e",
       "required_by": [
         "antigravity_semeval"
       ],
@@ -77,13 +82,16 @@
       "repo_path": "ML_note/实验/SemEval_DiCo-NLI/metrics/a1_train/smoke_v1/",
       "required_repo_files_for_recalc": [
         "ML_note/实验/SemEval_DiCo-NLI/metrics/a1_train/smoke_v1/a1_smoke.json",
-        "ML_note/实验/SemEval_DiCo-NLI/metrics/a1_train/smoke_v1/run_identity.json"
+        "ML_note/实验/SemEval_DiCo-NLI/metrics/a1_train/smoke_v1/run_identity.json",
+        "ML_note/实验/SemEval_DiCo-NLI/metrics/a1_train/smoke_v1/smoke/B2-Haiku/done.json"
       ]
     },
     {
       "artifact_id": "ART-C5-B2",
-      "name": "Commit 5 B2-Haiku 15 项正式归档与 SMOKE",
-      "sha256": "50c800620fbc9d5f53dcad5dffba3c8821b83aee28f7d567554dd887488e60ad",
+      "name": "Commit 5 B2-Haiku 15 项正式归档与 SMOKE（目录另含 B2-NLIinit 对应归档，共 150+12+12 个任务/SMOKE/OOF 文件）",
+      "sha256": "8dd977a3ccbde1ce3732ae957a8fa88f618c53813ef8d2d97daa5f02ed1bbcde",
+      "train_augb_v6_sha256": "50c800620fbc9d5f53dcad5dffba3c8821b83aee28f7d567554dd887488e60ad",
+      "b2_seed42_sym_oof_sha256": "65f4b5686c6d0f2b98631985dac31d1675d16dad0ee12c54e31bcf6e0c6cfcdf",
       "required_by": [
         "antigravity_semeval"
       ],
@@ -103,8 +111,10 @@
     },
     {
       "artifact_id": "ART-A0-FULL",
-      "name": "A0 全量教师输出与审计结果",
-      "sha256": "29e1285e1647",
+      "name": "A0 全量教师输出（teacher/ 15 组共 30 个 .json/.jsonl）与审计结果",
+      "sha256": "29e1285e16471aedba1e0f5923cba80ae1d8f415283427421f3ad1b44386013a",
+      "a0_stats_sha256": "96178a5c9d2e87b7d8d1a921fbc599d96bbff8a62e9fea6b5fac1c267ebb4a27",
+      "audit_result_sha256": "eebe58a68868938e61b8ec21e2989970751b83514cc27a962cf6ad83801674e7",
       "required_by": [
         "antigravity_semeval"
       ],
@@ -118,6 +128,7 @@
       "repo_path": "ML_note/实验/SemEval_DiCo-NLI/metrics/a0_teacher/full/",
       "required_repo_files_for_recalc": [
         "ML_note/实验/SemEval_DiCo-NLI/metrics/a0_teacher/full/A0_SUMMARY.json",
+        "ML_note/实验/SemEval_DiCo-NLI/metrics/a0_teacher/full/a0_stats.json",
         "ML_note/实验/SemEval_DiCo-NLI/metrics/a0_teacher/audit/audit_result.json"
       ]
     }
