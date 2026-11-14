@@ -3,10 +3,10 @@
 
 满足核心验收要求：
 1. 路径归属与任务级范围检查：
-   - 单次提交只改同一工作线目录；共用索引（根 README.md、ML_note/实验结果汇总.md）默认允许随同更新；
+   - 单次提交只改同一工作线目录；共用索引（根 README.md、ML_note/实验结果汇总.md）及任务绑定清单（agents/current_task.json）允许随同更新；
    - ML_note/实验/SemEval_DiCo-NLI/论文研究/ 按独立工作线判定，且不会被父目录前缀 ML_note/实验/SemEval_DiCo-NLI/ 误放行；
-   - 支持 --expected-line、--allowed-prefixes 与 --task-manifest，将“具体任务允许改哪里”交给脚本检查，
-     拦截“未跨多条线但改动了其他工作线或超出当前任务允许目录”的越界行为；
+   - 支持 --expected-line、--allowed-prefixes、--task-manifest 与 --require-task-scope（默认读取仓库 agents/current_task.json），
+     将“具体任务允许改哪里”接入自动检查；启用 --require-task-scope 时若缺失任务范围定义，直接报错“未完成任务范围验收”；
    - 归属与范围检查覆盖新增、修改、删除（D）以及重命名（R）/复制（C）的源与目标路径。
 2. 上下文感知的隐私与本机路径扫描：
    - 拦截私有学习字段、个人邮箱、密钥令牌与本地容器路径前缀，同时允许 NLP 笔记中的正常缩写（如 Lv et al.）；
@@ -17,10 +17,10 @@
    - 任何用于枚举或读取扫描输入的 Git 调用失败（如无效 commit 范围、浅克隆缺 base）均直接报错退出（返回码 1）；
    - 检查未提交改动时，分别枚举并扫描暂存区（git diff --cached 与 index blob :path）和工作区（git diff 与未跟踪文件）；
    - 覆盖一次 push 范围内的每个 commit 逐个扫描。
-5. Drive 主工作区交接元数据与版本绑定回执：
-   - 支持解析并校验 6 项交接必要信息（任务与当前负责人、允许修改范围、来源版本、可见范围、当前状态、正式结果链接）；
-   - 支持 --require-public-ready 拦截仍处于“工作区私有”状态的草稿进入公开仓库；
-   - 回执绑定文件 SHA-256、Drive fileId 与 Git commit；支持 --verify-receipt 校验文件是否在检查后被再次修改（若修改则旧回执自动失效）。
+5. 公开发布门禁与 Drive 版本绑定回执：
+   - --require-public-ready 同时作用于 --files、commit 范围扫描与暂存区/工作区扫描：任何标记为“工作区私有”或状态为“待审/退回/待提稿”的文件均报错拦截；
+   - verify_bound_receipt 拒绝空输入，强制要求传入待审文件的实际字节哈希并双向核对回执绑定清单；
+   - 支持联动运行 check_archive.py 并将双检查器身份与结果共同写入回执；回执明确区分“格式与卫生检查通过（内容待审）”与“公开发布门禁通过”。
 """
 from __future__ import annotations
 
@@ -33,7 +33,8 @@ import sys
 from pathlib import Path
 from typing import Any, Iterable
 
-SHARED_INDEX_FILES = {"README.md", "ML_note/实验结果汇总.md"}
+TASK_BINDING_REL_PATH = "agents/current_task.json"
+SHARED_INDEX_FILES = {"README.md", "ML_note/实验结果汇总.md", TASK_BINDING_REL_PATH}
 VALID_LINES = ("semeval", "semeval_papers", "learning", "infra", "shared_index", "other")
 SEMEVAL_PAPERS_PREFIX = "ML_note/实验/SemEval_DiCo-NLI/论文研究/"
 
@@ -41,16 +42,9 @@ PRIVATE_VISIBILITY_VALUES = {"工作区私有", "PRIVATE_WORKSPACE"}
 PUBLIC_VISIBILITY_VALUES = {"允许公开发布", "PUBLIC_READY"}
 VALID_VISIBILITY_VALUES = PRIVATE_VISIBILITY_VALUES | PUBLIC_VISIBILITY_VALUES
 
-VALID_STATUS_VALUES = {
-    "待提稿",
-    "待审",
-    "退回",
-    "通过",
-    "DRAFT",
-    "PENDING",
-    "RETURNED",
-    "APPROVED",
-}
+UNAPPROVED_STATUS_VALUES = {"待提稿", "待审", "退回", "DRAFT", "PENDING", "RETURNED"}
+APPROVED_STATUS_VALUES = {"通过", "APPROVED"}
+VALID_STATUS_VALUES = UNAPPROVED_STATUS_VALUES | APPROVED_STATUS_VALUES
 
 ALLOWED_EMAILS = {
     "noreply@anthropic.com",
@@ -124,7 +118,7 @@ def normalize_rel_path(rel_path: str) -> str:
 def classify_line(rel_path: str) -> str:
     """将仓库相对路径映射为工作线名称。"""
     p = normalize_rel_path(rel_path)
-    if p in SHARED_INDEX_FILES:
+    if p in {"README.md", "ML_note/实验结果汇总.md"}:
         return "shared_index"
     if p.startswith(SEMEVAL_PAPERS_PREFIX):
         return "semeval_papers"
@@ -148,7 +142,6 @@ def path_matches_allowed_prefixes(rel_path: str, allowed_prefixes: Iterable[str]
         pref = normalize_rel_path(raw_prefix).strip()
         if not pref:
             continue
-        # 防止父目录前缀穿透到独立的 论文研究/ 子线
         if p.startswith(SEMEVAL_PAPERS_PREFIX) and not pref.startswith(SEMEVAL_PAPERS_PREFIX.rstrip("/")):
             continue
         if p == pref:
@@ -171,7 +164,11 @@ def check_ownership(
     by_line: dict[str, list[str]] = {}
     norm_paths = [normalize_rel_path(p) for p in sorted(set(paths)) if p and normalize_rel_path(p)]
     for p in norm_paths:
-        line = classify_line(p)
+        # 任务绑定文件 agents/current_task.json 在仅随其他单线任务同步更新时归入 shared_index，单独在 infra 修改时正常归入 infra
+        if p == TASK_BINDING_REL_PATH and allow_shared_index and expected_line and expected_line != "infra":
+            line = "shared_index"
+        else:
+            line = classify_line(p)
         by_line.setdefault(line, []).append(p)
 
     non_shared = {k: v for k, v in by_line.items() if k != "shared_index"}
@@ -185,9 +182,9 @@ def check_ownership(
 
     if expected_line:
         for p in norm_paths:
-            line = classify_line(p)
-            if allow_shared_index and line == "shared_index":
+            if allow_shared_index and p in SHARED_INDEX_FILES:
                 continue
+            line = classify_line(p)
             if line != expected_line:
                 issues.append(
                     f"越界修改（工作线不符）：路径 {p} 属于工作线 {line}，不在{ctx}限定的工作线 {expected_line} 内"
@@ -216,7 +213,7 @@ def _split_prefix_values(raw: str) -> list[str]:
 
 
 def parse_task_manifest_text(text: str) -> dict[str, Any]:
-    """解析 JSON 或 Markdown 顶部交接元数据表，统一返回结构化字段。"""
+    """解析 JSON 或 Markdown 交接元数据表，统一返回结构化字段。"""
     stripped = text.strip()
     if stripped.startswith("{"):
         data = json.loads(stripped)
@@ -248,7 +245,7 @@ def parse_task_manifest_text(text: str) -> dict[str, Any]:
         "target_repo_path": "",
     }
 
-    for line in text.splitlines()[:80]:
+    for line in text.splitlines()[:200]:
         s = line.strip()
         if not s:
             continue
@@ -258,14 +255,15 @@ def parse_task_manifest_text(text: str) -> dict[str, Any]:
             if len(cells) >= 2 and not set(cells[0].replace("|", "")) <= {"-", ":", " "}:
                 key, val = cells[0].strip("* "), cells[1].strip()
         elif ":" in s or "：" in s:
-            m = re.match(r"^[-*>]?\s*\*?\*?([^:*：]+)\*?\*?\s*[:：]\s*(.+)$", s)
+            m = re.match(r"^[-*>]?\s*\*?\*?([^:*：|]+)\*?\*?\s*[:：]\s*(.+)$", s)
             if m:
                 key, val = m.group(1).strip(), m.group(2).strip()
         if not key or not val:
             continue
 
         clean_val = val.strip("` ").strip()
-        k_lower = key.lower()
+        is_table_row = s.startswith("|")
+        k_lower = key.lower() if is_table_row else ""
         if key in {"任务与当前负责人", "任务与负责人"}:
             if "|" in val or "｜" in val:
                 parts = re.split(r"[|｜]", val, maxsplit=1)
@@ -324,9 +322,55 @@ def validate_handoff_manifest(
         errors.append("交接元数据缺失：缺少「当前状态」（待提稿 / 待审 / 退回 / 通过）")
     elif st not in VALID_STATUS_VALUES:
         errors.append(f"交接元数据无效：「当前状态」值 {st!r} 不合法（允许：待提稿 / 待审 / 退回 / 通过）")
+    elif require_public_ready and st in UNAPPROVED_STATUS_VALUES:
+        errors.append(f"公开发布拦截：当前文件状态为「{st}」，尚未审阅通过，禁止合入公开仓库")
 
     if not (manifest.get("canonical_link") or manifest.get("target_repo_path")):
         errors.append("交接元数据缺失：缺少「正式结果链接」（或「目标仓库路径」）")
+    return errors
+
+
+def check_content_gates(
+    label: str,
+    text: str,
+    require_handoff_header: bool = False,
+    require_public_ready: bool = False,
+) -> list[str]:
+    """对文件内容执行交接元数据校验与公开发布门禁校验（同时适用于 --files、commit 扫描与暂存区/工作区扫描）。"""
+    if not (require_handoff_header or require_public_ready):
+        return []
+    # 任务绑定 JSON 本身允许配置当前任务状态，不按文稿拦截；但若其中 visibility 显式标为工作区私有且非 infra 任务也可按需检查
+    if label.endswith(TASK_BINDING_REL_PATH):
+        return []
+
+    try:
+        manifest = parse_task_manifest_text(text)
+    except Exception:
+        manifest = {}
+
+    errors: list[str] = []
+    if require_handoff_header:
+        for e in validate_handoff_manifest(manifest, require_public_ready=require_public_ready):
+            errors.append(f"{label} {e}")
+        return errors
+
+    if require_public_ready:
+        vis = manifest.get("visibility", "")
+        st = manifest.get("status", "")
+        has_any_handoff_field = any(
+            manifest.get(k) for k in ("task_id", "owner", "allowed_prefixes", "source_version", "visibility", "status")
+        )
+        if vis:
+            if vis not in VALID_VISIBILITY_VALUES:
+                errors.append(f"{label} 交接元数据无效：「可见范围」值 {vis!r} 不合法")
+            elif vis not in PUBLIC_VISIBILITY_VALUES:
+                errors.append(f"{label} 公开发布拦截：当前文件可见范围为「{vis}」，未标记为「允许公开发布」，禁止合入公开仓库")
+        elif has_any_handoff_field:
+            errors.append(f"{label} 公开发布拦截：交接文件缺少「可见范围: 允许公开发布」标记，禁止合入公开仓库")
+
+        if st and st in UNAPPROVED_STATUS_VALUES:
+            errors.append(f"{label} 公开发布拦截：当前文件状态为「{st}」，尚未审阅通过，禁止合入公开仓库")
+
     return errors
 
 
@@ -387,13 +431,7 @@ def git_checked(repo: Path, git_errors: list[str], context: str, *args: str) -> 
 
 
 def parse_name_status(lines: Iterable[str]) -> tuple[list[str], list[str]]:
-    """解析 git diff / diff-tree 的 --name-status 输出。
-
-    返回 (ownership_paths, content_paths)：
-    - 删除（D）：路径计入 ownership_paths，不计入 content_paths；
-    - 重命名（R*）或复制（C*）：源路径和目标路径均计入 ownership_paths，目标路径计入 content_paths；
-    - 其他状态（A/M/T 等）：路径同时计入 ownership_paths 和 content_paths。
-    """
+    """解析 git diff / diff-tree 的 --name-status 输出。"""
     ownership_paths: list[str] = []
     content_paths: list[str] = []
     for raw in lines:
@@ -416,16 +454,65 @@ def parse_name_status(lines: Iterable[str]) -> tuple[list[str], list[str]]:
     return sorted(set(ownership_paths)), sorted(set(content_paths))
 
 
+def resolve_commit_task_scope(
+    repo: Path,
+    rev: str,
+    expected_line: str | None,
+    allowed_prefixes: list[str],
+    allow_shared_index: bool,
+    task_label: str | None,
+    require_task_scope: bool,
+    git_errors: list[str],
+) -> tuple[str | None, list[str], bool, str | None]:
+    """解析单个 commit 绑定的任务范围；若启用了 --require-task-scope 且缺失任务范围则记入错误。"""
+    if expected_line or allowed_prefixes:
+        return expected_line, allowed_prefixes, allow_shared_index, task_label
+
+    # 尝试从该 commit 快照或工作区读取 agents/current_task.json
+    raw_manifest_text = ""
+    r = git_run(repo, "show", f"{rev}:{TASK_BINDING_REL_PATH}")
+    if r.returncode == 0 and r.stdout.strip():
+        raw_manifest_text = r.stdout
+    else:
+        disk_path = repo / TASK_BINDING_REL_PATH
+        if disk_path.is_file():
+            raw_manifest_text = disk_path.read_text(encoding="utf-8", errors="replace")
+
+    if raw_manifest_text:
+        try:
+            m = parse_task_manifest_text(raw_manifest_text)
+            c_line = m.get("expected_line")
+            c_prefs = list(m.get("allowed_prefixes") or [])
+            c_shared = bool(m.get("allow_shared_index", True))
+            c_label = " | ".join(x for x in (m.get("task_id"), m.get("owner")) if x) or None
+            if c_line or c_prefs:
+                return c_line, c_prefs, c_shared, c_label
+        except Exception as exc:
+            if require_task_scope:
+                git_errors.append(f"[{rev[:8]}] 解析 {TASK_BINDING_REL_PATH} 失败：{exc}")
+                return None, [], True, None
+
+    if require_task_scope:
+        git_errors.append(
+            f"[{rev[:8]}] 未完成任务范围验收：未提供任务绑定范围（缺少 --task-manifest / --allowed-prefixes / --expected-line 或有效的 {TASK_BINDING_REL_PATH}）"
+        )
+    return None, [], True, None
+
+
 def scan_commit(
     repo: Path,
     rev: str,
     git_errors: list[str],
+    file_hashes: dict[str, str],
     expected_line: str | None = None,
     allowed_prefixes: Iterable[str] | None = None,
     allow_shared_index: bool = True,
     task_label: str | None = None,
+    require_task_scope: bool = False,
+    require_handoff_header: bool = False,
+    require_public_ready: bool = False,
 ) -> tuple[list[str], list[str], dict[str, list[str]]]:
-    """扫描单个 commit 的路径归属/任务范围（含删除与重命名两端）及现存改动文件的完整内容。"""
+    """扫描单个 commit 的路径归属/任务范围（含删除与重命名两端）、公开发布门禁及现存改动文件的完整内容。"""
     r = git_checked(
         repo,
         git_errors,
@@ -441,13 +528,24 @@ def scan_commit(
     if r is None:
         return [], [], {}
 
+    c_line, c_prefs, c_shared, c_label = resolve_commit_task_scope(
+        repo,
+        rev,
+        expected_line,
+        list(allowed_prefixes or []),
+        allow_shared_index,
+        task_label,
+        require_task_scope,
+        git_errors,
+    )
+
     ownership_paths, content_paths = parse_name_status(r.stdout.splitlines())
     ownership_issues, by_line = check_ownership(
         ownership_paths,
-        expected_line=expected_line,
-        allowed_prefixes=allowed_prefixes,
-        allow_shared_index=allow_shared_index,
-        task_label=task_label,
+        expected_line=c_line,
+        allowed_prefixes=c_prefs,
+        allow_shared_index=c_shared,
+        task_label=c_label,
     )
     ownership_issues = [f"[{rev[:8]}] {msg}" for msg in ownership_issues]
 
@@ -455,17 +553,32 @@ def scan_commit(
     for rel_path in content_paths:
         blob = git_checked(repo, git_errors, f"读取 commit {rev[:8]} 文件 {rel_path}", "show", f"{rev}:{rel_path}")
         if blob is not None and "\x00" not in blob.stdout:
-            privacy_findings.extend(scan_text(f"{rev[:8]}:{rel_path}", blob.stdout))
+            label = f"{rev[:8]}:{rel_path}"
+            sha = hashlib.sha256(blob.stdout.encode("utf-8")).hexdigest()
+            file_hashes[label] = sha
+            file_hashes[normalize_rel_path(rel_path)] = sha
+            privacy_findings.extend(scan_text(label, blob.stdout))
+            git_errors.extend(
+                check_content_gates(
+                    label,
+                    blob.stdout,
+                    require_handoff_header=require_handoff_header,
+                    require_public_ready=require_public_ready,
+                )
+            )
     return ownership_issues, privacy_findings, by_line
 
 
 def scan_uncommitted(
     repo: Path,
     git_errors: list[str],
+    file_hashes: dict[str, str],
     expected_line: str | None = None,
     allowed_prefixes: Iterable[str] | None = None,
     allow_shared_index: bool = True,
     task_label: str | None = None,
+    require_handoff_header: bool = False,
+    require_public_ready: bool = False,
 ) -> tuple[list[str], list[str], list[str]]:
     """分别枚举并扫描暂存区（index）与工作区（worktree），返回 (ownership_issues, privacy_findings, scanned_labels)。"""
     ownership_issues: list[str] = []
@@ -491,7 +604,18 @@ def scan_uncommitted(
             scanned_labels.append(label)
             blob = git_checked(repo, git_errors, f"读取暂存区 blob {rel}", "show", f":{rel}")
             if blob is not None and "\x00" not in blob.stdout:
+                sha = hashlib.sha256(blob.stdout.encode("utf-8")).hexdigest()
+                file_hashes[label] = sha
+                file_hashes[normalize_rel_path(rel)] = sha
                 privacy_findings.extend(scan_text(label, blob.stdout))
+                git_errors.extend(
+                    check_content_gates(
+                        label,
+                        blob.stdout,
+                        require_handoff_header=require_handoff_header,
+                        require_public_ready=require_public_ready,
+                    )
+                )
 
     # 2. 工作区（worktree vs index）+ 未跟踪文件
     wt_res = git_checked(repo, git_errors, "枚举工作区改动", "diff", "--name-status", "-M")
@@ -516,7 +640,6 @@ def scan_uncommitted(
     )
     ownership_issues.extend(f"[worktree] {m}" for m in own_wt)
 
-    # 若暂存区与工作区各自单线但合起来跨线，也记录一条组合告警
     if not own_idx_or_wt(ownership_issues) and (staged_own and wt_own):
         own_combined, _ = check_ownership(
             staged_own + wt_own,
@@ -533,8 +656,20 @@ def scan_uncommitted(
             label = f"worktree:{rel}"
             scanned_labels.append(label)
             raw = fp.read_bytes()
+            sha = hashlib.sha256(raw).hexdigest()
+            file_hashes[label] = sha
+            file_hashes[normalize_rel_path(rel)] = sha
             if b"\x00" not in raw:
-                privacy_findings.extend(scan_text(label, raw.decode("utf-8", errors="replace")))
+                text = raw.decode("utf-8", errors="replace")
+                privacy_findings.extend(scan_text(label, text))
+                git_errors.extend(
+                    check_content_gates(
+                        label,
+                        text,
+                        require_handoff_header=require_handoff_header,
+                        require_public_ready=require_public_ready,
+                    )
+                )
 
     return ownership_issues, privacy_findings, scanned_labels
 
@@ -559,10 +694,46 @@ def script_sha256() -> str:
     return hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
 
 
+def install_pre_push_hook(repo: Path) -> Path:
+    """在本地 Git 仓库安装 pre-push 钩子，确保公开发布前在本地拦截违规提交（先于 GitHub Actions）。"""
+    hook_path = repo / ".git" / "hooks" / "pre-push"
+    hook_path.parent.mkdir(parents=True, exist_ok=True)
+    hook_content = """#!/usr/bin/env bash
+set -euo pipefail
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+ZERO="0000000000000000000000000000000000000000"
+while read -r local_ref local_sha remote_ref remote_sha; do
+  if [ "$local_sha" = "$ZERO" ]; then
+    continue
+  fi
+  if [ "$remote_sha" = "$ZERO" ]; then
+    if git rev-parse --verify -q "${local_sha}^" >/dev/null; then
+      RANGE="${local_sha}^..${local_sha}"
+    else
+      RANGE="${local_sha}"
+    fi
+  else
+    RANGE="${remote_sha}..${local_sha}"
+  fi
+  python3 "$REPO_ROOT/agents/check_repo_hygiene.py" \\
+    --repo "$REPO_ROOT" \\
+    --commit-range "$RANGE" \\
+    --ownership-mode error \\
+    --require-task-scope \\
+    --require-public-ready
+done
+"""
+    hook_path.write_text(hook_content, encoding="utf-8")
+    hook_path.chmod(0o755)
+    return hook_path
+
+
 def verify_bound_receipt(
     receipt_path: Path, current_file_hashes: dict[str, str]
 ) -> list[str]:
-    """核对当前待审文件的 SHA-256 是否与已签发回执中绑定的版本完全一致。"""
+    """核对当前待审文件的实际字节 SHA-256 是否与已签发回执中绑定的版本完全一致（拒绝空输入）。"""
+    if not current_file_hashes:
+        return ["回执校验失败：待核对的文件哈希输入为空（必须读取待审文件的实际字节并计算 SHA-256 后再核对回执）"]
     if not receipt_path.is_file():
         return [f"回执校验失败：找不到回执文件 {receipt_path}"]
     try:
@@ -579,38 +750,103 @@ def verify_bound_receipt(
         errors.append("回执校验失败：原回执未绑定任何文件 SHA-256（file_hashes 为空）")
         return errors
 
-    for rel, cur_sha in current_file_hashes.items():
-        if rel not in bound_hashes:
-            errors.append(f"版本失效：文件 {rel} 不在原回执绑定清单中，新稿须重新送检")
-        elif bound_hashes[rel] != cur_sha:
+    for rel, bound_sha in bound_hashes.items():
+        if rel not in current_file_hashes:
+            errors.append(f"回执校验失败：原回执绑定的文件 {rel} 未提供当前实际字节哈希，无法完成版本核对")
+        elif current_file_hashes[rel] != bound_sha:
             errors.append(
-                f"版本失效：文件 {rel} 当前 SHA-256 ({cur_sha[:12]}) 与回执绑定版本 ({bound_hashes[rel][:12]}) 不一致；"
+                f"版本失效：文件 {rel} 当前 SHA-256 ({current_file_hashes[rel][:12]}) 与回执绑定版本 ({bound_hashes[rel][:12]}) 不一致；"
                 "旧版本的“通过”只适用于旧版本，新稿必须重新送检"
             )
+
+    for rel in current_file_hashes:
+        if rel not in bound_hashes:
+            errors.append(f"版本失效：文件 {rel} 不在原回执绑定清单中，新稿须重新送检")
     return errors
+
+
+def run_archive_check_integration(
+    archive_script: Path,
+    archive_file: Path,
+    repo: Path,
+    skill_file: Path | None,
+    files: list[Path],
+) -> dict[str, Any]:
+    """联动调用私有学习线的 check_archive.py，返回结构化回执记录。"""
+    if not archive_script.is_file():
+        return {
+            "ran": False,
+            "passed": False,
+            "error": f"找不到 check_archive.py：{archive_script}",
+        }
+    if not archive_file.is_file():
+        return {
+            "ran": False,
+            "passed": False,
+            "error": f"找不到学习存档文件：{archive_file}",
+        }
+    cmd = [sys.executable, str(archive_script), str(archive_file), "--repo", str(repo)]
+    if skill_file and skill_file.is_file():
+        cmd.extend(["--skill", str(skill_file)])
+    if files:
+        cmd.extend(["--files", *[str(f) for f in files]])
+
+    proc = subprocess.run(cmd, capture_output=True, text=True, check=False)
+    sha = hashlib.sha256(archive_script.read_bytes()).hexdigest()
+    summary_line = ""
+    for line in reversed((proc.stdout or "").splitlines()):
+        if line.strip().startswith("结果："):
+            summary_line = line.strip()
+            break
+    return {
+        "ran": True,
+        "script": archive_script.name,
+        "script_sha256": sha,
+        "returncode": proc.returncode,
+        "passed": proc.returncode == 0,
+        "summary": summary_line or (proc.stderr.strip()[:200] if proc.stderr else f"exit code {proc.returncode}"),
+    }
 
 
 def render_markdown_receipt(receipt: dict[str, Any]) -> str:
     """生成写回 Google Drive 任务目录的 Markdown 版本绑定检查回执。"""
-    status_str = "通过（PASSED）" if receipt["passed"] else "未通过（FAILED）"
+    vis = receipt.get("visibility", "")
+    st = receipt.get("status", "")
+    if not receipt["passed"]:
+        status_str = "未通过（FAILED）"
+    elif vis in PUBLIC_VISIBILITY_VALUES and st in APPROVED_STATUS_VALUES:
+        status_str = "公开发布前检查通过（PASSED，允许合入公开仓库）"
+    else:
+        status_str = "自动检查通过（仅代表格式/隐私/任务范围检查通过；内容待审，尚未获准公开发布）"
+
     lines = [
         "# 自动检查回执（绑定确定版本快照）",
         "",
-        "> **版本绑定规则**：本回执仅对下方表内列出的文件 `SHA-256` 快照生效。若写作者（如 Gemini 网页端）在回执生成后再次修改了 Drive 文件，文件内容哈希改变，本回执自动失效，新稿须重新送检后再由审阅端（如 GPT 聊天端）审核。",
+        "> **版本绑定与状态说明**：本回执仅对下方表内列出的文件 `SHA-256` 快照生效，且**自动检查通过不代表学科内容已审核通过**。若写作者（如 Gemini 网页端）在回执生成后再次修改了 Drive 文件，文件内容哈希改变，本回执自动失效，新稿须重新送检。",
         "",
         "| 检查字段 | 记录值 |",
         "|---|---|",
-        f"| 检查结论 | **{status_str}** |",
-        f"| 检查脚本 | `{receipt['script']}` (`{receipt['script_sha256'][:12]}`) |",
+        f"| 自动检查结论 | **{status_str}** |",
+        f"| 卫生与范围检查器 | `{receipt['script']}` (`{receipt['script_sha256'][:12]}`) — `{'PASSED' if receipt['passed'] else 'FAILED'}` |",
+    ]
+    arch = receipt.get("archive_check")
+    if arch and arch.get("ran"):
+        lines.append(
+            f"| 学习存档与笔记格式检查器 | `{arch['script']}` (`{arch['script_sha256'][:12]}`) — `{'PASSED' if arch['passed'] else 'FAILED'}`（{arch.get('summary', '')}） |"
+        )
+    else:
+        lines.append("| 学习存档与笔记格式检查器 | 未在本回执联动运行 |")
+
+    lines.extend([
         f"| 基线 Git Commit | `{receipt.get('git_head_commit') or 'N/A'}` |",
         f"| 绑定 Drive File ID | `{receipt.get('drive_file_id') or 'N/A'}` |",
         f"| 任务与负责人 | `{receipt.get('task_label') or 'N/A'}` |",
         f"| 允许修改范围 | `{', '.join(receipt.get('allowed_prefixes') or []) or '按工作线默认规则'}` |",
-        f"| 可见范围 | `{receipt.get('visibility') or 'N/A'}` |",
+        f"| 可见范围与当前状态 | `{vis or 'N/A'}` ｜ `{st or 'N/A'}` |",
         "",
         "## 绑定文件快照（File SHA-256）",
         "",
-    ]
+    ])
     file_hashes: dict[str, str] = receipt.get("file_hashes", {})
     if file_hashes:
         lines.append("| 仓库目标路径 / 扫描标签 | 内容 SHA-256 |")
@@ -618,7 +854,7 @@ def render_markdown_receipt(receipt: dict[str, Any]) -> str:
         for rel, sha in sorted(file_hashes.items()):
             lines.append(f"| `{rel}` | `{sha}` |")
     else:
-        lines.append("- 本次按 Git commit 范围扫描，未单列外部文件快照。")
+        lines.append("- 本次未扫描任何文件。")
 
     lines.extend([
         "",
@@ -626,7 +862,7 @@ def render_markdown_receipt(receipt: dict[str, Any]) -> str:
         "",
         f"- 扫描 commit 数：`{len(receipt.get('scanned_commits', []))}`",
         f"- 扫描文件数：`{len(receipt.get('scanned_files', []))}`",
-        f"- Git/元数据错误：`{len(receipt.get('git_errors', []))}`",
+        f"- Git/元数据/门禁错误：`{len(receipt.get('git_errors', []))}`",
         f"- 路径归属与任务越界错误：`{len(receipt.get('ownership_errors', []))}`（提醒：`{len(receipt.get('ownership_warnings', []))}`）",
         f"- 隐私与本机路径错误：`{len(receipt.get('privacy_errors', []))}`",
     ])
@@ -671,6 +907,11 @@ def main(argv: list[str] | None = None) -> int:
         help="读取任务范围与交接元数据文件（支持 JSON 或含 6 项元数据的 Markdown 交接文件）",
     )
     ap.add_argument(
+        "--require-task-scope",
+        action="store_true",
+        help="强制要求本次检查具备任务级允许修改范围（从 CLI 参数、--task-manifest 或仓库 agents/current_task.json 读取；缺失则报错）",
+    )
+    ap.add_argument(
         "--require-handoff-header",
         action="store_true",
         help="要求被扫描的交接文件顶部必须包含完整的 6 项交接必要元数据",
@@ -678,15 +919,23 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument(
         "--require-public-ready",
         action="store_true",
-        help="要求交接文件可见范围必须已标记为「允许公开发布」（用于合入公开仓库 study_note 前拦截）",
+        help="公开发布前硬门禁：拦截可见范围为「工作区私有」或状态为「待审/退回/待提稿」的文件（适用于 --files、commit 扫描与暂存区/工作区扫描）",
     )
     ap.add_argument("--drive-file-id", help="记录在回执中的 Google Drive 文件 ID")
-    ap.add_argument("--verify-receipt", help="核对当前待审文件的 SHA-256 是否仍与指定 JSON 回执绑定的版本一致")
+    ap.add_argument("--verify-receipt", help="核对当前待审文件的实际字节 SHA-256 是否仍与指定 JSON 回执绑定的版本一致")
+    ap.add_argument("--archive-check-script", help="可选联动运行的 check_archive.py 脚本路径")
+    ap.add_argument("--archive-file", help="联动运行 check_archive.py 时的学习存档路径")
+    ap.add_argument("--skill-file", help="联动运行 check_archive.py 时的 SKILL.md 路径")
+    ap.add_argument("--install-pre-push-hook", action="store_true", help="在仓库 .git/hooks/pre-push 安装发布前自动拦截钩子")
     ap.add_argument("--json-receipt", help="输出 JSON 验收回执的路径")
     ap.add_argument("--markdown-receipt", help="输出写回 Drive 的 Markdown 验收回执路径")
     args = ap.parse_args(argv)
 
     repo = Path(args.repo).resolve()
+    if args.install_pre_push_hook:
+        hook_p = install_pre_push_hook(repo)
+        print(f"已安装发布前本地拦截钩子：{hook_p}")
+        return 0
     git_errors: list[str] = []
     ownership_warnings: list[str] = []
     ownership_errors: list[str] = []
@@ -694,12 +943,14 @@ def main(argv: list[str] | None = None) -> int:
     scanned_commits: list[str] = []
     scanned_files: list[str] = []
     file_hashes: dict[str, str] = {}
+    archive_check_result: dict[str, Any] = {"ran": False}
 
     expected_line = args.expected_line
     allowed_prefixes: list[str] = list(args.allowed_prefixes or [])
     allow_shared_index = True
     task_label: str | None = None
     visibility: str = ""
+    status: str = ""
     manifest_target_rel: str = ""
 
     # 若指定了 --task-manifest，解析并合并任务范围与交接元数据
@@ -713,7 +964,6 @@ def main(argv: list[str] | None = None) -> int:
                 if args.require_handoff_header or args.require_public_ready:
                     git_errors.extend(validate_handoff_manifest(manifest, require_public_ready=args.require_public_ready))
                 elif manifest.get("visibility") or manifest.get("status"):
-                    # 若文件声明了交接字段，校验其合法性
                     git_errors.extend(validate_handoff_manifest(manifest, require_public_ready=args.require_public_ready))
                 if not expected_line and manifest.get("expected_line"):
                     expected_line = manifest["expected_line"]
@@ -723,17 +973,26 @@ def main(argv: list[str] | None = None) -> int:
                 if manifest.get("task_id") or manifest.get("owner"):
                     task_label = " | ".join(x for x in (manifest.get("task_id"), manifest.get("owner")) if x)
                 visibility = manifest.get("visibility", "")
+                status = manifest.get("status", "")
                 manifest_target_rel = manifest.get("target_repo_path", "")
             except Exception as exc:
                 git_errors.append(f"解析任务清单 {args.task_manifest} 失败：{exc}")
 
-    # 当显式限定了任务范围（expected_line / allowed_prefixes / task_manifest）时，越界默认升级为 error
     effective_ownership_mode = (
         "error"
-        if (args.ownership_mode == "error" or expected_line or allowed_prefixes or args.task_manifest)
+        if (
+            args.ownership_mode == "error"
+            or expected_line
+            or allowed_prefixes
+            or args.task_manifest
+            or args.require_task_scope
+            or args.require_handoff_header
+            or args.require_public_ready
+        )
         else "warn"
     )
 
+    resolved_file_paths: list[Path] = []
     if args.files is not None:
         if not args.files:
             git_errors.append("--files 参数不能为空列表")
@@ -746,28 +1005,30 @@ def main(argv: list[str] | None = None) -> int:
             if not fp.is_file():
                 git_errors.append(f"指定扫描的文件不存在：{f}")
                 continue
+            resolved_file_paths.append(fp)
             raw_bytes = fp.read_bytes()
             sha = hashlib.sha256(raw_bytes).hexdigest()
             text = raw_bytes.decode("utf-8", errors="replace")
 
-            # 若未单独传 --task-manifest，但开启了 --require-handoff-header 或 --require-public-ready，从文件自身解析
-            if not args.task_manifest and (args.require_handoff_header or args.require_public_ready):
+            try:
                 inline_manifest = parse_task_manifest_text(text)
-                git_errors.extend(
-                    validate_handoff_manifest(inline_manifest, require_public_ready=args.require_public_ready)
+            except Exception:
+                inline_manifest = {}
+
+            if not allowed_prefixes and inline_manifest.get("allowed_prefixes"):
+                allowed_prefixes = list(inline_manifest["allowed_prefixes"])
+            if not expected_line and inline_manifest.get("expected_line"):
+                expected_line = inline_manifest["expected_line"]
+            if not task_label and (inline_manifest.get("task_id") or inline_manifest.get("owner")):
+                task_label = " | ".join(
+                    x for x in (inline_manifest.get("task_id"), inline_manifest.get("owner")) if x
                 )
-                if not allowed_prefixes and inline_manifest.get("allowed_prefixes"):
-                    allowed_prefixes = list(inline_manifest["allowed_prefixes"])
-                if not expected_line and inline_manifest.get("expected_line"):
-                    expected_line = inline_manifest["expected_line"]
-                if not task_label and (inline_manifest.get("task_id") or inline_manifest.get("owner")):
-                    task_label = " | ".join(
-                        x for x in (inline_manifest.get("task_id"), inline_manifest.get("owner")) if x
-                    )
-                if not visibility:
-                    visibility = inline_manifest.get("visibility", "")
-                if not manifest_target_rel and inline_manifest.get("target_repo_path"):
-                    manifest_target_rel = inline_manifest["target_repo_path"]
+            if not visibility and inline_manifest.get("visibility"):
+                visibility = inline_manifest.get("visibility", "")
+            if not status and inline_manifest.get("status"):
+                status = inline_manifest.get("status", "")
+            if not manifest_target_rel and inline_manifest.get("target_repo_path"):
+                manifest_target_rel = inline_manifest["target_repo_path"]
 
             if args.target_rel_path and idx == 0:
                 rel = normalize_rel_path(args.target_rel_path)
@@ -779,13 +1040,36 @@ def main(argv: list[str] | None = None) -> int:
                 except ValueError:
                     rel = fp.name
 
+            if not args.task_manifest and (args.require_handoff_header or args.require_public_ready):
+                git_errors.extend(
+                    check_content_gates(
+                        rel,
+                        text,
+                        require_handoff_header=args.require_handoff_header,
+                        require_public_ready=args.require_public_ready,
+                    )
+                )
+
             rel_list.append(rel)
             scanned_files.append(rel)
             file_hashes[rel] = sha
             privacy_errors.extend(scan_text(rel, text))
 
-        if expected_line or allowed_prefixes or args.require_handoff_header or args.require_public_ready:
-            effective_ownership_mode = "error"
+        if args.require_task_scope and not (expected_line or allowed_prefixes):
+            disk_tm = repo / TASK_BINDING_REL_PATH
+            if disk_tm.is_file():
+                try:
+                    m = parse_task_manifest(disk_tm)
+                    expected_line = m.get("expected_line")
+                    allowed_prefixes = list(m.get("allowed_prefixes") or [])
+                    allow_shared_index = bool(m.get("allow_shared_index", True))
+                    task_label = " | ".join(x for x in (m.get("task_id"), m.get("owner")) if x) or None
+                except Exception as exc:
+                    git_errors.append(f"解析 {TASK_BINDING_REL_PATH} 失败：{exc}")
+            if not (expected_line or allowed_prefixes):
+                git_errors.append(
+                    f"未完成任务范围验收：未提供任务绑定范围（缺少 --task-manifest / --allowed-prefixes / --expected-line 或有效的 {TASK_BINDING_REL_PATH}）"
+                )
 
         own_issues, _ = check_ownership(
             rel_list,
@@ -799,6 +1083,9 @@ def main(argv: list[str] | None = None) -> int:
         else:
             ownership_warnings.extend(own_issues)
     else:
+        if args.verify_receipt:
+            git_errors.append("回执校验失败：使用 --verify-receipt 时必须同时通过 --files 指定待核对的文件以读取实际字节")
+
         chk = git_checked(repo, git_errors, "验证 Git 仓库", "rev-parse", "--git-dir")
         if chk is not None:
             explicit_range = args.commit_range is not None
@@ -807,16 +1094,26 @@ def main(argv: list[str] | None = None) -> int:
                 revs_proc = git_checked(repo, git_errors, f"解析 commit 范围 {rng}", "rev-list", "--reverse", rng)
                 if revs_proc is not None:
                     revs = [l.strip() for l in revs_proc.stdout.splitlines() if l.strip()]
+                    if not revs and args.require_task_scope and not (expected_line or allowed_prefixes):
+                        disk_tm = repo / TASK_BINDING_REL_PATH
+                        if not disk_tm.is_file():
+                            git_errors.append(
+                                f"未完成任务范围验收：未提供任务绑定范围（缺少 --task-manifest / --allowed-prefixes / --expected-line 或有效的 {TASK_BINDING_REL_PATH}）"
+                            )
                     for rev in revs:
                         scanned_commits.append(rev)
                         own_issues, priv_issues, _ = scan_commit(
                             repo,
                             rev,
                             git_errors,
+                            file_hashes,
                             expected_line=expected_line,
                             allowed_prefixes=allowed_prefixes,
                             allow_shared_index=allow_shared_index,
                             task_label=task_label,
+                            require_task_scope=args.require_task_scope,
+                            require_handoff_header=args.require_handoff_header,
+                            require_public_ready=args.require_public_ready,
                         )
                         if effective_ownership_mode == "error":
                             ownership_errors.extend(own_issues)
@@ -824,15 +1121,37 @@ def main(argv: list[str] | None = None) -> int:
                             ownership_warnings.extend(own_issues)
                         privacy_errors.extend(priv_issues)
 
-            # 仅当显式指定 --include-worktree，或未显式指定 --commit-range 且无待扫 commit 时，扫描暂存区与工作区
             if args.include_worktree or (not explicit_range and not scanned_commits and not git_errors):
+                wt_line = expected_line
+                wt_prefs = list(allowed_prefixes)
+                wt_shared = allow_shared_index
+                wt_label = task_label
+                if args.require_task_scope and not (wt_line or wt_prefs):
+                    disk_tm = repo / TASK_BINDING_REL_PATH
+                    if disk_tm.is_file():
+                        try:
+                            m = parse_task_manifest(disk_tm)
+                            wt_line = m.get("expected_line")
+                            wt_prefs = list(m.get("allowed_prefixes") or [])
+                            wt_shared = bool(m.get("allow_shared_index", True))
+                            wt_label = " | ".join(x for x in (m.get("task_id"), m.get("owner")) if x) or None
+                        except Exception as exc:
+                            git_errors.append(f"解析 {TASK_BINDING_REL_PATH} 失败：{exc}")
+                    if not (wt_line or wt_prefs):
+                        git_errors.append(
+                            f"未完成任务范围验收：未提供任务绑定范围（缺少 --task-manifest / --allowed-prefixes / --expected-line 或有效的 {TASK_BINDING_REL_PATH}）"
+                        )
+
                 own_issues, priv_issues, labels = scan_uncommitted(
                     repo,
                     git_errors,
-                    expected_line=expected_line,
-                    allowed_prefixes=allowed_prefixes,
-                    allow_shared_index=allow_shared_index,
-                    task_label=task_label,
+                    file_hashes,
+                    expected_line=wt_line,
+                    allowed_prefixes=wt_prefs,
+                    allow_shared_index=wt_shared,
+                    task_label=wt_label,
+                    require_handoff_header=args.require_handoff_header,
+                    require_public_ready=args.require_public_ready,
                 )
                 scanned_files.extend(labels)
                 if effective_ownership_mode == "error":
@@ -841,7 +1160,18 @@ def main(argv: list[str] | None = None) -> int:
                     ownership_warnings.extend(own_issues)
                 privacy_errors.extend(priv_issues)
 
-    if args.verify_receipt:
+    if args.archive_check_script and args.archive_file:
+        archive_check_result = run_archive_check_integration(
+            Path(args.archive_check_script).resolve(),
+            Path(args.archive_file).resolve(),
+            repo,
+            Path(args.skill_file).resolve() if args.skill_file else None,
+            resolved_file_paths,
+        )
+        if not archive_check_result.get("passed", False):
+            git_errors.append(f"check_archive.py 检查未通过：{archive_check_result.get('summary') or archive_check_result.get('error')}")
+
+    if args.verify_receipt and args.files is not None:
         git_errors.extend(verify_bound_receipt(Path(args.verify_receipt), file_hashes))
 
     total_err = len(git_errors) + len(ownership_errors) + len(privacy_errors)
@@ -854,10 +1184,12 @@ def main(argv: list[str] | None = None) -> int:
         "expected_line": expected_line or "",
         "allowed_prefixes": allowed_prefixes,
         "visibility": visibility,
+        "status": status,
         "ownership_mode": effective_ownership_mode,
         "scanned_commits": scanned_commits,
         "scanned_files": scanned_files,
         "file_hashes": file_hashes,
+        "archive_check": archive_check_result,
         "git_errors": git_errors,
         "ownership_warnings": ownership_warnings,
         "ownership_errors": ownership_errors,
@@ -877,7 +1209,7 @@ def main(argv: list[str] | None = None) -> int:
     for w in ownership_warnings:
         print(f"提醒：{w}")
     for e in git_errors:
-        print(f"错误（Git/元数据/回执）：{e}")
+        print(f"错误（Git/元数据/门禁/回执）：{e}")
     for e in ownership_errors:
         print(f"错误（路径归属/任务范围）：{e}")
     for e in privacy_errors:

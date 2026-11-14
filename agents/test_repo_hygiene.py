@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""agents/check_repo_hygiene.py 的回归测试套件（含 v2 边界回归与 v3 任务范围/Drive 版本绑定回执回归）。"""
+"""agents/check_repo_hygiene.py 的回归测试套件（含 v2 边界回归、v3 任务范围/回执回归与 v4 三项门禁闭环回归）。"""
 from __future__ import annotations
 
 import contextlib
@@ -240,7 +240,6 @@ class TestRepoHygiene(unittest.TestCase):
             repo = init_temp_git_repo(tmp)
             base_rev = subprocess.check_output(["git", "-C", tmp, "rev-parse", "HEAD"], text=True).strip()
 
-            # B1 任务只允许修改 SemEval 的 code/ 和 README.md，但提交者只改了学习笔记（单线、未混线）
             learn_note = repo / "ML_note" / "原理笔记" / "BERT" / "attention.md"
             learn_note.parent.mkdir(parents=True, exist_ok=True)
             learn_note.write_text("# Attention Clean Note\n", encoding="utf-8")
@@ -260,14 +259,12 @@ class TestRepoHygiene(unittest.TestCase):
                 ])
             self.assertEqual(rc_wrong_line, 1)
 
-            # 进一步验证：父目录前缀 ML_note/实验/SemEval_DiCo-NLI/ 不会误放行独立的 论文研究/ 子线
             issues_paper, _ = crh.check_ownership(
                 ["ML_note/实验/SemEval_DiCo-NLI/论文研究/survey.md"],
                 allowed_prefixes=["ML_note/实验/SemEval_DiCo-NLI/"],
             )
             self.assertEqual(len(issues_paper), 1)
 
-            # 合规修改：修改 B1 允许的 code/ 文件 + 共用索引 README.md 应通过
             issues_ok, _ = crh.check_ownership(
                 ["ML_note/实验/SemEval_DiCo-NLI/code/b1_infer.py", "README.md"],
                 expected_line="semeval",
@@ -295,9 +292,8 @@ class TestRepoHygiene(unittest.TestCase):
         self.assertEqual(m["owner"], "Gemini 网页端")
         self.assertEqual(m["allowed_prefixes"], ["ML_note/原理笔记/", "ML_note/实验/ShortGPT_BI删层/"])
         self.assertEqual(crh.validate_handoff_manifest(m, require_public_ready=False), [])
-        # 未标为“允许公开发布”时，--require-public-ready 必须拦截
         pub_errs = crh.validate_handoff_manifest(m, require_public_ready=True)
-        self.assertEqual(len(pub_errs), 1)
+        self.assertTrue(len(pub_errs) >= 1)
 
     def test_version_bound_receipt_invalidated_when_file_modified_after_check(self):
         """回归 7（Drive 同步规则 3）：回执绑定文件 SHA-256；若检查后文件被再次修改，旧回执自动失效。"""
@@ -322,7 +318,6 @@ class TestRepoHygiene(unittest.TestCase):
             )
             draft.write_text(content_v1, encoding="utf-8")
 
-            # 第 1 步：对 v1 运行检查并签发 JSON + Markdown 回执
             with contextlib.redirect_stdout(io.StringIO()):
                 rc_v1 = crh.main([
                     "--repo", str(repo),
@@ -335,7 +330,6 @@ class TestRepoHygiene(unittest.TestCase):
             self.assertEqual(rc_v1, 0)
             self.assertTrue(receipt_md.is_file())
 
-            # 第 2 步：文件未改动时，--verify-receipt 校验通过
             with contextlib.redirect_stdout(io.StringIO()):
                 rc_verify_ok = crh.main([
                     "--repo", str(repo),
@@ -345,7 +339,6 @@ class TestRepoHygiene(unittest.TestCase):
                 ])
             self.assertEqual(rc_verify_ok, 0)
 
-            # 第 3 步：模拟 Gemini 在检查期间又改了 Drive 文件（v2），旧回执必须失效（返回码 1）
             draft.write_text(content_v1 + "\n新增未送检段落。\n", encoding="utf-8")
             buf = io.StringIO()
             with contextlib.redirect_stdout(buf):
@@ -357,6 +350,154 @@ class TestRepoHygiene(unittest.TestCase):
                 ])
             self.assertEqual(rc_verify_stale, 1)
             self.assertIn("版本失效", buf.getvalue())
+
+    def test_public_ready_gate_in_commit_and_worktree_scan(self):
+        """回归 8（Codex v4 问题 1）：在 commit 扫描或工作区扫描中传入 --require-public-ready 时，标记为“工作区私有”或“待审”的文件必须报错拦截。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = init_temp_git_repo(tmp)
+            base_rev = subprocess.check_output(["git", "-C", tmp, "rev-parse", "HEAD"], text=True).strip()
+
+            note_file = repo / "ML_note" / "原理笔记" / "推理优化" / "draft.md"
+            note_file.parent.mkdir(parents=True, exist_ok=True)
+            note_file.write_text(
+                "# 草稿\n\n| 字段 | 内容 |\n|---|---|\n| 可见范围 | `工作区私有` |\n| 当前状态 | `待审` |\n",
+                encoding="utf-8",
+            )
+            subprocess.run(["git", "-C", tmp, "add", "."], check=True)
+            subprocess.run(["git", "-C", tmp, "commit", "-q", "-m", "commit private draft"], check=True)
+
+            buf = io.StringIO()
+            with contextlib.redirect_stdout(buf):
+                rc_commit = crh.main([
+                    "--repo", tmp,
+                    "--commit-range", f"{base_rev}..HEAD",
+                    "--require-public-ready",
+                ])
+            self.assertEqual(rc_commit, 1)
+            self.assertIn("公开发布拦截", buf.getvalue())
+
+            # 工作区未提交改动同样拦截
+            note_file.write_text("# 草稿\n可见范围: 工作区私有\n", encoding="utf-8")
+            with contextlib.redirect_stdout(io.StringIO()):
+                rc_wt = crh.main([
+                    "--repo", tmp,
+                    "--include-worktree",
+                    "--require-public-ready",
+                ])
+            self.assertEqual(rc_wt, 1)
+
+            # 改为“允许公开发布”且“通过”后，新 commit 范围通过
+            prev_rev = subprocess.check_output(["git", "-C", tmp, "rev-parse", "HEAD"], text=True).strip()
+            note_file.write_text(
+                "# 正式笔记\n\n| 字段 | 内容 |\n|---|---|\n| 可见范围 | `允许公开发布` |\n| 当前状态 | `通过` |\n",
+                encoding="utf-8",
+            )
+            subprocess.run(["git", "-C", tmp, "add", "."], check=True)
+            subprocess.run(["git", "-C", tmp, "commit", "-q", "-m", "publish ready note"], check=True)
+            with contextlib.redirect_stdout(io.StringIO()):
+                rc_ok = crh.main([
+                    "--repo", tmp,
+                    "--commit-range", f"{prev_rev}..HEAD",
+                    "--require-public-ready",
+                ])
+            self.assertEqual(rc_ok, 0)
+
+    def test_require_task_scope_reads_repo_binding_and_fails_when_missing(self):
+        """回归 9（Codex v4 问题 2）：--require-task-scope 在缺失任务绑定时报错；存在 agents/current_task.json 时无需手动传参即可拦截跨任务修改。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = init_temp_git_repo(tmp)
+            base_rev = subprocess.check_output(["git", "-C", tmp, "rev-parse", "HEAD"], text=True).strip()
+
+            learn_file = repo / "ML_note" / "原理笔记" / "BERT" / "only_learn.md"
+            learn_file.parent.mkdir(parents=True, exist_ok=True)
+            learn_file.write_text("# Clean Learn\n", encoding="utf-8")
+            subprocess.run(["git", "-C", tmp, "add", "."], check=True)
+            subprocess.run(["git", "-C", tmp, "commit", "-q", "-m", "c1 no task binding"], check=True)
+
+            # 场景 A：既未传 CLI 范围，仓库也无 agents/current_task.json -> 必须报“未完成任务范围验收”
+            buf_missing = io.StringIO()
+            with contextlib.redirect_stdout(buf_missing):
+                rc_missing = crh.main([
+                    "--repo", tmp,
+                    "--commit-range", f"{base_rev}..HEAD",
+                    "--require-task-scope",
+                ])
+            self.assertEqual(rc_missing, 1)
+            self.assertIn("未完成任务范围验收", buf_missing.getvalue())
+
+            # 场景 B：仓库配置了 B1 任务范围（agents/current_task.json），不传手动 CLI 参数扫描只改学习线的 commit -> 必须报“越界修改”
+            (repo / "agents").mkdir(exist_ok=True)
+            (repo / "agents" / "current_task.json").write_text(
+                json.dumps({
+                    "task_id": "TASK-SEMEVAL-B1",
+                    "owner": "Antigravity (SemEval)",
+                    "expected_line": "semeval",
+                    "allowed_prefixes": [
+                        "ML_note/实验/SemEval_DiCo-NLI/code/",
+                        "ML_note/实验/SemEval_DiCo-NLI/README.md",
+                    ],
+                }),
+                encoding="utf-8",
+            )
+            buf_b1 = io.StringIO()
+            with contextlib.redirect_stdout(buf_b1):
+                rc_b1_violation = crh.main([
+                    "--repo", tmp,
+                    "--commit-range", f"{base_rev}..HEAD",
+                    "--require-task-scope",
+                ])
+            self.assertEqual(rc_b1_violation, 1)
+            self.assertIn("越界修改", buf_b1.getvalue())
+
+            # 场景 C：在 B1 任务绑定下修改允许的 SemEval code/ 文件 -> 不传手动 CLI 参数亦可通过
+            c1_rev = subprocess.check_output(["git", "-C", tmp, "rev-parse", "HEAD"], text=True).strip()
+            b1_code = repo / "ML_note" / "实验" / "SemEval_DiCo-NLI" / "code" / "b1.py"
+            b1_code.parent.mkdir(parents=True, exist_ok=True)
+            b1_code.write_text("# B1 inference\n", encoding="utf-8")
+            subprocess.run(["git", "-C", tmp, "add", "."], check=True)
+            subprocess.run(["git", "-C", tmp, "commit", "-q", "-m", "b1 valid change"], check=True)
+
+            with contextlib.redirect_stdout(io.StringIO()):
+                rc_b1_ok = crh.main([
+                    "--repo", tmp,
+                    "--commit-range", f"{c1_rev}..HEAD",
+                    "--require-task-scope",
+                ])
+            self.assertEqual(rc_b1_ok, 0)
+
+    def test_verify_bound_receipt_rejects_empty_input_and_populates_commit_hashes(self):
+        """回归 10（Codex v4 问题 3）：verify_bound_receipt 拒绝空输入 {}；commit 扫描正常填充 file_hashes。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = init_temp_git_repo(tmp)
+            base_rev = subprocess.check_output(["git", "-C", tmp, "rev-parse", "HEAD"], text=True).strip()
+            (repo / "README.md").write_text("# Updated Root\n", encoding="utf-8")
+            subprocess.run(["git", "-C", tmp, "add", "README.md"], check=True)
+            subprocess.run(["git", "-C", tmp, "commit", "-q", "-m", "update readme"], check=True)
+
+            receipt_json = Path(tmp) / "commit_receipt.json"
+            with contextlib.redirect_stdout(io.StringIO()):
+                rc = crh.main([
+                    "--repo", tmp,
+                    "--commit-range", f"{base_rev}..HEAD",
+                    "--json-receipt", str(receipt_json),
+                ])
+            self.assertEqual(rc, 0)
+            data = json.loads(receipt_json.read_text(encoding="utf-8"))
+            self.assertIn("README.md", data["file_hashes"])
+
+            # 直接调用 verify_bound_receipt(receipt, {}) 必须报错拒绝空输入
+            empty_errs = crh.verify_bound_receipt(receipt_json, {})
+            self.assertEqual(len(empty_errs), 1)
+            self.assertIn("为空", empty_errs[0])
+
+            # CLI 传入 --verify-receipt 但未传 --files 时必须报错退出
+            with contextlib.redirect_stdout(io.StringIO()):
+                rc_no_files = crh.main([
+                    "--repo", tmp,
+                    "--commit-range", f"{base_rev}..HEAD",
+                    "--verify-receipt", str(receipt_json),
+                ])
+            self.assertEqual(rc_no_files, 1)
 
 
 if __name__ == "__main__":
